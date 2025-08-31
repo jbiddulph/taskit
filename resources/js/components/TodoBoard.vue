@@ -629,12 +629,16 @@ const createProject = async () => {
 // Load projects from API
 const loadProjects = async () => {
   try {
+    console.log('Loading projects...');
     const response = await todoApi.getProjectsWithStats();
+    console.log('Projects response:', response);
     projects.value = response.data;
+    console.log('Projects loaded:', projects.value.length, 'projects');
     
     // Set selected project ID if current project exists
     if (currentProject.value) {
       selectedProjectId.value = currentProject.value.id.toString();
+      console.log('Set selected project ID to:', selectedProjectId.value);
     }
   } catch (error) {
     console.error('Failed to load projects:', error);
@@ -643,7 +647,10 @@ const loadProjects = async () => {
 
 // Handle project selection change
 const onProjectChange = async () => {
+  console.log('Project selection changed to:', selectedProjectId.value);
+  
   if (!selectedProjectId.value) {
+    console.log('No project selected, clearing current project');
     currentProject.value = null;
     localStorage.removeItem('currentProjectId');
     todos.value = [];
@@ -652,7 +659,10 @@ const onProjectChange = async () => {
   
   try {
     const projectId = parseInt(selectedProjectId.value);
+    console.log('Loading project with ID:', projectId);
     const project = await todoApi.getProject(projectId);
+    console.log('Project loaded:', project);
+    
     currentProject.value = project;
     localStorage.setItem('currentProjectId', projectId.toString());
     
@@ -677,13 +687,6 @@ const onProjectChange = async () => {
     }
   }
 };
-
-// Load current project and todos on mount
-onMounted(async () => {
-  await loadCurrentProject();
-  await loadProjects();
-  await loadTodos();
-});
 
 // Load current project from localStorage
 const loadCurrentProject = async () => {
@@ -731,8 +734,18 @@ watch(showCreateProject, (newValue) => {
   }
 });
 
-// Listen for project selection changes from sidebar
-onMounted(() => {
+// Single onMounted hook to handle all initialization
+onMounted(async () => {
+  // Load projects first (so dropdown has options)
+  await loadProjects();
+  
+  // Then load current project from localStorage
+  await loadCurrentProject();
+  
+  // Finally load todos for the current project
+  await loadTodos();
+  
+  // Set up event listeners
   const handleStorageChange = (e: StorageEvent) => {
     if (e.key === 'currentProjectId') {
       loadCurrentProject();
