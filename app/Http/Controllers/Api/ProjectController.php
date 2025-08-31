@@ -1,0 +1,247 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Project;
+use App\Services\TodoWebSocketService;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+
+class ProjectController extends Controller
+{
+    protected TodoWebSocketService $webSocketService;
+
+    public function __construct(TodoWebSocketService $webSocketService)
+    {
+        $this->webSocketService = $webSocketService;
+    }
+
+    /**
+     * Display a listing of projects for the authenticated user
+     */
+    public function index(): JsonResponse
+    {
+        $user = Auth::user();
+        $projects = Project::forUser($user->id)
+            ->withCount('todos')
+            ->orderBy('name')
+            ->get();
+
+        // Transform the data to include total_todos
+        $projects->each(function ($project) {
+            $project->total_todos = $project->todos_count;
+            unset($project->todos_count);
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $projects
+        ]);
+    }
+
+    /**
+     * Store a newly created project
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'key' => 'nullable|string|max:10|unique:projects,key',
+            'color' => 'nullable|string|regex:/^#[0-9A-F]{6}$/i',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = Auth::user();
+        
+        $project = Project::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'key' => $request->key ?? Project::generateUniqueKey($request->name),
+            'color' => $request->color ?? '#3B82F6',
+            'owner_id' => $user->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Project created successfully',
+            'data' => $project
+        ], 201);
+    }
+
+    /**
+     * Display the specified project
+     */
+    public function show(Project $project): JsonResponse
+    {
+        $user = Auth::user();
+        
+        if (!$project->canAccess($user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        $project->load(['todos' => function ($query) {
+            $query->orderBy('created_at', 'desc');
+        }]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $project
+        ]);
+    }
+
+    /**
+     * Update the specified project
+     */
+    public function update(Request $request, Project $project): JsonResponse
+    {
+        $user = Auth::user();
+        
+        if (!$project->canAccess($user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|required|string|max:255',
+            'description' => 'nullable|string',
+            'key' => 'sometimes|required|string|max:10|unique:projects,key,' . $project->id,
+            'color' => 'nullable|string|regex:/^#[0-9A-F]{6}$/i',
+            'is_active' => 'sometimes|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $project->update($request->only(['name', 'description', 'key', 'color', 'is_active']));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Project updated successfully',
+            'data' => $project
+        ]);
+    }
+
+    /**
+     * Remove the specified project
+     */
+    public function destroy(Project $project): JsonResponse
+    {
+        $user = Auth::user();
+        
+        if (!$project->canAccess($user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        // Get todo count for better user feedback
+        $todoCount = $project->todos()->count();
+        
+        if ($todoCount > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot delete project with {$todoCount} existing todos. Please delete all todos first.",
+                'todo_count' => $todoCount
+            ], 422);
+        }
+
+        $project->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Project deleted successfully'
+        ]);
+    }
+
+    /**
+     * Remove the specified project and all its todos
+     */
+    public function destroyWithTodos(Project $project): JsonResponse
+    {
+        $user = Auth::user();
+        
+        if (!$project->canAccess($user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        $todoCount = $project->todos()->count();
+        
+        // Delete all todos first (cascade should handle this, but being explicit)
+        $project->todos()->delete();
+        
+        // Then delete the project
+        $project->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Project and {$todoCount} todos deleted successfully"
+        ]);
+    }
+
+    /**
+     * Get project statistics
+     */
+    public function stats(Project $project): JsonResponse
+    {
+        $user = Auth::user();
+        
+        if (!$project->canAccess($user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        $stats = $project->getStats();
+
+        return response()->json([
+            'success' => true,
+            'data' => $stats
+        ]);
+    }
+
+    /**
+     * Get all projects with their statistics
+     */
+    public function withStats(): JsonResponse
+    {
+        $user = Auth::user();
+        $projects = Project::forUser($user->id)
+            ->with(['todos'])
+            ->get()
+            ->map(function ($project) {
+                $stats = $project->getStats();
+                $project->stats = $stats;
+                $project->total_todos = $stats['total'];
+                return $project;
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $projects
+        ]);
+    }
+}
