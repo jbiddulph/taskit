@@ -40,27 +40,30 @@
         </div>
         
         <div class="flex items-center gap-3">
-          <!-- Project Display -->
-          <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-            <div 
-              v-if="currentProject"
-              class="w-4 h-4 rounded-full"
-              :style="{ backgroundColor: currentProject.color }"
-            ></div>
-            <div class="text-sm">
-              <div class="font-medium text-gray-900 dark:text-gray-100">
-                {{ currentProject?.name || 'Select a Project' }}
-              </div>
-              <div v-if="currentProject" class="text-xs text-gray-500">
-                {{ currentProject.key }}
-              </div>
-            </div>
+          <!-- Project Selector Dropdown -->
+          <div class="relative">
+            <select
+              v-model="selectedProjectId"
+              @change="onProjectChange"
+              class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 min-w-[200px]"
+            >
+              <option value="">Select a Project</option>
+              <option 
+                v-for="project in projects" 
+                :key="project.id" 
+                :value="project.id"
+                class="flex items-center gap-2"
+              >
+                <span class="inline-block w-3 h-3 rounded-full mr-2" :style="{ backgroundColor: project.color }"></span>
+                {{ project.name }} ({{ project.key }})
+              </option>
+            </select>
           </div>
           
           <button
             @click="handleShowForm"
             :disabled="!currentProject"
-            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Icon name="Plus" class="w-4 h-4" />
             Add Todo
@@ -312,10 +315,12 @@ import TodoStats from './TodoStats.vue';
 import { todoApi, type Project, type Todo } from '@/services/todoApi';
 
 const todos = ref<Todo[]>([]);
+const projects = ref<Project[]>([]);
 const showForm = ref(false);
 const showCreateProject = ref(false);
 const showEditProject = ref(false);
 const currentProject = ref<Project | null>(null);
+const selectedProjectId = ref<string>('');
 const editingTodo = ref<Todo | null>(null);
 const editingProjectName = ref('');
 const searchQuery = ref('');
@@ -621,9 +626,62 @@ const createProject = async () => {
   }
 };
 
+// Load projects from API
+const loadProjects = async () => {
+  try {
+    const response = await todoApi.getProjectsWithStats();
+    projects.value = response.data;
+    
+    // Set selected project ID if current project exists
+    if (currentProject.value) {
+      selectedProjectId.value = currentProject.value.id.toString();
+    }
+  } catch (error) {
+    console.error('Failed to load projects:', error);
+  }
+};
+
+// Handle project selection change
+const onProjectChange = async () => {
+  if (!selectedProjectId.value) {
+    currentProject.value = null;
+    localStorage.removeItem('currentProjectId');
+    todos.value = [];
+    return;
+  }
+  
+  try {
+    const projectId = parseInt(selectedProjectId.value);
+    const project = await todoApi.getProject(projectId);
+    currentProject.value = project;
+    localStorage.setItem('currentProjectId', projectId.toString());
+    
+    // Load todos for the selected project
+    await loadTodos();
+    
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'success',
+        title: 'Project Selected',
+        message: `Switched to project "${project.name}".`
+      });
+    }
+  } catch (error) {
+    console.error('Failed to load project:', error);
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: 'Project Load Failed',
+        message: 'Failed to load the selected project. Please try again.'
+      });
+    }
+  }
+};
+
 // Load current project and todos on mount
 onMounted(async () => {
   await loadCurrentProject();
+  await loadProjects();
   await loadTodos();
 });
 
@@ -634,6 +692,7 @@ const loadCurrentProject = async () => {
     if (projectId) {
       const project = await todoApi.getProject(parseInt(projectId));
       currentProject.value = project;
+      selectedProjectId.value = projectId;
     }
   } catch (error) {
     console.error('Failed to load current project:', error);
@@ -658,7 +717,10 @@ const loadTodos = async () => {
 };
 
 // Watch for project changes and reload todos
-watch(currentProject, async () => {
+watch(currentProject, async (newProject) => {
+  if (newProject) {
+    selectedProjectId.value = newProject.id.toString();
+  }
   await loadTodos();
 });
 
