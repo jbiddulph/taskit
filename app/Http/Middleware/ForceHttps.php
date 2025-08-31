@@ -15,8 +15,11 @@ class ForceHttps
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Force HTTPS for all URLs
-        if (config('app.force_https', true) && !$request->secure()) {
+        // Force HTTPS for all URLs, but only if we're not already on HTTPS
+        // and if the request is coming from a non-secure connection
+        if (config('app.force_https', true) && 
+            !$request->secure() && 
+            !$request->header('X-Forwarded-Proto') === 'https') {
             return redirect()->secure($request->getRequestUri());
         }
         
