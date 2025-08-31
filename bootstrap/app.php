@@ -34,4 +34,10 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
+    })
+    ->booted(function (Application $app) {
+        // Force HTTPS for all URL generation in production
+        if (config('app.force_https', true)) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
     })->create();

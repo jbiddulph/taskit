@@ -76,9 +76,11 @@ return [
     | HTTPS instead of HTTP. This is useful for production environments
     | where you want to ensure all internal URLs are generated with HTTPS.
     |
+    | Note: In Laravel 12+, this is handled automatically when APP_URL uses HTTPS.
+    |
     */
     
-    'https' => env('APP_FORCE_HTTPS', true),
+    'force_https' => env('APP_FORCE_HTTPS', true),
 
     /*
     |--------------------------------------------------------------------------
