@@ -11,6 +11,8 @@ class Project extends Model
 {
     use HasFactory;
 
+    protected $table = 'taskit_projects';
+
     protected $fillable = [
         'name',
         'description',

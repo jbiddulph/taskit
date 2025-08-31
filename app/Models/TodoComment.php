@@ -10,6 +10,8 @@ class TodoComment extends Model
 {
     use HasFactory;
 
+    protected $table = 'taskit_todo_comments';
+
     protected $fillable = [
         'todo_id',
         'user_id',

@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('todos', function (Blueprint $table) {
+        Schema::create('taskit_todos', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('project_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('taskit_users')->onDelete('cascade');
+            $table->foreignId('project_id')->constrained('taskit_projects')->onDelete('cascade');
             $table->string('title');
             $table->text('description')->nullable();
             $table->enum('priority', ['Low', 'Medium', 'High', 'Critical'])->default('Medium');
@@ -38,6 +38,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('todos');
+        Schema::dropIfExists('taskit_todos');
     }
 };

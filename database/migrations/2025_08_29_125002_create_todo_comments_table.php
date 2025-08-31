@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('todo_comments', function (Blueprint $table) {
+        Schema::create('taskit_todo_comments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('todo_id')->constrained()->onDelete('cascade');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('todo_id')->constrained('taskit_todos')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('taskit_users')->onDelete('cascade');
             $table->text('content');
             $table->timestamps();
             
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('todo_comments');
+        Schema::dropIfExists('taskit_todo_comments');
     }
 };

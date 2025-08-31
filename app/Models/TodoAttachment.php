@@ -10,6 +10,8 @@ class TodoAttachment extends Model
 {
     use HasFactory;
 
+    protected $table = 'taskit_todo_attachments';
+
     protected $fillable = [
         'todo_id',
         'user_id',

@@ -50,7 +50,7 @@ class ProjectController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'key' => 'nullable|string|max:10|unique:projects,key',
+            'key' => 'nullable|string|max:10|unique:taskit_projects,key',
             'color' => 'nullable|string|regex:/^#[0-9A-F]{6}$/i',
         ]);
 
@@ -119,7 +119,7 @@ class ProjectController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
-            'key' => 'sometimes|required|string|max:10|unique:projects,key,' . $project->id,
+            'key' => 'sometimes|required|string|max:10|unique:taskit_projects,key,' . $project->id,
             'color' => 'nullable|string|regex:/^#[0-9A-F]{6}$/i',
             'is_active' => 'sometimes|boolean',
         ]);

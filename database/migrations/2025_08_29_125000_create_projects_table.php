@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('projects', function (Blueprint $table) {
+        Schema::create('taskit_projects', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('key')->unique(); // Project key like "PROJ", "FEAT", etc.
             $table->string('color', 7)->default('#3B82F6'); // Hex color for project
             $table->boolean('is_active')->default(true);
-            $table->foreignId('owner_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('owner_id')->constrained('taskit_users')->onDelete('cascade');
             $table->timestamps();
             
             $table->index(['owner_id', 'is_active']);
@@ -31,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('projects');
+        Schema::dropIfExists('taskit_projects');
     }
 };

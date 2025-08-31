@@ -12,6 +12,8 @@ class Todo extends Model
 {
     use HasFactory;
 
+    protected $table = 'taskit_todos';
+
     protected $fillable = [
         'user_id',
         'project_id',
