@@ -93,7 +93,7 @@ class TodoController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'project_id' => 'required|exists:projects,id',
+            'project_id' => 'required|exists:taskit_projects,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'priority' => 'required|in:Low,Medium,High,Critical',
