@@ -40,30 +40,72 @@
         </div>
         
         <div class="flex items-center gap-3">
-          <!-- Project Selector Dropdown -->
-          <div class="relative flex items-center gap-2">
-            <!-- Project Color Indicator -->
-            <div 
-              v-if="currentProject"
-              class="w-4 h-4 rounded-full flex-shrink-0"
-              :style="{ backgroundColor: currentProject.color }"
-            ></div>
-            
-            <select
-              v-model="selectedProjectId"
-              @change="onProjectChange"
-              class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 min-w-[200px]"
+          <!-- Clickable Project Display with Dropdown -->
+          <div class="relative project-dropdown-container">
+            <button
+              @click="toggleProjectDropdown"
+              class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer min-w-[200px]"
               :style="currentProject ? { borderLeftColor: currentProject.color, borderLeftWidth: '4px' } : {}"
             >
-              <option value="">Select a Project</option>
-              <option 
-                v-for="project in projects" 
-                :key="project.id" 
-                :value="project.id"
-              >
-                {{ project.name }} ({{ project.key }})
-              </option>
-            </select>
+              <!-- Project Color Indicator -->
+              <div 
+                v-if="currentProject"
+                class="w-4 h-4 rounded-full flex-shrink-0"
+                :style="{ backgroundColor: currentProject.color }"
+              ></div>
+              <div v-else class="w-4 h-4 rounded-full flex-shrink-0 bg-gray-300"></div>
+              
+              <!-- Project Info -->
+              <div class="text-left flex-1">
+                <div class="font-medium text-gray-900 dark:text-gray-100">
+                  {{ currentProject?.name || 'Select a Project' }}
+                </div>
+                <div v-if="currentProject" class="text-xs text-gray-500">
+                  {{ currentProject.key }}
+                </div>
+              </div>
+              
+              <!-- Dropdown Arrow -->
+              <Icon name="ChevronDown" class="w-4 h-4 text-gray-400" />
+            </button>
+            
+            <!-- Project Dropdown Menu -->
+            <div 
+              v-if="showProjectDropdown"
+              class="absolute top-full left-0 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
+            >
+              <div class="p-2">
+                <div class="text-xs font-medium text-gray-500 dark:text-gray-400 px-2 py-1 mb-2">
+                  Select Project
+                </div>
+                <button
+                  @click="selectProject(null)"
+                  class="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+                >
+                  No Project Selected
+                </button>
+                <div class="border-t border-gray-200 dark:border-gray-600 my-2"></div>
+                <button
+                  v-for="project in projects"
+                  :key="project.id"
+                  @click="selectProject(project)"
+                  class="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-3"
+                >
+                  <div 
+                    class="w-3 h-3 rounded-full flex-shrink-0"
+                    :style="{ backgroundColor: project.color }"
+                  ></div>
+                  <div>
+                    <div class="font-medium text-gray-900 dark:text-gray-100">
+                      {{ project.name }}
+                    </div>
+                    <div class="text-xs text-gray-500">
+                      {{ project.key }}
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
           </div>
           
           <button
@@ -325,6 +367,7 @@ const projects = ref<Project[]>([]);
 const showForm = ref(false);
 const showCreateProject = ref(false);
 const showEditProject = ref(false);
+const showProjectDropdown = ref(false);
 const currentProject = ref<Project | null>(null);
 const selectedProjectId = ref<string>('');
 const editingTodo = ref<Todo | null>(null);
@@ -651,7 +694,54 @@ const loadProjects = async () => {
   }
 };
 
-// Handle project selection change
+// Toggle project dropdown
+const toggleProjectDropdown = () => {
+  showProjectDropdown.value = !showProjectDropdown.value;
+};
+
+// Select a project from the dropdown
+const selectProject = async (project: Project | null) => {
+  showProjectDropdown.value = false;
+  
+  if (!project) {
+    console.log('No project selected, clearing current project');
+    currentProject.value = null;
+    localStorage.removeItem('currentProjectId');
+    todos.value = [];
+    return;
+  }
+  
+  try {
+    console.log('Loading project:', project.name);
+    const loadedProject = await todoApi.getProject(project.id);
+    console.log('Project loaded:', loadedProject);
+    
+    currentProject.value = loadedProject;
+    localStorage.setItem('currentProjectId', loadedProject.id.toString());
+    
+    // Load todos for the selected project
+    await loadTodos();
+    
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'success',
+        title: 'Project Selected',
+        message: `Switched to project "${loadedProject.name}".`
+      });
+    }
+  } catch (error) {
+    console.error('Failed to load project:', error);
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: 'Project Load Failed',
+        message: 'Failed to load the selected project. Please try again.'
+      });
+    }
+  }
+};
+
+// Handle project selection change (keeping for backward compatibility)
 const onProjectChange = async () => {
   console.log('Project selection changed to:', selectedProjectId.value);
   
@@ -758,7 +848,16 @@ onMounted(async () => {
     }
   };
   
+  // Handle clicks outside the project dropdown
+  const handleClickOutside = (event: Event) => {
+    const target = event.target as Element;
+    if (!target.closest('.project-dropdown-container')) {
+      showProjectDropdown.value = false;
+    }
+  };
+  
   window.addEventListener('storage', handleStorageChange);
+  window.addEventListener('click', handleClickOutside);
   
   // Also listen for custom events from the sidebar
   window.addEventListener('projectSelected', async (e: any) => {
