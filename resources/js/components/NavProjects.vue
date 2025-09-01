@@ -23,6 +23,17 @@ onMounted(async () => {
   window.addEventListener('todoChanged', async () => {
     await loadProjects();
   });
+  
+  // Listen for project selection events from the dropdown
+  window.addEventListener('projectSelected', async (e: any) => {
+    if (e.detail?.projectId) {
+      const project = projects.value.find(p => p.id === e.detail.projectId);
+      if (project) {
+        currentProject.value = project;
+        console.log('Sidebar updated to show selected project:', project.name);
+      }
+    }
+  });
 });
 
 const loadProjects = async () => {
