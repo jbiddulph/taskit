@@ -59,7 +59,7 @@
             >
               <option value="">Select a Project</option>
               <option 
-                v-for="project in projects" 
+                v-for="project in safeProjects" 
                 :key="project.id" 
                 :value="project.id"
               >
@@ -376,6 +376,11 @@ const uniqueAssignees = computed(() => {
   return [...new Set(assignees)];
 });
 
+// Safe projects array to prevent undefined errors
+const safeProjects = computed(() => {
+  return projects.value || [];
+});
+
 // Methods
 const editTodo = (todo: Todo) => {
   editingTodo.value = { ...todo };
@@ -666,10 +671,41 @@ const createProject = async () => {
 const loadProjects = async () => {
   try {
     console.log('Loading projects...');
-    const response = await todoApi.getProjectsWithStats();
-    console.log('Projects response:', response);
-    projects.value = response.data;
-    console.log('Projects loaded:', projects.value.length, 'projects');
+    
+    // Try to load projects with stats first
+    try {
+      const response = await todoApi.getProjectsWithStats();
+      console.log('Projects with stats response:', response);
+      
+      // Check if response has the expected structure
+      if (response && Array.isArray(response)) {
+        projects.value = response;
+        console.log('Projects loaded with stats:', projects.value.length, 'projects');
+      } else if (response && response.data && Array.isArray(response.data)) {
+        projects.value = response.data;
+        console.log('Projects loaded with stats:', projects.value.length, 'projects');
+      } else {
+        console.error('Unexpected response structure from getProjectsWithStats:', response);
+        throw new Error('Invalid response structure');
+      }
+    } catch (statsError) {
+      console.log('Failed to load projects with stats, trying regular getProjects:', statsError);
+      
+      // Fallback to regular getProjects
+      const response = await todoApi.getProjects();
+      console.log('Regular projects response:', response);
+      
+      if (response && Array.isArray(response)) {
+        projects.value = response;
+        console.log('Projects loaded with regular method:', projects.value.length, 'projects');
+      } else if (response && response.data && Array.isArray(response.data)) {
+        projects.value = response.data;
+        console.log('Projects loaded with regular method:', projects.value.length, 'projects');
+      } else {
+        console.error('Unexpected response structure from getProjects:', response);
+        projects.value = [];
+      }
+    }
     
     // Set selected project ID if current project exists
     if (currentProject.value) {
@@ -677,7 +713,8 @@ const loadProjects = async () => {
       console.log('Set selected project ID to:', selectedProjectId.value);
     }
   } catch (error) {
-    console.error('Failed to load projects:', error);
+    console.error('Failed to load projects completely:', error);
+    projects.value = [];
   }
 };
 
