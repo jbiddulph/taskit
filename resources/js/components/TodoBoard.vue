@@ -40,6 +40,11 @@
         </div>
         
         <div class="flex items-center gap-3">
+          <!-- Debug Info (temporary) -->
+          <div class="text-xs text-gray-500">
+            Projects: {{ projects.length }} | Dropdown: {{ showProjectDropdown ? 'Open' : 'Closed' }}
+          </div>
+          
           <!-- Clickable Project Display with Dropdown -->
           <div class="relative project-dropdown-container">
             <button
@@ -66,17 +71,22 @@
               </div>
               
               <!-- Dropdown Arrow -->
-              <Icon name="ChevronDown" class="w-4 h-4 text-gray-400" />
+              <Icon 
+                name="ChevronDown" 
+                class="w-4 h-4 text-gray-400 transition-transform duration-200"
+                :class="{ 'rotate-180': showProjectDropdown }"
+              />
             </button>
             
             <!-- Project Dropdown Menu -->
             <div 
               v-if="showProjectDropdown"
-              class="absolute top-full left-0 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
+              class="absolute top-full left-0 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-[9999] max-h-60 overflow-y-auto"
+              style="min-width: 250px;"
             >
               <div class="p-2">
                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400 px-2 py-1 mb-2">
-                  Select Project
+                  Select Project ({{ projects.length }} available)
                 </div>
                 <button
                   @click="selectProject(null)"
@@ -85,6 +95,9 @@
                   No Project Selected
                 </button>
                 <div class="border-t border-gray-200 dark:border-gray-600 my-2"></div>
+                <div v-if="projects.length === 0" class="px-3 py-2 text-sm text-gray-500">
+                  No projects available
+                </div>
                 <button
                   v-for="project in projects"
                   :key="project.id"
@@ -723,7 +736,10 @@ const loadProjects = async () => {
 
 // Toggle project dropdown
 const toggleProjectDropdown = () => {
+  console.log('Toggling project dropdown. Current state:', showProjectDropdown.value);
   showProjectDropdown.value = !showProjectDropdown.value;
+  console.log('New dropdown state:', showProjectDropdown.value);
+  console.log('Projects available:', projects.value.length);
 };
 
 // Select a project from the dropdown
