@@ -178,6 +178,7 @@
         status="todo"
         :todos="filteredTodos.todo"
         :show-add-button="true"
+        :current-project-id="currentProject?.id || null"
         @add="handleShowForm"
         @edit="editTodo"
         @delete="deleteTodo"
@@ -189,6 +190,7 @@
         title="In Progress"
         status="in-progress"
         :todos="filteredTodos.inProgress"
+        :current-project-id="currentProject?.id || null"
         @edit="editTodo"
         @delete="deleteTodo"
         @drop="handleDrop"
@@ -199,6 +201,7 @@
         title="Done"
         status="done"
         :todos="filteredTodos.done"
+        :current-project-id="currentProject?.id || null"
         @edit="editTodo"
         @delete="deleteTodo"
         @drop="handleDrop"
@@ -519,6 +522,30 @@ const deleteTodo = async (id: string) => {
 
 const handleDrop = async (todo: Todo, newStatus: string) => {
   console.log('TodoBoard received drop event:', todo.title, '->', newStatus);
+  
+  // Validate that the todo belongs to the current project
+  if (!currentProject.value) {
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: 'Project Required',
+        message: 'Please select a project before moving todos.'
+      });
+    }
+    return;
+  }
+  
+  if (todo.project_id !== currentProject.value.id) {
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: 'Invalid Move',
+        message: `Cannot move todo "${todo.title}" - it belongs to a different project.`
+      });
+    }
+    return;
+  }
+  
   try {
     const updatedTodo = await todoApi.updateTodoStatus(todo.id, newStatus as 'todo' | 'in-progress' | 'done');
     console.log('API response:', updatedTodo);

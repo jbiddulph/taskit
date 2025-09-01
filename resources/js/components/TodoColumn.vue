@@ -68,10 +68,14 @@
         <div
           v-for="todo in todos"
           :key="todo.id"
-          draggable="true"
+          :draggable="canDragTodo(todo)"
           @dragstart="handleDragStart($event, todo)"
           @dragend="handleDragEnd"
-          class="transform transition-transform duration-200 hover:scale-[1.02]"
+          class="transform transition-transform duration-200"
+          :class="{
+            'hover:scale-[1.02]': canDragTodo(todo),
+            'opacity-60 cursor-not-allowed': !canDragTodo(todo)
+          }"
         >
           <TodoCard
             :todo="todo"
@@ -96,6 +100,7 @@ interface Props {
   status: 'todo' | 'in-progress' | 'done';
   todos: Todo[];
   showAddButton?: boolean;
+  currentProjectId?: number | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -114,8 +119,21 @@ const dropZone = ref<HTMLElement>();
 const isDragOver = ref(false);
 const draggedTodo = ref<Todo | null>(null);
 
+// Check if a todo can be dragged (belongs to current project)
+const canDragTodo = (todo: Todo): boolean => {
+  return !props.currentProjectId || todo.project_id === props.currentProjectId;
+};
+
 const handleDragStart = (event: DragEvent, todo: Todo) => {
   console.log('Drag start:', todo.title, 'Status:', todo.status, 'Column:', props.status);
+  
+  // Validate that the todo belongs to the current project
+  if (props.currentProjectId && todo.project_id !== props.currentProjectId) {
+    console.log('Cannot drag todo from different project:', todo.project_id, 'vs', props.currentProjectId);
+    event.preventDefault();
+    return;
+  }
+  
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', todo.id);
