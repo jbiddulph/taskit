@@ -42,26 +42,14 @@
             ></textarea>
           </div>
 
-          <!-- Project -->
-          <div>
+          <!-- Project (Read-only) -->
+          <div v-if="currentProject">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Project *
+              Project
             </label>
-            <select
-              v-model="form.project_id"
-              required
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="">Select Project</option>
-              <option 
-                v-for="project in projects" 
-                :key="project.id" 
-                :value="project.id"
-                :selected="!isEditing && currentProject && project.id === currentProject.id"
-              >
-                {{ project.key }} - {{ project.name }}
-              </option>
-            </select>
+            <div class="px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-gray-100">
+              {{ currentProject.key }} - {{ currentProject.name }}
+            </div>
           </div>
 
           <!-- Priority and Type -->
@@ -230,11 +218,8 @@ const emit = defineEmits<{
   save: [todo: Todo];
 }>();
 
-const projects = ref<Project[]>([])
-
 const form = ref({
   id: '',
-  project_id: '',
   title: '',
   description: '',
   priority: 'Medium' as const,
@@ -248,18 +233,11 @@ const form = ref({
 
 const tagsInput = ref('');
 
-const loadProjects = async () => {
-  try {
-    projects.value = await todoApi.getProjects()
-  } catch (error) {
-    console.error('Failed to load projects:', error)
-  }
-}
+
 
 const resetForm = () => {
   form.value = {
     id: '',
-    project_id: '',
     title: '',
     description: '',
     priority: 'Medium',
@@ -274,20 +252,12 @@ const resetForm = () => {
 };
 
 // Initialize form when editing
-// Load projects on mount
-onMounted(() => {
-  loadProjects()
-})
 
 watch(() => props.todo, (newTodo) => {
   if (newTodo) {
     form.value = { ...newTodo };
   } else {
     resetForm();
-    // Pre-select current project when creating new todo
-    if (props.currentProject) {
-      form.value.project_id = props.currentProject.id.toString();
-    }
   }
 }, { immediate: true });
 
@@ -308,9 +278,14 @@ const removeTag = (tagToRemove: string) => {
 
 const handleSubmit = async () => {
   try {
+    if (!props.currentProject) {
+      console.error('No current project selected');
+      return;
+    }
+    
     const todoData: any = {
       ...form.value,
-      project_id: parseInt(form.value.project_id),
+      project_id: props.currentProject.id,
       due_date: form.value.due_date || null,
       story_points: form.value.story_points || null,
     };
