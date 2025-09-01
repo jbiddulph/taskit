@@ -345,6 +345,7 @@ const newProject = ref({
   key: '',
   color: '#3B82F6'
 });
+const isUpdatingProject = ref(false); // Flag to prevent circular events
 
 // Computed properties
 const filteredTodos = computed(() => {
@@ -731,7 +732,15 @@ const onProjectChange = async () => {
     return;
   }
   
+  // Prevent circular events
+  if (isUpdatingProject.value) {
+    console.log('Skipping project change - already updating');
+    return;
+  }
+  
   try {
+    isUpdatingProject.value = true;
+    
     const projectId = parseInt(selectedProjectId.value);
     console.log('Loading project with ID:', projectId);
     const project = await todoApi.getProject(projectId);
@@ -764,6 +773,8 @@ const onProjectChange = async () => {
         message: 'Failed to load the selected project. Please try again.'
       });
     }
+  } finally {
+    isUpdatingProject.value = false;
   }
 };
 
@@ -776,10 +787,8 @@ const loadCurrentProject = async () => {
       currentProject.value = project;
       selectedProjectId.value = projectId;
       
-      // Dispatch event to update sidebar selection
-      window.dispatchEvent(new CustomEvent('projectSelected', {
-        detail: { projectId: parseInt(projectId) }
-      }));
+      // Don't dispatch event here to prevent circular loop
+      // The sidebar will be updated when the component mounts
     }
   } catch (error) {
     console.error('Failed to load current project:', error);
@@ -840,9 +849,14 @@ onMounted(async () => {
   
   // Also listen for custom events from the sidebar
   window.addEventListener('projectSelected', async (e: any) => {
-    if (e.detail?.projectId) {
-      localStorage.setItem('currentProjectId', e.detail.projectId.toString());
-      await loadCurrentProject();
+    if (e.detail?.projectId && !isUpdatingProject.value) {
+      isUpdatingProject.value = true;
+      try {
+        localStorage.setItem('currentProjectId', e.detail.projectId.toString());
+        await loadCurrentProject();
+      } finally {
+        isUpdatingProject.value = false;
+      }
     }
   });
   

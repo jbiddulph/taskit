@@ -9,6 +9,7 @@ const page = usePage();
 const projects = ref<Project[]>([]);
 const currentProject = ref<Project | null>(null);
 const loading = ref(false);
+const isUpdatingProject = ref(false); // Flag to prevent circular events
 
 // Load projects on mount
 onMounted(async () => {
@@ -26,11 +27,16 @@ onMounted(async () => {
   
   // Listen for project selection events from the dropdown
   window.addEventListener('projectSelected', async (e: any) => {
-    if (e.detail?.projectId) {
-      const project = projects.value.find(p => p.id === e.detail.projectId);
-      if (project) {
-        currentProject.value = project;
-        console.log('Sidebar updated to show selected project:', project.name);
+    if (e.detail?.projectId && !isUpdatingProject.value) {
+      isUpdatingProject.value = true;
+      try {
+        const project = projects.value.find(p => p.id === e.detail.projectId);
+        if (project) {
+          currentProject.value = project;
+          console.log('Sidebar updated to show selected project:', project.name);
+        }
+      } finally {
+        isUpdatingProject.value = false;
       }
     }
   });
