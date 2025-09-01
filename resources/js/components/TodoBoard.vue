@@ -44,8 +44,9 @@
           <div class="relative project-dropdown-container">
             <button
               @click="toggleProjectDropdown"
-              class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer min-w-[200px]"
+              class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-200 cursor-pointer min-w-[200px] group"
               :style="currentProject ? { borderLeftColor: currentProject.color, borderLeftWidth: '4px' } : {}"
+              title="Click to change project"
             >
               <!-- Project Color Indicator -->
               <div 
@@ -57,10 +58,10 @@
               
               <!-- Project Info -->
               <div class="text-left flex-1">
-                <div class="font-medium text-gray-900 dark:text-gray-100">
+                <div class="font-medium text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                   {{ currentProject?.name || 'Select a Project' }}
                 </div>
-                <div v-if="currentProject" class="text-xs text-gray-500">
+                <div v-if="currentProject" class="text-xs text-gray-500 group-hover:text-blue-500 transition-colors">
                   {{ currentProject.key }}
                 </div>
               </div>
@@ -68,7 +69,7 @@
               <!-- Dropdown Arrow -->
               <Icon 
                 name="ChevronDown" 
-                class="w-4 h-4 text-gray-400 transition-transform duration-200"
+                class="w-4 h-4 text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-all duration-200"
                 :class="{ 'rotate-180': showProjectDropdown }"
               />
             </button>
