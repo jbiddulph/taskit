@@ -40,11 +40,6 @@
         </div>
         
         <div class="flex items-center gap-3">
-          <!-- Debug Info (temporary) -->
-          <div class="text-xs text-gray-500">
-            Projects: {{ projects.length }} | Dropdown: {{ showProjectDropdown ? 'Open' : 'Closed' }}
-          </div>
-          
           <!-- Clickable Project Display with Dropdown -->
           <div class="relative project-dropdown-container">
             <button
@@ -736,10 +731,7 @@ const loadProjects = async () => {
 
 // Toggle project dropdown
 const toggleProjectDropdown = () => {
-  console.log('Toggling project dropdown. Current state:', showProjectDropdown.value);
   showProjectDropdown.value = !showProjectDropdown.value;
-  console.log('New dropdown state:', showProjectDropdown.value);
-  console.log('Projects available:', projects.value.length);
 };
 
 // Select a project from the dropdown
