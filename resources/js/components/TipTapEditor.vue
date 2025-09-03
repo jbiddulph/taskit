@@ -1,11 +1,11 @@
 <template>
   <div class="border border-gray-300 dark:border-gray-600 rounded-md">
     <div class="flex gap-2 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-      <button class="px-2 py-1 text-sm" @click="toggle('bold')"><strong>B</strong></button>
-      <button class="px-2 py-1 text-sm italic" @click="toggle('italic')">I</button>
-      <button class="px-2 py-1 text-sm underline" @click="toggle('underline')">U</button>
-      <button class="px-2 py-1 text-sm" @click="insertBullet">• List</button>
-      <button class="px-2 py-1 text-sm" @click="onImage">Image</button>
+      <button type="button" class="px-2 py-1 text-sm" @click.prevent="toggle('bold')"><strong>B</strong></button>
+      <button type="button" class="px-2 py-1 text-sm italic" @click.prevent="toggle('italic')">I</button>
+      <button type="button" class="px-2 py-1 text-sm underline" @click.prevent="toggle('underline')">U</button>
+      <button type="button" class="px-2 py-1 text-sm" @click.prevent="insertBullet">• List</button>
+      <button type="button" class="px-2 py-1 text-sm" @click.prevent="onImage">Image</button>
       <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="uploadAndInsert" />
     </div>
     <EditorContent :editor="editor" class="p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 min-h-[180px]" />
