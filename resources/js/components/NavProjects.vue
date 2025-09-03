@@ -211,7 +211,18 @@ const createProject = () => {
           @click="selectProject(project)" 
           :is-active="currentProject?.id === project.id"
           :tooltip="project.name"
-          class="group"
+          class="group relative"
+          :class="{
+            'selected-project': currentProject?.id === project.id
+          }"
+          :style="currentProject?.id === project.id ? {
+            borderTop: `2px solid ${project.color}`,
+            borderLeft: `2px solid ${project.color}`,
+            borderBottom: `2px solid ${project.color}`,
+            borderRight: 'none',
+            marginRight: '-2px',
+            borderRadius: '0'
+          } : {}"
         >
           <div class="flex items-center gap-2 w-full">
             <div 
@@ -251,6 +262,23 @@ const createProject = () => {
 </template>
 
 <style scoped>
+.selected-project {
+  position: relative;
+  z-index: 10;
+}
+
+/* Ensure the selected project button extends to the edge */
+.selected-project::after {
+  content: '';
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: inherit;
+  border-color: inherit;
+}
+
 /* Custom styles for project items */
 .group:hover .opacity-0 {
   opacity: 1;
