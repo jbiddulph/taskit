@@ -34,7 +34,13 @@
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Description
             </label>
-            <Editor api-key="no-api-key" v-model="form.description" :init="tinyInit" />
+            <QuillEditor
+              v-model:content="form.description"
+              content-type="html"
+              theme="snow"
+              :modules="quillModules"
+              class="bg-white dark:bg-gray-700 rounded-md border border-gray-300 dark:border-gray-600"
+            />
           </div>
 
           <!-- Project (Read-only) -->
@@ -167,7 +173,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
-import Editor from '@tinymce/tinymce-vue';
+import { QuillEditor } from '@vueup/vue-quill';
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import { usePage } from '@inertiajs/vue3';
 import Icon from '@/components/Icon.vue';
 import TodoComments from '@/components/TodoComments.vue';
@@ -305,16 +312,34 @@ const handleSubmit = async () => {
   }
 };
 
-const tinyInit = {
-  menubar: false,
-  height: 280,
-  plugins: 'lists link image code table autoresize',
-  toolbar: 'bold italic underline | bullist numlist | link image | table | removeformat | code',
-  images_upload_handler: async (blobInfo: any, progress: (p: number)=>void) => {
-    const file = blobInfo.blob();
-    const url = await uploadImageToTaskitBucket(file);
-    return url;
-  },
+const quillModules = {
+  toolbar: {
+    container: [
+      ['bold', 'italic', 'underline'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['link', 'image'],
+      ['clean']
+    ],
+    handlers: {
+      image: async function (this: any) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = async () => {
+          const file = (input.files && input.files[0]) as File;
+          if (!file) return;
+          try {
+            const url = await uploadImageToTaskitBucket(file);
+            const range = this.quill.getSelection(true);
+            this.quill.insertEmbed(range.index, 'image', url, 'user');
+          } catch (e) {
+            console.error('Image upload failed', e);
+          }
+        };
+        input.click();
+      }
+    }
+  }
 };
 
 </script>
