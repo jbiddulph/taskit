@@ -175,6 +175,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { QuillEditor } from '@vueup/vue-quill';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
+import Quill from 'quill';
 import { usePage } from '@inertiajs/vue3';
 import Icon from '@/components/Icon.vue';
 import TodoComments from '@/components/TodoComments.vue';
@@ -201,24 +202,18 @@ const page = usePage();
 const currentUser = (page.props as any)?.auth?.user || null;
 const currentUserName = currentUser?.name || '';
 
+// Ensure Quill is available globally for the editor integration
+(window as any).Quill = (window as any).Quill || Quill;
+
 type SimpleUser = { id: number; name: string; email: string };
 const users = ref<SimpleUser[]>([]);
 
 const loadUsers = async () => {
-  try {
-    // Try backend users endpoint; fallback to current user only
-    // @ts-ignore
-    const resp = await fetch('/api/users');
-    if (resp.ok) {
-      const json = await resp.json();
-      users.value = (json.data || json) as SimpleUser[];
-    } else if (currentUser) {
-      users.value = [{ id: currentUser.id, name: currentUser.name, email: currentUser.email }];
-    }
-  } catch (e) {
-    if (currentUser) {
-      users.value = [{ id: currentUser.id, name: currentUser.name, email: currentUser.email }];
-    }
+  // Use current user until a users API exists
+  if (currentUser) {
+    users.value = [{ id: currentUser.id, name: currentUser.name, email: currentUser.email }];
+  } else {
+    users.value = [];
   }
 };
 
