@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import UserInfo from '@/components/UserInfo.vue';
-import NotificationBadge from '@/components/NotificationBadge.vue';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
 import { usePage } from '@inertiajs/vue3';
@@ -14,14 +13,6 @@ const { isMobile, state } = useSidebar();
 
 <template>
     <SidebarMenu>
-        <!-- Notification Badge (separate from user dropdown) -->
-        <SidebarMenuItem>
-            <div class="flex justify-center">
-                <NotificationBadge />
-            </div>
-        </SidebarMenuItem>
-        
-        <!-- User Dropdown -->
         <SidebarMenuItem>
             <DropdownMenu>
                 <DropdownMenuTrigger as-child>
