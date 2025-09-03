@@ -89,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import Icon from '@/components/Icon.vue';
 import TodoCard from './TodoCard.vue';
 
@@ -146,6 +146,9 @@ const handleDragStart = (event: DragEvent, todo: Todo) => {
 
 const handleDragEnd = () => {
   console.log('Drag end in column:', props.status, 'draggedTodo:', draggedTodo.value?.title);
+  // Always reset drag state when drag ends
+  isDragOver.value = false;
+  
   // Only clear draggedTodo if this is the source column
   if (draggedTodo.value && draggedTodo.value.status === props.status) {
     console.log('Clearing draggedTodo in source column:', props.status);
@@ -165,11 +168,14 @@ const handleDragOver = (event: DragEvent) => {
 
 const handleDragLeave = (event: DragEvent) => {
   console.log('Drag leave column:', props.status);
-  // Only set isDragOver to false if we're actually leaving the drop zone
-  // This prevents false triggers when moving between child elements
-  if (event.currentTarget === dropZone.value) {
-    isDragOver.value = false;
-  }
+  // Use a timeout to prevent flickering when moving between child elements
+  setTimeout(() => {
+    // Check if we're still over the drop zone or any of its children
+    const relatedTarget = event.relatedTarget as HTMLElement;
+    if (!dropZone.value?.contains(relatedTarget)) {
+      isDragOver.value = false;
+    }
+  }, 50);
 };
 
 const handleDrop = (event: DragEvent) => {
@@ -201,6 +207,20 @@ const handleDrop = (event: DragEvent) => {
     console.log('No todo data in dataTransfer');
   }
 };
+
+// Global drag end handler to reset all drag states
+const handleGlobalDragEnd = () => {
+  isDragOver.value = false;
+  draggedTodo.value = null;
+};
+
+onMounted(() => {
+  document.addEventListener('dragend', handleGlobalDragEnd);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('dragend', handleGlobalDragEnd);
+});
 </script>
 
 <style scoped>
