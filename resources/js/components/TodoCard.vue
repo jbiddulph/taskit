@@ -39,16 +39,24 @@
       {{ todo.title }}
     </h3>
 
-    <!-- Description -->
-    <p
-      v-if="todo.description"
-      :class="[
-        'text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2',
-        { 'line-through opacity-60': todo.status === 'done' }
-      ]"
-    >
-      {{ todo.description }}
-    </p>
+    <!-- Description & first image preview -->
+    <div v-if="firstImageSrc || plainTextDescription" class="mb-3 flex items-start gap-3">
+      <img
+        v-if="firstImageSrc"
+        :src="firstImageSrc"
+        alt="attachment"
+        class="w-14 h-14 object-cover rounded border border-gray-200 dark:border-gray-700 flex-shrink-0"
+      />
+      <p
+        v-if="plainTextDescription"
+        :class="[
+          'text-sm text-gray-600 dark:text-gray-400 line-clamp-2',
+          { 'line-through opacity-60': todo.status === 'done' }
+        ]"
+      >
+        {{ plainTextDescription }}
+      </p>
+    </div>
 
     <!-- Tags -->
     <div v-if="todo.tags && todo.tags.length" class="flex flex-wrap gap-1 mb-3">
@@ -142,6 +150,23 @@ const formatDate = (dateString: string) => {
     return date.toLocaleDateString();
   }
 };
+
+// Safely extract first image src and plain text from HTML description
+const getFirstImageSrc = (html?: string): string | null => {
+  if (!html) return null;
+  const match = html.match(/<img[^>]*src=["']([^"']+)["'][^>]*>/i);
+  return match ? match[1] : null;
+};
+
+const stripHtml = (html?: string): string => {
+  if (!html) return '';
+  const withoutImgs = html.replace(/<img[^>]*>/gi, '');
+  const text = withoutImgs.replace(/<[^>]+>/g, ' ');
+  return text.replace(/\s+/g, ' ').trim();
+};
+
+const firstImageSrc = computed(() => getFirstImageSrc((props as any).todo?.description));
+const plainTextDescription = computed(() => stripHtml((props as any).todo?.description));
 </script>
 
 <style scoped>
