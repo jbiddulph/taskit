@@ -87,18 +87,19 @@
             </div>
           </div>
 
-          <!-- Assignee and Due Date -->
-          <div class="grid grid-cols-2 gap-4">
+          <!-- Assignee, Due Date, Tags (single row) -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Assignee
               </label>
-              <input
+              <select
                 v-model="form.assignee"
-                type="text"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                placeholder="Enter assignee name"
-              />
+              >
+                <option v-if="currentUserName" :value="currentUserName">{{ currentUserName }} (You)</option>
+                <option v-for="u in users" :key="u.id" :value="u.name">{{ u.name }}</option>
+              </select>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -108,23 +109,6 @@
                 v-model="form.due_date"
                 type="date"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
-          </div>
-
-          <!-- Story Points and Tags -->
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Story Points
-              </label>
-              <input
-                v-model.number="form.story_points"
-                type="number"
-                min="1"
-                max="21"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                placeholder="1-21"
               />
             </div>
             <div>
@@ -159,21 +143,7 @@
             </span>
           </div>
 
-          <!-- Status -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Status *
-            </label>
-            <select
-              v-model="form.status"
-              required
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="todo">To Do</option>
-              <option value="in-progress">In Progress</option>
-              <option value="done">Done</option>
-            </select>
-          </div>
+          <!-- Status removed: controlled by board drag/drop -->
 
           <!-- Action buttons -->
           <div class="flex justify-end gap-3 pt-4">
@@ -202,6 +172,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import Icon from '@/components/Icon.vue';
 import TodoComments from '@/components/TodoComments.vue';
 import { todoApi, type Project } from '@/services/todoApi';
@@ -221,6 +192,31 @@ const emit = defineEmits<{
   close: [];
   save: [todo: Todo];
 }>();
+
+const page = usePage();
+const currentUser = (page.props as any)?.auth?.user || null;
+const currentUserName = currentUser?.name || '';
+
+type SimpleUser = { id: number; name: string; email: string };
+const users = ref<SimpleUser[]>([]);
+
+const loadUsers = async () => {
+  try {
+    // Try backend users endpoint; fallback to current user only
+    // @ts-ignore
+    const resp = await fetch('/api/users');
+    if (resp.ok) {
+      const json = await resp.json();
+      users.value = (json.data || json) as SimpleUser[];
+    } else if (currentUser) {
+      users.value = [{ id: currentUser.id, name: currentUser.name, email: currentUser.email }];
+    }
+  } catch (e) {
+    if (currentUser) {
+      users.value = [{ id: currentUser.id, name: currentUser.name, email: currentUser.email }];
+    }
+  }
+};
 
 const form = ref({
   id: '',
@@ -256,12 +252,19 @@ const resetForm = () => {
 };
 
 // Initialize form when editing
+onMounted(() => {
+  loadUsers();
+});
 
 watch(() => props.todo, (newTodo) => {
   if (newTodo) {
     form.value = { ...newTodo };
   } else {
     resetForm();
+    // Auto-assign current user on create
+    if (currentUserName) {
+      form.value.assignee = currentUserName;
+    }
   }
 }, { immediate: true });
 
