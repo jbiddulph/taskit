@@ -16,8 +16,9 @@
         </span>
         <span
           v-if="todo.type"
-          class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+          class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
         >
+          <Icon :name="getTypeIcon(todo.type)" class="w-3 h-3" />
           {{ todo.type }}
         </span>
       </div>
@@ -164,6 +165,18 @@ const stripHtml = (html?: string): string => {
   const withoutImgs = html.replace(/<img[^>]*>/gi, '');
   const text = withoutImgs.replace(/<[^>]+>/g, ' ');
   return text.replace(/\s+/g, ' ').trim();
+};
+
+// Get appropriate icon for todo type
+const getTypeIcon = (type: string): string => {
+  const iconMap: Record<string, string> = {
+    'Bug': 'Bug',
+    'Feature': 'Zap',
+    'Task': 'CheckSquare',
+    'Story': 'BookOpen',
+    'Epic': 'Layers'
+  };
+  return iconMap[type] || 'Circle';
 };
 
 const firstImageSrc = computed(() => getFirstImageSrc((props as any).todo?.description));

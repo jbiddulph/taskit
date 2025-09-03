@@ -68,17 +68,7 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Type
               </label>
-              <select
-                v-model="form.type"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="">Select type</option>
-                <option value="Bug">Bug</option>
-                <option value="Feature">Feature</option>
-                <option value="Task">Task</option>
-                <option value="Story">Story</option>
-                <option value="Epic">Epic</option>
-              </select>
+              <TypeSelector v-model="form.type" />
             </div>
           </div>
 
@@ -168,6 +158,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import TipTapEditor from '@/components/TipTapEditor.vue';
+import TypeSelector from '@/components/TypeSelector.vue';
 import { usePage } from '@inertiajs/vue3';
 import Icon from '@/components/Icon.vue';
 import TodoComments from '@/components/TodoComments.vue';

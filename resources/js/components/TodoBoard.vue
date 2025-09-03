@@ -102,17 +102,7 @@
             <option value="Critical">Critical</option>
           </select>
           
-          <select
-            v-model="typeFilter"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-          >
-            <option value="">All Types</option>
-            <option value="Bug">Bug</option>
-            <option value="Feature">Feature</option>
-            <option value="Task">Task</option>
-            <option value="Story">Story</option>
-            <option value="Epic">Epic</option>
-          </select>
+          <TypeFilter v-model="typeFilter" />
           
           <select
             v-model="assigneeFilter"
@@ -322,6 +312,7 @@ import Icon from '@/components/Icon.vue';
 import TodoColumn from './TodoColumn.vue';
 import TodoForm from './TodoForm.vue';
 import TodoStats from './TodoStats.vue';
+import TypeFilter from './TypeFilter.vue';
 import { todoApi, type Project, type Todo } from '@/services/todoApi';
 import { deleteImagesInHtml } from '@/services/supabaseClient';
 
