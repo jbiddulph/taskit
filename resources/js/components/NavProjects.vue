@@ -216,15 +216,12 @@ const createProject = () => {
             'selected-project': currentProject?.id === project.id
           }"
           :style="currentProject?.id === project.id ? {
-            borderTop: `2px solid ${project.color}`,
-            borderLeft: `2px solid ${project.color}`,
-            borderBottom: `2px solid ${project.color}`,
+            borderTop: '1px solid rgb(255, 140, 130)',
+            borderLeft: '1px solid rgb(255, 140, 130)',
+            borderBottom: '1px solid rgb(255, 140, 130)',
             borderRight: 'none',
             marginRight: '-2px',
-            borderTopLeftRadius: '6px',
-            borderBottomLeftRadius: '6px',
-            borderTopRightRadius: '0',
-            borderBottomRightRadius: '0'
+            borderRadius: '15px 0px 0px 15px'
           } : {}"
         >
           <div class="flex items-center gap-2 w-full">
