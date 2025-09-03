@@ -514,10 +514,17 @@ const handleDrop = async (todo: Todo, newStatus: string) => {
   try {
     const updatedTodo = await todoApi.updateTodoStatus(todo.id, newStatus as 'todo' | 'in-progress' | 'done');
     console.log('API response:', updatedTodo);
-    const index = todos.value.findIndex(t => t.id === todo.id);
+    
+    // Find the todo by ID, ensuring type consistency
+    const index = todos.value.findIndex(t => String(t.id) === String(todo.id));
+    console.log('Looking for todo with ID:', todo.id, 'Found at index:', index);
+    
     if (index !== -1) {
       todos.value[index] = updatedTodo;
-      console.log('Todo updated in local state');
+      console.log('Todo updated in local state:', updatedTodo);
+      
+      // Force reactivity update
+      todos.value = [...todos.value];
       
       // Dispatch event to refresh sidebar project stats
       window.dispatchEvent(new CustomEvent('todoChanged'));
@@ -529,6 +536,10 @@ const handleDrop = async (todo: Todo, newStatus: string) => {
           message: `Todo "${updatedTodo.title}" moved to ${newStatus.replace('-', ' ')}.`
         });
       }
+    } else {
+      console.error('Todo not found in local state for ID:', todo.id);
+      // Reload todos from API as fallback
+      await loadTodos();
     }
   } catch (error) {
     console.error('Failed to update todo status:', error);
