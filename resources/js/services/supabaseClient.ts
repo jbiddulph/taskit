@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+// Prefer build-time Vite env; fallback to runtime window vars injected by Blade
+const runtimeUrl = (globalThis as any)?.VITE_SUPABASE_URL as string | undefined;
+const runtimeAnon = (globalThis as any)?.VITE_SUPABASE_ANON_KEY as string | undefined;
+
+const supabaseUrl = (import.meta as any)?.env?.VITE_SUPABASE_URL || runtimeUrl;
+const supabaseAnonKey = (import.meta as any)?.env?.VITE_SUPABASE_ANON_KEY || runtimeAnon;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 

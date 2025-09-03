@@ -44,6 +44,10 @@
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
+        <script>
+            window.VITE_SUPABASE_URL = "{{ env('VITE_SUPABASE_URL') }}";
+            window.VITE_SUPABASE_ANON_KEY = "{{ env('VITE_SUPABASE_ANON_KEY') }}";
+        </script>
         @inertia
         <div id="notification-container"></div>
     </body>
