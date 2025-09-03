@@ -8,7 +8,7 @@
       <button type="button" class="px-2 py-1 text-sm" @click.prevent="onImage">Image</button>
       <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="uploadAndInsert" />
     </div>
-    <EditorContent :editor="editor" class="p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 min-h-[180px]" />
+    <EditorContent :editor="editor" class="p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 min-h-[320px] w-full" />
   </div>
   
 </template>
