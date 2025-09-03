@@ -34,12 +34,7 @@
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Description
             </label>
-            <textarea
-              v-model="form.description"
-              rows="3"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              placeholder="Enter description (optional)"
-            ></textarea>
+            <Editor api-key="no-api-key" v-model="form.description" :init="tinyInit" />
           </div>
 
           <!-- Project (Read-only) -->
@@ -172,11 +167,13 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
+import Editor from '@tinymce/tinymce-vue';
 import { usePage } from '@inertiajs/vue3';
 import Icon from '@/components/Icon.vue';
 import TodoComments from '@/components/TodoComments.vue';
 import { todoApi, type Project } from '@/services/todoApi';
 import type { Todo } from '@/services/todoApi';
+import { uploadImageToTaskitBucket } from '@/services/supabaseClient';
 
 interface Props {
   todo?: Todo;
@@ -308,5 +305,16 @@ const handleSubmit = async () => {
   }
 };
 
+const tinyInit = {
+  menubar: false,
+  height: 280,
+  plugins: 'lists link image code table autoresize',
+  toolbar: 'bold italic underline | bullist numlist | link image | table | removeformat | code',
+  images_upload_handler: async (blobInfo: any, progress: (p: number)=>void) => {
+    const file = blobInfo.blob();
+    const url = await uploadImageToTaskitBucket(file);
+    return url;
+  },
+};
 
 </script>
