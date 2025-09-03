@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\TodoCommentController;
 use App\Http\Controllers\Api\TodoAttachmentController;
+use App\Http\Controllers\Api\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,4 +43,12 @@ Route::delete('projects/{project}/with-todos', [ProjectController::class, 'destr
     Route::apiResource('todos.attachments', TodoAttachmentController::class);
     Route::get('todos/{todo}/attachments/{attachment}/download', [TodoAttachmentController::class, 'download']);
     Route::get('todos/{todo}/attachments/{attachment}/preview', [TodoAttachmentController::class, 'preview']);
+    
+    // Notification routes
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::patch('notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
+    Route::patch('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('notifications/{notification}', [NotificationController::class, 'destroy']);
+    Route::post('notifications', [NotificationController::class, 'store']); // For testing
 });

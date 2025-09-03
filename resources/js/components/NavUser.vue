@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import UserInfo from '@/components/UserInfo.vue';
+import NotificationBadge from '@/components/NotificationBadge.vue';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
 import { usePage } from '@inertiajs/vue3';
@@ -18,7 +19,10 @@ const { isMobile, state } = useSidebar();
                 <DropdownMenuTrigger as-child>
                     <SidebarMenuButton size="lg" class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                         <UserInfo :user="user" />
-                        <ChevronsUpDown class="ml-auto size-4" />
+                        <div class="ml-auto flex items-center gap-2">
+                            <NotificationBadge />
+                            <ChevronsUpDown class="size-4" />
+                        </div>
                     </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
