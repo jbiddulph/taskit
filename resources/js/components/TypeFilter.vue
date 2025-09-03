@@ -3,7 +3,7 @@
     <button
       type="button"
       @click="toggleDropdown"
-      class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 text-left flex items-center justify-between min-w-[120px]"
+      class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-left flex items-center justify-between min-w-[120px]"
     >
       <div class="flex items-center gap-2">
         <Icon v-if="selectedType" :name="getTypeIcon(selectedType)" class="w-4 h-4" />
@@ -14,22 +14,22 @@
     
     <div
       v-if="isOpen"
-      class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg"
+      class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg"
     >
       <div class="py-1">
         <button
           type="button"
           @click="selectType('')"
-          class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+          class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
         >
-          <span class="text-gray-500">All Types</span>
+          <span class="text-gray-500 dark:text-gray-400">All Types</span>
         </button>
         <button
           v-for="type in types"
           :key="type.value"
           type="button"
           @click="selectType(type.value)"
-          class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+          class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
         >
           <Icon :name="type.icon" class="w-4 h-4" />
           <span>{{ type.label }}</span>
