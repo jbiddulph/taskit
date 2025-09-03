@@ -18,7 +18,7 @@
     <!-- Notification Dropdown -->
     <div
       v-if="showNotifications"
-      class="absolute bottom-full left-0 mb-2 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
+      class="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
     >
       <!-- Header -->
       <div class="p-4 border-b border-gray-200 dark:border-gray-700">
