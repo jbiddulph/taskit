@@ -27,6 +27,11 @@
         <li v-for="comment in comments" :key="comment.id" class="p-3 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div class="flex items-start justify-between gap-3">
             <div class="flex-1">
+              <div class="mb-1 text-xs text-gray-600 dark:text-gray-400">
+                <span class="font-medium text-gray-800 dark:text-gray-200">{{ comment.user?.name || 'User' }}</span>
+                <span class="mx-1">·</span>
+                <span>{{ formatDate(comment.created_at) }}</span>
+              </div>
               <div v-if="editingId === comment.id" class="flex gap-2">
                 <input
                   v-model="editContent"
@@ -37,7 +42,6 @@
                 <button @click="cancelEdit" class="px-3 py-2 bg-gray-300 text-gray-800 rounded-md">Cancel</button>
               </div>
               <div v-else class="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-line">{{ comment.content }}</div>
-              <div class="mt-1 text-xs text-gray-500">{{ formatDate(comment.created_at) }}</div>
             </div>
             <div class="flex gap-2">
               <button
@@ -59,6 +63,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import { todoApi, type TodoComment } from '@/services/todoApi';
 
 interface Props {
@@ -66,6 +71,9 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const page = usePage();
+const currentUser = (page.props as any)?.auth?.user || null;
 
 const loading = ref(false);
 const adding = ref(false);
@@ -91,6 +99,10 @@ const handleAdd = async () => {
   try {
     adding.value = true;
     const created = await todoApi.addComment(props.todoId, newComment.value.trim());
+    // Ensure user info is present for immediate display
+    if (!created.user && currentUser) {
+      created.user = { id: currentUser.id, name: currentUser.name, email: currentUser.email };
+    }
     comments.value.push(created);
     newComment.value = '';
     (window as any).$notify?.({ type: 'success', title: 'Comment Added', message: 'Your comment was added.' });
