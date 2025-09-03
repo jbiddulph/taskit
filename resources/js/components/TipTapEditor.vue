@@ -1,5 +1,5 @@
 <template>
-  <div class="border border-gray-300 dark:border-gray-600 rounded-md">
+  <div class="border border-gray-300 dark:border-gray-600 rounded-md" @click="focusEditor" style="cursor:text">
     <div class="flex gap-2 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
       <button type="button" class="px-2 py-1 text-sm" @click.prevent="toggle('bold')"><strong>B</strong></button>
       <button type="button" class="px-2 py-1 text-sm italic" @click.prevent="toggle('italic')">I</button>
@@ -8,7 +8,7 @@
       <button type="button" class="px-2 py-1 text-sm" @click.prevent="onImage">Image</button>
       <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="uploadAndInsert" />
     </div>
-    <EditorContent :editor="editor" class="p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 min-h-[320px] w-full" />
+    <EditorContent :editor="editor" class="editor bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 w-full" />
   </div>
   
 </template>
@@ -68,11 +68,26 @@ async function uploadAndInsert(e: Event) {
     if (fileInput.value) fileInput.value.value = '';
   }
 }
+
+function focusEditor() {
+  if (editor && !editor.isFocused) {
+    (editor as any).chain().focus().run();
+  }
+}
 </script>
 
 <style scoped>
-.ProseMirror:focus {
+.editor :deep(.ProseMirror) {
+  min-height: 320px;
+  padding: 12px;
   outline: none;
+  border: 0;
+}
+.editor :deep(.ProseMirror:focus) {
+  outline: none;
+}
+.editor :deep(p) {
+  margin: 0;
 }
 </style>
 
