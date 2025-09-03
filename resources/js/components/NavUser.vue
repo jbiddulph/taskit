@@ -14,15 +14,20 @@ const { isMobile, state } = useSidebar();
 
 <template>
     <SidebarMenu>
+        <!-- Notification Badge (separate from user dropdown) -->
+        <SidebarMenuItem>
+            <div class="flex justify-center">
+                <NotificationBadge />
+            </div>
+        </SidebarMenuItem>
+        
+        <!-- User Dropdown -->
         <SidebarMenuItem>
             <DropdownMenu>
                 <DropdownMenuTrigger as-child>
                     <SidebarMenuButton size="lg" class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                         <UserInfo :user="user" />
-                        <div class="ml-auto flex items-center gap-2">
-                            <NotificationBadge />
-                            <ChevronsUpDown class="size-4" />
-                        </div>
+                        <ChevronsUpDown class="ml-auto size-4" />
                     </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
