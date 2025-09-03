@@ -83,6 +83,7 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
           : 'group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l',
         props.class,
       )"
+      style="padding-right: 0px;"
       v-bind="$attrs"
     >
       <div

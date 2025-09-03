@@ -221,7 +221,10 @@ const createProject = () => {
             borderBottom: `2px solid ${project.color}`,
             borderRight: 'none',
             marginRight: '-2px',
-            borderRadius: '0'
+            borderTopLeftRadius: '6px',
+            borderBottomLeftRadius: '6px',
+            borderTopRightRadius: '0',
+            borderBottomRightRadius: '0'
           } : {}"
         >
           <div class="flex items-center gap-2 w-full">
