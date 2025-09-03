@@ -26,4 +26,32 @@ export async function uploadImageToTaskitBucket(file: File): Promise<string> {
   return data.publicUrl;
 }
 
+function extractTaskitPathFromPublicUrl(url: string): string | null {
+  try {
+    const marker = '/storage/v1/object/public/taskit/';
+    const idx = url.indexOf(marker);
+    if (idx === -1) return null;
+    return url.substring(idx + marker.length);
+  } catch {
+    return null;
+  }
+}
+
+export async function deletePublicImageUrl(url: string): Promise<void> {
+  const path = extractTaskitPathFromPublicUrl(url);
+  if (!path) return;
+  await supabase.storage.from('taskit').remove([path]);
+}
+
+export async function deleteImagesInHtml(html?: string): Promise<void> {
+  if (!html) return;
+  const matches = html.match(/<img[^>]*src=["']([^"']+)["'][^>]*>/gi) || [];
+  const urls = matches.map(tag => {
+    const m = tag.match(/src=["']([^"']+)["']/i);
+    return m ? m[1] : null;
+  }).filter(Boolean) as string[];
+  if (urls.length === 0) return;
+  await Promise.all(urls.map(u => deletePublicImageUrl(u)));
+}
+
 

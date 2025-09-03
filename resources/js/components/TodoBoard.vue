@@ -323,6 +323,7 @@ import TodoColumn from './TodoColumn.vue';
 import TodoForm from './TodoForm.vue';
 import TodoStats from './TodoStats.vue';
 import { todoApi, type Project, type Todo } from '@/services/todoApi';
+import { deleteImagesInHtml } from '@/services/supabaseClient';
 
 const todos = ref<Todo[]>([]);
 const projects = ref<Project[]>([]);
@@ -460,7 +461,12 @@ const deleteTodo = async (id: string) => {
   }
   
   try {
+    const toDelete = todos.value.find(t => t.id === id);
     await todoApi.deleteTodo(id);
+    // Attempt to cleanup images from Supabase storage
+    if (toDelete?.description) {
+      deleteImagesInHtml(toDelete.description).catch(() => {});
+    }
     todos.value = todos.value.filter(t => t.id !== id);
     
     // Dispatch event to refresh sidebar project stats
