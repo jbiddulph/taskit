@@ -2,7 +2,7 @@
   <div class="h-full flex flex-col">
     <!-- Header with Search and Filters -->
     <div 
-      class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 relative overflow-hidden"
+      class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 relative"
       :style="currentProject ? {
         borderTop: `4px solid ${currentProject.color}`,
         backgroundColor: `${currentProject.color}10`
