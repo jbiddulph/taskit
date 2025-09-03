@@ -26,7 +26,7 @@ export interface UnreadCountResponse {
 }
 
 class NotificationApiService {
-  private baseUrl = '/api/notifications';
+  private baseUrl = '/notifications';
 
   private async request<T>(method: string, url: string, data?: any): Promise<T> {
     try {
