@@ -39,15 +39,15 @@ class SendDueTodoNotifications extends Command
             ->with(['project'])
             ->get();
 
-        // Due within 3 days (1..3 days from now)
+        // Due within 3 days (2-3 days from now, excluding tomorrow)
         $dueWithinThreeDays = Todo::query()
             ->whereNotNull('due_date')
-            ->whereBetween('due_date', [$tomorrow, $inThreeDays])
+            ->whereBetween('due_date', [$now->copy()->addDays(2)->startOfDay(), $inThreeDays])
             ->where('status', '!=', 'done')
             ->with(['project'])
             ->get();
 
-        // Due within 7 days (4..7 days from now)
+        // Due within 7 days (4-7 days from now)
         $dueWithinSevenDays = Todo::query()
             ->whereNotNull('due_date')
             ->whereBetween('due_date', [$now->copy()->addDays(4)->startOfDay(), $inSevenDays])
@@ -77,7 +77,7 @@ class SendDueTodoNotifications extends Command
         foreach ($dueWithinThreeDays as $todo) {
             $dueDate = Carbon::parse($todo->due_date);
             $days = Carbon::now()->startOfDay()->diffInDays($dueDate, false);
-            if ($days < 1 || $days > 3) {
+            if ($days < 2 || $days > 3) {
                 continue; // guard in case of edge cases
             }
 
