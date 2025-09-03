@@ -34,13 +34,7 @@
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Description
             </label>
-            <QuillEditor
-              v-model:content="form.description"
-              content-type="html"
-              theme="snow"
-              :modules="quillModules"
-              class="bg-white dark:bg-gray-700 rounded-md border border-gray-300 dark:border-gray-600"
-            />
+            <TipTapEditor v-model="form.description" />
           </div>
 
           <!-- Project (Read-only) -->
@@ -173,9 +167,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
-import { QuillEditor } from '@vueup/vue-quill';
-import '@vueup/vue-quill/dist/vue-quill.snow.css';
-import Quill from 'quill';
+import TipTapEditor from '@/components/TipTapEditor.vue';
 import { usePage } from '@inertiajs/vue3';
 import Icon from '@/components/Icon.vue';
 import TodoComments from '@/components/TodoComments.vue';
@@ -202,8 +194,6 @@ const page = usePage();
 const currentUser = (page.props as any)?.auth?.user || null;
 const currentUserName = currentUser?.name || '';
 
-// Ensure Quill is available globally for the editor integration
-(window as any).Quill = (window as any).Quill || Quill;
 
 type SimpleUser = { id: number; name: string; email: string };
 const users = ref<SimpleUser[]>([]);
@@ -307,34 +297,6 @@ const handleSubmit = async () => {
   }
 };
 
-const quillModules = {
-  toolbar: {
-    container: [
-      ['bold', 'italic', 'underline'],
-      [{ list: 'ordered' }, { list: 'bullet' }],
-      ['link', 'image'],
-      ['clean']
-    ],
-    handlers: {
-      image: async function (this: any) {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.onchange = async () => {
-          const file = (input.files && input.files[0]) as File;
-          if (!file) return;
-          try {
-            const url = await uploadImageToTaskitBucket(file);
-            const range = this.quill.getSelection(true);
-            this.quill.insertEmbed(range.index, 'image', url, 'user');
-          } catch (e) {
-            console.error('Image upload failed', e);
-          }
-        };
-        input.click();
-      }
-    }
-  }
-};
+// TipTap editor used; no extra config here
 
 </script>
