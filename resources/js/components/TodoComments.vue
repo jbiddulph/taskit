@@ -1,0 +1,156 @@
+<template>
+  <div class="mt-6">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Comments</h3>
+
+    <!-- New comment form -->
+    <form @submit.prevent="handleAdd" class="flex gap-2 mb-4">
+      <input
+        v-model="newComment"
+        type="text"
+        placeholder="Write a comment..."
+        class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+      />
+      <button
+        type="submit"
+        :disabled="adding || !newComment.trim()"
+        class="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {{ adding ? 'Adding...' : 'Add' }}
+      </button>
+    </form>
+
+    <!-- Comments list -->
+    <div v-if="loading" class="text-sm text-gray-500">Loading comments...</div>
+    <div v-else>
+      <div v-if="comments.length === 0" class="text-sm text-gray-500">No comments yet.</div>
+      <ul class="space-y-3">
+        <li v-for="comment in comments" :key="comment.id" class="p-3 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex-1">
+              <div v-if="editingId === comment.id" class="flex gap-2">
+                <input
+                  v-model="editContent"
+                  type="text"
+                  class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                />
+                <button @click="saveEdit(comment)" class="px-3 py-2 bg-green-600 text-white rounded-md">Save</button>
+                <button @click="cancelEdit" class="px-3 py-2 bg-gray-300 text-gray-800 rounded-md">Cancel</button>
+              </div>
+              <div v-else class="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-line">{{ comment.content }}</div>
+              <div class="mt-1 text-xs text-gray-500">{{ formatDate(comment.created_at) }}</div>
+            </div>
+            <div class="flex gap-2">
+              <button
+                v-if="editingId !== comment.id"
+                @click="startEdit(comment)"
+                class="text-gray-500 hover:text-blue-600 text-sm"
+              >Edit</button>
+              <button
+                @click="remove(comment)"
+                class="text-gray-500 hover:text-red-600 text-sm"
+              >Delete</button>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { todoApi, type TodoComment } from '@/services/todoApi';
+
+interface Props {
+  todoId: number;
+}
+
+const props = defineProps<Props>();
+
+const loading = ref(false);
+const adding = ref(false);
+const newComment = ref('');
+const comments = ref<TodoComment[]>([]);
+
+const editingId = ref<number | null>(null);
+const editContent = ref('');
+
+const load = async () => {
+  try {
+    loading.value = true;
+    comments.value = await todoApi.getComments(props.todoId);
+  } catch (e) {
+    console.error('Failed to load comments', e);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handleAdd = async () => {
+  if (!newComment.value.trim()) return;
+  try {
+    adding.value = true;
+    const created = await todoApi.addComment(props.todoId, newComment.value.trim());
+    comments.value.push(created);
+    newComment.value = '';
+    (window as any).$notify?.({ type: 'success', title: 'Comment Added', message: 'Your comment was added.' });
+  } catch (e) {
+    console.error('Failed to add comment', e);
+    (window as any).$notify?.({ type: 'error', title: 'Add Failed', message: 'Could not add comment.' });
+  } finally {
+    adding.value = false;
+  }
+};
+
+const startEdit = (c: TodoComment) => {
+  editingId.value = c.id as unknown as number;
+  editContent.value = c.content;
+};
+
+const cancelEdit = () => {
+  editingId.value = null;
+  editContent.value = '';
+};
+
+const saveEdit = async (c: TodoComment) => {
+  if (!editContent.value.trim()) return;
+  try {
+    const updated = await todoApi.updateComment(props.todoId, c.id as unknown as number, editContent.value.trim());
+    const idx = comments.value.findIndex(x => String(x.id) === String(c.id));
+    if (idx !== -1) {
+      comments.value[idx] = updated;
+      comments.value = [...comments.value];
+    }
+    editingId.value = null;
+    editContent.value = '';
+    (window as any).$notify?.({ type: 'success', title: 'Comment Updated', message: 'Your comment was updated.' });
+  } catch (e) {
+    console.error('Failed to update comment', e);
+    (window as any).$notify?.({ type: 'error', title: 'Update Failed', message: 'Could not update comment.' });
+  }
+};
+
+const remove = async (c: TodoComment) => {
+  if (!confirm('Delete this comment?')) return;
+  try {
+    await todoApi.deleteComment(props.todoId, c.id as unknown as number);
+    comments.value = comments.value.filter(x => String(x.id) !== String(c.id));
+    (window as any).$notify?.({ type: 'success', title: 'Comment Deleted', message: 'Your comment was deleted.' });
+  } catch (e) {
+    console.error('Failed to delete comment', e);
+    (window as any).$notify?.({ type: 'error', title: 'Delete Failed', message: 'Could not delete comment.' });
+  }
+};
+
+const formatDate = (dt: string) => {
+  try {
+    return new Date(dt).toLocaleString();
+  } catch {
+    return dt;
+  }
+};
+
+onMounted(load);
+</script>
+
+

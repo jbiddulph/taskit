@@ -192,6 +192,9 @@
             </button>
           </div>
         </form>
+
+        <!-- Comments (only when editing existing todo) -->
+        <TodoComments v-if="isEditing && form.id" :todo-id="Number(form.id)" />
       </div>
     </div>
   </div>
@@ -200,6 +203,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import Icon from '@/components/Icon.vue';
+import TodoComments from '@/components/TodoComments.vue';
 import { todoApi, type Project } from '@/services/todoApi';
 import type { Todo } from '@/services/todoApi';
 
