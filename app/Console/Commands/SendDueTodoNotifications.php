@@ -22,12 +22,13 @@ class SendDueTodoNotifications extends Command
      *
      * @var string
      */
-    protected $description = 'Create notifications for todos due tomorrow and within 7 days';
+    protected $description = 'Create notifications for todos due within 1, 3, and 7 days';
 
     public function handle(): int
     {
         $now = Carbon::now();
         $tomorrow = $now->copy()->addDay()->startOfDay();
+        $inThreeDays = $now->copy()->addDays(3)->endOfDay();
         $inSevenDays = $now->copy()->addDays(7)->endOfDay();
 
         // Due tomorrow (exact date match)
@@ -38,16 +39,25 @@ class SendDueTodoNotifications extends Command
             ->with(['project'])
             ->get();
 
-        // Due within 7 days (1..7 days from now)
+        // Due within 3 days (1..3 days from now)
+        $dueWithinThreeDays = Todo::query()
+            ->whereNotNull('due_date')
+            ->whereBetween('due_date', [$tomorrow, $inThreeDays])
+            ->where('status', '!=', 'done')
+            ->with(['project'])
+            ->get();
+
+        // Due within 7 days (4..7 days from now)
         $dueWithinSevenDays = Todo::query()
             ->whereNotNull('due_date')
-            ->whereBetween('due_date', [$tomorrow, $inSevenDays])
+            ->whereBetween('due_date', [$now->copy()->addDays(4)->startOfDay(), $inSevenDays])
             ->where('status', '!=', 'done')
             ->with(['project'])
             ->get();
 
         $created = 0;
 
+        // Notifications for todos due tomorrow
         foreach ($dueTomorrow as $todo) {
             $created += $this->notifyIfNotExists(
                 userId: $todo->user_id,
@@ -63,17 +73,40 @@ class SendDueTodoNotifications extends Command
             );
         }
 
+        // Notifications for todos due within 3 days
+        foreach ($dueWithinThreeDays as $todo) {
+            $dueDate = Carbon::parse($todo->due_date);
+            $days = Carbon::now()->startOfDay()->diffInDays($dueDate, false);
+            if ($days < 1 || $days > 3) {
+                continue; // guard in case of edge cases
+            }
+
+            $created += $this->notifyIfNotExists(
+                userId: $todo->user_id,
+                type: 'warning',
+                title: 'Todo due in 3 days',
+                message: $this->buildMessage($todo->title, $todo->project, $dueDate, $days),
+                data: [
+                    'todo_id' => $todo->id,
+                    'project_id' => $todo->project_id,
+                    'due_in_days' => $days,
+                    'scope' => 'due_within_3_days',
+                ],
+            );
+        }
+
+        // Notifications for todos due within 7 days
         foreach ($dueWithinSevenDays as $todo) {
             $dueDate = Carbon::parse($todo->due_date);
             $days = Carbon::now()->startOfDay()->diffInDays($dueDate, false);
-            if ($days < 1 || $days > 7) {
+            if ($days < 4 || $days > 7) {
                 continue; // guard in case of edge cases
             }
 
             $created += $this->notifyIfNotExists(
                 userId: $todo->user_id,
                 type: 'info',
-                title: 'Todo due soon',
+                title: 'Todo due in 7 days',
                 message: $this->buildMessage($todo->title, $todo->project, $dueDate, $days),
                 data: [
                     'todo_id' => $todo->id,

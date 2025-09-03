@@ -4,8 +4,8 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
-// Schedule daily due-date notifications at 08:00 server time
-Schedule::command('taskit:send-due-notifications')->dailyAt('08:00');
+// Schedule hourly due-date notifications
+Schedule::command('taskit:send-due-notifications')->hourly();
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
