@@ -30,14 +30,22 @@
     </div>
 
     <!-- Title -->
-    <h3 class="font-medium text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
+    <h3 
+      :class="[
+        'font-medium text-gray-900 dark:text-gray-100 mb-2 line-clamp-2',
+        { 'line-through opacity-60': todo.status === 'done' }
+      ]"
+    >
       {{ todo.title }}
     </h3>
 
     <!-- Description -->
     <p
       v-if="todo.description"
-      class="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2"
+      :class="[
+        'text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2',
+        { 'line-through opacity-60': todo.status === 'done' }
+      ]"
     >
       {{ todo.description }}
     </p>
@@ -47,7 +55,10 @@
       <span
         v-for="tag in todo.tags"
         :key="tag"
-        class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+        :class="[
+          'inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
+          { 'line-through opacity-60': todo.status === 'done' }
+        ]"
       >
         {{ tag }}
       </span>
