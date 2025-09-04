@@ -216,9 +216,9 @@ const createProject = () => {
             'selected-project': currentProject?.id === project.id
           }"
           :style="currentProject?.id === project.id ? {
-            borderTop: '1px solid rgb(255, 140, 130)',
-            borderLeft: '1px solid rgb(255, 140, 130)',
-            borderBottom: '1px solid rgb(255, 140, 130)',
+            borderTop: `1px solid ${project.color}`,
+            borderLeft: `1px solid ${project.color}`,
+            borderBottom: `1px solid ${project.color}`,
             borderRight: 'none',
             marginRight: '-2px',
             borderRadius: '15px 0px 0px 15px'
