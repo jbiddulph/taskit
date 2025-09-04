@@ -67,6 +67,13 @@ class Todo extends Model
         $query->where('user_id', $user->id);
     }
 
+    public function scopeForCompany(Builder $query, int $companyId): void
+    {
+        $query->whereHas('user', function ($q) use ($companyId) {
+            $q->where('company_id', $companyId);
+        });
+    }
+
     public function scopeForProject(Builder $query, int $projectId): void
     {
         $query->where('project_id', $projectId);

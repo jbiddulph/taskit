@@ -26,9 +26,17 @@ class TodoController extends Controller
     {
         $user = Auth::user();
         
-        $query = Todo::forUser($user)
-            ->with(['comments', 'attachments', 'project'])
-            ->orderBy('created_at', 'desc');
+        if ($user->company_id) {
+            // Show all todos from the same company
+            $query = Todo::forCompany($user->company_id)
+                ->with(['comments', 'attachments', 'project'])
+                ->orderBy('created_at', 'desc');
+        } else {
+            // Fallback to user's own todos if no company
+            $query = Todo::forUser($user)
+                ->with(['comments', 'attachments', 'project'])
+                ->orderBy('created_at', 'desc');
+        }
 
         // Filter by project if specified
         if ($request->filled('project_id')) {

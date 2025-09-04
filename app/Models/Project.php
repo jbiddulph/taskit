@@ -59,6 +59,16 @@ class Project extends Model
     }
 
     /**
+     * Get active projects for a company
+     */
+    public function scopeForCompany($query, int $companyId)
+    {
+        return $query->whereHas('owner', function ($q) use ($companyId) {
+            $q->where('company_id', $companyId);
+        })->where('is_active', true);
+    }
+
+    /**
      * Get projects by key
      */
     public function scopeByKey($query, string $key)
@@ -113,6 +123,12 @@ class Project extends Model
      */
     public function canAccess(int $userId): bool
     {
-        return $this->owner_id === $userId;
+        $user = User::find($userId);
+        if (!$user || !$user->company_id) {
+            return $this->owner_id === $userId;
+        }
+        
+        // User can access if they own it OR if they're in the same company as the owner
+        return $this->owner_id === $userId || $this->owner->company_id === $user->company_id;
     }
 }

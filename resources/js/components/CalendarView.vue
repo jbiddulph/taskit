@@ -106,9 +106,8 @@ const monthYearLabel = computed(() =>
 const itemsByDate = computed<Record<string, Todo[]>>(() => {
   const map: Record<string, Todo[]> = {};
   for (const t of props.todos || []) {
-    // Only show To Do and In Progress tasks for the current user
+    // Only show To Do and In Progress tasks from all company users
     if (!t.due_date || (t.status !== 'todo' && t.status !== 'in-progress')) continue;
-    if (t.assignee !== currentUserName) continue;
     const key = t.due_date.slice(0, 10);
     if (!map[key]) map[key] = [];
     map[key].push(t);

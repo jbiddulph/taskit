@@ -25,10 +25,20 @@ class ProjectController extends Controller
     public function index(): JsonResponse
     {
         $user = Auth::user();
-        $projects = Project::forUser($user->id)
-            ->withCount('todos')
-            ->orderBy('name')
-            ->get();
+        
+        if ($user->company_id) {
+            // Show all projects from the same company
+            $projects = Project::forCompany($user->company_id)
+                ->withCount('todos')
+                ->orderBy('name')
+                ->get();
+        } else {
+            // Fallback to user's own projects if no company
+            $projects = Project::forUser($user->id)
+                ->withCount('todos')
+                ->orderBy('name')
+                ->get();
+        }
 
         // Transform the data to include total_todos
         $projects->each(function ($project) {
@@ -229,15 +239,30 @@ class ProjectController extends Controller
     public function withStats(): JsonResponse
     {
         $user = Auth::user();
-        $projects = Project::forUser($user->id)
-            ->with(['todos'])
-            ->get()
-            ->map(function ($project) {
-                $stats = $project->getStats();
-                $project->stats = $stats;
-                $project->total_todos = $stats['total'];
-                return $project;
-            });
+        
+        if ($user->company_id) {
+            // Show all projects from the same company
+            $projects = Project::forCompany($user->company_id)
+                ->with(['todos'])
+                ->get()
+                ->map(function ($project) {
+                    $stats = $project->getStats();
+                    $project->stats = $stats;
+                    $project->total_todos = $stats['total'];
+                    return $project;
+                });
+        } else {
+            // Fallback to user's own projects if no company
+            $projects = Project::forUser($user->id)
+                ->with(['todos'])
+                ->get()
+                ->map(function ($project) {
+                    $stats = $project->getStats();
+                    $project->stats = $stats;
+                    $project->total_todos = $stats['total'];
+                    return $project;
+                });
+        }
 
         return response()->json([
             'success' => true,
