@@ -23,9 +23,47 @@
               <Icon name="Edit3" class="w-5 h-5" />
             </button>
           </div>
-          <p class="text-gray-600 dark:text-gray-400">
-            {{ currentProject ? `Project: ${currentProject.key} - ${currentProject.description || 'No description'}` : 'Select a project to manage todos' }}
-          </p>
+          <div class="text-gray-600 dark:text-gray-400">
+            <span v-if="!currentProject">Select a project to manage todos</span>
+            <div v-else class="flex items-center gap-2">
+              <span>Project: {{ currentProject.key }} - </span>
+              <div v-if="!editingProjectDescription" class="flex items-center gap-2">
+                <span>{{ currentProject.description || 'No description' }}</span>
+                <button
+                  @click="startEditProjectDescription"
+                  class="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                  title="Edit project description"
+                >
+                  <Icon name="Edit3" class="w-4 h-4" />
+                </button>
+              </div>
+              <div v-else class="flex items-center gap-2">
+                <input
+                  v-model="editingProjectDescriptionText"
+                  @keydown.enter="saveProjectDescription"
+                  @keydown.escape="cancelEditProjectDescription"
+                  @blur="saveProjectDescription"
+                  class="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Enter project description"
+                  ref="projectDescriptionInput"
+                />
+                <button
+                  @click="saveProjectDescription"
+                  class="p-1 text-green-500 hover:text-green-600 transition-colors"
+                  title="Save"
+                >
+                  <Icon name="Check" class="w-4 h-4" />
+                </button>
+                <button
+                  @click="cancelEditProjectDescription"
+                  class="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                  title="Cancel"
+                >
+                  <Icon name="X" class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
           
                       <!-- Create Project Button (only shown when no project is selected) -->
             <div v-if="!currentProject" class="mt-4">
@@ -174,6 +212,7 @@
         @add="handleShowForm"
         @edit="editTodo"
         @delete="deleteTodo"
+        @update="updateTodo"
         @drop="handleDrop"
         @menu="() => {}"
       />
@@ -185,6 +224,7 @@
         :current-project-id="currentProject?.id || null"
         @edit="editTodo"
         @delete="deleteTodo"
+        @update="updateTodo"
         @drop="handleDrop"
         @menu="() => {}"
       />
@@ -196,6 +236,7 @@
         :current-project-id="currentProject?.id || null"
         @edit="editTodo"
         @delete="deleteTodo"
+        @update="updateTodo"
         @drop="handleDrop"
         @menu="() => {}"
       />
@@ -398,7 +439,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import Icon from '@/components/Icon.vue';
 import TodoColumn from './TodoColumn.vue';
 import TodoForm from './TodoForm.vue';
@@ -420,6 +461,9 @@ const currentProject = ref<Project | null>(null);
 const selectedProjectId = ref<string>('');
 const editingTodo = ref<Todo | null>(null);
 const editingProjectName = ref('');
+const editingProjectDescription = ref(false);
+const editingProjectDescriptionText = ref('');
+const projectDescriptionInput = ref<HTMLInputElement | null>(null);
 const searchQuery = ref('');
 const priorityFilter = ref('');
 const typeFilter = ref('');
@@ -796,7 +840,68 @@ const saveEditProject = async () => {
   }
 };
 
+const startEditProjectDescription = () => {
+  editingProjectDescription.value = true;
+  editingProjectDescriptionText.value = currentProject.value?.description || '';
+  nextTick(() => {
+    projectDescriptionInput.value?.focus();
+  });
+};
 
+const saveProjectDescription = async () => {
+  if (!currentProject.value) return;
+  
+  try {
+    const updatedProject = await todoApi.updateProject(currentProject.value.id, {
+      description: editingProjectDescriptionText.value.trim()
+    });
+    
+    // Update current project
+    currentProject.value = { ...currentProject.value, ...updatedProject };
+    
+    // Show success notification
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'success',
+        title: 'Project Updated',
+        message: 'Project description has been updated successfully.'
+      });
+    }
+    
+    // Exit edit mode
+    editingProjectDescription.value = false;
+    editingProjectDescriptionText.value = '';
+    
+    // Dispatch event to refresh sidebar projects
+    window.dispatchEvent(new CustomEvent('todoChanged'));
+    
+    console.log('Project description updated successfully');
+  } catch (error) {
+    console.error('Failed to update project description:', error);
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to update project description. Please try again.'
+      });
+    }
+  }
+};
+
+const cancelEditProjectDescription = () => {
+  editingProjectDescription.value = false;
+  editingProjectDescriptionText.value = '';
+};
+
+
+
+const updateTodo = (updatedTodo: Todo) => {
+  // Update the todo in the local array
+  const index = todos.value.findIndex(todo => todo.id === updatedTodo.id);
+  if (index !== -1) {
+    todos.value[index] = updatedTodo;
+  }
+};
 
 const resetNewProject = () => {
   newProject.value = {

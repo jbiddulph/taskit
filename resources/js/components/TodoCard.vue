@@ -31,14 +31,52 @@
     </div>
 
     <!-- Title -->
-    <h3 
-      :class="[
-        'font-medium text-gray-900 dark:text-gray-100 mb-2 line-clamp-2',
-        { 'line-through opacity-60': todo.status === 'done' }
-      ]"
-    >
-      {{ todo.title }}
-    </h3>
+    <div class="mb-2">
+      <div v-if="!editingTitle" class="flex items-center gap-2">
+        <h3 
+          :class="[
+            'font-medium text-gray-900 dark:text-gray-100 line-clamp-2 flex-1 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors',
+            { 'line-through opacity-60': todo.status === 'done' }
+          ]"
+          @click.stop="startEditTitle"
+          title="Click to edit title"
+        >
+          {{ todo.title }}
+        </h3>
+        <button
+          @click.stop="startEditTitle"
+          class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-500 transition-opacity p-1"
+          title="Edit title"
+        >
+          <Icon name="Edit3" class="w-3 h-3" />
+        </button>
+      </div>
+      <div v-else class="flex items-center gap-2">
+        <input
+          v-model="editingTitleText"
+          @keydown.enter="saveTitle"
+          @keydown.escape="cancelEditTitle"
+          @blur="saveTitle"
+          class="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+          placeholder="Enter todo title"
+          ref="titleInput"
+        />
+        <button
+          @click.stop="saveTitle"
+          class="p-1 text-green-500 hover:text-green-600 transition-colors"
+          title="Save"
+        >
+          <Icon name="Check" class="w-3 h-3" />
+        </button>
+        <button
+          @click.stop="cancelEditTitle"
+          class="p-1 text-gray-400 hover:text-red-500 transition-colors"
+          title="Cancel"
+        >
+          <Icon name="X" class="w-3 h-3" />
+        </button>
+      </div>
+    </div>
 
     <!-- Description & first image preview -->
     <div v-if="firstImageSrc || plainTextDescription" class="mb-3 flex items-start gap-3">
@@ -105,8 +143,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, nextTick } from 'vue';
 import Icon from '@/components/Icon.vue';
+import { todoApi } from '@/services/todoApi';
 
 import type { Todo } from '@/services/todoApi';
 
@@ -118,7 +157,13 @@ const props = defineProps<Props>();
 const emit = defineEmits<{
   edit: [todo: Todo];
   delete: [id: string];
+  update: [todo: Todo];
 }>();
+
+// Title editing state
+const editingTitle = ref(false);
+const editingTitleText = ref('');
+const titleInput = ref<HTMLInputElement | null>(null);
 
 const priorityClasses = {
   Low: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-yellow-200',
@@ -184,6 +229,61 @@ const getTypeIcon = (type: string): string => {
 
 const firstImageSrc = computed(() => getFirstImageSrc((props as any).todo?.description));
 const plainTextDescription = computed(() => stripHtml((props as any).todo?.description));
+
+// Title editing methods
+const startEditTitle = () => {
+  editingTitle.value = true;
+  editingTitleText.value = props.todo.title;
+  nextTick(() => {
+    titleInput.value?.focus();
+    titleInput.value?.select();
+  });
+};
+
+const saveTitle = async () => {
+  if (!editingTitleText.value.trim()) {
+    cancelEditTitle();
+    return;
+  }
+  
+  try {
+    const updatedTodo = await todoApi.updateTodo(props.todo.id, {
+      title: editingTitleText.value.trim()
+    });
+    
+    // Emit update event to parent
+    emit('update', updatedTodo);
+    
+    // Show success notification
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'success',
+        title: 'Todo Updated',
+        message: 'Todo title has been updated successfully.'
+      });
+    }
+    
+    // Exit edit mode
+    editingTitle.value = false;
+    editingTitleText.value = '';
+    
+    console.log('Todo title updated successfully');
+  } catch (error) {
+    console.error('Failed to update todo title:', error);
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to update todo title. Please try again.'
+      });
+    }
+  }
+};
+
+const cancelEditTitle = () => {
+  editingTitle.value = false;
+  editingTitleText.value = '';
+};
 </script>
 
 <style scoped>

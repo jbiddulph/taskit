@@ -81,6 +81,7 @@
             :todo="todo"
             @edit="$emit('edit', $event)"
             @delete="$emit('delete', $event)"
+            @update="$emit('update', $event)"
           />
         </div>
       </TransitionGroup>
@@ -111,6 +112,7 @@ const emit = defineEmits<{
   add: [];
   edit: [todo: Todo];
   delete: [id: string];
+  update: [todo: Todo];
   menu: [];
   drop: [todo: Todo, newStatus: string];
 }>();
