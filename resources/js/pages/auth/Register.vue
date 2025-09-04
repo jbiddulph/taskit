@@ -9,7 +9,7 @@ import AuthBase from '@/layouts/AuthLayout.vue';
 import { login } from '@/routes';
 import { Form, Head } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 interface Props {
     subscriptionType?: string;
@@ -21,6 +21,11 @@ const props = withDefaults(defineProps<Props>(), {
 
 const companyType = ref('');
 const subscriptionType = ref(props.subscriptionType);
+
+// Watch for prop changes and update the reactive variable
+watch(() => props.subscriptionType, (newValue) => {
+    subscriptionType.value = newValue;
+}, { immediate: true });
 
 // Hide individual option for paid plans
 const showIndividualOption = computed(() => subscriptionType.value === 'FREE');
