@@ -28,7 +28,7 @@ class TodoCommentController extends Controller
     {
         $user = Auth::user();
         
-        if ($todo->user_id !== $user->id) {
+        if (!$todo->canAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
@@ -50,7 +50,7 @@ class TodoCommentController extends Controller
     {
         $user = Auth::user();
         
-        if ($todo->user_id !== $user->id) {
+        if (!$todo->canAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
@@ -110,7 +110,7 @@ class TodoCommentController extends Controller
     {
         $user = Auth::user();
         
-        if ($todo->user_id !== $user->id || $comment->todo_id !== $todo->id) {
+        if (!$todo->canAccess($user) || $comment->todo_id !== $todo->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
@@ -132,7 +132,7 @@ class TodoCommentController extends Controller
     {
         $user = Auth::user();
         
-        if ($todo->user_id !== $user->id || $comment->todo_id !== $todo->id) {
+        if (!$todo->canAccess($user) || $comment->todo_id !== $todo->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
@@ -177,7 +177,7 @@ class TodoCommentController extends Controller
     {
         $user = Auth::user();
         
-        if ($todo->user_id !== $user->id || $comment->todo_id !== $todo->id) {
+        if (!$todo->canAccess($user) || $comment->todo_id !== $todo->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
