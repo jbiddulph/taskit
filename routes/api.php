@@ -26,12 +26,12 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 // Todo routes
 Route::middleware(['web', 'auth'])->group(function () {
-    // Project routes
+    // Project routes (place specific routes BEFORE resource to avoid {project} capturing)
+    Route::patch('projects/update-order', [ProjectController::class, 'updateOrder']);
     Route::apiResource('projects', ProjectController::class);
 Route::delete('projects/{project}/with-todos', [ProjectController::class, 'destroyWithTodos']);
     Route::get('projects/{project}/stats', [ProjectController::class, 'stats']);
     Route::get('projects-with-stats', [ProjectController::class, 'withStats']);
-    Route::patch('projects/update-order', [ProjectController::class, 'updateOrder']);
     
     // Todo routes
     Route::apiResource('todos', TodoController::class);
