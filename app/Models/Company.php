@@ -13,6 +13,7 @@ class Company extends Model
     protected $fillable = [
         'name',
         'code',
+        'subscription_type',
     ];
 
     protected static function boot()

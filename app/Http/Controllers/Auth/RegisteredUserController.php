@@ -19,9 +19,18 @@ class RegisteredUserController extends Controller
     /**
      * Show the registration page.
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('auth/Register');
+        $subscriptionType = $request->query('plan', 'FREE');
+        
+        // Validate subscription type
+        if (!in_array($subscriptionType, ['FREE', 'MIDI', 'MAXI'])) {
+            $subscriptionType = 'FREE';
+        }
+        
+        return Inertia::render('auth/Register', [
+            'subscriptionType' => $subscriptionType
+        ]);
     }
 
     /**
@@ -38,19 +47,22 @@ class RegisteredUserController extends Controller
             'company_type' => 'required|in:create,join,individual',
             'company_name' => 'required_if:company_type,create|string|max:255',
             'company_code' => 'required_if:company_type,join|string|size:8|exists:taskit_companies,code',
+            'subscription_type' => 'required|in:FREE,MIDI,MAXI',
         ]);
 
         $companyId = null;
 
         if ($request->company_type === 'create') {
-            // Create new company
+            // Create new company with subscription type
             $company = Company::create([
                 'name' => $request->company_name,
+                'subscription_type' => $request->subscription_type,
             ]);
             $companyId = $company->id;
         } elseif ($request->company_type === 'join') {
-            // Find existing company by code
+            // Find existing company by code and update subscription type
             $company = Company::where('code', strtoupper($request->company_code))->first();
+            $company->update(['subscription_type' => $request->subscription_type]);
             $companyId = $company->id;
         } elseif ($request->company_type === 'individual') {
             // Individual user - no company association

@@ -9,9 +9,21 @@ import AuthBase from '@/layouts/AuthLayout.vue';
 import { login } from '@/routes';
 import { Form, Head } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+
+interface Props {
+    subscriptionType?: string;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    subscriptionType: 'FREE'
+});
 
 const companyType = ref('');
+const subscriptionType = ref(props.subscriptionType);
+
+// Hide individual option for paid plans
+const showIndividualOption = computed(() => subscriptionType.value === 'FREE');
 </script>
 
 <template>
@@ -55,6 +67,23 @@ const companyType = ref('');
                         placeholder="Confirm password"
                     />
                     <InputError :message="errors.password_confirmation" />
+                </div>
+
+                <!-- Subscription Type Selection -->
+                <div class="grid gap-2">
+                    <Label for="subscription_type">Subscription Plan</Label>
+                    <select
+                        id="subscription_type"
+                        name="subscription_type"
+                        v-model="subscriptionType"
+                        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        :tabindex="5"
+                    >
+                        <option value="FREE">FREE - £0/month</option>
+                        <option value="MIDI">MIDI - £6/month</option>
+                        <option value="MAXI">MAXI - £9/month</option>
+                    </select>
+                    <InputError :message="errors.subscription_type" />
                 </div>
 
                 <!-- Company Selection -->
@@ -107,7 +136,7 @@ const companyType = ref('');
                             <InputError :message="errors.company_code" />
                         </div>
 
-                        <div class="flex items-center space-x-2">
+                        <div v-if="showIndividualOption" class="flex items-center space-x-2">
                             <input
                                 id="individual"
                                 type="radio"
