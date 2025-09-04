@@ -35,7 +35,7 @@ class RegisteredUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'company_type' => 'required|in:create,join',
+            'company_type' => 'required|in:create,join,individual',
             'company_name' => 'required_if:company_type,create|string|max:255',
             'company_code' => 'required_if:company_type,join|string|size:8|exists:taskit_companies,code',
         ]);
@@ -52,6 +52,9 @@ class RegisteredUserController extends Controller
             // Find existing company by code
             $company = Company::where('code', strtoupper($request->company_code))->first();
             $companyId = $company->id;
+        } elseif ($request->company_type === 'individual') {
+            // Individual user - no company association
+            $companyId = null;
         }
 
         $user = User::create([

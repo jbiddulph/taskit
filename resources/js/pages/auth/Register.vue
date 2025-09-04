@@ -106,6 +106,18 @@ const companyType = ref('');
                             />
                             <InputError :message="errors.company_code" />
                         </div>
+
+                        <div class="flex items-center space-x-2">
+                            <input
+                                id="individual"
+                                type="radio"
+                                name="company_type"
+                                value="individual"
+                                v-model="companyType"
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                            />
+                            <Label for="individual" class="text-sm font-medium">I am not part of a company / Individual use</Label>
+                        </div>
                     </div>
                 </div>
 
