@@ -37,6 +37,7 @@ export interface Todo {
     comments?: TodoComment[];
     attachments?: TodoAttachment[];
     project?: Project;
+    is_new_assigned?: boolean;
 }
 
 export interface TodoComment {
@@ -140,6 +141,15 @@ class TodoApiService {
             method: 'GET',
             url: `/todos/${id}`,
         });
+        // Mark assignment as seen when opening a todo
+        try {
+            if (response.data?.is_new_assigned) {
+                await this.request({
+                    method: 'POST',
+                    url: `/todos/${id}/mark-assignment-seen`,
+                });
+            }
+        } catch { /* ignore */ }
         return response.data;
     }
 

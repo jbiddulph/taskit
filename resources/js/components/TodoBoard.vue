@@ -541,7 +541,16 @@ const safeProjects = computed(() => {
 });
 
 // Methods
-const editTodo = (todo: Todo) => {
+const editTodo = async (todo: Todo) => {
+  // If marked as newly assigned, clear the badge by calling the detail API (which marks seen)
+  try {
+    if (todo.is_new_assigned) {
+      await todoApi.getTodo(todo.id);
+      // Optimistically clear flag locally
+      const idx = todos.value.findIndex(t => t.id === todo.id);
+      if (idx !== -1) todos.value[idx].is_new_assigned = false;
+    }
+  } catch {}
   editingTodo.value = { ...todo };
   showForm.value = true;
 };

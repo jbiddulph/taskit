@@ -93,9 +93,12 @@
     </div>
 
     <!-- Story points -->
-    <div v-if="todo.story_points" class="absolute top-2 right-2">
-      <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300">
+    <div class="absolute top-2 right-2 flex items-center gap-1">
+      <span v-if="todo.story_points" class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300">
         {{ todo.story_points }}
+      </span>
+      <span v-if="todo.is_new_assigned" class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-700">
+        NEW
       </span>
     </div>
   </div>

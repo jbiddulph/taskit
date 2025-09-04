@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Todo;
+use App\Models\Notification;
 use App\Services\TodoWebSocketService;
 use App\Services\AssignmentNotificationService;
 use Illuminate\Http\Request;
@@ -76,6 +77,20 @@ class TodoController extends Controller
         }
 
         $todos = $query->get();
+
+        // Determine which todos are newly assigned to the current user (and not created by them)
+        $unreadAssignmentTodoIds = Notification::query()
+            ->where('user_id', $user->id)
+            ->where('type', 'assignment')
+            ->where('is_read', false)
+            ->pluck('data->todo_id')
+            ->map(fn ($id) => (int)$id)
+            ->toArray();
+
+        $todos->each(function ($todo) use ($unreadAssignmentTodoIds, $user) {
+            $isNew = in_array((int)$todo->id, $unreadAssignmentTodoIds, true) && (int)$todo->user_id !== (int)$user->id;
+            $todo->setAttribute('is_new_assigned', $isNew);
+        });
 
         // Group by status for Kanban board
         $grouped = [
@@ -257,6 +272,36 @@ class TodoController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Todo deleted successfully'
+        ]);
+    }
+
+    /**
+     * Mark assignment notifications for a todo as seen by the current user
+     */
+    public function markAssignmentSeen(Todo $todo): JsonResponse
+    {
+        $user = Auth::user();
+
+        if (!$todo->canAccess($user)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        // Mark unread assignment notifications for this todo as read
+        Notification::where('user_id', $user->id)
+            ->where('type', 'assignment')
+            ->where('is_read', false)
+            ->whereRaw("(data->>'todo_id') = ?", [(string)$todo->id])
+            ->update([
+                'is_read' => true,
+                'read_at' => now(),
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Assignment marked as seen'
         ]);
     }
 
