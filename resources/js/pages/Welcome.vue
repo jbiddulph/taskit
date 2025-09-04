@@ -318,7 +318,6 @@ import { Head, Link } from '@inertiajs/vue3';
             
             <div class="text-center mt-12 text-sm text-[#706f6c] dark:text-[#A1A09A]">
                 <p>All plans include our core features: Kanban boards, real-time collaboration, file attachments, and email notifications.</p>
-                <p class="mt-2">Need a custom solution? <a href="/contact" class="text-[#f53003] dark:text-[#FF4433] hover:underline">Contact us</a> for enterprise pricing.</p>
             </div>
         </section>
         
