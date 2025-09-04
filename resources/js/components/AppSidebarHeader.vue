@@ -12,6 +12,7 @@ withDefaults(
             id: number;
             name: string;
             code: string;
+            subscription_type: string;
         } | null;
     }>(),
     {
@@ -37,6 +38,7 @@ withDefaults(
             <CompanyCodeDisplay 
                 :company-code="company?.code" 
                 :company-name="company?.name" 
+                :subscription-type="company?.subscription_type"
             />
             <NotificationBadge />
         </div>

@@ -17,6 +17,7 @@ Route::get('dashboard', function () {
             'id' => $company->id,
             'name' => $company->name,
             'code' => $company->code,
+            'subscription_type' => $company->subscription_type,
         ] : null,
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
