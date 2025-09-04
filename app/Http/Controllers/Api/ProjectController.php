@@ -30,12 +30,14 @@ class ProjectController extends Controller
             // Show all projects from the same company
             $projects = Project::forCompany($user->company_id)
                 ->withCount('todos')
+                ->orderBy('viewing_order')
                 ->orderBy('name')
                 ->get();
         } else {
             // Fallback to user's own projects if no company
             $projects = Project::forUser($user->id)
                 ->withCount('todos')
+                ->orderBy('viewing_order')
                 ->orderBy('name')
                 ->get();
         }
@@ -79,6 +81,7 @@ class ProjectController extends Controller
             'key' => $request->key ?? Project::generateUniqueKey($request->name),
             'color' => $request->color ?? '#3B82F6',
             'owner_id' => $user->id,
+            'viewing_order' => Project::getNextViewingOrder($user->id),
         ]);
 
         return response()->json([
@@ -244,6 +247,8 @@ class ProjectController extends Controller
             // Show all projects from the same company
             $projects = Project::forCompany($user->company_id)
                 ->with(['todos'])
+                ->orderBy('viewing_order')
+                ->orderBy('name')
                 ->get()
                 ->map(function ($project) {
                     $stats = $project->getStats();
@@ -255,6 +260,8 @@ class ProjectController extends Controller
             // Fallback to user's own projects if no company
             $projects = Project::forUser($user->id)
                 ->with(['todos'])
+                ->orderBy('viewing_order')
+                ->orderBy('name')
                 ->get()
                 ->map(function ($project) {
                     $stats = $project->getStats();
@@ -267,6 +274,39 @@ class ProjectController extends Controller
         return response()->json([
             'success' => true,
             'data' => $projects
+        ]);
+    }
+
+    /**
+     * Update project viewing order
+     */
+    public function updateOrder(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        
+        $request->validate([
+            'project_orders' => 'required|array',
+            'project_orders.*.id' => 'required|integer|exists:taskit_projects,id',
+            'project_orders.*.viewing_order' => 'required|integer|min:1',
+        ]);
+
+        foreach ($request->project_orders as $projectOrder) {
+            $project = Project::find($projectOrder['id']);
+            
+            // Check if user can access this project
+            if (!$project->canAccess($user->id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized to reorder this project'
+                ], 403);
+            }
+            
+            $project->update(['viewing_order' => $projectOrder['viewing_order']]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Project order updated successfully'
         ]);
     }
 }

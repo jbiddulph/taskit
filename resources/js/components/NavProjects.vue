@@ -190,6 +190,83 @@ const createProject = () => {
   window.dispatchEvent(new CustomEvent('openCreateProjectModal'));
 };
 
+// Drag and drop functionality
+const draggedProject = ref<Project | null>(null);
+const draggedOverIndex = ref<number | null>(null);
+
+const handleDragStart = (event: DragEvent, project: Project) => {
+  draggedProject.value = project;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', project.id.toString());
+  }
+};
+
+const handleDragOver = (event: DragEvent, index: number) => {
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move';
+  }
+  draggedOverIndex.value = index;
+};
+
+const handleDragLeave = () => {
+  draggedOverIndex.value = null;
+};
+
+const handleDrop = async (event: DragEvent, dropIndex: number) => {
+  event.preventDefault();
+  draggedOverIndex.value = null;
+  
+  if (!draggedProject.value) return;
+  
+  const dragIndex = projects.value.findIndex(p => p.id === draggedProject.value!.id);
+  if (dragIndex === -1 || dragIndex === dropIndex) {
+    draggedProject.value = null;
+    return;
+  }
+  
+  // Reorder the projects array
+  const reorderedProjects = [...projects.value];
+  const [draggedItem] = reorderedProjects.splice(dragIndex, 1);
+  reorderedProjects.splice(dropIndex, 0, draggedItem);
+  
+  // Update viewing_order for all projects
+  const projectOrders = reorderedProjects.map((project, index) => ({
+    id: project.id,
+    viewing_order: index + 1
+  }));
+  
+  try {
+    await todoApi.updateProjectOrder(projectOrders);
+    projects.value = reorderedProjects;
+    
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'success',
+        title: 'Project Order Updated',
+        message: 'Projects have been reordered successfully.'
+      });
+    }
+  } catch (error) {
+    console.error('Failed to update project order:', error);
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to reorder projects. Please try again.'
+      });
+    }
+  }
+  
+  draggedProject.value = null;
+};
+
+const handleDragEnd = () => {
+  draggedProject.value = null;
+  draggedOverIndex.value = null;
+};
+
 
 </script>
 
@@ -206,7 +283,16 @@ const createProject = () => {
       </SidebarMenuItem>
       
       <!-- Project List -->
-      <SidebarMenuItem v-for="project in projects" :key="project.id">
+      <SidebarMenuItem 
+        v-for="(project, index) in projects" 
+        :key="project.id"
+        @dragover="handleDragOver($event, index)"
+        @dragleave="handleDragLeave"
+        @drop="handleDrop($event, index)"
+        :class="{
+          'drag-over': draggedOverIndex === index
+        }"
+      >
         <SidebarMenuButton 
           @click="selectProject(project)" 
           :is-active="currentProject?.id === project.id"
@@ -226,8 +312,12 @@ const createProject = () => {
         >
           <div class="flex items-center gap-2 w-full">
             <div 
-              class="w-3 h-3 rounded-full flex-shrink-0"
+              class="w-3 h-3 rounded-full flex-shrink-0 cursor-move hover:scale-110 transition-transform"
               :style="{ backgroundColor: project.color }"
+              draggable="true"
+              @dragstart="handleDragStart($event, project)"
+              @dragend="handleDragEnd"
+              title="Drag to reorder"
             ></div>
             
             <span class="flex-1 truncate">{{ project.name }}</span>
@@ -282,5 +372,12 @@ const createProject = () => {
 /* Custom styles for project items */
 .group:hover .opacity-0 {
   opacity: 1;
+}
+
+/* Drag and drop styles */
+.drag-over {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
 }
 </style>

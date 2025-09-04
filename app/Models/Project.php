@@ -20,6 +20,7 @@ class Project extends Model
         'color',
         'is_active',
         'owner_id',
+        'viewing_order',
     ];
 
     protected $casts = [
@@ -130,5 +131,47 @@ class Project extends Model
         
         // User can access if they own it OR if they're in the same company as the owner
         return $this->owner_id === $userId || $this->owner->company_id === $user->company_id;
+    }
+
+    /**
+     * Initialize viewing order for projects
+     */
+    public static function initializeViewingOrder(): void
+    {
+        // Get all companies and individual users
+        $companies = User::whereNotNull('company_id')->distinct()->pluck('company_id');
+        $individualUsers = User::whereNull('company_id')->pluck('id');
+
+        // Initialize viewing order for company projects
+        foreach ($companies as $companyId) {
+            $projects = static::forCompany($companyId)->orderBy('created_at')->get();
+            foreach ($projects as $index => $project) {
+                $project->update(['viewing_order' => $index + 1]);
+            }
+        }
+
+        // Initialize viewing order for individual user projects
+        foreach ($individualUsers as $userId) {
+            $projects = static::forUser($userId)->orderBy('created_at')->get();
+            foreach ($projects as $index => $project) {
+                $project->update(['viewing_order' => $index + 1]);
+            }
+        }
+    }
+
+    /**
+     * Get the next viewing order for a user/company
+     */
+    public static function getNextViewingOrder(int $userId): int
+    {
+        $user = User::find($userId);
+        
+        if ($user->company_id) {
+            $maxOrder = static::forCompany($user->company_id)->max('viewing_order') ?? 0;
+        } else {
+            $maxOrder = static::forUser($userId)->max('viewing_order') ?? 0;
+        }
+        
+        return $maxOrder + 1;
     }
 }

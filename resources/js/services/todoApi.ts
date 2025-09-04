@@ -17,6 +17,7 @@ export interface Project {
     updated_at: string;
     total_todos?: number;
     stats?: TodoStats;
+    viewing_order?: number;
 }
 
 export interface Todo {
@@ -263,6 +264,14 @@ class TodoApiService {
             url: `/projects/${id}/stats`,
         });
         return response.data;
+    }
+
+    async updateProjectOrder(projectOrders: { id: number; viewing_order: number }[]): Promise<void> {
+        await this.request({
+            method: 'PATCH',
+            url: '/projects/update-order',
+            data: { project_orders: projectOrders },
+        });
     }
 
     // Comment operations

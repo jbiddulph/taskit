@@ -31,6 +31,7 @@ Route::middleware(['web', 'auth'])->group(function () {
 Route::delete('projects/{project}/with-todos', [ProjectController::class, 'destroyWithTodos']);
     Route::get('projects/{project}/stats', [ProjectController::class, 'stats']);
     Route::get('projects-with-stats', [ProjectController::class, 'withStats']);
+    Route::patch('projects/update-order', [ProjectController::class, 'updateOrder']);
     
     // Todo routes
     Route::apiResource('todos', TodoController::class);
