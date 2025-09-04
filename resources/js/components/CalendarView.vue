@@ -61,6 +61,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import type { Todo } from '@/services/todoApi';
 
 interface Props {
@@ -72,6 +73,10 @@ const props = defineProps<Props>();
 const emit = defineEmits<{
   editTodo: [todo: Todo];
 }>();
+
+const page = usePage();
+const currentUser = (page.props as any)?.auth?.user || null;
+const currentUserName = currentUser?.name || '';
 
 const current = ref(new Date());
 
@@ -101,8 +106,9 @@ const monthYearLabel = computed(() =>
 const itemsByDate = computed<Record<string, Todo[]>>(() => {
   const map: Record<string, Todo[]> = {};
   for (const t of props.todos || []) {
-    // Only show To Do and In Progress tasks
+    // Only show To Do and In Progress tasks for the current user
     if (!t.due_date || (t.status !== 'todo' && t.status !== 'in-progress')) continue;
+    if (t.assignee !== currentUserName) continue;
     const key = t.due_date.slice(0, 10);
     if (!map[key]) map[key] = [];
     map[key].push(t);
