@@ -19,7 +19,7 @@
           <span class="text-xs font-semibold" :class="{ 'text-gray-900 dark:text-gray-100': cell.inMonth, 'text-gray-400': !cell.inMonth }">{{ cell.date.getDate() }}</span>
           <span v-if="isToday(cell.date)" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-600 text-white">Today</span>
         </div>
-        <div class="space-y-1 overflow-y-auto max-h-20">
+        <div class="space-y-1 overflow-y-auto max-h-20 relative">
           <div 
             v-for="item in itemsByDate[cell.iso]" 
             :key="item.id" 
@@ -30,7 +30,7 @@
             <span v-if="item.project?.key" class="ml-1 text-gray-500">({{ item.project.key }})</span>
             
             <!-- Hover Tooltip -->
-            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
               <div class="flex items-center gap-2">
                 <div 
                   class="w-3 h-3 rounded-full" 
