@@ -154,7 +154,7 @@ class TodoController extends Controller
     {
         $user = Auth::user();
         
-        if ($todo->user_id !== $user->id) {
+        if (!$todo->canAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
@@ -176,7 +176,7 @@ class TodoController extends Controller
     {
         $user = Auth::user();
         
-        if ($todo->user_id !== $user->id) {
+        if (!$todo->canAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
@@ -227,7 +227,7 @@ class TodoController extends Controller
     {
         $user = Auth::user();
         
-        if ($todo->user_id !== $user->id) {
+        if (!$todo->canAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
@@ -255,7 +255,7 @@ class TodoController extends Controller
     {
         $user = Auth::user();
         
-        if ($todo->user_id !== $user->id) {
+        if (!$todo->canAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'

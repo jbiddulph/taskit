@@ -155,4 +155,17 @@ class Todo extends Model
             'file_size' => $fileSize,
         ]);
     }
+
+    /**
+     * Check if user can access this todo
+     */
+    public function canAccess(User $user): bool
+    {
+        if (!$user->company_id) {
+            return $this->user_id === $user->id;
+        }
+        
+        // User can access if they created it OR if they're in the same company as the creator
+        return $this->user_id === $user->id || $this->user->company_id === $user->company_id;
+    }
 }
