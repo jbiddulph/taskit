@@ -43,13 +43,15 @@ const props = defineProps<Props>();
 
 const current = ref(new Date());
 
-const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
 const endOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
 const startOfWeek = (d: Date) => {
   const dd = new Date(d);
-  dd.setDate(dd.getDate() - dd.getDay());
+  const day = dd.getDay(); // 0=Sun,1=Mon,...
+  const diff = (day + 6) % 7; // 0 for Mon, 6 for Sun
+  dd.setDate(dd.getDate() - diff);
   dd.setHours(0, 0, 0, 0);
   return dd;
 };
