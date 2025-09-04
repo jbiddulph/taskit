@@ -75,6 +75,14 @@
             <Icon name="Plus" class="w-4 h-4" />
             Add Todo
           </button>
+
+          <button
+            @click="showCalendar = !showCalendar"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600"
+          >
+            <Icon name="Calendar" class="w-4 h-4" />
+            {{ showCalendar ? 'Hide Calendar' : 'Show Calendar' }}
+          </button>
         </div>
       </div>
 
@@ -155,8 +163,11 @@
       </div>
     </div>
 
-    <!-- Statistics -->
-    <TodoStats :todos="todos" />
+    <!-- Statistics / Calendar -->
+    <div v-if="showCalendar" class="mb-4">
+      <CalendarView :todos="todos" />
+    </div>
+    <TodoStats v-else :todos="todos" />
 
     <!-- Kanban Board -->
     <div class="flex-1 flex gap-6 overflow-x-auto pb-4">
@@ -351,6 +362,7 @@ import TodoColumn from './TodoColumn.vue';
 import TodoForm from './TodoForm.vue';
 import TodoStats from './TodoStats.vue';
 import TypeFilter from './TypeFilter.vue';
+import CalendarView from './CalendarView.vue';
 import { todoApi, type Project, type Todo } from '@/services/todoApi';
 import { deleteImagesInHtml } from '@/services/supabaseClient';
 
@@ -359,6 +371,7 @@ const projects = ref<Project[]>([]);
 const showForm = ref(false);
 const showCreateProject = ref(false);
 const showEditProject = ref(false);
+const showCalendar = ref(false);
 
 const currentProject = ref<Project | null>(null);
 const selectedProjectId = ref<string>('');
