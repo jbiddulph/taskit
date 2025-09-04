@@ -193,6 +193,21 @@
           </div>
         </div>
       </div>
+      
+      <!-- Filter Status Indicator -->
+      <div v-if="hasActiveFilters" class="mt-3 flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-2">
+        <div class="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
+          <Icon name="Filter" class="w-4 h-4" />
+          <span>Filters have been applied</span>
+        </div>
+        <button
+          @click="clearAllFilters"
+          class="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors"
+        >
+          <Icon name="X" class="w-4 h-4" />
+          <span>Clear filters</span>
+        </button>
+      </div>
     </div>
 
     <!-- Statistics / Calendar -->
@@ -592,6 +607,14 @@ const uniqueAssignees = computed(() => {
   return [...new Set(assignees)];
 });
 
+// Check if any filters are currently applied
+const hasActiveFilters = computed(() => {
+  return searchQuery.value.trim() !== '' || 
+         priorityFilter.value !== '' || 
+         typeFilter.value !== '' || 
+         assigneeFilter.value !== '';
+});
+
 // Safe projects array to prevent undefined errors
 const safeProjects = computed(() => {
   return projects.value || [];
@@ -914,6 +937,14 @@ const updateTodo = (updatedTodo: Todo) => {
   if (index !== -1) {
     todos.value[index] = updatedTodo;
   }
+};
+
+const clearAllFilters = () => {
+  searchQuery.value = '';
+  priorityFilter.value = '';
+  typeFilter.value = '';
+  assigneeFilter.value = '';
+  selectedSavedViewName.value = '';
 };
 
 const resetNewProject = () => {
