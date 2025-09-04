@@ -79,11 +79,14 @@ class TodoController extends Controller
         $todos = $query->get();
 
         // Determine which todos are newly assigned to the current user (and not created by them)
+        // Use Postgres JSON extraction to safely pluck todo IDs from notification data
         $unreadAssignmentTodoIds = Notification::query()
             ->where('user_id', $user->id)
             ->where('type', 'assignment')
             ->where('is_read', false)
-            ->pluck('data->todo_id')
+            ->selectRaw("(data->>'todo_id')::int AS todo_id")
+            ->pluck('todo_id')
+            ->filter()
             ->map(fn ($id) => (int)$id)
             ->toArray();
 
