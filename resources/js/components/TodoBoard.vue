@@ -113,6 +113,44 @@
               {{ assignee }}
             </option>
           </select>
+
+          <!-- Saved Views Controls -->
+          <div class="flex items-center gap-2">
+            <select
+              v-model="selectedSavedViewName"
+              @change="onApplySavedView"
+              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="">Saved Views</option>
+              <option v-for="view in savedViews" :key="view.name" :value="view.name">{{ view.name }}</option>
+            </select>
+
+            <input
+              v-model="newSavedViewName"
+              type="text"
+              placeholder="View name"
+              class="w-32 px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+
+            <button
+              type="button"
+              @click="saveCurrentAsView"
+              class="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600"
+              title="Save current filters as a view"
+            >
+              Save
+            </button>
+
+            <button
+              v-if="selectedSavedViewName"
+              type="button"
+              @click="deleteSavedView"
+              class="px-3 py-2 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg border border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/50"
+              title="Delete selected view"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -330,6 +368,77 @@ const searchQuery = ref('');
 const priorityFilter = ref('');
 const typeFilter = ref('');
 const assigneeFilter = ref('');
+
+// Saved Views (local-only for now)
+type SavedView = {
+  name: string;
+  searchQuery: string;
+  priority: string;
+  type: string;
+  assignee: string;
+};
+const SAVED_VIEWS_KEY = 'taskit_saved_views_v1';
+const savedViews = ref<SavedView[]>([]);
+const selectedSavedViewName = ref('');
+const newSavedViewName = ref('');
+
+const loadSavedViews = () => {
+  try {
+    const raw = localStorage.getItem(SAVED_VIEWS_KEY);
+    savedViews.value = raw ? JSON.parse(raw) : [];
+  } catch {
+    savedViews.value = [];
+  }
+};
+
+const persistSavedViews = () => {
+  localStorage.setItem(SAVED_VIEWS_KEY, JSON.stringify(savedViews.value));
+};
+
+const getCurrentFilters = (): SavedView => ({
+  name: '',
+  searchQuery: searchQuery.value || '',
+  priority: priorityFilter.value || '',
+  type: typeFilter.value || '',
+  assignee: assigneeFilter.value || '',
+});
+
+const applyView = (view: SavedView) => {
+  searchQuery.value = view.searchQuery;
+  priorityFilter.value = view.priority;
+  typeFilter.value = view.type;
+  assigneeFilter.value = view.assignee;
+};
+
+const onApplySavedView = () => {
+  const view = savedViews.value.find(v => v.name === selectedSavedViewName.value);
+  if (view) applyView(view);
+};
+
+const saveCurrentAsView = () => {
+  const name = newSavedViewName.value.trim();
+  if (!name) return;
+  const existingIdx = savedViews.value.findIndex(v => v.name === name);
+  const payload = { ...getCurrentFilters(), name };
+  if (existingIdx >= 0) {
+    savedViews.value.splice(existingIdx, 1, payload);
+  } else {
+    savedViews.value.push(payload);
+  }
+  persistSavedViews();
+  selectedSavedViewName.value = name;
+};
+
+const deleteSavedView = () => {
+  const name = selectedSavedViewName.value;
+  if (!name) return;
+  const idx = savedViews.value.findIndex(v => v.name === name);
+  if (idx >= 0) {
+    savedViews.value.splice(idx, 1);
+    persistSavedViews();
+    selectedSavedViewName.value = '';
+  }
+};
 
 const newProject = ref({
   name: '',
@@ -873,6 +982,9 @@ onMounted(async () => {
     showCreateProject.value = true;
     resetNewProject();
   });
+
+  // Load saved views
+  loadSavedViews();
 });
 
 
