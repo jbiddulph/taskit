@@ -100,7 +100,8 @@ class RegisteredUserController extends Controller
                 // Store the intended subscription type
                 $company->update(['subscription_type' => $request->subscription_type]);
 
-                return redirect($session->url);
+                // Use Inertia's external redirect for Stripe checkout
+                return Inertia::location($session->url);
             } catch (\Exception $e) {
                 // If Stripe fails, continue to dashboard with FREE plan
                 return to_route('dashboard')->with('error', 'Payment setup failed. You have been registered with a FREE plan.');
