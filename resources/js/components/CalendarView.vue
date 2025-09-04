@@ -26,11 +26,19 @@
             class="truncate text-[11px] px-2 py-1 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-shadow relative group"
             @click="$emit('editTodo', item)"
           >
-            <span class="font-medium">{{ item.title }}</span>
+            <div class="flex items-center gap-1">
+              <!-- Status indicator dot -->
+              <div 
+                v-if="item.status === 'in-progress'"
+                class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"
+                title="In Progress"
+              ></div>
+              <span class="font-medium">{{ item.title }}</span>
+            </div>
             <span v-if="item.project?.key" class="ml-1 text-gray-500">({{ item.project.key }})</span>
             
             <!-- Hover Tooltip -->
-            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-[9999]">
               <div class="flex items-center gap-2">
                 <div 
                   class="w-3 h-3 rounded-full" 
@@ -39,6 +47,7 @@
                 <span class="font-medium">{{ item.project?.name || 'No Project' }}</span>
               </div>
               <div class="text-gray-300 mt-1">{{ item.title }}</div>
+              <div v-if="item.status === 'in-progress'" class="text-green-300 text-[10px] mt-1">● In Progress</div>
               <!-- Arrow -->
               <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
             </div>
@@ -92,7 +101,8 @@ const monthYearLabel = computed(() =>
 const itemsByDate = computed<Record<string, Todo[]>>(() => {
   const map: Record<string, Todo[]> = {};
   for (const t of props.todos || []) {
-    if (!t.due_date) continue;
+    // Only show To Do and In Progress tasks
+    if (!t.due_date || (t.status !== 'todo' && t.status !== 'in-progress')) continue;
     const key = t.due_date.slice(0, 10);
     if (!map[key]) map[key] = [];
     map[key].push(t);
