@@ -895,6 +895,14 @@ const loadProjects = async () => {
     if (currentProject.value) {
       selectedProjectId.value = currentProject.value.id.toString();
       console.log('Set selected project ID to:', selectedProjectId.value);
+    } else if (projects.value.length > 0 && !localStorage.getItem('currentProjectId')) {
+      // If no current project is set and projects are available, auto-select the first one
+      const firstProject = projects.value[0];
+      currentProject.value = firstProject;
+      selectedProjectId.value = firstProject.id.toString();
+      localStorage.setItem('currentProjectId', firstProject.id.toString());
+      
+      console.log('Auto-selected first project during load:', firstProject.name);
     }
   } catch (error) {
     console.error('Failed to load projects completely:', error);
@@ -973,10 +981,28 @@ const loadCurrentProject = async () => {
       
       // Don't dispatch event here to prevent circular loop
       // The sidebar will be updated when the component mounts
+    } else if (projects.value.length > 0) {
+      // If no project is selected and projects are available, select the first one
+      const firstProject = projects.value[0];
+      currentProject.value = firstProject;
+      selectedProjectId.value = firstProject.id.toString();
+      localStorage.setItem('currentProjectId', firstProject.id.toString());
+      
+      console.log('Auto-selected first project:', firstProject.name);
     }
   } catch (error) {
     console.error('Failed to load current project:', error);
     localStorage.removeItem('currentProjectId');
+    
+    // If there was an error but projects are available, try to select the first one
+    if (projects.value.length > 0) {
+      const firstProject = projects.value[0];
+      currentProject.value = firstProject;
+      selectedProjectId.value = firstProject.id.toString();
+      localStorage.setItem('currentProjectId', firstProject.id.toString());
+      
+      console.log('Auto-selected first project after error:', firstProject.name);
+    }
   }
 };
 
