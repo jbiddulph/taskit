@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Todo;
 use App\Services\TodoWebSocketService;
+use App\Services\AssignmentNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -13,10 +14,12 @@ use Illuminate\Support\Facades\Validator;
 class TodoController extends Controller
 {
     protected TodoWebSocketService $webSocketService;
+    protected AssignmentNotificationService $assignmentNotificationService;
 
-    public function __construct(TodoWebSocketService $webSocketService)
+    public function __construct(TodoWebSocketService $webSocketService, AssignmentNotificationService $assignmentNotificationService)
     {
         $this->webSocketService = $webSocketService;
+        $this->assignmentNotificationService = $assignmentNotificationService;
     }
 
     /**
@@ -140,6 +143,9 @@ class TodoController extends Controller
         // Send real-time notification
         $this->webSocketService->todoCreated($todo);
 
+        // Send assignment notification if todo is assigned to someone
+        $this->assignmentNotificationService->sendNewTodoAssignmentNotification($todo);
+
         return response()->json([
             'success' => true,
             'message' => 'Todo created successfully',
@@ -203,6 +209,9 @@ class TodoController extends Controller
             ], 422);
         }
 
+        // Store old assignee before updating
+        $oldAssignee = $todo->assignee;
+
         $todo->update($request->only([
             'title', 'description', 'priority', 'type', 'tags',
             'assignee', 'due_date', 'story_points', 'status'
@@ -212,6 +221,9 @@ class TodoController extends Controller
 
         // Send real-time notification
         $this->webSocketService->todoUpdated($todo);
+
+        // Send assignment notification if assignee has changed
+        $this->assignmentNotificationService->sendAssignmentNotification($todo, $oldAssignee);
 
         return response()->json([
             'success' => true,
