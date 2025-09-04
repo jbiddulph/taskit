@@ -296,8 +296,11 @@ const handleSubmit = async () => {
     const todoData: any = {
       ...form.value,
       project_id: props.currentProject.id,
-      due_date: form.value.due_date || null,
-      story_points: form.value.story_points || null,
+      // Normalize optional fields to null instead of empty strings for backend validation
+      type: form.value.type ? form.value.type : null,
+      assignee: form.value.assignee ? form.value.assignee : null,
+      due_date: form.value.due_date ? form.value.due_date : null,
+      story_points: form.value.story_points ? form.value.story_points : null,
     };
     
     if (props.isEditing) {
