@@ -3,7 +3,7 @@
     <button
       type="button"
       @click="toggleDropdown"
-      class="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-left flex items-center justify-between min-w-[120px]"
+      class="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-left flex items-center justify-between min-w-[120px] h-[34px]"
     >
       <div class="flex items-center gap-2">
         <Icon v-if="selectedType" :name="getTypeIcon(selectedType)" class="w-4 h-4" />

@@ -122,7 +122,17 @@
             </option>
           </select>
 
-          <!-- Saved Views Controls - Only show if there are saved views -->
+          <!-- Save View Button -->
+          <button
+            type="button"
+            @click="showSaveViewModal = true"
+            class="px-2 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600"
+            title="Save current filters as a view"
+          >
+            Save View
+          </button>
+
+          <!-- Saved Views Dropdown - Only show if there are saved views -->
           <div v-if="savedViews.length > 0" class="flex items-center gap-2">
             <select
               v-model="selectedSavedViewName"
@@ -132,22 +142,6 @@
               <option value="">Saved Views</option>
               <option v-for="view in savedViews" :key="view.name" :value="view.name">{{ view.name }}</option>
             </select>
-
-            <input
-              v-model="newSavedViewName"
-              type="text"
-              placeholder="View name"
-              class="w-24 px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
-
-            <button
-              type="button"
-              @click="saveCurrentAsView"
-              class="px-2 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600"
-              title="Save current filters as a view"
-            >
-              Save
-            </button>
 
             <button
               v-if="selectedSavedViewName"
@@ -352,6 +346,54 @@
         </div>
       </div>
     </div>
+
+    <!-- Save View Modal -->
+    <div v-if="showSaveViewModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click="showSaveViewModal = false">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4" @click.stop>
+        <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Save Current View</h3>
+          <button
+            @click="showSaveViewModal = false"
+            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            <Icon name="X" class="w-6 h-6" />
+          </button>
+        </div>
+        
+        <div class="p-6">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              View Name
+            </label>
+            <input
+              v-model="newSavedViewName"
+              type="text"
+              placeholder="Enter view name"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              @keyup.enter="saveCurrentAsView"
+            />
+          </div>
+          
+          <div class="flex gap-3">
+            <button
+              type="button"
+              @click="saveCurrentAsView"
+              :disabled="!newSavedViewName.trim()"
+              class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Save View
+            </button>
+            <button
+              type="button"
+              @click="showSaveViewModal = false"
+              class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -372,6 +414,7 @@ const showForm = ref(false);
 const showCreateProject = ref(false);
 const showEditProject = ref(false);
 const showCalendar = ref(false);
+const showSaveViewModal = ref(false);
 
 const currentProject = ref<Project | null>(null);
 const selectedProjectId = ref<string>('');
@@ -440,6 +483,8 @@ const saveCurrentAsView = () => {
   }
   persistSavedViews();
   selectedSavedViewName.value = name;
+  newSavedViewName.value = '';
+  showSaveViewModal.value = false;
 };
 
 const deleteSavedView = () => {
