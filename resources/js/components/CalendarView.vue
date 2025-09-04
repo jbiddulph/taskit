@@ -20,9 +20,28 @@
           <span v-if="isToday(cell.date)" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-600 text-white">Today</span>
         </div>
         <div class="space-y-1 overflow-y-auto max-h-20">
-          <div v-for="item in itemsByDate[cell.iso]" :key="item.id" class="truncate text-[11px] px-2 py-1 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+          <div 
+            v-for="item in itemsByDate[cell.iso]" 
+            :key="item.id" 
+            class="truncate text-[11px] px-2 py-1 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-shadow relative group"
+            @click="$emit('editTodo', item)"
+          >
             <span class="font-medium">{{ item.title }}</span>
             <span v-if="item.project?.key" class="ml-1 text-gray-500">({{ item.project.key }})</span>
+            
+            <!-- Hover Tooltip -->
+            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+              <div class="flex items-center gap-2">
+                <div 
+                  class="w-3 h-3 rounded-full" 
+                  :style="{ backgroundColor: item.project?.color || '#6b7280' }"
+                ></div>
+                <span class="font-medium">{{ item.project?.name || 'No Project' }}</span>
+              </div>
+              <div class="text-gray-300 mt-1">{{ item.title }}</div>
+              <!-- Arrow -->
+              <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
+            </div>
           </div>
           <div v-if="!itemsByDate[cell.iso] || itemsByDate[cell.iso].length === 0" class="text-[11px] text-gray-400">No todos</div>
         </div>
@@ -40,6 +59,10 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const emit = defineEmits<{
+  editTodo: [todo: Todo];
+}>();
 
 const current = ref(new Date());
 

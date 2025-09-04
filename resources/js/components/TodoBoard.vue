@@ -165,7 +165,7 @@
 
     <!-- Statistics / Calendar -->
     <div v-if="showCalendar" class="mb-4">
-      <CalendarView :todos="todos" />
+      <CalendarView :todos="todos" @edit-todo="handleEditTodoFromCalendar" />
     </div>
     <TodoStats v-else :todos="todos" />
 
@@ -497,6 +497,11 @@ const safeProjects = computed(() => {
 
 // Methods
 const editTodo = (todo: Todo) => {
+  editingTodo.value = { ...todo };
+  showForm.value = true;
+};
+
+const handleEditTodoFromCalendar = (todo: Todo) => {
   editingTodo.value = { ...todo };
   showForm.value = true;
 };

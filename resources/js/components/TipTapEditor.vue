@@ -78,7 +78,7 @@ function focusEditor() {
 
 <style scoped>
 .editor :deep(.ProseMirror) {
-  min-height: 320px;
+  min-height: 120px;
   padding: 12px;
   outline: none;
   border: 0;
