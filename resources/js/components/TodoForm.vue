@@ -190,11 +190,34 @@ type SimpleUser = { id: number; name: string; email: string };
 const users = ref<SimpleUser[]>([]);
 
 const loadUsers = async () => {
-  // Use current user until a users API exists
-  if (currentUser) {
-    users.value = [{ id: currentUser.id, name: currentUser.name, email: currentUser.email }];
-  } else {
-    users.value = [];
+  try {
+    const response = await fetch('/api/users', {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      credentials: 'same-origin',
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      users.value = data;
+    } else {
+      // Fallback to current user if API fails
+      if (currentUser) {
+        users.value = [{ id: currentUser.id, name: currentUser.name, email: currentUser.email }];
+      } else {
+        users.value = [];
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load users:', error);
+    // Fallback to current user
+    if (currentUser) {
+      users.value = [{ id: currentUser.id, name: currentUser.name, email: currentUser.email }];
+    } else {
+      users.value = [];
+    }
   }
 };
 

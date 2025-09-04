@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\TodoCommentController;
 use App\Http\Controllers\Api\TodoAttachmentController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,6 +44,9 @@ Route::delete('projects/{project}/with-todos', [ProjectController::class, 'destr
     Route::apiResource('todos.attachments', TodoAttachmentController::class);
     Route::get('todos/{todo}/attachments/{attachment}/download', [TodoAttachmentController::class, 'download']);
     Route::get('todos/{todo}/attachments/{attachment}/preview', [TodoAttachmentController::class, 'preview']);
+    
+    // User routes
+    Route::get('users', [UserController::class, 'index']);
     
     // Notification routes
     Route::get('notifications', [NotificationController::class, 'index']);
