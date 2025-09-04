@@ -14,6 +14,14 @@ class Company extends Model
         'name',
         'code',
         'subscription_type',
+        'stripe_customer_id',
+        'stripe_subscription_id',
+        'subscription_ends_at',
+        'subscription_status',
+    ];
+
+    protected $casts = [
+        'subscription_ends_at' => 'datetime',
     ];
 
     protected static function boot()

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\StripeService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,6 +17,10 @@ use Inertia\Response;
 
 class RegisteredUserController extends Controller
 {
+    public function __construct(
+        protected StripeService $stripeService
+    ) {}
+
     /**
      * Show the registration page.
      */
@@ -79,6 +84,28 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
+
+        // Handle paid subscriptions
+        if (in_array($request->subscription_type, ['MIDI', 'MAXI']) && $companyId) {
+            try {
+                $company = Company::find($companyId);
+                $session = $this->stripeService->createCheckoutSession(
+                    $company,
+                    $request->subscription_type,
+                    $user->email,
+                    route('subscription.success') . '?session_id={CHECKOUT_SESSION_ID}',
+                    route('subscription.cancel')
+                );
+
+                // Store the intended subscription type
+                $company->update(['subscription_type' => $request->subscription_type]);
+
+                return redirect($session->url);
+            } catch (\Exception $e) {
+                // If Stripe fails, continue to dashboard with FREE plan
+                return to_route('dashboard')->with('error', 'Payment setup failed. You have been registered with a FREE plan.');
+            }
+        }
 
         return to_route('dashboard');
     }
