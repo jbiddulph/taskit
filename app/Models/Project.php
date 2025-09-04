@@ -88,6 +88,7 @@ class Project extends Model
             'total' => $todos->count(),
             'todo' => $todos->where('status', 'todo')->count(),
             'in-progress' => $todos->where('status', 'in-progress')->count(),
+            'qa-testing' => $todos->where('status', 'qa-testing')->count(),
             'done' => $todos->where('status', 'done')->count(),
             'overdue' => $todos->where('due_date', '<', now())->where('status', '!=', 'done')->count(),
             'due_today' => $todos->where('due_date', now()->toDateString())->count(),

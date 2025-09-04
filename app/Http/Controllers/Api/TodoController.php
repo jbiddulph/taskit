@@ -99,6 +99,7 @@ class TodoController extends Controller
         $grouped = [
             'todo' => $todos->where('status', 'todo')->values(),
             'in-progress' => $todos->where('status', 'in-progress')->values(),
+            'qa-testing' => $todos->where('status', 'qa-testing')->values(),
             'done' => $todos->where('status', 'done')->values(),
         ];
 
@@ -109,6 +110,7 @@ class TodoController extends Controller
                 'total' => $todos->count(),
                 'todo' => $todos->where('status', 'todo')->count(),
                 'in-progress' => $todos->where('status', 'in-progress')->count(),
+                'qa-testing' => $todos->where('status', 'qa-testing')->count(),
                 'done' => $todos->where('status', 'done')->count(),
                 'overdue' => $todos->filter(fn($todo) => $todo->is_overdue)->count(),
                 'due_today' => $todos->filter(fn($todo) => $todo->due_date?->isToday())->count(),
@@ -132,7 +134,7 @@ class TodoController extends Controller
             'assignee' => 'nullable|string|max:255',
             'due_date' => 'nullable|date|after:today',
             'story_points' => 'nullable|integer|min:1|max:21',
-            'status' => 'required|in:todo,in-progress,done',
+            'status' => 'required|in:todo,in-progress,qa-testing,done',
         ]);
 
         if ($validator->fails()) {
@@ -217,7 +219,7 @@ class TodoController extends Controller
             'assignee' => 'nullable|string|max:255',
             'due_date' => 'nullable|date',
             'story_points' => 'nullable|integer|min:1|max:21',
-            'status' => 'sometimes|required|in:todo,in-progress,done',
+            'status' => 'sometimes|required|in:todo,in-progress,qa-testing,done',
         ]);
 
         if ($validator->fails()) {
@@ -323,7 +325,7 @@ class TodoController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:todo,in-progress,done',
+            'status' => 'required|in:todo,in-progress,qa-testing,done',
         ]);
 
         if ($validator->fails()) {

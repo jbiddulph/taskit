@@ -230,6 +230,18 @@
       />
       
       <TodoColumn
+        title="Q&A / Testing"
+        status="qa-testing"
+        :todos="filteredTodos.qaTesting"
+        :current-project-id="currentProject?.id || null"
+        @edit="editTodo"
+        @delete="deleteTodo"
+        @update="updateTodo"
+        @drop="handleDrop"
+        @menu="() => {}"
+      />
+      
+      <TodoColumn
         title="Done"
         status="done"
         :todos="filteredTodos.done"
@@ -568,6 +580,7 @@ const filteredTodos = computed(() => {
   return {
     todo: filtered.filter(t => t.status === 'todo'),
     inProgress: filtered.filter(t => t.status === 'in-progress'),
+    qaTesting: filtered.filter(t => t.status === 'qa-testing'),
     done: filtered.filter(t => t.status === 'done')
   };
 });
