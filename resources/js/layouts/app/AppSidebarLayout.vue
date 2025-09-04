@@ -7,10 +7,16 @@ import type { BreadcrumbItemType } from '@/types';
 
 interface Props {
     breadcrumbs?: BreadcrumbItemType[];
+    company?: {
+        id: number;
+        name: string;
+        code: string;
+    } | null;
 }
 
 withDefaults(defineProps<Props>(), {
     breadcrumbs: () => [],
+    company: null,
 });
 </script>
 
@@ -18,7 +24,7 @@ withDefaults(defineProps<Props>(), {
     <AppShell variant="sidebar">
         <AppSidebar />
         <AppContent variant="sidebar" class="overflow-x-hidden">
-            <AppSidebarHeader :breadcrumbs="breadcrumbs" />
+            <AppSidebarHeader :breadcrumbs="breadcrumbs" :company="company" />
             <slot />
         </AppContent>
     </AppShell>

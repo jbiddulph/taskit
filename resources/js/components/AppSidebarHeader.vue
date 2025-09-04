@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
+import CompanyCodeDisplay from '@/components/CompanyCodeDisplay.vue';
 import NotificationBadge from '@/components/NotificationBadge.vue';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { BreadcrumbItemType } from '@/types';
@@ -7,9 +8,15 @@ import type { BreadcrumbItemType } from '@/types';
 withDefaults(
     defineProps<{
         breadcrumbs?: BreadcrumbItemType[];
+        company?: {
+            id: number;
+            name: string;
+            code: string;
+        } | null;
     }>(),
     {
         breadcrumbs: () => [],
+        company: null,
     },
 );
 </script>
@@ -25,8 +32,12 @@ withDefaults(
             </template>
         </div>
         
-        <!-- Notification Badge on the right -->
-        <div class="flex items-center">
+        <!-- Company Code and Notification Badge on the right -->
+        <div class="flex items-center gap-3">
+            <CompanyCodeDisplay 
+                :company-code="company?.code" 
+                :company-name="company?.name" 
+            />
             <NotificationBadge />
         </div>
     </header>
