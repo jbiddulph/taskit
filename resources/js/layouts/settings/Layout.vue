@@ -28,7 +28,8 @@ const sidebarNavItems = computed(() => {
     ];
 
     // Add Company Logo for paid plans only
-    const company = (page.props.user as any)?.company;
+    const user = (page.props.auth as any)?.user;
+    const company = user?.company;
     if (company && ['MIDI', 'MAXI'].includes(company.subscription_type)) {
         items.push({
             title: 'Company Logo',
