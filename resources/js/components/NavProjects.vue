@@ -40,6 +40,12 @@ onMounted(async () => {
       }
     }
   });
+  
+  // Listen for subscription downgrades to reload projects list
+  window.addEventListener('subscription-downgrade', async (e: any) => {
+    console.log('Subscription downgrade detected, reloading projects:', e.detail);
+    await loadProjects();
+  });
 });
 
 const loadProjects = async () => {

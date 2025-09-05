@@ -199,7 +199,20 @@ const changePlan = async (planType: string) => {
                 console.log('Redirecting to Stripe checkout:', redirectUrl);
                 window.location.href = redirectUrl;
             } else {
-                console.log('No redirect URL found, reloading page');
+                console.log('No redirect URL found, handling plan change');
+                
+                // If downgrading (MAXI->MIDI or paid->FREE), reload projects to hide excess ones
+                const isDowngrade = (currentPlan.value === 'MAXI' && planType === 'MIDI') || 
+                                  (currentPlan.value !== 'FREE' && planType === 'FREE');
+                
+                if (isDowngrade) {
+                    console.log('Downgrade detected, emitting project reload event');
+                    // Emit global event to reload projects
+                    window.dispatchEvent(new CustomEvent('subscription-downgrade', { 
+                        detail: { newPlan: planType, oldPlan: currentPlan.value }
+                    }));
+                }
+                
                 window.location.reload();
             }
         },

@@ -1306,6 +1306,34 @@ onMounted(async () => {
       todos.value = [];
     }
   });
+  
+  // Listen for subscription downgrades to reload projects and check current project access
+  window.addEventListener('subscription-downgrade', async (e: any) => {
+    console.log('Subscription downgrade detected in TodoBoard, reloading projects:', e.detail);
+    await loadProjects();
+    
+    // Check if current project is still accessible after downgrade
+    if (currentProject.value) {
+      const projectStillAccessible = projects.value.find(p => p.id === currentProject.value!.id);
+      if (!projectStillAccessible) {
+        console.log('Current project is no longer accessible after downgrade, clearing selection');
+        currentProject.value = null;
+        selectedProjectId.value = '';
+        localStorage.removeItem('currentProjectId');
+        todos.value = [];
+        
+        // Auto-select first available project if any
+        if (projects.value.length > 0) {
+          const firstProject = projects.value[0];
+          currentProject.value = firstProject;
+          selectedProjectId.value = firstProject.id.toString();
+          localStorage.setItem('currentProjectId', firstProject.id.toString());
+          await loadTodos();
+          console.log('Auto-selected first accessible project after downgrade:', firstProject.name);
+        }
+      }
+    }
+  });
 
   // Load saved views
   loadSavedViews();
