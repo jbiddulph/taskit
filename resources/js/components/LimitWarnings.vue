@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
 import { X, AlertTriangle, Users, FolderOpen } from 'lucide-vue-next';
 
 interface Company {
@@ -64,9 +65,16 @@ const getMemberUpgradeText = () => {
 
 const getProjectUpgradeText = () => {
     if (props.company.subscription_type === 'FREE') {
-        return 'Upgrade to MIDI (£6/month) or MAXI (£9/month) to create more projects.';
+        return {
+            before: 'to create more projects.',
+            hasLinks: true
+        };
     }
-    return 'Upgrade to MAXI (£9/month) to create more projects.';
+    return {
+        before: 'to create more projects.',
+        hasLinks: true,
+        singlePlan: 'MAXI'
+    };
 };
 </script>
 
@@ -120,7 +128,22 @@ const getProjectUpgradeText = () => {
                     </div>
                     <p class="text-sm text-red-700 dark:text-red-300">
                         {{ company.current_project_count }}/{{ company.project_limit }} projects used. 
-                        {{ getProjectUpgradeText() }}
+                        <template v-if="company.subscription_type === 'FREE'">
+                            <Link href="/subscription" class="font-bold text-red-800 dark:text-red-200 hover:underline">
+                                Upgrade to MIDI (£6/month)
+                            </Link>
+                            or 
+                            <Link href="/subscription" class="font-bold text-red-800 dark:text-red-200 hover:underline">
+                                MAXI (£9/month)
+                            </Link>
+                            {{ getProjectUpgradeText().before }}
+                        </template>
+                        <template v-else>
+                            <Link href="/subscription" class="font-bold text-red-800 dark:text-red-200 hover:underline">
+                                Upgrade to MAXI (£9/month)
+                            </Link>
+                            {{ getProjectUpgradeText().before }}
+                        </template>
                     </p>
                 </div>
             </div>
