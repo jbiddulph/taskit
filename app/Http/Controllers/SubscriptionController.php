@@ -130,6 +130,9 @@ class SubscriptionController extends Controller
         $company = $user->company;
 
         if (!$company) {
+            if ($request->header('X-Inertia')) {
+                return back()->withErrors(['plan' => 'No company found']);
+            }
             return response()->json(['message' => 'No company found'], 400);
         }
 
@@ -147,6 +150,9 @@ class SubscriptionController extends Controller
                     'subscription_ends_at' => null,
                 ]);
 
+                if ($request->header('X-Inertia')) {
+                    return back()->with('success', 'Downgraded to FREE plan successfully');
+                }
                 return response()->json(['message' => 'Downgraded to FREE plan successfully']);
             }
 
@@ -155,6 +161,9 @@ class SubscriptionController extends Controller
                 $this->stripeService->updateSubscription($company->stripe_subscription_id, $request->plan);
                 $company->update(['subscription_type' => $request->plan]);
                 
+                if ($request->header('X-Inertia')) {
+                    return back()->with('success', 'Subscription updated successfully');
+                }
                 return response()->json(['message' => 'Subscription updated successfully']);
             } else {
                 // Need to create new subscription
@@ -166,10 +175,19 @@ class SubscriptionController extends Controller
                     route('subscription.cancel')
                 );
 
-                        // Force JSON response for subscription redirects to avoid CORS issues
-        return response()->json(['redirect_url' => $session->url]);
+                        // For Stripe redirects, we need to handle this specially
+                // Since Inertia can't handle external redirects directly, we'll use a session flash
+                if ($request->header('X-Inertia')) {
+                    return back()->with('redirect_url', $session->url);
+                }
+                
+                // Fallback for direct requests
+                return response()->json(['redirect_url' => $session->url]);
             }
         } catch (\Exception $e) {
+            if ($request->header('X-Inertia')) {
+                return back()->withErrors(['plan' => $e->getMessage()]);
+            }
             return response()->json(['message' => $e->getMessage()], 400);
         }
     }

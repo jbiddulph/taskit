@@ -89,49 +89,34 @@ const changePlan = async (planType: string) => {
     }
     
     loading.value = true;
-    console.log('Setting loading to true, starting request...');
+    console.log('Setting loading to true, using Inertia router...');
     
-    try {
-        console.log('Making fetch request to /subscription/change-plan');
-        const response = await fetch('/subscription/change-plan', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({ plan: planType }),
-        });
-
-        console.log('Response received:', response.status, response.statusText);
-        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-        if (response.ok) {
-            const data = await response.json();
-            console.log('Response data:', data);
-            
-            if (data.redirect_url) {
-                console.log('Redirecting to Stripe checkout:', data.redirect_url);
-                window.location.href = data.redirect_url;
+    // Use Inertia router to handle CSRF automatically
+    router.post('/subscription/change-plan', { plan: planType }, {
+        onBefore: () => {
+            console.log('Inertia request starting...');
+        },
+        onSuccess: (page) => {
+            console.log('Inertia request successful:', page);
+            // Check if we got a redirect URL in the response
+            const flash = page.props.flash as any;
+            if (flash?.redirect_url) {
+                console.log('Redirecting to Stripe checkout:', flash.redirect_url);
+                window.location.href = flash.redirect_url;
             } else {
                 console.log('Plan change successful, reloading page');
                 window.location.reload();
             }
-        } else {
-            console.log('Response not ok, getting error data...');
-            const errorData = await response.json().catch(() => ({}));
-            console.log('Error data:', errorData);
-            const errorMessage = errorData.message || errorData.errors?.plan?.[0] || 'Failed to change plan';
-            throw new Error(errorMessage);
+        },
+        onError: (errors) => {
+            console.error('Inertia request failed:', errors);
+            alert('An error occurred while changing your plan. Please try again.');
+        },
+        onFinish: () => {
+            console.log('Setting loading to false');
+            loading.value = false;
         }
-    } catch (error) {
-        console.error('Error changing plan:', error);
-        alert('An error occurred while changing your plan. Please try again.');
-    } finally {
-        console.log('Setting loading to false');
-        loading.value = false;
-    }
+    });
 };
 
 const cancelSubscription = async () => {
