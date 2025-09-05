@@ -109,92 +109,47 @@ const changePlan = async (planType: string) => {
     }
     
     loading.value = true;
-    console.log('Setting loading to true, trying fetch approach...');
+    console.log('Setting loading to true, using Inertia router approach...');
     
-    try {
-        // First, get a fresh CSRF token
-        const tokenResponse = await fetch('/sanctum/csrf-cookie', {
-            credentials: 'same-origin'
-        });
-        console.log('CSRF token refresh:', tokenResponse.status);
-        
-        // Wait a moment for the cookie to be set
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        let csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-        
-        // If meta tag token is missing or invalid, try to get from cookie
-        if (!csrfToken || csrfToken.length < 10) {
-            const cookies = document.cookie.split(';');
-            const xsrfCookie = cookies.find(cookie => cookie.trim().startsWith('XSRF-TOKEN='));
-            if (xsrfCookie) {
-                csrfToken = decodeURIComponent(xsrfCookie.split('=')[1]);
-                console.log('Using CSRF token from cookie');
-            }
-        }
-        
-        console.log('CSRF token found:', csrfToken ? 'YES' : 'NO');
-        console.log('CSRF token length:', csrfToken.length);
-        
-        if (!csrfToken || csrfToken.length < 10) {
-            console.error('Invalid or missing CSRF token after all attempts');
-            throw new Error('CSRF token not available');
-        }
-        
-        const response = await fetch('/subscription/change-plan', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
-            },
-            credentials: 'same-origin',
-            body: JSON.stringify({ plan: planType }),
-        });
-
-        console.log('Response received:', response.status, response.statusText);
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.log('Response data:', data);
-            console.log('Checking for redirect_url...');
-            console.log('data.redirect_url exists:', !!data.redirect_url);
-            console.log('data.redirect_url value:', data.redirect_url);
+    // Use Inertia router which handles CSRF automatically
+    router.post('/subscription/change-plan', { plan: planType }, {
+        onBefore: () => {
+            console.log('Inertia request starting...');
+            return true;
+        },
+        onSuccess: (page) => {
+            console.log('Inertia request successful:', page);
             
-            if (data.redirect_url) {
-                console.log('About to redirect to Stripe checkout:', data.redirect_url);
-                console.log('Current window.location.href before redirect:', window.location.href);
-                
-                // Don't set loading to false for redirects - let the page redirect
-                console.log('Attempting immediate redirect...');
-                
-                // Use top-level window to ensure redirect works even in iframe
-                if (window.top) {
-                    window.top.location.href = data.redirect_url;
-                } else {
-                    window.location.href = data.redirect_url;
-                }
-                
-                // Exit early to avoid finally block
-                return;
+            // Check for redirect URL in flash data or response
+            const flash = page.props.flash as any;
+            console.log('Flash data:', flash);
+            
+            if (flash?.redirect_url) {
+                console.log('Redirecting to Stripe checkout from flash:', flash.redirect_url);
+                window.location.href = flash.redirect_url;
             } else {
-                console.log('No redirect_url found, reloading page');
-                loading.value = false;
+                console.log('Plan change successful, reloading page');
                 window.location.reload();
             }
-        } else {
-            console.log('Response not ok:', response.status);
-            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-            console.log('Error data:', errorData);
-            throw new Error(errorData.message || 'Failed to change plan');
+        },
+        onError: (errors) => {
+            console.error('Inertia request failed:', errors);
+            console.log('Error details:', JSON.stringify(errors, null, 2));
+            
+            let errorMessage = 'An error occurred while changing your plan. Please try again.';
+            if (errors.plan) {
+                errorMessage = errors.plan;
+            } else if (errors.message) {
+                errorMessage = errors.message;
+            }
+            
+            alert(errorMessage);
+        },
+        onFinish: () => {
+            console.log('Setting loading to false');
+            loading.value = false;
         }
-    } catch (error) {
-        console.error('Error changing plan:', error);
-        alert('An error occurred while changing your plan. Please try again.');
-        loading.value = false;
-    }
-    // Note: Don't set loading to false in finally block as it might interfere with redirects
+    });
 };
 
 // Test if component is mounting properly

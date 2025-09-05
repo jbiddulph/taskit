@@ -306,7 +306,12 @@ class SubscriptionController extends Controller
                     'plan' => $request->plan
                 ]);
 
-                // Always return JSON response for AJAX requests (which our frontend is making)
+                // Handle both Inertia and JSON requests for checkout sessions
+                if ($request->header('X-Inertia')) {
+                    return back()->with('redirect_url', $session->url);
+                }
+                
+                // Fallback for direct JSON requests
                 return response()->json(['redirect_url' => $session->url]);
             }
         } catch (\Exception $e) {
