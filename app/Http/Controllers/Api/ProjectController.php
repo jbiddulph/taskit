@@ -27,11 +27,9 @@ class ProjectController extends Controller
         $user = Auth::user();
         
         if ($user->company_id) {
-            // Show all projects from the same company
-            $projects = Project::forCompany($user->company_id)
+            // Show visible projects from the same company (respecting subscription limits)
+            $projects = Project::visibleForCompany($user->company_id)
                 ->withCount('todos')
-                ->orderBy('viewing_order')
-                ->orderBy('name')
                 ->get();
         } else {
             // Fallback to user's own projects if no company
@@ -265,11 +263,9 @@ class ProjectController extends Controller
         $user = Auth::user();
         
         if ($user->company_id) {
-            // Show all projects from the same company
-            $projects = Project::forCompany($user->company_id)
+            // Show visible projects from the same company (respecting subscription limits)
+            $projects = Project::visibleForCompany($user->company_id)
                 ->with(['todos'])
-                ->orderBy('viewing_order')
-                ->orderBy('name')
                 ->get()
                 ->map(function ($project) {
                     $stats = $project->getStats();

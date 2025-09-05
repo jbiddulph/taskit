@@ -239,6 +239,16 @@ class SubscriptionController extends Controller
 
         try {
             if ($request->plan === 'FREE') {
+                // Check if downgrading will hide projects
+                $currentProjectCount = $company->getCurrentProjectCount();
+                $freeLimit = 10;
+                
+                $message = 'Downgraded to FREE plan successfully';
+                if ($currentProjectCount > $freeLimit) {
+                    $hiddenCount = $currentProjectCount - $freeLimit;
+                    $message .= ". Note: {$hiddenCount} projects are now hidden and will become visible again if you upgrade to a paid plan.";
+                }
+                
                 // Downgrade to FREE - cancel subscription
                 if ($company->stripe_subscription_id) {
                     $this->stripeService->cancelSubscription($company->stripe_subscription_id);
@@ -247,7 +257,8 @@ class SubscriptionController extends Controller
                 \Log::info('Clearing all Stripe data for FREE downgrade', [
                     'company_id' => $company->id,
                     'clearing_customer_id' => $company->stripe_customer_id,
-                    'clearing_subscription_id' => $company->stripe_subscription_id
+                    'clearing_subscription_id' => $company->stripe_subscription_id,
+                    'projects_hidden' => $currentProjectCount > $freeLimit ? $currentProjectCount - $freeLimit : 0
                 ]);
                 
                 // Clear ALL Stripe-related data so company can resubscribe later
@@ -265,25 +276,39 @@ class SubscriptionController extends Controller
                 ]);
 
                 if ($request->header('X-Inertia')) {
-                    return back()->with('success', 'Downgraded to FREE plan successfully');
+                    return back()->with('success', $message);
                 }
-                return response()->json(['message' => 'Downgraded to FREE plan successfully']);
+                return response()->json(['message' => $message]);
             }
 
             if ($company->stripe_subscription_id) {
+                // Check if downgrading from MAXI to MIDI will hide projects
+                $message = 'Subscription updated successfully';
+                if ($company->subscription_type === 'MAXI' && $request->plan === 'MIDI') {
+                    $currentProjectCount = $company->getCurrentProjectCount();
+                    $midiLimit = 20;
+                    
+                    if ($currentProjectCount > $midiLimit) {
+                        $hiddenCount = $currentProjectCount - $midiLimit;
+                        $message .= ". Note: {$hiddenCount} projects are now hidden and will become visible again if you upgrade back to MAXI.";
+                    }
+                }
+                
                 // Update existing subscription
                 \Log::info('Updating existing subscription', [
                     'subscription_id' => $company->stripe_subscription_id,
-                    'new_plan' => $request->plan
+                    'new_plan' => $request->plan,
+                    'projects_hidden' => ($company->subscription_type === 'MAXI' && $request->plan === 'MIDI') ? 
+                        max(0, $company->getCurrentProjectCount() - 20) : 0
                 ]);
                 
                 $this->stripeService->updateSubscription($company->stripe_subscription_id, $request->plan);
                 $company->update(['subscription_type' => $request->plan]);
                 
                 if ($request->header('X-Inertia')) {
-                    return back()->with('success', 'Subscription updated successfully');
+                    return back()->with('success', $message);
                 }
-                return response()->json(['message' => 'Subscription updated successfully']);
+                return response()->json(['message' => $message]);
             } else {
                 // No existing subscription - create new checkout session
                 \Log::info('Creating new checkout session for plan upgrade', [

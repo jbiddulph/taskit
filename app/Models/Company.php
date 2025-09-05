@@ -60,6 +60,22 @@ class Company extends Model
     }
 
     /**
+     * Get visible projects based on subscription tier
+     */
+    public function visibleProjects()
+    {
+        $query = $this->projects()->orderBy('viewing_order');
+        
+        // Apply subscription-based limits
+        $limit = $this->getProjectLimit();
+        if ($limit !== PHP_INT_MAX) {
+            $query->limit($limit);
+        }
+        
+        return $query;
+    }
+
+    /**
      * Get member limit based on subscription type
      */
     public function getMemberLimit(): int
