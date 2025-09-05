@@ -5,7 +5,7 @@ use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
 // Subscription management routes (require authentication)
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'subscription.access'])->group(function () {
     Route::get('/subscription', [SubscriptionController::class, 'index'])->name('subscription.index');
     Route::post('/subscription/checkout', [SubscriptionController::class, 'checkout'])->name('subscription.checkout');
     Route::get('/subscription/success', [SubscriptionController::class, 'success'])->name('subscription.success');

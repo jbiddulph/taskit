@@ -239,14 +239,27 @@ class SubscriptionController extends Controller
 
         try {
             if ($request->plan === 'FREE') {
-                // Check if downgrading will hide projects
+                // Check if downgrading will hide projects and block users
                 $currentProjectCount = $company->getCurrentProjectCount();
-                $freeLimit = 10;
+                $currentMemberCount = $company->getCurrentMemberCount();
+                $freeLimitProjects = 10;
+                $freeLimitMembers = 5;
                 
                 $message = 'Downgraded to FREE plan successfully';
-                if ($currentProjectCount > $freeLimit) {
-                    $hiddenCount = $currentProjectCount - $freeLimit;
-                    $message .= ". Note: {$hiddenCount} projects are now hidden and will become visible again if you upgrade to a paid plan.";
+                $warnings = [];
+                
+                if ($currentProjectCount > $freeLimitProjects) {
+                    $hiddenCount = $currentProjectCount - $freeLimitProjects;
+                    $warnings[] = "{$hiddenCount} projects are now hidden";
+                }
+                
+                if ($currentMemberCount > $freeLimitMembers) {
+                    $blockedCount = $currentMemberCount - $freeLimitMembers;
+                    $warnings[] = "{$blockedCount} users will be blocked from accessing the system";
+                }
+                
+                if (!empty($warnings)) {
+                    $message .= ". Note: " . implode(' and ', $warnings) . ". They will become accessible again if you upgrade to a paid plan.";
                 }
                 
                 // Downgrade to FREE - cancel subscription
@@ -258,7 +271,8 @@ class SubscriptionController extends Controller
                     'company_id' => $company->id,
                     'clearing_customer_id' => $company->stripe_customer_id,
                     'clearing_subscription_id' => $company->stripe_subscription_id,
-                    'projects_hidden' => $currentProjectCount > $freeLimit ? $currentProjectCount - $freeLimit : 0
+                    'projects_hidden' => $currentProjectCount > $freeLimitProjects ? $currentProjectCount - $freeLimitProjects : 0,
+                    'users_blocked' => $currentMemberCount > $freeLimitMembers ? $currentMemberCount - $freeLimitMembers : 0
                 ]);
                 
                 // Clear ALL Stripe-related data so company can resubscribe later
@@ -282,15 +296,28 @@ class SubscriptionController extends Controller
             }
 
             if ($company->stripe_subscription_id) {
-                // Check if downgrading from MAXI to MIDI will hide projects
+                // Check if downgrading from MAXI to MIDI will hide projects and block users
                 $message = 'Subscription updated successfully';
                 if ($company->subscription_type === 'MAXI' && $request->plan === 'MIDI') {
                     $currentProjectCount = $company->getCurrentProjectCount();
-                    $midiLimit = 20;
+                    $currentMemberCount = $company->getCurrentMemberCount();
+                    $midiLimitProjects = 20;
+                    $midiLimitMembers = 10;
                     
-                    if ($currentProjectCount > $midiLimit) {
-                        $hiddenCount = $currentProjectCount - $midiLimit;
-                        $message .= ". Note: {$hiddenCount} projects are now hidden and will become visible again if you upgrade back to MAXI.";
+                    $warnings = [];
+                    
+                    if ($currentProjectCount > $midiLimitProjects) {
+                        $hiddenCount = $currentProjectCount - $midiLimitProjects;
+                        $warnings[] = "{$hiddenCount} projects are now hidden";
+                    }
+                    
+                    if ($currentMemberCount > $midiLimitMembers) {
+                        $blockedCount = $currentMemberCount - $midiLimitMembers;
+                        $warnings[] = "{$blockedCount} users will be blocked from accessing the system";
+                    }
+                    
+                    if (!empty($warnings)) {
+                        $message .= ". Note: " . implode(' and ', $warnings) . ". They will become accessible again if you upgrade back to MAXI.";
                     }
                 }
                 
@@ -299,7 +326,9 @@ class SubscriptionController extends Controller
                     'subscription_id' => $company->stripe_subscription_id,
                     'new_plan' => $request->plan,
                     'projects_hidden' => ($company->subscription_type === 'MAXI' && $request->plan === 'MIDI') ? 
-                        max(0, $company->getCurrentProjectCount() - 20) : 0
+                        max(0, $company->getCurrentProjectCount() - 20) : 0,
+                    'users_blocked' => ($company->subscription_type === 'MAXI' && $request->plan === 'MIDI') ? 
+                        max(0, $company->getCurrentMemberCount() - 10) : 0
                 ]);
                 
                 $this->stripeService->updateSubscription($company->stripe_subscription_id, $request->plan);

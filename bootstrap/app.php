@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckSubscriptionAccess;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -30,6 +31,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
         ]);
 
+        // Register middleware aliases
+        $middleware->alias([
+            'subscription.access' => CheckSubscriptionAccess::class,
+        ]);
 
     })
     ->withExceptions(function (Exceptions $exceptions) {

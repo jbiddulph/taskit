@@ -76,6 +76,37 @@ class Company extends Model
     }
 
     /**
+     * Get accessible users based on subscription tier (first N registered)
+     */
+    public function accessibleUsers()
+    {
+        $query = $this->users()->orderBy('created_at');
+        
+        // Apply subscription-based limits
+        $limit = $this->getMemberLimit();
+        if ($limit !== PHP_INT_MAX) {
+            $query->limit($limit);
+        }
+        
+        return $query;
+    }
+
+    /**
+     * Check if a specific user can access the system based on subscription limits
+     */
+    public function userCanAccess(User $user): bool
+    {
+        if ($user->company_id !== $this->id) {
+            return false;
+        }
+        
+        // Get the user IDs of accessible users (first N registered)
+        $accessibleUserIds = $this->accessibleUsers()->pluck('id')->toArray();
+        
+        return in_array($user->id, $accessibleUserIds);
+    }
+
+    /**
      * Get member limit based on subscription type
      */
     public function getMemberLimit(): int

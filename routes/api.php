@@ -25,7 +25,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 // Todo routes
-Route::middleware(['web', 'auth'])->group(function () {
+Route::middleware(['web', 'auth', 'subscription.access'])->group(function () {
     // Project routes (place specific routes BEFORE resource to avoid {project} capturing)
     Route::patch('projects/update-order', [ProjectController::class, 'updateOrder']);
     Route::apiResource('projects', ProjectController::class);

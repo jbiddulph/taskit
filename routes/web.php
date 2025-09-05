@@ -24,7 +24,7 @@ Route::get('dashboard', function () {
             'project_limit' => $company->getProjectLimit(),
         ] : null,
     ]);
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'verified', 'subscription.access'])->name('dashboard');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
