@@ -4,7 +4,7 @@ import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, CreditCard, AlertCircle } from 'lucide-vue-next';
+import { Check, CreditCard, AlertCircle, Crown } from 'lucide-vue-next';
 
 interface User {
     id: number;
@@ -81,20 +81,46 @@ const getPlanColor = (planType: string): string => {
     switch (planType) {
         case 'FREE': return 'gray';
         case 'MIDI': return 'blue';
-        case 'MAXI': return 'purple';
+        case 'MAXI': return 'yellow'; // Using yellow for gold effect
         default: return 'gray';
     }
 };
 
 const getPlanClasses = (planType: string): string => {
-    const color = getPlanColor(planType);
     const isCurrentPlan = planType === currentPlan.value;
     
     if (isCurrentPlan) {
-        return `border-2 border-${color}-500 bg-${color}-50 dark:bg-${color}-900/20`;
+        if (planType === 'MAXI') {
+            // Gold styling for MAXI plan
+            return 'border-2 border-yellow-500 bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20';
+        } else if (planType === 'MIDI') {
+            // Blue styling for MIDI plan
+            return 'border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/20';
+        } else {
+            // Gray styling for FREE plan
+            return 'border-2 border-gray-500 bg-gray-50 dark:bg-gray-900/20';
+        }
     }
     
     return 'border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600';
+};
+
+const getButtonText = (planType: string): string => {
+    const current = currentPlan.value;
+    const plan = props.plans[planType as keyof Plans];
+    
+    // Define plan hierarchy for comparison
+    const planHierarchy = { 'FREE': 0, 'MIDI': 1, 'MAXI': 2 };
+    const currentLevel = planHierarchy[current as keyof typeof planHierarchy] || 0;
+    const targetLevel = planHierarchy[planType as keyof typeof planHierarchy] || 0;
+    
+    if (targetLevel > currentLevel) {
+        return `Upgrade to ${plan.name}`;
+    } else if (targetLevel < currentLevel) {
+        return `Downgrade to ${plan.name}`;
+    } else {
+        return `Switch to ${plan.name}`;
+    }
 };
 
 const handlePlanChange = (planType: string) => {
@@ -336,7 +362,13 @@ const cancelSubscription = async () => {
                     >
                         <CardHeader class="text-center">
                             <CardTitle class="flex items-center justify-center gap-2">
-                                {{ plan.name }}
+                                <Crown 
+                                    v-if="planType === 'MAXI'" 
+                                    class="w-5 h-5 text-yellow-500" 
+                                />
+                                <span :class="{ 'text-yellow-600 dark:text-yellow-400': planType === 'MAXI' }">
+                                    {{ plan.name }}
+                                </span>
                                 <Check 
                                     v-if="planType === currentPlan" 
                                     class="w-5 h-5 text-green-500" 
@@ -370,7 +402,7 @@ const cancelSubscription = async () => {
                             :variant="planType === 'MIDI' ? 'default' : 'outline'"
                             class="w-full"
                         >
-                            {{ planType === 'FREE' ? 'Downgrade to Free' : `Upgrade to ${plan.name}` }}
+                            {{ getButtonText(planType) }}
                         </Button>
                             
                             <div v-else class="text-center">
