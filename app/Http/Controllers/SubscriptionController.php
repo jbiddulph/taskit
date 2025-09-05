@@ -183,6 +183,9 @@ class SubscriptionController extends Controller
      */
     public function changePlan(Request $request)
     {
+        error_log('=== CONTROLLER METHOD START ===');
+        error_log('Request plan: ' . $request->input('plan'));
+        
         \Log::info('=== SUBSCRIPTION CHANGE PLAN CONTROLLER HIT ===', [
             'timestamp' => now()->toISOString(),
             'method' => $request->method(),
@@ -262,13 +265,22 @@ class SubscriptionController extends Controller
                     'has_customer_id' => !empty($company->stripe_customer_id)
                 ]);
                 
-                $session = $this->stripeService->createCheckoutSession(
-                    $company,
-                    $request->plan,
-                    $user->email,
-                    route('subscription.success') . '?session_id={CHECKOUT_SESSION_ID}',
-                    route('subscription.cancel')
-                );
+                try {
+                    error_log('=== CALLING STRIPE SERVICE ===');
+                    $session = $this->stripeService->createCheckoutSession(
+                        $company,
+                        $request->plan,
+                        $user->email,
+                        route('subscription.success') . '?session_id={CHECKOUT_SESSION_ID}',
+                        route('subscription.cancel')
+                    );
+                    error_log('=== STRIPE SERVICE SUCCESS ===');
+                } catch (\Exception $stripeException) {
+                    error_log('=== STRIPE SERVICE FAILED ===');
+                    error_log('Stripe error: ' . $stripeException->getMessage());
+                    error_log('Stripe error file: ' . $stripeException->getFile() . ':' . $stripeException->getLine());
+                    throw $stripeException; // Re-throw to trigger main exception handler
+                }
 
                 \Log::info('Checkout session created successfully', [
                     'session_id' => $session->id,
