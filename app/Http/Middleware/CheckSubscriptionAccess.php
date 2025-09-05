@@ -26,8 +26,25 @@ class CheckSubscriptionAccess
         
         $company = $user->company;
         
+        // Debug logging
+        \Log::info('CheckSubscriptionAccess middleware', [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'company_id' => $company->id,
+            'subscription_type' => $company->subscription_type,
+            'member_limit' => $company->getMemberLimit(),
+            'current_member_count' => $company->getCurrentMemberCount(),
+        ]);
+        
         // Check if user has access based on subscription limits
-        if (!$company->userCanAccess($user)) {
+        $canAccess = $company->userCanAccess($user);
+        \Log::info('User access check result', [
+            'user_id' => $user->id,
+            'can_access' => $canAccess,
+            'accessible_user_ids' => $company->accessibleUsers()->pluck('id')->toArray()
+        ]);
+        
+        if (!$canAccess) {
             Auth::logout();
             
             // Clear session
