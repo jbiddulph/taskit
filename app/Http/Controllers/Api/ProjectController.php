@@ -75,6 +75,27 @@ class ProjectController extends Controller
 
         $user = Auth::user();
         
+        // Check project limits for company users
+        if ($user->company_id) {
+            $company = $user->company;
+            if (!$company->canCreateNewProjects()) {
+                $currentCount = $company->getCurrentProjectCount();
+                $limit = $company->getProjectLimit();
+                
+                if ($company->subscription_type === 'FREE') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Project limit reached ({$limit} projects). Upgrade to MIDI (£6/month) or MAXI (£9/month) to create more projects."
+                    ], 403);
+                } elseif ($company->subscription_type === 'MIDI') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Project limit reached ({$limit} projects). Upgrade to MAXI (£9/month) to create more projects."
+                    ], 403);
+                }
+            }
+        }
+        
         $project = Project::create([
             'name' => $request->name,
             'description' => $request->description,
