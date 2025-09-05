@@ -78,19 +78,39 @@ const changePlan = async (planType: string) => {
     
     loading.value = true;
     
-    router.post('/subscription/change-plan', { plan: planType }, {
-        onSuccess: () => {
-            // Page will automatically reload with updated data
-            // The Inertia::location() redirect or back() will handle this
-        },
-        onError: (errors) => {
-            console.error('Error changing plan:', errors);
-            alert('An error occurred while changing your plan. Please try again.');
-        },
-        onFinish: () => {
-            loading.value = false;
+    try {
+        const response = await fetch('/subscription/change-plan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ plan: planType }),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.redirect_url) {
+                // Redirect to Stripe checkout
+                window.location.href = data.redirect_url;
+            } else {
+                // Plan change was successful, reload page
+                window.location.reload();
+            }
+        } else {
+            const errorData = await response.json().catch(() => ({}));
+            const errorMessage = errorData.message || errorData.errors?.plan?.[0] || 'Failed to change plan';
+            throw new Error(errorMessage);
         }
-    });
+    } catch (error) {
+        console.error('Error changing plan:', error);
+        alert('An error occurred while changing your plan. Please try again.');
+    } finally {
+        loading.value = false;
+    }
 };
 
 const cancelSubscription = async () => {
