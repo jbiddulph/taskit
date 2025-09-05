@@ -74,11 +74,20 @@ const getPlanClasses = (planType: string): string => {
 };
 
 const changePlan = async (planType: string) => {
-    if (loading.value || planType === currentPlan.value) return;
+    console.log('changePlan called with:', planType);
+    console.log('loading.value:', loading.value);
+    console.log('currentPlan.value:', currentPlan.value);
+    
+    if (loading.value || planType === currentPlan.value) {
+        console.log('Exiting early - either loading or same plan');
+        return;
+    }
     
     loading.value = true;
+    console.log('Setting loading to true, starting request...');
     
     try {
+        console.log('Making fetch request to /subscription/change-plan');
         const response = await fetch('/subscription/change-plan', {
             method: 'POST',
             headers: {
@@ -90,18 +99,24 @@ const changePlan = async (planType: string) => {
             body: JSON.stringify({ plan: planType }),
         });
 
+        console.log('Response received:', response.status, response.statusText);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
         if (response.ok) {
             const data = await response.json();
+            console.log('Response data:', data);
             
             if (data.redirect_url) {
-                // Redirect to Stripe checkout
+                console.log('Redirecting to Stripe checkout:', data.redirect_url);
                 window.location.href = data.redirect_url;
             } else {
-                // Plan change was successful, reload page
+                console.log('Plan change successful, reloading page');
                 window.location.reload();
             }
         } else {
+            console.log('Response not ok, getting error data...');
             const errorData = await response.json().catch(() => ({}));
+            console.log('Error data:', errorData);
             const errorMessage = errorData.message || errorData.errors?.plan?.[0] || 'Failed to change plan';
             throw new Error(errorMessage);
         }
@@ -109,6 +124,7 @@ const changePlan = async (planType: string) => {
         console.error('Error changing plan:', error);
         alert('An error occurred while changing your plan. Please try again.');
     } finally {
+        console.log('Setting loading to false');
         loading.value = false;
     }
 };
