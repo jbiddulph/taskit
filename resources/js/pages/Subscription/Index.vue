@@ -49,6 +49,22 @@ const loading = ref(false);
 const currentPlan = computed(() => props.company?.subscription_type || 'FREE');
 const isActive = computed(() => props.company?.subscription_status === 'active');
 
+// Filter out FREE plan for paid users - they can only upgrade or cancel
+const availablePlans = computed(() => {
+    const current = currentPlan.value;
+    
+    // If user is on FREE plan, show all plans
+    if (current === 'FREE') {
+        return props.plans;
+    }
+    
+    // If user is on paid plan (MIDI/MAXI), hide FREE plan
+    // They can only upgrade/downgrade between MIDI/MAXI or cancel subscription
+    const filtered = { ...props.plans };
+    delete filtered.FREE;
+    return filtered;
+});
+
 // Debug logging
 console.log('=== SUBSCRIPTION PAGE LOADED ===');
 console.log('Props:', props);
@@ -314,7 +330,7 @@ const cancelSubscription = async () => {
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Card 
-                        v-for="(plan, planType) in plans" 
+                        v-for="(plan, planType) in availablePlans" 
                         :key="planType"
                         :class="getPlanClasses(planType)"
                     >
