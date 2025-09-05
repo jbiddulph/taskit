@@ -105,16 +105,51 @@ const deleteProject = async (project: Project, event: Event) => {
         try {
           await todoApi.deleteProjectWithTodos(project.id);
           
-          // Remove from local list
+          // Remove from local list and auto-select next project
           const index = projects.value.findIndex(p => p.id === project.id);
           if (index !== -1) {
             projects.value.splice(index, 1);
           }
           
-          // If this was the current project, clear it
+          // If this was the current project, auto-select the next project in order
           if (currentProject.value?.id === project.id) {
-            currentProject.value = null;
-            localStorage.removeItem('currentProjectId');
+            let nextProject = null;
+            
+            if (projects.value.length > 0) {
+              // Try to select the project at the same index position
+              if (index < projects.value.length) {
+                nextProject = projects.value[index];
+              } else if (index > 0) {
+                // If we deleted the last project, select the previous one
+                nextProject = projects.value[index - 1];
+              } else {
+                // If only one project left, select it
+                nextProject = projects.value[0];
+              }
+            }
+            
+            if (nextProject) {
+              currentProject.value = nextProject;
+              localStorage.setItem('currentProjectId', nextProject.id.toString());
+              
+              // Dispatch event to update TodoBoard
+              window.dispatchEvent(new CustomEvent('projectSelected', {
+                detail: { projectId: nextProject.id }
+              }));
+              
+              console.log(`Auto-selected next project: ${nextProject.name}`);
+            } else {
+              // No projects left
+              currentProject.value = null;
+              localStorage.removeItem('currentProjectId');
+              
+              // Dispatch event to clear TodoBoard
+              window.dispatchEvent(new CustomEvent('projectSelected', {
+                detail: { projectId: null }
+              }));
+              
+              console.log('No projects left after deletion');
+            }
           }
           
           console.log(`Project "${project.name}" and ${todoCount} todos deleted successfully`);
@@ -147,16 +182,51 @@ const deleteProject = async (project: Project, event: Event) => {
       try {
         await todoApi.deleteProject(project.id);
         
-        // Remove from local list
+        // Remove from local list and auto-select next project
         const index = projects.value.findIndex(p => p.id === project.id);
         if (index !== -1) {
           projects.value.splice(index, 1);
         }
         
-        // If this was the current project, clear it
+        // If this was the current project, auto-select the next project in order
         if (currentProject.value?.id === project.id) {
-          currentProject.value = null;
-          localStorage.removeItem('currentProjectId');
+          let nextProject = null;
+          
+          if (projects.value.length > 0) {
+            // Try to select the project at the same index position
+            if (index < projects.value.length) {
+              nextProject = projects.value[index];
+            } else if (index > 0) {
+              // If we deleted the last project, select the previous one
+              nextProject = projects.value[index - 1];
+            } else {
+              // If only one project left, select it
+              nextProject = projects.value[0];
+            }
+          }
+          
+          if (nextProject) {
+            currentProject.value = nextProject;
+            localStorage.setItem('currentProjectId', nextProject.id.toString());
+            
+            // Dispatch event to update TodoBoard
+            window.dispatchEvent(new CustomEvent('projectSelected', {
+              detail: { projectId: nextProject.id }
+            }));
+            
+            console.log(`Auto-selected next project: ${nextProject.name}`);
+          } else {
+            // No projects left
+            currentProject.value = null;
+            localStorage.removeItem('currentProjectId');
+            
+            // Dispatch event to clear TodoBoard
+            window.dispatchEvent(new CustomEvent('projectSelected', {
+              detail: { projectId: null }
+            }));
+            
+            console.log('No projects left after deletion');
+          }
         }
         
                   console.log(`Project "${project.name}" deleted successfully`);
