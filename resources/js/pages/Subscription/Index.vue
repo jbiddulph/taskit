@@ -399,7 +399,7 @@ const cancelSubscription = async () => {
                             v-if="planType !== currentPlan"
                             @click="handlePlanChange(planType)"
                             :disabled="loading"
-                            :variant="planType === 'MIDI' ? 'default' : 'outline'"
+                            :variant="planType === 'MIDI' || planType === 'MAXI' ? 'default' : 'outline'"
                             class="w-full"
                         >
                             {{ getButtonText(planType) }}
