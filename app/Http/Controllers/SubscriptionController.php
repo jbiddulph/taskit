@@ -167,9 +167,24 @@ class SubscriptionController extends Controller
         try {
             $this->stripeService->cancelSubscription($company->stripe_subscription_id);
             
+            \Log::info('Clearing all Stripe data for company', [
+                'company_id' => $company->id,
+                'clearing_customer_id' => $company->stripe_customer_id,
+                'clearing_subscription_id' => $company->stripe_subscription_id
+            ]);
+            
+            // Clear ALL Stripe-related data so company can resubscribe later
             $company->update([
-                'subscription_status' => 'canceled',
                 'subscription_type' => 'FREE',
+                'subscription_status' => 'active',         // Set to active for FREE plan
+                'stripe_customer_id' => null,             // Clear customer ID
+                'stripe_subscription_id' => null,         // Clear subscription ID
+                'subscription_ends_at' => null,           // Clear end date
+            ]);
+
+            \Log::info('Successfully cleared all Stripe data', [
+                'company_id' => $company->id,
+                'new_subscription_type' => 'FREE'
             ]);
 
             return back()->with('success', 'Subscription cancelled successfully');
@@ -229,11 +244,24 @@ class SubscriptionController extends Controller
                     $this->stripeService->cancelSubscription($company->stripe_subscription_id);
                 }
                 
+                \Log::info('Clearing all Stripe data for FREE downgrade', [
+                    'company_id' => $company->id,
+                    'clearing_customer_id' => $company->stripe_customer_id,
+                    'clearing_subscription_id' => $company->stripe_subscription_id
+                ]);
+                
+                // Clear ALL Stripe-related data so company can resubscribe later
                 $company->update([
                     'subscription_type' => 'FREE',
                     'subscription_status' => 'active',
-                    'stripe_subscription_id' => null,
-                    'subscription_ends_at' => null,
+                    'stripe_customer_id' => null,      // Clear customer ID
+                    'stripe_subscription_id' => null,   // Clear subscription ID  
+                    'subscription_ends_at' => null,     // Clear end date
+                ]);
+
+                \Log::info('Successfully cleared all Stripe data for FREE downgrade', [
+                    'company_id' => $company->id,
+                    'new_subscription_type' => 'FREE'
                 ]);
 
                 if ($request->header('X-Inertia')) {

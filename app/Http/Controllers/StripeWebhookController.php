@@ -154,16 +154,25 @@ class StripeWebhookController extends Controller
             return;
         }
 
-        $company->update([
-            'subscription_type' => 'FREE',
-            'subscription_status' => 'canceled',
-            'stripe_subscription_id' => null,
-            'subscription_ends_at' => null,
+        Log::info('Clearing all Stripe data via webhook', [
+            'company_id' => $company->id,
+            'clearing_customer_id' => $company->stripe_customer_id,
+            'clearing_subscription_id' => $company->stripe_subscription_id
         ]);
 
-        Log::info('Subscription deleted', [
+        // Clear ALL Stripe-related data so company can resubscribe later
+        $company->update([
+            'subscription_type' => 'FREE',
+            'subscription_status' => 'active',        // Set to active for FREE plan
+            'stripe_customer_id' => null,            // Clear customer ID
+            'stripe_subscription_id' => null,        // Clear subscription ID
+            'subscription_ends_at' => null,          // Clear end date
+        ]);
+
+        Log::info('Successfully cleared all Stripe data via webhook', [
             'company_id' => $company->id,
-            'subscription_id' => $subscription->id
+            'subscription_id' => $subscription->id,
+            'new_subscription_type' => 'FREE'
         ]);
     }
 
