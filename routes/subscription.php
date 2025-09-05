@@ -4,8 +4,9 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
-// Subscription management routes (require authentication)
-Route::middleware(['auth', 'verified', 'subscription.access'])->group(function () {
+// Subscription management routes (require authentication but NOT subscription access limits)
+// Users must be able to access subscription page to upgrade when over limits
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/subscription', [SubscriptionController::class, 'index'])->name('subscription.index');
     Route::post('/subscription/checkout', [SubscriptionController::class, 'checkout'])->name('subscription.checkout');
     Route::get('/subscription/success', [SubscriptionController::class, 'success'])->name('subscription.success');

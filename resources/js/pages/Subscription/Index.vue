@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,10 +44,14 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const page = usePage();
 
 const loading = ref(false);
 const currentPlan = computed(() => props.company?.subscription_type || 'FREE');
 const isActive = computed(() => props.company?.subscription_status === 'active');
+
+// Get error messages from the page
+const errors = computed(() => page.props.errors as Record<string, string> || {});
 
 // Filter out FREE plan for paid users - they can only upgrade or cancel
 const availablePlans = computed(() => {
@@ -320,6 +324,18 @@ const cancelSubscription = async () => {
                 <p class="text-gray-600 dark:text-gray-400">
                     Manage your TaskIT subscription and billing settings
                 </p>
+            </div>
+
+            <!-- Error Message Display -->
+            <div v-if="errors.subscription" class="mb-6">
+                <Card class="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+                    <CardContent class="p-4">
+                        <div class="flex items-center gap-2 text-red-700 dark:text-red-300">
+                            <AlertCircle class="w-5 h-5 flex-shrink-0" />
+                            <p class="text-sm font-medium">{{ errors.subscription }}</p>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
             <!-- Current Subscription Status -->

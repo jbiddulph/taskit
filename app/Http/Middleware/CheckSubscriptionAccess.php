@@ -34,9 +34,9 @@ class CheckSubscriptionAccess
             $request->session()->invalidate();
             $request->session()->regenerateToken();
             
-            // Redirect to login with error message
-            return redirect()->route('login')->withErrors([
-                'email' => 'Access denied. Your company has exceeded the user limit for the current subscription plan. Please contact an administrator to upgrade the plan or remove inactive users.'
+            // Redirect to subscription page with error message
+            return redirect()->route('subscription.index')->withErrors([
+                'subscription' => 'Access denied. Your company has exceeded the user limit for the current subscription plan. Please upgrade your plan to regain access.'
             ]);
         }
         
