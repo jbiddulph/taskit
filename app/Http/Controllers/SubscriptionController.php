@@ -262,6 +262,9 @@ class SubscriptionController extends Controller
                 ]);
                 
                 try {
+                    // Set Stripe API key
+                    \Stripe\Stripe::setApiKey(config('stripe.secret_key'));
+                    
                     $customer = Customer::retrieve($company->stripe_customer_id);
                     $subscriptions = Subscription::all(['customer' => $company->stripe_customer_id, 'status' => 'active']);
                     
