@@ -49,6 +49,11 @@ const loading = ref(false);
 const currentPlan = computed(() => props.company?.subscription_type || 'FREE');
 const isActive = computed(() => props.company?.subscription_status === 'active');
 
+// Debug logging
+console.log('Subscription page loaded');
+console.log('Props:', props);
+console.log('Current plan computed:', currentPlan.value);
+
 const formatPrice = (price: number): string => {
     return `£${(price / 100).toFixed(0)}`;
 };
@@ -247,7 +252,7 @@ const cancelSubscription = async () => {
                             
                             <Button
                                 v-if="planType !== currentPlan"
-                                @click="changePlan(planType)"
+                                @click="() => { console.log('Button clicked for plan:', planType); changePlan(planType); }"
                                 :disabled="loading"
                                 :variant="planType === 'MIDI' ? 'default' : 'outline'"
                                 class="w-full"
