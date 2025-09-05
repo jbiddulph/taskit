@@ -9,6 +9,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Stripe\Customer;
+use Stripe\Subscription;
 
 class SubscriptionController extends Controller
 {
@@ -144,6 +146,15 @@ class SubscriptionController extends Controller
             return response()->json(['message' => 'No company found'], 400);
         }
 
+        \Log::info('changePlan company details', [
+            'company_id' => $company->id,
+            'current_subscription_type' => $company->subscription_type,
+            'stripe_customer_id' => $company->stripe_customer_id,
+            'stripe_subscription_id' => $company->stripe_subscription_id,
+            'subscription_status' => $company->subscription_status,
+            'requested_plan' => $request->plan
+        ]);
+
         try {
             if ($request->plan === 'FREE') {
                 // Downgrade to FREE - cancel subscription
@@ -166,6 +177,11 @@ class SubscriptionController extends Controller
 
             if ($company->stripe_subscription_id) {
                 // Update existing subscription
+                \Log::info('Updating existing subscription', [
+                    'subscription_id' => $company->stripe_subscription_id,
+                    'new_plan' => $request->plan
+                ]);
+                
                 $this->stripeService->updateSubscription($company->stripe_subscription_id, $request->plan);
                 $company->update(['subscription_type' => $request->plan]);
                 
@@ -173,6 +189,40 @@ class SubscriptionController extends Controller
                     return back()->with('success', 'Subscription updated successfully');
                 }
                 return response()->json(['message' => 'Subscription updated successfully']);
+            } elseif ($company->stripe_customer_id) {
+                // Company has customer ID but no subscription ID - check Stripe for existing subscriptions
+                \Log::info('Company has customer ID but no subscription ID, checking Stripe', [
+                    'customer_id' => $company->stripe_customer_id
+                ]);
+                
+                try {
+                    $customer = Customer::retrieve($company->stripe_customer_id);
+                    $subscriptions = Subscription::all(['customer' => $company->stripe_customer_id, 'status' => 'active']);
+                    
+                    if ($subscriptions->data && count($subscriptions->data) > 0) {
+                        $activeSubscription = $subscriptions->data[0];
+                        \Log::info('Found active subscription for customer', [
+                            'subscription_id' => $activeSubscription->id
+                        ]);
+                        
+                        // Update the company with the found subscription ID
+                        $company->update(['stripe_subscription_id' => $activeSubscription->id]);
+                        
+                        // Now update the subscription
+                        $this->stripeService->updateSubscription($activeSubscription->id, $request->plan);
+                        $company->update(['subscription_type' => $request->plan]);
+                        
+                        if ($request->header('X-Inertia')) {
+                            return back()->with('success', 'Subscription updated successfully');
+                        }
+                        return response()->json(['message' => 'Subscription updated successfully']);
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Error checking existing subscriptions', ['error' => $e->getMessage()]);
+                }
+                
+                // If no active subscription found, create new one
+                \Log::info('No active subscription found, creating new checkout session');
             } else {
                 // Need to create new subscription
                 $session = $this->stripeService->createCheckoutSession(
