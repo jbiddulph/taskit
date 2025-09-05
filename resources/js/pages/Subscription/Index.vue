@@ -121,6 +121,11 @@ const changePlan = async (planType: string) => {
             console.log('Inertia request successful:', page);
             console.log('Full page props:', JSON.stringify(page.props, null, 2));
             
+            // Debug all props keys to see what's actually available
+            console.log('All page props keys:', Object.keys(page.props));
+            console.log('Direct redirect_url check:', page.props.redirect_url);
+            console.log('Has redirect_url prop:', 'redirect_url' in page.props);
+            
             // Check for redirect URL in flash data or response
             const flash = page.props.flash as any;
             console.log('Flash data:', flash);
