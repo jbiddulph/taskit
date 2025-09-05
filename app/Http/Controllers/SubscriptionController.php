@@ -308,9 +308,11 @@ class SubscriptionController extends Controller
 
                 // Handle both Inertia and JSON requests for checkout sessions
                 if ($request->header('X-Inertia')) {
+                    \Log::info('Returning Inertia response with redirect_url', ['redirect_url' => $session->url]);
                     return back()->with('redirect_url', $session->url);
                 }
                 
+                \Log::info('Returning JSON response with redirect_url', ['redirect_url' => $session->url]);
                 // Fallback for direct JSON requests
                 return response()->json(['redirect_url' => $session->url]);
             }

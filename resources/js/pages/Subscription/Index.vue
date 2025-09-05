@@ -119,16 +119,40 @@ const changePlan = async (planType: string) => {
         },
         onSuccess: (page) => {
             console.log('Inertia request successful:', page);
+            console.log('Full page props:', JSON.stringify(page.props, null, 2));
             
             // Check for redirect URL in flash data or response
             const flash = page.props.flash as any;
             console.log('Flash data:', flash);
+            console.log('Flash type:', typeof flash);
+            console.log('Flash keys:', flash ? Object.keys(flash) : 'no flash');
+            
+            // Try different ways to access the redirect URL
+            let redirectUrl = null;
             
             if (flash?.redirect_url) {
-                console.log('Redirecting to Stripe checkout from flash:', flash.redirect_url);
-                window.location.href = flash.redirect_url;
+                redirectUrl = flash.redirect_url;
+                console.log('Found redirect_url in flash.redirect_url');
+            } else if (page.props.redirect_url) {
+                redirectUrl = page.props.redirect_url;
+                console.log('Found redirect_url in page.props.redirect_url');
+            } else if (flash && typeof flash === 'object') {
+                // Check all flash properties
+                for (const [key, value] of Object.entries(flash)) {
+                    console.log(`Flash ${key}:`, value);
+                    if (key === 'redirect_url' || (typeof value === 'string' && value.includes('checkout.stripe.com'))) {
+                        redirectUrl = value as string;
+                        console.log(`Found redirect URL in flash.${key}`);
+                        break;
+                    }
+                }
+            }
+            
+            if (redirectUrl) {
+                console.log('Redirecting to Stripe checkout:', redirectUrl);
+                window.location.href = redirectUrl;
             } else {
-                console.log('Plan change successful, reloading page');
+                console.log('No redirect URL found, reloading page');
                 window.location.reload();
             }
         },
