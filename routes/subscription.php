@@ -15,7 +15,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         error_log('=== ROUTE HIT BEFORE CONTROLLER ===');
         error_log('User ID: ' . auth()->id());
         error_log('Plan: ' . $request->input('plan'));
-        return app(SubscriptionController::class)->changePlan($request);
+        
+        try {
+            error_log('About to call controller method...');
+            $result = app(SubscriptionController::class)->changePlan($request);
+            error_log('Controller method completed successfully');
+            return $result;
+        } catch (\Exception $e) {
+            error_log('=== CONTROLLER EXCEPTION ===');
+            error_log('Exception: ' . $e->getMessage());
+            error_log('File: ' . $e->getFile() . ':' . $e->getLine());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            throw $e; // Re-throw to maintain normal error handling
+        }
     })->name('subscription.change-plan');
     Route::post('/subscription/test-csrf', function() {
         \Log::info('=== TEST CSRF ROUTE HIT ===', [
