@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
@@ -50,9 +50,12 @@ const currentPlan = computed(() => props.company?.subscription_type || 'FREE');
 const isActive = computed(() => props.company?.subscription_status === 'active');
 
 // Debug logging
-console.log('Subscription page loaded');
+console.log('=== SUBSCRIPTION PAGE LOADED ===');
 console.log('Props:', props);
 console.log('Current plan computed:', currentPlan.value);
+console.log('Loading state:', loading.value);
+console.log('Component initial setup complete');
+console.log('Component fully loaded at:', new Date().toISOString());
 
 const formatPrice = (price: number): string => {
     return `£${(price / 100).toFixed(0)}`;
@@ -76,6 +79,23 @@ const getPlanClasses = (planType: string): string => {
     }
     
     return 'border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600';
+};
+
+const handlePlanChange = (planType: string) => {
+    console.log('=== BUTTON CLICKED ===');
+    console.log('Plan type:', planType);
+    console.log('Current time:', new Date().toISOString());
+    console.log('Loading state:', loading.value);
+    console.log('Current plan:', currentPlan.value);
+    console.log('Function exists:', typeof changePlan);
+    console.log('About to call changePlan...');
+    
+    try {
+        changePlan(planType);
+        console.log('changePlan called successfully');
+    } catch (error) {
+        console.error('Error calling changePlan:', error);
+    }
 };
 
 const changePlan = async (planType: string) => {
@@ -157,6 +177,16 @@ const changePlan = async (planType: string) => {
     }
     // Note: Don't set loading to false in finally block as it might interfere with redirects
 };
+
+// Test if component is mounting properly
+onMounted(() => {
+    console.log('=== COMPONENT MOUNTED ===');
+    console.log('onMounted hook called at:', new Date().toISOString());
+    console.log('Final function check:', {
+        handlePlanChange: typeof handlePlanChange,
+        changePlan: typeof changePlan
+    });
+});
 
 const cancelSubscription = async () => {
     if (!confirm('Are you sure you want to cancel your subscription? Your account will be downgraded to the FREE plan.')) {
@@ -274,15 +304,15 @@ const cancelSubscription = async () => {
                                 </li>
                             </ul>
                             
-                            <Button
-                                v-if="planType !== currentPlan"
-                                @click="() => { console.log('Button clicked for plan:', planType); changePlan(planType); }"
-                                :disabled="loading"
-                                :variant="planType === 'MIDI' ? 'default' : 'outline'"
-                                class="w-full"
-                            >
-                                {{ planType === 'FREE' ? 'Downgrade to Free' : `Upgrade to ${plan.name}` }}
-                            </Button>
+                                                    <Button
+                            v-if="planType !== currentPlan"
+                            @click="handlePlanChange(planType)"
+                            :disabled="loading"
+                            :variant="planType === 'MIDI' ? 'default' : 'outline'"
+                            class="w-full"
+                        >
+                            {{ planType === 'FREE' ? 'Downgrade to Free' : `Upgrade to ${plan.name}` }}
+                        </Button>
                             
                             <div v-else class="text-center">
                                 <span class="text-sm text-gray-500">Current Plan</span>
