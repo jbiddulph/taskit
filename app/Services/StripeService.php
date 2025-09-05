@@ -82,6 +82,22 @@ class StripeService
     }
 
     /**
+     * Retrieve a checkout session
+     */
+    public function retrieveCheckoutSession(string $sessionId): Session
+    {
+        return Session::retrieve($sessionId);
+    }
+
+    /**
+     * Retrieve a subscription
+     */
+    public function retrieveSubscription(string $subscriptionId): Subscription
+    {
+        return Subscription::retrieve($subscriptionId);
+    }
+
+    /**
      * Cancel a subscription
      */
     public function cancelSubscription(string $subscriptionId): Subscription

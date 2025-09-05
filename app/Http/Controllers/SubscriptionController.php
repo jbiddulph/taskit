@@ -81,8 +81,69 @@ class SubscriptionController extends Controller
             return redirect()->route('dashboard')->with('error', 'Invalid session');
         }
 
-        // The webhook will handle updating the company's subscription details
-        return redirect()->route('dashboard')->with('success', 'Subscription activated successfully!');
+        try {
+            // Retrieve the checkout session from Stripe
+            $session = $this->stripeService->retrieveCheckoutSession($sessionId);
+            
+            if (!$session) {
+                return redirect()->route('dashboard')->with('error', 'Invalid session');
+            }
+
+            // Get company info from session metadata
+            $companyId = $session->metadata->company_id ?? null;
+            $planType = $session->metadata->plan_type ?? null;
+
+            if (!$companyId || !$planType) {
+                \Log::error('Missing metadata in checkout session', ['session_id' => $sessionId]);
+                return redirect()->route('dashboard')->with('error', 'Session metadata missing');
+            }
+
+            $user = Auth::user();
+            $company = $user->company;
+
+            if (!$company || $company->id != $companyId) {
+                \Log::error('Company mismatch in checkout session', [
+                    'session_company_id' => $companyId,
+                    'user_company_id' => $company->id ?? 'null'
+                ]);
+                return redirect()->route('dashboard')->with('error', 'Company mismatch');
+            }
+
+            // Update company with subscription details
+            $updateData = [
+                'stripe_customer_id' => $session->customer,
+                'subscription_type' => $planType,
+                'subscription_status' => 'active',
+            ];
+
+            // If there's a subscription ID, save it
+            if ($session->subscription) {
+                $updateData['stripe_subscription_id'] = $session->subscription;
+                
+                // Get subscription details for end date
+                $subscription = $this->stripeService->retrieveSubscription($session->subscription);
+                if ($subscription && $subscription->current_period_end) {
+                    $updateData['subscription_ends_at'] = now()->createFromTimestamp($subscription->current_period_end);
+                }
+            }
+
+            $company->update($updateData);
+
+            \Log::info('Subscription activated via success callback', [
+                'company_id' => $company->id,
+                'session_id' => $sessionId,
+                'subscription_id' => $session->subscription ?? 'none',
+                'plan_type' => $planType
+            ]);
+
+            return redirect()->route('dashboard')->with('success', 'Subscription activated successfully!');
+        } catch (\Exception $e) {
+            \Log::error('Error processing subscription success', [
+                'session_id' => $sessionId,
+                'error' => $e->getMessage()
+            ]);
+            return redirect()->route('dashboard')->with('error', 'Error activating subscription. Please contact support.');
+        }
     }
 
     /**
