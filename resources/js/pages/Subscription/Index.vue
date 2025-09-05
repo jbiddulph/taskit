@@ -118,9 +118,28 @@ const changePlan = async (planType: string) => {
         });
         console.log('CSRF token refresh:', tokenResponse.status);
         
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        // Wait a moment for the cookie to be set
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        let csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        
+        // If meta tag token is missing or invalid, try to get from cookie
+        if (!csrfToken || csrfToken.length < 10) {
+            const cookies = document.cookie.split(';');
+            const xsrfCookie = cookies.find(cookie => cookie.trim().startsWith('XSRF-TOKEN='));
+            if (xsrfCookie) {
+                csrfToken = decodeURIComponent(xsrfCookie.split('=')[1]);
+                console.log('Using CSRF token from cookie');
+            }
+        }
+        
         console.log('CSRF token found:', csrfToken ? 'YES' : 'NO');
         console.log('CSRF token length:', csrfToken.length);
+        
+        if (!csrfToken || csrfToken.length < 10) {
+            console.error('Invalid or missing CSRF token after all attempts');
+            throw new Error('CSRF token not available');
+        }
         
         const response = await fetch('/subscription/change-plan', {
             method: 'POST',

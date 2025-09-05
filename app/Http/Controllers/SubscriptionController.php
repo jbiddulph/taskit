@@ -286,6 +286,11 @@ class SubscriptionController extends Controller
                 \Log::info('No active subscription found, creating new checkout session');
             } else {
                 // Need to create new subscription
+                \Log::info('Creating new subscription for company without customer ID', [
+                    'company_id' => $company->id,
+                    'plan' => $request->plan
+                ]);
+                
                 $session = $this->stripeService->createCheckoutSession(
                     $company,
                     $request->plan,
@@ -294,13 +299,14 @@ class SubscriptionController extends Controller
                     route('subscription.cancel')
                 );
 
-                        // For Stripe redirects, we need to handle this specially
-                // Since Inertia can't handle external redirects directly, we'll use a session flash
-                if ($request->header('X-Inertia')) {
-                    return back()->with('redirect_url', $session->url);
-                }
-                
-                // Fallback for direct requests
+                \Log::info('Checkout session created successfully', [
+                    'session_id' => $session->id,
+                    'session_url' => $session->url,
+                    'company_id' => $company->id,
+                    'plan' => $request->plan
+                ]);
+
+                // Always return JSON response for AJAX requests (which our frontend is making)
                 return response()->json(['redirect_url' => $session->url]);
             }
         } catch (\Exception $e) {
