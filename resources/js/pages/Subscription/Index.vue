@@ -119,13 +119,29 @@ const changePlan = async (planType: string) => {
         if (response.ok) {
             const data = await response.json();
             console.log('Response data:', data);
+            console.log('Checking for redirect_url...');
+            console.log('data.redirect_url exists:', !!data.redirect_url);
+            console.log('data.redirect_url value:', data.redirect_url);
             
             if (data.redirect_url) {
-                console.log('Redirecting to Stripe checkout:', data.redirect_url);
-                window.location.href = data.redirect_url;
+                console.log('About to redirect to Stripe checkout:', data.redirect_url);
+                console.log('Current window.location.href before redirect:', window.location.href);
+                
+                // Don't set loading to false for redirects - let the page redirect
+                console.log('Attempting immediate redirect...');
+                
+                // Use top-level window to ensure redirect works even in iframe
+                if (window.top) {
+                    window.top.location.href = data.redirect_url;
+                } else {
+                    window.location.href = data.redirect_url;
+                }
+                
+                // Exit early to avoid finally block
                 return;
             } else {
-                console.log('Plan change successful, reloading page');
+                console.log('No redirect_url found, reloading page');
+                loading.value = false;
                 window.location.reload();
             }
         } else {
@@ -137,10 +153,9 @@ const changePlan = async (planType: string) => {
     } catch (error) {
         console.error('Error changing plan:', error);
         alert('An error occurred while changing your plan. Please try again.');
-    } finally {
-        console.log('Setting loading to false');
         loading.value = false;
     }
+    // Note: Don't set loading to false in finally block as it might interfere with redirects
 };
 
 const cancelSubscription = async () => {
