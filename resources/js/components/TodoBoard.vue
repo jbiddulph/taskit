@@ -1279,24 +1279,28 @@ onMounted(async () => {
     console.log('ProjectListChanged event received, refreshing projects and checking current selection');
     await loadProjects();
     
-    // Reload current project from localStorage to sync with NavProjects
+    // Force reload current project from localStorage to sync with NavProjects
     const storedProjectId = localStorage.getItem('currentProjectId');
+    console.log('Stored project ID after project list change:', storedProjectId);
+    console.log('Available projects:', projects.value.map(p => ({ id: p.id, name: p.name })));
+    
     if (storedProjectId) {
       const projectExists = projects.value.find(p => p.id === parseInt(storedProjectId));
       if (projectExists) {
+        console.log('Found stored project in list:', projectExists.name);
         currentProject.value = projectExists;
         selectedProjectId.value = storedProjectId;
         await loadTodos();
-        console.log('Synced with stored project:', projectExists.name);
+        console.log('Successfully synced with stored project:', projectExists.name);
       } else {
-        console.log('Stored project no longer exists, clearing');
+        console.log('Stored project no longer exists in project list, clearing');
         currentProject.value = null;
         selectedProjectId.value = '';
         localStorage.removeItem('currentProjectId');
         todos.value = [];
       }
     } else {
-      // No stored project, clear current selection
+      console.log('No stored project ID found, clearing current selection');
       currentProject.value = null;
       selectedProjectId.value = '';
       todos.value = [];
