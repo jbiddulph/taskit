@@ -44,6 +44,9 @@ class CheckSubscriptionAccess
             'accessible_user_ids' => $company->accessibleUsers()->pluck('id')->toArray()
         ]);
         
+        // TEMPORARILY DISABLED - Allow all users to access so they can upgrade subscription
+        // TODO: Re-enable after subscription is upgraded
+        /*
         if (!$canAccess) {
             Auth::logout();
             
@@ -51,11 +54,12 @@ class CheckSubscriptionAccess
             $request->session()->invalidate();
             $request->session()->regenerateToken();
             
-            // Redirect to subscription page with error message
-            return redirect()->route('subscription.index')->withErrors([
+            // Redirect to subscription page with error message (force HTTPS)
+            return redirect()->route('subscription.index', [], true)->withErrors([
                 'subscription' => 'Access denied. Your company has exceeded the user limit for the current subscription plan. Please upgrade your plan to regain access.'
             ]);
         }
+        */
         
         return $next($request);
     }
