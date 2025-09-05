@@ -94,13 +94,13 @@ class SubscriptionController extends Controller
     /**
      * Cancel subscription
      */
-    public function cancelSubscription(): JsonResponse
+    public function cancelSubscription()
     {
         $user = Auth::user();
         $company = $user->company;
 
         if (!$company || !$company->stripe_subscription_id) {
-            return response()->json(['error' => 'No active subscription found'], 400);
+            return back()->withErrors(['subscription' => 'No active subscription found']);
         }
 
         try {
@@ -111,16 +111,16 @@ class SubscriptionController extends Controller
                 'subscription_type' => 'FREE',
             ]);
 
-            return response()->json(['message' => 'Subscription cancelled successfully']);
+            return back()->with('success', 'Subscription cancelled successfully');
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return back()->withErrors(['subscription' => $e->getMessage()]);
         }
     }
 
     /**
      * Change subscription plan
      */
-    public function changePlan(Request $request): JsonResponse
+    public function changePlan(Request $request)
     {
         $request->validate([
             'plan' => 'required|in:FREE,MIDI,MAXI',
@@ -130,7 +130,7 @@ class SubscriptionController extends Controller
         $company = $user->company;
 
         if (!$company) {
-            return response()->json(['error' => 'No company found'], 400);
+            return back()->withErrors(['plan' => 'No company found']);
         }
 
         try {
@@ -147,7 +147,7 @@ class SubscriptionController extends Controller
                     'subscription_ends_at' => null,
                 ]);
 
-                return response()->json(['message' => 'Downgraded to FREE plan successfully']);
+                return back()->with('success', 'Downgraded to FREE plan successfully');
             }
 
             if ($company->stripe_subscription_id) {
@@ -155,7 +155,7 @@ class SubscriptionController extends Controller
                 $this->stripeService->updateSubscription($company->stripe_subscription_id, $request->plan);
                 $company->update(['subscription_type' => $request->plan]);
                 
-                return response()->json(['message' => 'Subscription updated successfully']);
+                return back()->with('success', 'Subscription updated successfully');
             } else {
                 // Need to create new subscription
                 $session = $this->stripeService->createCheckoutSession(
@@ -166,10 +166,10 @@ class SubscriptionController extends Controller
                     route('subscription.cancel')
                 );
 
-                return response()->json(['checkout_url' => $session->url]);
+                return Inertia::location($session->url);
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return back()->withErrors(['plan' => $e->getMessage()]);
         }
     }
 }

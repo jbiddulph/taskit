@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -78,31 +78,19 @@ const changePlan = async (planType: string) => {
     
     loading.value = true;
     
-    try {
-        const response = await fetch('/subscription/change-plan', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-            },
-            body: JSON.stringify({ plan: planType }),
-        });
-        
-        const data = await response.json();
-        
-        if (data.checkout_url) {
-            window.location.href = data.checkout_url;
-        } else if (data.message) {
-            window.location.reload();
-        } else if (data.error) {
-            alert(data.error);
+    router.post('/subscription/change-plan', { plan: planType }, {
+        onSuccess: () => {
+            // Page will automatically reload with updated data
+            // The Inertia::location() redirect or back() will handle this
+        },
+        onError: (errors) => {
+            console.error('Error changing plan:', errors);
+            alert('An error occurred while changing your plan. Please try again.');
+        },
+        onFinish: () => {
+            loading.value = false;
         }
-    } catch (error) {
-        console.error('Error changing plan:', error);
-        alert('An error occurred while changing your plan. Please try again.');
-    } finally {
-        loading.value = false;
-    }
+    });
 };
 
 const cancelSubscription = async () => {
@@ -112,28 +100,18 @@ const cancelSubscription = async () => {
     
     loading.value = true;
     
-    try {
-        const response = await fetch('/subscription/cancel-subscription', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-            },
-        });
-        
-        const data = await response.json();
-        
-        if (data.message) {
-            window.location.reload();
-        } else if (data.error) {
-            alert(data.error);
+    router.post('/subscription/cancel-subscription', {}, {
+        onSuccess: () => {
+            // Page will automatically reload with updated data
+        },
+        onError: (errors) => {
+            console.error('Error cancelling subscription:', errors);
+            alert('An error occurred while cancelling your subscription. Please try again.');
+        },
+        onFinish: () => {
+            loading.value = false;
         }
-    } catch (error) {
-        console.error('Error cancelling subscription:', error);
-        alert('An error occurred while cancelling your subscription. Please try again.');
-    } finally {
-        loading.value = false;
-    }
+    });
 };
 </script>
 
