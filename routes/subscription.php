@@ -12,6 +12,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/subscription/cancel', [SubscriptionController::class, 'cancel'])->name('subscription.cancel');
     Route::post('/subscription/cancel-subscription', [SubscriptionController::class, 'cancelSubscription'])->name('subscription.cancel-subscription');
     Route::post('/subscription/change-plan', [SubscriptionController::class, 'changePlan'])->name('subscription.change-plan');
+    Route::post('/subscription/test-csrf', function() {
+        \Log::info('=== TEST CSRF ROUTE HIT ===', [
+            'timestamp' => now()->toISOString(),
+            'user_id' => auth()->id()
+        ]);
+        return response()->json(['message' => 'CSRF test successful']);
+    });
 });
 
 // Stripe webhook (no authentication required)
