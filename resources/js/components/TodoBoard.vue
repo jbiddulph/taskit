@@ -1217,11 +1217,23 @@ onMounted(async () => {
   
   // Also listen for custom events from the sidebar
   window.addEventListener('projectSelected', async (e: any) => {
-    if (e.detail?.projectId && !isUpdatingProject.value) {
+    if (!isUpdatingProject.value) {
       isUpdatingProject.value = true;
       try {
-        localStorage.setItem('currentProjectId', e.detail.projectId.toString());
-        await loadCurrentProject();
+        if (e.detail?.projectId) {
+          // Project was selected
+          console.log('Project selected event received:', e.detail.projectId);
+          localStorage.setItem('currentProjectId', e.detail.projectId.toString());
+          await loadCurrentProject();
+          await loadTodos();
+        } else {
+          // Project was cleared (null projectId)
+          console.log('Project cleared event received');
+          currentProject.value = null;
+          selectedProjectId.value = '';
+          localStorage.removeItem('currentProjectId');
+          todos.value = [];
+        }
       } finally {
         isUpdatingProject.value = false;
       }
@@ -1232,6 +1244,63 @@ onMounted(async () => {
   window.addEventListener('openCreateProjectModal', () => {
     showCreateProject.value = true;
     resetNewProject();
+  });
+  
+  // Listen for project changes (like deletion) to refresh project list
+  window.addEventListener('todoChanged', async () => {
+    console.log('TodoChanged event received, refreshing projects');
+    await loadProjects();
+    
+    // Check if current project still exists
+    if (currentProject.value) {
+      const projectStillExists = projects.value.find(p => p.id === currentProject.value!.id);
+      if (!projectStillExists) {
+        console.log('Current project no longer exists, clearing selection');
+        currentProject.value = null;
+        selectedProjectId.value = '';
+        localStorage.removeItem('currentProjectId');
+        todos.value = [];
+        
+        // Auto-select first available project if any
+        if (projects.value.length > 0) {
+          const firstProject = projects.value[0];
+          currentProject.value = firstProject;
+          selectedProjectId.value = firstProject.id.toString();
+          localStorage.setItem('currentProjectId', firstProject.id.toString());
+          await loadTodos();
+          console.log('Auto-selected first available project:', firstProject.name);
+        }
+      }
+    }
+  });
+  
+  // Listen for project list changes (more specific event for project deletions)
+  window.addEventListener('projectListChanged', async () => {
+    console.log('ProjectListChanged event received, refreshing projects and checking current selection');
+    await loadProjects();
+    
+    // Reload current project from localStorage to sync with NavProjects
+    const storedProjectId = localStorage.getItem('currentProjectId');
+    if (storedProjectId) {
+      const projectExists = projects.value.find(p => p.id === parseInt(storedProjectId));
+      if (projectExists) {
+        currentProject.value = projectExists;
+        selectedProjectId.value = storedProjectId;
+        await loadTodos();
+        console.log('Synced with stored project:', projectExists.name);
+      } else {
+        console.log('Stored project no longer exists, clearing');
+        currentProject.value = null;
+        selectedProjectId.value = '';
+        localStorage.removeItem('currentProjectId');
+        todos.value = [];
+      }
+    } else {
+      // No stored project, clear current selection
+      currentProject.value = null;
+      selectedProjectId.value = '';
+      todos.value = [];
+    }
   });
 
   // Load saved views

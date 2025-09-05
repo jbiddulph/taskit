@@ -154,8 +154,9 @@ const deleteProject = async (project: Project, event: Event) => {
           
           console.log(`Project "${project.name}" and ${todoCount} todos deleted successfully`);
           
-          // Dispatch event to refresh sidebar project stats
+          // Dispatch event to refresh sidebar project stats and TodoBoard
           window.dispatchEvent(new CustomEvent('todoChanged'));
+          window.dispatchEvent(new CustomEvent('projectListChanged'));
           
           if ((window as any).$notify) {
             (window as any).$notify({
@@ -231,8 +232,9 @@ const deleteProject = async (project: Project, event: Event) => {
         
                   console.log(`Project "${project.name}" deleted successfully`);
           
-          // Dispatch event to refresh sidebar project stats
+          // Dispatch event to refresh sidebar project stats and TodoBoard
           window.dispatchEvent(new CustomEvent('todoChanged'));
+          window.dispatchEvent(new CustomEvent('projectListChanged'));
           
           if ((window as any).$notify) {
             (window as any).$notify({
