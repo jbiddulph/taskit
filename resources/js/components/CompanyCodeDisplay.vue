@@ -58,7 +58,7 @@ const copyToClipboard = async () => {
         :class="{
           'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300': subscriptionType === 'FREE',
           'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800': subscriptionType === 'MIDI',
-          'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800': subscriptionType === 'MAXI'
+          'bg-gradient-to-r from-yellow-100 to-amber-100 dark:from-yellow-900/20 dark:to-amber-900/20 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800': subscriptionType === 'MAXI'
         }"
       >
         {{ subscriptionType }}
