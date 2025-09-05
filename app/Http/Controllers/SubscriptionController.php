@@ -130,10 +130,7 @@ class SubscriptionController extends Controller
         $company = $user->company;
 
         if (!$company) {
-            if ($request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
-                return response()->json(['message' => 'No company found'], 400);
-            }
-            return back()->withErrors(['plan' => 'No company found']);
+            return response()->json(['message' => 'No company found'], 400);
         }
 
         try {
@@ -150,10 +147,7 @@ class SubscriptionController extends Controller
                     'subscription_ends_at' => null,
                 ]);
 
-                if ($request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
-                    return response()->json(['message' => 'Downgraded to FREE plan successfully']);
-                }
-                return back()->with('success', 'Downgraded to FREE plan successfully');
+                return response()->json(['message' => 'Downgraded to FREE plan successfully']);
             }
 
             if ($company->stripe_subscription_id) {
@@ -161,10 +155,7 @@ class SubscriptionController extends Controller
                 $this->stripeService->updateSubscription($company->stripe_subscription_id, $request->plan);
                 $company->update(['subscription_type' => $request->plan]);
                 
-                if ($request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
-                    return response()->json(['message' => 'Subscription updated successfully']);
-                }
-                return back()->with('success', 'Subscription updated successfully');
+                return response()->json(['message' => 'Subscription updated successfully']);
             } else {
                 // Need to create new subscription
                 $session = $this->stripeService->createCheckoutSession(
@@ -175,18 +166,11 @@ class SubscriptionController extends Controller
                     route('subscription.cancel')
                 );
 
-                // Handle both AJAX and regular requests
-                if ($request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
-                    return response()->json(['redirect_url' => $session->url]);
-                }
-
-                return Inertia::location($session->url);
+                        // Force JSON response for subscription redirects to avoid CORS issues
+        return response()->json(['redirect_url' => $session->url]);
             }
         } catch (\Exception $e) {
-            if ($request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
-                return response()->json(['message' => $e->getMessage()], 400);
-            }
-            return back()->withErrors(['plan' => $e->getMessage()]);
+            return response()->json(['message' => $e->getMessage()], 400);
         }
     }
 }
