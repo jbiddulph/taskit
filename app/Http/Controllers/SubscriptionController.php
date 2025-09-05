@@ -282,40 +282,41 @@ class SubscriptionController extends Controller
                     \Log::error('Error checking existing subscriptions', ['error' => $e->getMessage()]);
                 }
                 
-                // If no active subscription found, create new one
-                \Log::info('No active subscription found, creating new checkout session');
-            } else {
-                // Need to create new subscription
-                \Log::info('Creating new subscription for company without customer ID', [
-                    'company_id' => $company->id,
-                    'plan' => $request->plan
-                ]);
-                
-                $session = $this->stripeService->createCheckoutSession(
-                    $company,
-                    $request->plan,
-                    $user->email,
-                    route('subscription.success') . '?session_id={CHECKOUT_SESSION_ID}',
-                    route('subscription.cancel')
-                );
-
-                \Log::info('Checkout session created successfully', [
-                    'session_id' => $session->id,
-                    'session_url' => $session->url,
-                    'company_id' => $company->id,
-                    'plan' => $request->plan
-                ]);
-
-                // Handle both Inertia and JSON requests for checkout sessions
-                if ($request->header('X-Inertia')) {
-                    \Log::info('Returning Inertia response with redirect_url', ['redirect_url' => $session->url]);
-                    return back()->with('redirect_url', $session->url);
-                }
-                
-                \Log::info('Returning JSON response with redirect_url', ['redirect_url' => $session->url]);
-                // Fallback for direct JSON requests
-                return response()->json(['redirect_url' => $session->url]);
+                // If no active subscription found, fall through to create new one
+                \Log::info('No active subscription found, will create new checkout session');
             }
+            
+            // Create new subscription (either no customer ID or no active subscription found)
+            \Log::info('Creating new subscription checkout session', [
+                'company_id' => $company->id,
+                'plan' => $request->plan,
+                'has_customer_id' => !empty($company->stripe_customer_id)
+            ]);
+            
+            $session = $this->stripeService->createCheckoutSession(
+                $company,
+                $request->plan,
+                $user->email,
+                route('subscription.success') . '?session_id={CHECKOUT_SESSION_ID}',
+                route('subscription.cancel')
+            );
+
+            \Log::info('Checkout session created successfully', [
+                'session_id' => $session->id,
+                'session_url' => $session->url,
+                'company_id' => $company->id,
+                'plan' => $request->plan
+            ]);
+
+            // Handle both Inertia and JSON requests for checkout sessions
+            if ($request->header('X-Inertia')) {
+                \Log::info('Returning Inertia response with redirect_url', ['redirect_url' => $session->url]);
+                return back()->with('redirect_url', $session->url);
+            }
+            
+            \Log::info('Returning JSON response with redirect_url', ['redirect_url' => $session->url]);
+            // Fallback for direct JSON requests
+            return response()->json(['redirect_url' => $session->url]);
         } catch (\Exception $e) {
             if ($request->header('X-Inertia')) {
                 return back()->withErrors(['plan' => $e->getMessage()]);
