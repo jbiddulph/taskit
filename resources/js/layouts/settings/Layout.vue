@@ -48,6 +48,7 @@ const sidebarNavItems = computed(() => {
         });
     }
 
+    console.log('Final sidebar items:', items);
     return items;
 });
 
@@ -62,7 +63,7 @@ const currentPath = typeof window !== undefined ? window.location.pathname : '';
             <aside class="w-full max-w-xl lg:w-48">
                 <nav class="flex flex-col space-y-1 space-x-0">
                     <Button
-                        v-for="item in sidebarNavItems.value"
+                        v-for="item in sidebarNavItems"
                         :key="typeof item.href === 'string' ? item.href : item.href?.url"
                         variant="ghost"
                         :class="[
