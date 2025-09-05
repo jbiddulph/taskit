@@ -20,7 +20,11 @@ class AssignmentNotificationService
             $assignedUser = User::where('name', $todo->assignee)->first();
             
             if ($assignedUser) {
-                $this->createAssignmentNotification($todo, $assignedUser);
+                // Don't send notification if user is assigning task to themselves
+                $currentUser = auth()->user();
+                if (!$currentUser || $assignedUser->id !== $currentUser->id) {
+                    $this->createAssignmentNotification($todo, $assignedUser);
+                }
             }
         }
     }
@@ -76,7 +80,11 @@ class AssignmentNotificationService
             $assignedUser = User::where('name', $todo->assignee)->first();
             
             if ($assignedUser) {
-                $this->createAssignmentNotification($todo, $assignedUser);
+                // Don't send notification if user is assigning task to themselves
+                $currentUser = auth()->user();
+                if (!$currentUser || $assignedUser->id !== $currentUser->id) {
+                    $this->createAssignmentNotification($todo, $assignedUser);
+                }
             }
         }
     }
