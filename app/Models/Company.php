@@ -49,9 +49,14 @@ class Company extends Model
         return $this->hasMany(User::class);
     }
 
-    public function projects(): HasMany
+    /**
+     * Get projects for this company through users
+     */
+    public function projects()
     {
-        return $this->hasMany(Project::class);
+        return Project::whereHas('owner', function ($query) {
+            $query->where('company_id', $this->id);
+        })->where('is_active', true);
     }
 
     /**
