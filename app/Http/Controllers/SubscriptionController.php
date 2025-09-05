@@ -9,8 +9,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
-use Stripe\Customer;
-use Stripe\Subscription;
 
 class SubscriptionController extends Controller
 {
@@ -255,88 +253,52 @@ class SubscriptionController extends Controller
                     return back()->with('success', 'Subscription updated successfully');
                 }
                 return response()->json(['message' => 'Subscription updated successfully']);
-            } elseif ($company->stripe_customer_id) {
-                // Company has customer ID but no subscription ID - check Stripe for existing subscriptions
-                \Log::info('Company has customer ID but no subscription ID, checking Stripe', [
-                    'customer_id' => $company->stripe_customer_id
+            } else {
+                // No existing subscription - create new checkout session
+                \Log::info('Creating new checkout session for plan upgrade', [
+                    'current_plan' => $company->subscription_type,
+                    'target_plan' => $request->plan,
+                    'company_id' => $company->id,
+                    'has_customer_id' => !empty($company->stripe_customer_id)
                 ]);
                 
-                try {
-                    // Set Stripe API key
-                    \Stripe\Stripe::setApiKey(config('stripe.secret_key'));
-                    
-                    $customer = Customer::retrieve($company->stripe_customer_id);
-                    $subscriptions = Subscription::all(['customer' => $company->stripe_customer_id, 'status' => 'active']);
-                    
-                    if ($subscriptions->data && count($subscriptions->data) > 0) {
-                        $activeSubscription = $subscriptions->data[0];
-                        \Log::info('Found active subscription for customer', [
-                            'subscription_id' => $activeSubscription->id
-                        ]);
-                        
-                        // Update the company with the found subscription ID
-                        $company->update(['stripe_subscription_id' => $activeSubscription->id]);
-                        
-                        // Now update the subscription
-                        $this->stripeService->updateSubscription($activeSubscription->id, $request->plan);
-                        $company->update(['subscription_type' => $request->plan]);
-                        
-                        if ($request->header('X-Inertia')) {
-                            return back()->with('success', 'Subscription updated successfully');
-                        }
-                        return response()->json(['message' => 'Subscription updated successfully']);
-                    }
-                } catch (\Exception $e) {
-                    \Log::error('Error checking existing subscriptions', ['error' => $e->getMessage()]);
-                }
-                
-                // If no active subscription found, fall through to create new one
-                \Log::info('No active subscription found, will create new checkout session');
-            }
-            
-            // Create new subscription (either no customer ID or no active subscription found)
-            \Log::info('Creating new subscription checkout session', [
-                'company_id' => $company->id,
-                'plan' => $request->plan,
-                'has_customer_id' => !empty($company->stripe_customer_id)
-            ]);
-            
-            $session = $this->stripeService->createCheckoutSession(
-                $company,
-                $request->plan,
-                $user->email,
-                route('subscription.success') . '?session_id={CHECKOUT_SESSION_ID}',
-                route('subscription.cancel')
-            );
+                $session = $this->stripeService->createCheckoutSession(
+                    $company,
+                    $request->plan,
+                    $user->email,
+                    route('subscription.success') . '?session_id={CHECKOUT_SESSION_ID}',
+                    route('subscription.cancel')
+                );
 
-            \Log::info('Checkout session created successfully', [
-                'session_id' => $session->id,
-                'session_url' => $session->url,
-                'company_id' => $company->id,
-                'plan' => $request->plan
-            ]);
-
-            // Handle both Inertia and JSON requests for checkout sessions
-            if ($request->header('X-Inertia')) {
-                \Log::info('=== RETURNING INERTIA RESPONSE ===', [
-                    'redirect_url' => $session->url,
+                \Log::info('Checkout session created successfully', [
                     'session_id' => $session->id,
-                    'using_inertia_share' => true
+                    'session_url' => $session->url,
+                    'company_id' => $company->id,
+                    'plan' => $request->plan
                 ]);
-                
-                // Use Inertia's sharing mechanism for flash data
-                return back()->with([
-                    'flash' => [
+
+                // Handle both Inertia and JSON requests for checkout sessions
+                if ($request->header('X-Inertia')) {
+                    \Log::info('=== RETURNING INERTIA RESPONSE ===', [
                         'redirect_url' => $session->url,
                         'session_id' => $session->id,
-                        'message' => 'Redirecting to Stripe checkout...'
-                    ]
-                ]);
+                        'using_inertia_share' => true
+                    ]);
+                    
+                    // Use Inertia's sharing mechanism for flash data
+                    return back()->with([
+                        'flash' => [
+                            'redirect_url' => $session->url,
+                            'session_id' => $session->id,
+                            'message' => 'Redirecting to Stripe checkout...'
+                        ]
+                    ]);
+                }
+                
+                \Log::info('=== RETURNING JSON RESPONSE ===', ['redirect_url' => $session->url]);
+                // Fallback for direct JSON requests
+                return response()->json(['redirect_url' => $session->url]);
             }
-            
-            \Log::info('=== RETURNING JSON RESPONSE ===', ['redirect_url' => $session->url]);
-            // Fallback for direct JSON requests
-            return response()->json(['redirect_url' => $session->url]);
         } catch (\Exception $e) {
             \Log::error('=== EXCEPTION IN CHANGE PLAN ===', [
                 'error_message' => $e->getMessage(),
