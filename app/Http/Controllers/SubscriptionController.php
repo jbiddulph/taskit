@@ -290,20 +290,15 @@ class SubscriptionController extends Controller
                 ]);
 
                 // Handle both Inertia and JSON requests for checkout sessions
-                if ($request->header('X-Inertia')) {
-                    \Log::info('=== RETURNING INERTIA RESPONSE ===', [
-                        'redirect_url' => $session->url,
-                        'session_id' => $session->id,
-                        'using_inertia_direct_flash' => true
-                    ]);
-                    
-                    // Use direct flash data (not nested in 'flash' key)
-                    return back()->with('redirect_url', $session->url);
-                }
+                \Log::info('=== RETURNING EXTERNAL REDIRECT ===', [
+                    'redirect_url' => $session->url,
+                    'session_id' => $session->id,
+                    'using_inertia_location' => true
+                ]);
                 
-                \Log::info('=== RETURNING JSON RESPONSE ===', ['redirect_url' => $session->url]);
-                // Fallback for direct JSON requests
-                return response()->json(['redirect_url' => $session->url]);
+                // For Stripe checkout, use Inertia's external location redirect
+                // This works for both Inertia and regular requests
+                return \Inertia\Inertia::location($session->url);
             }
         } catch (\Exception $e) {
             \Log::error('=== EXCEPTION IN CHANGE PLAN ===', [
