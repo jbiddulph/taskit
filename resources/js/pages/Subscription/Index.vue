@@ -176,6 +176,42 @@ const changePlan = async (planType: string) => {
     });
 };
 
+// Get CSRF token from meta tag
+const getCSRFToken = () => {
+    const metaTag = document.querySelector('meta[name="csrf-token"]');
+    return metaTag ? metaTag.getAttribute('content') : '';
+};
+
+// Test CSRF functionality
+const testCSRF = async () => {
+    console.log('=== TESTING CSRF ===');
+    const csrfToken = getCSRFToken();
+    console.log('CSRF Token:', csrfToken ? 'Found' : 'Missing');
+    
+    try {
+        const response = await fetch('/subscription/test-csrf', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
+        
+        console.log('CSRF Test Response:', response.status, response.statusText);
+        if (response.ok) {
+            const data = await response.json();
+            console.log('CSRF Test Success:', data);
+        } else {
+            console.log('CSRF Test Failed:', response.status);
+        }
+    } catch (error) {
+        console.error('CSRF Test Error:', error);
+    }
+};
+
 // Test if component is mounting properly
 onMounted(() => {
     console.log('=== COMPONENT MOUNTED ===');
@@ -184,6 +220,10 @@ onMounted(() => {
         handlePlanChange: typeof handlePlanChange,
         changePlan: typeof changePlan
     });
+    
+    // Run CSRF test automatically
+    console.log('Running automatic CSRF test...');
+    testCSRF();
 });
 
 const cancelSubscription = async () => {
