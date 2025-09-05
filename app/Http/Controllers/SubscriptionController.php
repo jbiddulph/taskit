@@ -122,6 +122,14 @@ class SubscriptionController extends Controller
      */
     public function changePlan(Request $request)
     {
+        \Log::info('changePlan called', [
+            'plan' => $request->plan,
+            'X-Inertia' => $request->header('X-Inertia'),
+            'X-Requested-With' => $request->header('X-Requested-With'),
+            'wantsJson' => $request->wantsJson(),
+            'headers' => $request->headers->all()
+        ]);
+
         $request->validate([
             'plan' => 'required|in:FREE,MIDI,MAXI',
         ]);

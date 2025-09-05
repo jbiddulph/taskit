@@ -89,34 +89,58 @@ const changePlan = async (planType: string) => {
     }
     
     loading.value = true;
-    console.log('Setting loading to true, using Inertia router...');
+    console.log('Setting loading to true, trying fetch approach...');
     
-    // Use Inertia router to handle CSRF automatically
-    router.post('/subscription/change-plan', { plan: planType }, {
-        onBefore: () => {
-            console.log('Inertia request starting...');
-        },
-        onSuccess: (page) => {
-            console.log('Inertia request successful:', page);
-            // Check if we got a redirect URL in the response
-            const flash = page.props.flash as any;
-            if (flash?.redirect_url) {
-                console.log('Redirecting to Stripe checkout:', flash.redirect_url);
-                window.location.href = flash.redirect_url;
+    try {
+        // First, get a fresh CSRF token
+        const tokenResponse = await fetch('/sanctum/csrf-cookie', {
+            credentials: 'same-origin'
+        });
+        console.log('CSRF token refresh:', tokenResponse.status);
+        
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        console.log('CSRF token found:', csrfToken ? 'YES' : 'NO');
+        console.log('CSRF token length:', csrfToken.length);
+        
+        const response = await fetch('/subscription/change-plan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ plan: planType }),
+        });
+
+        console.log('Response received:', response.status, response.statusText);
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Response data:', data);
+            
+            if (data.redirect_url) {
+                console.log('Redirecting to Stripe checkout:', data.redirect_url);
+                window.location.href = data.redirect_url;
+                return;
             } else {
                 console.log('Plan change successful, reloading page');
                 window.location.reload();
             }
-        },
-        onError: (errors) => {
-            console.error('Inertia request failed:', errors);
-            alert('An error occurred while changing your plan. Please try again.');
-        },
-        onFinish: () => {
-            console.log('Setting loading to false');
-            loading.value = false;
+        } else {
+            console.log('Response not ok:', response.status);
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            console.log('Error data:', errorData);
+            throw new Error(errorData.message || 'Failed to change plan');
         }
-    });
+    } catch (error) {
+        console.error('Error changing plan:', error);
+        alert('An error occurred while changing your plan. Please try again.');
+    } finally {
+        console.log('Setting loading to false');
+        loading.value = false;
+    }
 };
 
 const cancelSubscription = async () => {
