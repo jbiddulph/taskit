@@ -6,22 +6,38 @@ import { appearance } from '@/routes';
 import { edit as editPassword } from '@/routes/password';
 import { edit } from '@/routes/profile';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
-const sidebarNavItems: NavItem[] = [
-    {
-        title: 'Profile',
-        href: edit(),
-    },
-    {
-        title: 'Password',
-        href: editPassword(),
-    },
-    {
-        title: 'Appearance',
-        href: appearance(),
-    },
-];
+const page = usePage();
+
+const sidebarNavItems = computed(() => {
+    const items: NavItem[] = [
+        {
+            title: 'Profile',
+            href: edit(),
+        },
+        {
+            title: 'Password',
+            href: editPassword(),
+        },
+        {
+            title: 'Appearance',
+            href: appearance(),
+        },
+    ];
+
+    // Add Company Logo for paid plans only
+    const company = (page.props.user as any)?.company;
+    if (company && ['MIDI', 'MAXI'].includes(company.subscription_type)) {
+        items.push({
+            title: 'Company Logo',
+            href: '/settings/company-logo',
+        });
+    }
+
+    return items;
+});
 
 const currentPath = typeof window !== undefined ? window.location.pathname : '';
 </script>
@@ -34,7 +50,7 @@ const currentPath = typeof window !== undefined ? window.location.pathname : '';
             <aside class="w-full max-w-xl lg:w-48">
                 <nav class="flex flex-col space-y-1 space-x-0">
                     <Button
-                        v-for="item in sidebarNavItems"
+                        v-for="item in sidebarNavItems.value"
                         :key="typeof item.href === 'string' ? item.href : item.href?.url"
                         variant="ghost"
                         :class="[

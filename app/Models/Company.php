@@ -18,6 +18,7 @@ class Company extends Model
         'stripe_subscription_id',
         'subscription_ends_at',
         'subscription_status',
+        'logo_url',
     ];
 
     protected $casts = [

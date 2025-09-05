@@ -21,4 +21,16 @@ Route::middleware(['auth', 'subscription.access'])->group(function () {
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/Appearance');
     })->name('appearance');
+
+    Route::get('settings/company-logo', function () {
+        $user = Auth::user();
+        return Inertia::render('settings/CompanyLogo', [
+            'user' => $user,
+            'company' => $user->company,
+        ]);
+    })->name('company-logo');
+
+    // Company logo routes (only for paid plans)
+    Route::post('settings/company-logo/upload', [App\Http\Controllers\CompanyLogoController::class, 'upload'])->name('company-logo.upload');
+    Route::delete('settings/company-logo/remove', [App\Http\Controllers\CompanyLogoController::class, 'remove'])->name('company-logo.remove');
 });
