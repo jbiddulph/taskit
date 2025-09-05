@@ -321,12 +321,17 @@ class SubscriptionController extends Controller
                 \Log::info('=== RETURNING INERTIA RESPONSE ===', [
                     'redirect_url' => $session->url,
                     'session_id' => $session->id,
-                    'flash_data_being_set' => 'redirect_url'
+                    'using_inertia_share' => true
                 ]);
                 
-                $response = back()->with('redirect_url', $session->url);
-                \Log::info('Inertia response created', ['response_type' => get_class($response)]);
-                return $response;
+                // Use Inertia's sharing mechanism for flash data
+                return back()->with([
+                    'flash' => [
+                        'redirect_url' => $session->url,
+                        'session_id' => $session->id,
+                        'message' => 'Redirecting to Stripe checkout...'
+                    ]
+                ]);
             }
             
             \Log::info('=== RETURNING JSON RESPONSE ===', ['redirect_url' => $session->url]);
