@@ -185,12 +185,17 @@ class SubscriptionController extends Controller
      */
     public function changePlan(Request $request)
     {
-        \Log::info('changePlan called', [
+        \Log::info('=== SUBSCRIPTION CHANGE PLAN CONTROLLER HIT ===', [
+            'timestamp' => now()->toISOString(),
+            'method' => $request->method(),
+            'url' => $request->fullUrl(),
             'plan' => $request->plan,
+            'user_id' => auth()->id(),
             'X-Inertia' => $request->header('X-Inertia'),
             'X-Requested-With' => $request->header('X-Requested-With'),
             'wantsJson' => $request->wantsJson(),
-            'headers' => $request->headers->all()
+            'content_type' => $request->header('Content-Type'),
+            'accept' => $request->header('Accept')
         ]);
 
         $request->validate([
@@ -310,17 +315,34 @@ class SubscriptionController extends Controller
 
             // Handle both Inertia and JSON requests for checkout sessions
             if ($request->header('X-Inertia')) {
-                \Log::info('Returning Inertia response with redirect_url', ['redirect_url' => $session->url]);
-                return back()->with('redirect_url', $session->url);
+                \Log::info('=== RETURNING INERTIA RESPONSE ===', [
+                    'redirect_url' => $session->url,
+                    'session_id' => $session->id,
+                    'flash_data_being_set' => 'redirect_url'
+                ]);
+                
+                $response = back()->with('redirect_url', $session->url);
+                \Log::info('Inertia response created', ['response_type' => get_class($response)]);
+                return $response;
             }
             
-            \Log::info('Returning JSON response with redirect_url', ['redirect_url' => $session->url]);
+            \Log::info('=== RETURNING JSON RESPONSE ===', ['redirect_url' => $session->url]);
             // Fallback for direct JSON requests
             return response()->json(['redirect_url' => $session->url]);
         } catch (\Exception $e) {
+            \Log::error('=== EXCEPTION IN CHANGE PLAN ===', [
+                'error_message' => $e->getMessage(),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+                'stack_trace' => $e->getTraceAsString()
+            ]);
+            
             if ($request->header('X-Inertia')) {
+                \Log::info('Returning Inertia error response');
                 return back()->withErrors(['plan' => $e->getMessage()]);
             }
+            
+            \Log::info('Returning JSON error response');
             return response()->json(['message' => $e->getMessage()], 400);
         }
     }
