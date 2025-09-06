@@ -14,6 +14,16 @@ class CompanyLogoController extends Controller
      */
     public function upload(Request $request)
     {
+        // Use error_log to ensure we see logs on Heroku
+        error_log('LOGO UPLOAD DEBUG: Started for user ' . Auth::id());
+        error_log('LOGO UPLOAD DEBUG: Has file? ' . ($request->hasFile('logo') ? 'YES' : 'NO'));
+        if ($request->hasFile('logo')) {
+            $file = $request->file('logo');
+            error_log('LOGO UPLOAD DEBUG: File size: ' . $file->getSize());
+            error_log('LOGO UPLOAD DEBUG: File mime: ' . $file->getMimeType());
+            error_log('LOGO UPLOAD DEBUG: File extension: ' . $file->getClientOriginalExtension());
+        }
+        
         \Log::info('Logo upload request started', [
             'user_id' => Auth::id(),
             'has_file' => $request->hasFile('logo'),
@@ -25,7 +35,9 @@ class CompanyLogoController extends Controller
         $company = $user->company;
 
         // Check if user has a company and it's a paid plan
+        error_log('LOGO UPLOAD DEBUG: Checking subscription - Type: ' . ($company?->subscription_type ?? 'null'));
         if (!$company || !in_array($company->subscription_type, ['MIDI', 'MAXI'])) {
+            error_log('LOGO UPLOAD DEBUG: Upload denied - insufficient plan');
             \Log::error('Logo upload denied - insufficient plan', [
                 'user_id' => $user->id,
                 'subscription_type' => $company?->subscription_type
@@ -33,11 +45,14 @@ class CompanyLogoController extends Controller
             return back()->withErrors(['logo' => 'Company logo upload is only available for MIDI and MAXI plans.']);
         }
 
+        error_log('LOGO UPLOAD DEBUG: Starting validation');
         try {
             $request->validate([
                 'logo' => 'required|image|mimes:png,jpg,jpeg,svg|max:2048', // 2MB max
             ]);
+            error_log('LOGO UPLOAD DEBUG: Validation passed');
         } catch (\Illuminate\Validation\ValidationException $e) {
+            error_log('LOGO UPLOAD DEBUG: Validation failed - ' . json_encode($e->errors()));
             \Log::error('Logo upload validation failed', [
                 'errors' => $e->errors(),
                 'has_file' => $request->hasFile('logo'),
@@ -50,6 +65,7 @@ class CompanyLogoController extends Controller
             throw $e;
         }
 
+        error_log('LOGO UPLOAD DEBUG: Starting upload process');
         try {
             $file = $request->file('logo');
             
@@ -58,6 +74,9 @@ class CompanyLogoController extends Controller
             
             // Upload to Supabase storage in logos folder
             $path = 'logos/' . $filename;
+            
+            error_log('LOGO UPLOAD DEBUG: Generated filename: ' . $filename);
+            error_log('LOGO UPLOAD DEBUG: Upload path: ' . $path);
             
             \Log::info('Attempting logo upload', [
                 'company_id' => $company->id,
@@ -73,7 +92,9 @@ class CompanyLogoController extends Controller
             \Log::info('Supabase disk created successfully');
             
             // Store file using the supabase disk
+            error_log('LOGO UPLOAD DEBUG: Attempting file upload to Supabase');
             $uploaded = Storage::disk('supabase')->put($path, file_get_contents($file->getRealPath()));
+            error_log('LOGO UPLOAD DEBUG: Upload result: ' . ($uploaded ? 'SUCCESS' : 'FAILED'));
             
             \Log::info('Upload result', [
                 'uploaded' => $uploaded,
@@ -95,6 +116,8 @@ class CompanyLogoController extends Controller
                 return back()->withErrors(['logo' => 'Failed to upload logo. Please try again.']);
             }
         } catch (\Exception $e) {
+            error_log('LOGO UPLOAD DEBUG: Exception caught: ' . $e->getMessage());
+            error_log('LOGO UPLOAD DEBUG: Exception trace: ' . $e->getTraceAsString());
             \Log::error('Logo upload failed', [
                 'company_id' => $company->id,
                 'error' => $e->getMessage(),
