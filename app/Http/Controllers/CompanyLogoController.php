@@ -14,17 +14,41 @@ class CompanyLogoController extends Controller
      */
     public function upload(Request $request)
     {
+        \Log::info('Logo upload request started', [
+            'user_id' => Auth::id(),
+            'has_file' => $request->hasFile('logo'),
+            'request_data' => $request->all(),
+            'files' => $request->allFiles()
+        ]);
+
         $user = Auth::user();
         $company = $user->company;
 
         // Check if user has a company and it's a paid plan
         if (!$company || !in_array($company->subscription_type, ['MIDI', 'MAXI'])) {
+            \Log::error('Logo upload denied - insufficient plan', [
+                'user_id' => $user->id,
+                'subscription_type' => $company?->subscription_type
+            ]);
             return back()->withErrors(['logo' => 'Company logo upload is only available for MIDI and MAXI plans.']);
         }
 
-        $request->validate([
-            'logo' => 'required|image|mimes:png,jpg,jpeg,svg|max:2048', // 2MB max
-        ]);
+        try {
+            $request->validate([
+                'logo' => 'required|image|mimes:png,jpg,jpeg,svg|max:2048', // 2MB max
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Logo upload validation failed', [
+                'errors' => $e->errors(),
+                'has_file' => $request->hasFile('logo'),
+                'file_info' => $request->hasFile('logo') ? [
+                    'size' => $request->file('logo')->getSize(),
+                    'mime' => $request->file('logo')->getMimeType(),
+                    'extension' => $request->file('logo')->getClientOriginalExtension()
+                ] : null
+            ]);
+            throw $e;
+        }
 
         try {
             $file = $request->file('logo');
@@ -42,6 +66,11 @@ class CompanyLogoController extends Controller
                 'file_size' => $file->getSize(),
                 'file_mime' => $file->getMimeType()
             ]);
+            
+            // Test if Supabase disk is accessible
+            \Log::info('Testing Supabase disk access');
+            $disks = Storage::disk('supabase');
+            \Log::info('Supabase disk created successfully');
             
             // Store file using the supabase disk
             $uploaded = Storage::disk('supabase')->put($path, file_get_contents($file->getRealPath()));
