@@ -74,6 +74,13 @@ class ExportImportController extends Controller
                     'exported_at' => now()->toISOString(),
                 ];
 
+            case 'projects_todos':
+                return [
+                    'projects' => $this->getProjectsData($company),
+                    'todos' => $this->getTodosData($company),
+                    'exported_at' => now()->toISOString(),
+                ];
+
             case 'projects':
                 return $this->getProjectsData($company);
 
@@ -236,6 +243,24 @@ class ExportImportController extends Controller
                     fputcsv($output, $this->convertRowForCsv($comment));
                 }
             }
+        } elseif ($dataType === 'projects_todos') {
+            // For 'projects_todos' export, create separate sections
+            fputcsv($output, ['=== PROJECTS DATA ===']);
+            if (isset($data['projects']) && !empty($data['projects'])) {
+                fputcsv($output, array_keys($data['projects'][0]));
+                foreach ($data['projects'] as $project) {
+                    fputcsv($output, $this->convertRowForCsv($project));
+                }
+            }
+
+            fputcsv($output, ['']);
+            fputcsv($output, ['=== TODOS DATA ===']);
+            if (isset($data['todos']) && !empty($data['todos'])) {
+                fputcsv($output, array_keys($data['todos'][0]));
+                foreach ($data['todos'] as $todo) {
+                    fputcsv($output, $this->convertRowForCsv($todo));
+                }
+            }
         } else {
             // For specific data types
             if (!empty($data)) {
@@ -257,7 +282,7 @@ class ExportImportController extends Controller
     {
         $request->validate([
             'file' => 'required|file|mimes:json,csv,txt|max:10240', // 10MB max
-            'import_type' => 'required|in:projects,todos,comments',
+            'import_type' => 'required|in:projects,todos,comments,projects_todos',
         ]);
 
         $user = Auth::user();
@@ -374,6 +399,11 @@ class ExportImportController extends Controller
                 }
                 return $data;
 
+            case 'projects_todos':
+                // For combined projects+todos import, return the data as-is
+                // It should have both 'projects' and 'todos' keys
+                return $data;
+
             default:
                 return $data;
         }
@@ -456,6 +486,58 @@ class ExportImportController extends Controller
                                 'user_id' => $user->id,
                             ]);
                             $importedCount++;
+                        }
+                    }
+                }
+                break;
+
+            case 'projects_todos':
+                // Import projects first, then todos
+                if (isset($data['projects']) && is_array($data['projects'])) {
+                    foreach ($data['projects'] as $projectData) {
+                        if (isset($projectData['name']) && !empty($projectData['name'])) {
+                            Project::create([
+                                'name' => $projectData['name'],
+                                'description' => $projectData['description'] ?? '',
+                                'key' => Project::generateUniqueKey($projectData['name']),
+                                'color' => $projectData['color'] ?? '#3b82f6',
+                                'is_active' => true,
+                                'owner_id' => $user->id,
+                                'viewing_order' => Project::getNextViewingOrder($user->id),
+                            ]);
+                            $importedCount++;
+                        }
+                    }
+                }
+
+                // Then import todos for the imported projects
+                if (isset($data['todos']) && is_array($data['todos'])) {
+                    foreach ($data['todos'] as $todoData) {
+                        if (isset($todoData['title']) && !empty($todoData['title'])) {
+                            // Find project by name or key
+                            $project = null;
+                            if (isset($todoData['project_key'])) {
+                                $project = $company->projects()->where('key', $todoData['project_key'])->first();
+                            } elseif (isset($todoData['project_name'])) {
+                                $project = $company->projects()->where('name', $todoData['project_name'])->first();
+                            }
+
+                            if ($project) {
+                                Todo::create([
+                                    'title' => $todoData['title'],
+                                    'description' => $todoData['description'] ?? '',
+                                    'status' => $todoData['status'] ?? 'todo',
+                                    'priority' => $todoData['priority'] ?? 'Medium',
+                                    'type' => $todoData['type'] ?? null,
+                                    'tags' => isset($todoData['tags']) ? (is_array($todoData['tags']) ? $todoData['tags'] : json_decode($todoData['tags'], true)) : [],
+                                    'assignee' => $todoData['assignee'] ?? $user->name,
+                                    'due_date' => $todoData['due_date'] ?? null,
+                                    'story_points' => $todoData['story_points'] ?? null,
+                                    'project_id' => $project->id,
+                                    'user_id' => $user->id,
+                                ]);
+                                $importedCount++;
+                            }
                         }
                     }
                 }

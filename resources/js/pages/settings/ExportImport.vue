@@ -135,6 +135,7 @@ const successMessage = computed(() => page.props.flash?.success as string || '')
 
 const dataTypeOptions = [
     { value: 'all', label: 'All Data', icon: Database, description: 'Export everything: projects, todos, comments, and users' },
+    { value: 'projects_todos', label: 'Projects + To-Dos', icon: FolderOpen, description: 'Export projects with their todos (perfect for restore)' },
     { value: 'projects', label: 'Projects Only', icon: FolderOpen, description: 'Export only project information' },
     { value: 'todos', label: 'To-Dos Only', icon: Package, description: 'Export only task information' },
     { value: 'comments', label: 'Comments Only', icon: MessageSquare, description: 'Export only comment information' },
@@ -146,9 +147,10 @@ const formatOptions = [
 ];
 
 const importTypeOptions = [
-    { value: 'projects', label: 'Projects', icon: FolderOpen, description: 'Import project data' },
-    { value: 'todos', label: 'To-Dos', icon: Package, description: 'Import task data' },
-    { value: 'comments', label: 'Comments', icon: MessageSquare, description: 'Import comment data' },
+    { value: 'projects_todos', label: 'Projects + To-Dos', icon: FolderOpen, description: 'Import projects with their todos (restore functionality)' },
+    { value: 'projects', label: 'Projects Only', icon: FolderOpen, description: 'Import project data only' },
+    { value: 'todos', label: 'To-Dos Only', icon: Package, description: 'Import task data only' },
+    { value: 'comments', label: 'Comments Only', icon: MessageSquare, description: 'Import comment data only' },
 ];
 </script>
 
