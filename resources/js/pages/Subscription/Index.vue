@@ -18,9 +18,16 @@ interface Company {
     name: string;
     code: string;
     subscription_type: string;
+    effective_subscription_type?: string;
     subscription_status: string;
     subscription_ends_at?: string;
     stripe_subscription_id?: string;
+    pending_change?: {
+        current_plan: string;
+        scheduled_plan: string;
+        change_date: string;
+        is_downgrade: boolean;
+    };
 }
 
 interface Plan {
@@ -48,8 +55,9 @@ const props = defineProps<Props>();
 const page = usePage();
 
 const loading = ref(false);
-const currentPlan = computed(() => props.company?.subscription_type || 'FREE');
+const currentPlan = computed(() => props.company?.effective_subscription_type || props.company?.subscription_type || 'FREE');
 const isActive = computed(() => props.company?.subscription_status === 'active');
+const hasPendingChange = computed(() => !!props.company?.pending_change);
 
 // Company creation modal state
 const showCompanyModal = ref(false);
@@ -399,6 +407,27 @@ const handleCompanyCreated = (companyData: any) => {
                                 {{ isActive ? 'Active' : company?.subscription_status || 'Free' }}
                             </div>
                         </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <!-- Pending Subscription Change -->
+            <Card v-if="hasPendingChange" class="mb-8 border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20">
+                <CardHeader>
+                    <CardTitle class="flex items-center gap-2 text-orange-700 dark:text-orange-300">
+                        <AlertCircle class="w-5 h-5" />
+                        Scheduled Plan Change
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="text-orange-700 dark:text-orange-300">
+                        <p class="font-medium">
+                            Your plan will change from {{ company?.pending_change?.current_plan }} to {{ company?.pending_change?.scheduled_plan }} 
+                            on {{ company?.pending_change?.change_date ? new Date(company.pending_change.change_date).toLocaleDateString() : 'your next billing date' }}.
+                        </p>
+                        <p class="text-sm mt-2">
+                            You'll continue to have access to your current {{ company?.pending_change?.current_plan }} plan features until then.
+                        </p>
                     </div>
                 </CardContent>
             </Card>

@@ -14,15 +14,18 @@ class Company extends Model
         'name',
         'code',
         'subscription_type',
+        'scheduled_subscription_type',
         'stripe_customer_id',
         'stripe_subscription_id',
         'subscription_ends_at',
+        'scheduled_change_date',
         'subscription_status',
         'logo_url',
     ];
 
     protected $casts = [
         'subscription_ends_at' => 'datetime',
+        'scheduled_change_date' => 'datetime',
     ];
 
     protected static function boot()
@@ -189,5 +192,97 @@ class Company extends Model
         
         // Show warning at 80% of limit
         return $current >= ($limit * 0.8);
+    }
+
+    /**
+     * Get the effective subscription type (current until scheduled change takes effect)
+     */
+    public function getEffectiveSubscriptionType(): string
+    {
+        // If there's a scheduled change and it hasn't taken effect yet, use current subscription
+        if ($this->scheduled_subscription_type && 
+            $this->scheduled_change_date && 
+            $this->scheduled_change_date->isFuture()) {
+            return $this->subscription_type;
+        }
+        
+        // If scheduled change date has passed, the scheduled type should have become active
+        if ($this->scheduled_subscription_type && 
+            $this->scheduled_change_date && 
+            $this->scheduled_change_date->isPast()) {
+            return $this->scheduled_subscription_type;
+        }
+        
+        return $this->subscription_type;
+    }
+
+    /**
+     * Check if there's a pending subscription change
+     */
+    public function hasPendingSubscriptionChange(): bool
+    {
+        return $this->scheduled_subscription_type && 
+               $this->scheduled_change_date && 
+               $this->scheduled_change_date->isFuture();
+    }
+
+    /**
+     * Get pending subscription change info
+     */
+    public function getPendingSubscriptionChange(): ?array
+    {
+        if (!$this->hasPendingSubscriptionChange()) {
+            return null;
+        }
+        
+        return [
+            'current_plan' => $this->subscription_type,
+            'scheduled_plan' => $this->scheduled_subscription_type,
+            'change_date' => $this->scheduled_change_date,
+            'is_downgrade' => $this->isDowngrade($this->subscription_type, $this->scheduled_subscription_type),
+        ];
+    }
+
+    /**
+     * Check if plan change is a downgrade
+     */
+    protected function isDowngrade(string $currentPlan, string $newPlan): bool
+    {
+        $planHierarchy = ['FREE' => 0, 'MIDI' => 1, 'MAXI' => 2];
+        return ($planHierarchy[$newPlan] ?? 0) < ($planHierarchy[$currentPlan] ?? 0);
+    }
+
+    /**
+     * Schedule a subscription change
+     */
+    public function scheduleSubscriptionChange(string $newPlan, \Carbon\Carbon $changeDate): void
+    {
+        $this->update([
+            'scheduled_subscription_type' => $newPlan,
+            'scheduled_change_date' => $changeDate,
+        ]);
+    }
+
+    /**
+     * Apply scheduled subscription change (called by webhook or scheduled job)
+     */
+    public function applyScheduledChange(): bool
+    {
+        if (!$this->scheduled_subscription_type || !$this->scheduled_change_date) {
+            return false;
+        }
+
+        // Only apply if the scheduled date has passed
+        if ($this->scheduled_change_date->isFuture()) {
+            return false;
+        }
+
+        $this->update([
+            'subscription_type' => $this->scheduled_subscription_type,
+            'scheduled_subscription_type' => null,
+            'scheduled_change_date' => null,
+        ]);
+
+        return true;
     }
 }

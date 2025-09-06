@@ -24,9 +24,16 @@ class SubscriptionController extends Controller
         $user = Auth::user();
         $company = $user->company;
 
+        // Include scheduled change information
+        $companyData = $company ? $company->toArray() : null;
+        if ($company) {
+            $companyData['pending_change'] = $company->getPendingSubscriptionChange();
+            $companyData['effective_subscription_type'] = $company->getEffectiveSubscriptionType();
+        }
+
         return Inertia::render('Subscription/Index', [
             'user' => $user,
-            'company' => $company,
+            'company' => $companyData,
             'plans' => config('stripe.plans'),
             'stripePublicKey' => config('stripe.public_key'),
         ]);
@@ -239,55 +246,28 @@ class SubscriptionController extends Controller
 
         try {
             if ($request->plan === 'FREE') {
-                // Check if downgrading will hide projects and block users
-                $currentProjectCount = $company->getCurrentProjectCount();
-                $currentMemberCount = $company->getCurrentMemberCount();
-                $freeLimitProjects = 10;
-                $freeLimitMembers = 5;
-                
-                $message = 'Downgraded to FREE plan successfully';
-                $warnings = [];
-                
-                if ($currentProjectCount > $freeLimitProjects) {
-                    $hiddenCount = $currentProjectCount - $freeLimitProjects;
-                    $warnings[] = "{$hiddenCount} projects are now hidden";
-                }
-                
-                if ($currentMemberCount > $freeLimitMembers) {
-                    $blockedCount = $currentMemberCount - $freeLimitMembers;
-                    $warnings[] = "{$blockedCount} users will be blocked from accessing the system";
-                }
-                
-                if (!empty($warnings)) {
-                    $message .= ". Note: " . implode(' and ', $warnings) . ". They will become accessible again if you upgrade to a paid plan.";
-                }
-                
-                // Downgrade to FREE - cancel subscription
+                // Schedule downgrade to FREE at the end of billing period
                 if ($company->stripe_subscription_id) {
-                    $this->stripeService->cancelSubscription($company->stripe_subscription_id);
+                    $subscription = $this->stripeService->cancelSubscriptionAtPeriodEnd($company->stripe_subscription_id);
+                    $periodEnd = \Carbon\Carbon::createFromTimestamp($subscription->current_period_end);
+                    
+                    // Schedule the change in our database
+                    $company->scheduleSubscriptionChange('FREE', $periodEnd);
+                    
+                    \Log::info('Scheduled FREE downgrade at period end', [
+                        'company_id' => $company->id,
+                        'current_plan' => $company->subscription_type,
+                        'scheduled_plan' => 'FREE',
+                        'change_date' => $periodEnd->toISOString(),
+                        'stripe_subscription_id' => $company->stripe_subscription_id
+                    ]);
+                    
+                    $message = "Your subscription will be downgraded to FREE on {$periodEnd->format('F j, Y')}. You'll keep your current {$company->subscription_type} plan benefits until then.";
+                } else {
+                    // No active subscription, downgrade immediately
+                    $company->update(['subscription_type' => 'FREE']);
+                    $message = 'Downgraded to FREE plan successfully';
                 }
-                
-                \Log::info('Clearing all Stripe data for FREE downgrade', [
-                    'company_id' => $company->id,
-                    'clearing_customer_id' => $company->stripe_customer_id,
-                    'clearing_subscription_id' => $company->stripe_subscription_id,
-                    'projects_hidden' => $currentProjectCount > $freeLimitProjects ? $currentProjectCount - $freeLimitProjects : 0,
-                    'users_blocked' => $currentMemberCount > $freeLimitMembers ? $currentMemberCount - $freeLimitMembers : 0
-                ]);
-                
-                // Clear ALL Stripe-related data so company can resubscribe later
-                $company->update([
-                    'subscription_type' => 'FREE',
-                    'subscription_status' => 'active',
-                    'stripe_customer_id' => null,      // Clear customer ID
-                    'stripe_subscription_id' => null,   // Clear subscription ID  
-                    'subscription_ends_at' => null,     // Clear end date
-                ]);
-
-                \Log::info('Successfully cleared all Stripe data for FREE downgrade', [
-                    'company_id' => $company->id,
-                    'new_subscription_type' => 'FREE'
-                ]);
 
                 if ($request->header('X-Inertia')) {
                     return back()->with('success', $message);
@@ -296,43 +276,43 @@ class SubscriptionController extends Controller
             }
 
             if ($company->stripe_subscription_id) {
-                // Check if downgrading from MAXI to MIDI will hide projects and block users
-                $message = 'Subscription updated successfully';
-                if ($company->subscription_type === 'MAXI' && $request->plan === 'MIDI') {
-                    $currentProjectCount = $company->getCurrentProjectCount();
-                    $currentMemberCount = $company->getCurrentMemberCount();
-                    $midiLimitProjects = 20;
-                    $midiLimitMembers = 10;
+                // Check if this is a downgrade (MAXI to MIDI) or upgrade (MIDI to MAXI)
+                $planHierarchy = ['FREE' => 0, 'MIDI' => 1, 'MAXI' => 2];
+                $currentLevel = $planHierarchy[$company->subscription_type] ?? 0;
+                $targetLevel = $planHierarchy[$request->plan] ?? 0;
+                $isDowngrade = $targetLevel < $currentLevel;
+                
+                if ($isDowngrade && $company->subscription_type === 'MAXI' && $request->plan === 'MIDI') {
+                    // Schedule MAXI to MIDI downgrade at period end
+                    $subscription = $this->stripeService->retrieveSubscription($company->stripe_subscription_id);
+                    $periodEnd = \Carbon\Carbon::createFromTimestamp($subscription->current_period_end);
                     
-                    $warnings = [];
+                    // Schedule the change in our database
+                    $company->scheduleSubscriptionChange('MIDI', $periodEnd);
                     
-                    if ($currentProjectCount > $midiLimitProjects) {
-                        $hiddenCount = $currentProjectCount - $midiLimitProjects;
-                        $warnings[] = "{$hiddenCount} projects are now hidden";
-                    }
+                    \Log::info('Scheduled MIDI downgrade at period end', [
+                        'company_id' => $company->id,
+                        'current_plan' => $company->subscription_type,
+                        'scheduled_plan' => 'MIDI',
+                        'change_date' => $periodEnd->toISOString(),
+                        'stripe_subscription_id' => $company->stripe_subscription_id
+                    ]);
                     
-                    if ($currentMemberCount > $midiLimitMembers) {
-                        $blockedCount = $currentMemberCount - $midiLimitMembers;
-                        $warnings[] = "{$blockedCount} users will be blocked from accessing the system";
-                    }
+                    $message = "Your subscription will be downgraded to MIDI on {$periodEnd->format('F j, Y')}. You'll keep your current MAXI plan benefits until then.";
+                } else {
+                    // Immediate upgrade or same-tier change
+                    $this->stripeService->updateSubscription($company->stripe_subscription_id, $request->plan);
+                    $company->update(['subscription_type' => $request->plan]);
                     
-                    if (!empty($warnings)) {
-                        $message .= ". Note: " . implode(' and ', $warnings) . ". They will become accessible again if you upgrade back to MAXI.";
-                    }
+                    \Log::info('Immediately updated subscription', [
+                        'company_id' => $company->id,
+                        'old_plan' => $company->subscription_type,
+                        'new_plan' => $request->plan,
+                        'subscription_id' => $company->stripe_subscription_id
+                    ]);
+                    
+                    $message = $isDowngrade ? 'Subscription downgraded successfully' : 'Subscription upgraded successfully';
                 }
-                
-                // Update existing subscription
-                \Log::info('Updating existing subscription', [
-                    'subscription_id' => $company->stripe_subscription_id,
-                    'new_plan' => $request->plan,
-                    'projects_hidden' => ($company->subscription_type === 'MAXI' && $request->plan === 'MIDI') ? 
-                        max(0, $company->getCurrentProjectCount() - 20) : 0,
-                    'users_blocked' => ($company->subscription_type === 'MAXI' && $request->plan === 'MIDI') ? 
-                        max(0, $company->getCurrentMemberCount() - 10) : 0
-                ]);
-                
-                $this->stripeService->updateSubscription($company->stripe_subscription_id, $request->plan);
-                $company->update(['subscription_type' => $request->plan]);
                 
                 if ($request->header('X-Inertia')) {
                     return back()->with('success', $message);

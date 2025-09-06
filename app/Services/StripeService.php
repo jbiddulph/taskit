@@ -98,7 +98,7 @@ class StripeService
     }
 
     /**
-     * Cancel a subscription
+     * Cancel a subscription immediately
      */
     public function cancelSubscription(string $subscriptionId): Subscription
     {
@@ -106,7 +106,17 @@ class StripeService
     }
 
     /**
-     * Update subscription to new plan
+     * Cancel a subscription at the end of the current period
+     */
+    public function cancelSubscriptionAtPeriodEnd(string $subscriptionId): Subscription
+    {
+        return Subscription::update($subscriptionId, [
+            'cancel_at_period_end' => true
+        ]);
+    }
+
+    /**
+     * Update subscription to new plan immediately
      */
     public function updateSubscription(string $subscriptionId, string $newPlanType): Subscription
     {
@@ -125,6 +135,32 @@ class StripeService
                     'price' => $plan['stripe_price_id'],
                 ]
             ]
+        ]);
+    }
+
+    /**
+     * Schedule a subscription plan change at the end of the current period
+     */
+    public function scheduleSubscriptionChange(string $subscriptionId, string $newPlanType): Subscription
+    {
+        $plan = config("stripe.plans.{$newPlanType}");
+        
+        if (!$plan || !$plan['stripe_price_id']) {
+            throw new \InvalidArgumentException("Invalid plan type: {$newPlanType}");
+        }
+
+        $subscription = Subscription::retrieve($subscriptionId);
+        
+        // For downgrades, we schedule the change at period end
+        return Subscription::update($subscriptionId, [
+            'items' => [
+                [
+                    'id' => $subscription->items->data[0]->id,
+                    'price' => $plan['stripe_price_id'],
+                ]
+            ],
+            'proration_behavior' => 'none', // Don't prorate for downgrades
+            'billing_cycle_anchor' => 'unchanged' // Keep the same billing cycle
         ]);
     }
 

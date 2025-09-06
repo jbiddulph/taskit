@@ -132,16 +132,58 @@ class StripeWebhookController extends Controller
             return;
         }
 
-        $company->update([
+        // Detect plan changes by checking the current price against our configured plans
+        $currentPrice = $subscription->items->data[0]->price ?? null;
+        $newPlanType = null;
+        
+        if ($currentPrice) {
+            $plans = config('stripe.plans');
+            foreach ($plans as $planKey => $planData) {
+                if (isset($planData['stripe_price_id']) && $planData['stripe_price_id'] === $currentPrice->id) {
+                    $newPlanType = $planKey;
+                    break;
+                }
+            }
+        }
+
+        $updateData = [
             'subscription_status' => $subscription->status,
             'subscription_ends_at' => $subscription->current_period_end ? 
                 now()->createFromTimestamp($subscription->current_period_end) : null,
-        ]);
+        ];
 
-        Log::info('Subscription updated', [
+        // If plan changed and it matches a scheduled change, apply it
+        if ($newPlanType && $newPlanType !== $company->subscription_type) {
+            if ($company->scheduled_subscription_type === $newPlanType && $company->scheduled_change_date) {
+                Log::info('Applying scheduled plan change via webhook', [
+                    'company_id' => $company->id,
+                    'from_plan' => $company->subscription_type,
+                    'to_plan' => $newPlanType,
+                    'scheduled_date' => $company->scheduled_change_date->toISOString()
+                ]);
+                
+                // Apply the scheduled change
+                $company->applyScheduledChange();
+                $updateData['subscription_type'] = $newPlanType;
+            } else {
+                // Immediate plan change (upgrade)
+                $updateData['subscription_type'] = $newPlanType;
+                Log::info('Immediate plan change detected', [
+                    'company_id' => $company->id,
+                    'old_plan' => $company->subscription_type,
+                    'new_plan' => $newPlanType
+                ]);
+            }
+        }
+
+        $company->update($updateData);
+
+        Log::info('Subscription updated via webhook', [
             'company_id' => $company->id,
             'subscription_id' => $subscription->id,
-            'status' => $subscription->status
+            'status' => $subscription->status,
+            'plan_changed' => $newPlanType ? ($newPlanType !== $company->getOriginal('subscription_type')) : false,
+            'new_plan' => $newPlanType
         ]);
     }
 
@@ -154,25 +196,41 @@ class StripeWebhookController extends Controller
             return;
         }
 
-        Log::info('Clearing all Stripe data via webhook', [
+        Log::info('Processing subscription deletion webhook', [
             'company_id' => $company->id,
-            'clearing_customer_id' => $company->stripe_customer_id,
-            'clearing_subscription_id' => $company->stripe_subscription_id
+            'current_subscription_type' => $company->subscription_type,
+            'scheduled_subscription_type' => $company->scheduled_subscription_type,
+            'subscription_id' => $subscription->id
         ]);
+
+        // Check if this is a scheduled downgrade to FREE
+        if ($company->scheduled_subscription_type === 'FREE' && $company->scheduled_change_date) {
+            Log::info('Applying scheduled FREE downgrade via webhook', [
+                'company_id' => $company->id,
+                'from_plan' => $company->subscription_type,
+                'to_plan' => 'FREE',
+                'scheduled_date' => $company->scheduled_change_date->toISOString()
+            ]);
+            
+            // Apply the scheduled change
+            $company->applyScheduledChange();
+        }
 
         // Clear ALL Stripe-related data so company can resubscribe later
         $company->update([
-            'subscription_type' => 'FREE',
+            'subscription_type' => $company->scheduled_subscription_type ?: 'FREE',
             'subscription_status' => 'active',        // Set to active for FREE plan
             'stripe_customer_id' => null,            // Clear customer ID
             'stripe_subscription_id' => null,        // Clear subscription ID
             'subscription_ends_at' => null,          // Clear end date
+            'scheduled_subscription_type' => null,   // Clear scheduled change
+            'scheduled_change_date' => null,         // Clear scheduled date
         ]);
 
-        Log::info('Successfully cleared all Stripe data via webhook', [
+        Log::info('Successfully processed subscription deletion via webhook', [
             'company_id' => $company->id,
             'subscription_id' => $subscription->id,
-            'new_subscription_type' => 'FREE'
+            'new_subscription_type' => $company->subscription_type
         ]);
     }
 
