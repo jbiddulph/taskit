@@ -16,7 +16,7 @@ import AppLogo from './AppLogo.vue';
         <SidebarHeader>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton size="lg" as-child>
+                    <SidebarMenuButton as-child>
                         <Link :href="dashboard()">
                             <AppLogo />
                         </Link>
