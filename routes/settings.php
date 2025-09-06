@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Settings\DashboardController;
+use App\Http\Controllers\Settings\ExportImportController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +27,11 @@ Route::middleware(['auth', 'subscription.access'])->group(function () {
 
     Route::get('settings/dashboard', [DashboardController::class, 'index'])->name('dashboard.settings');
     Route::patch('settings/dashboard', [DashboardController::class, 'update'])->name('dashboard.settings.update');
+
+    // Export/Import routes
+    Route::get('settings/export-import', [ExportImportController::class, 'index'])->name('export-import.settings');
+    Route::post('settings/export', [ExportImportController::class, 'export'])->name('export.settings');
+    Route::post('settings/import', [ExportImportController::class, 'import'])->name('import.settings');
 
     Route::get('settings/company-logo', function () {
         $user = Auth::user();

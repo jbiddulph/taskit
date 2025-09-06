@@ -30,6 +30,10 @@ const sidebarNavItems = computed(() => {
             title: 'Dashboard',
             href: dashboardSettings(),
         },
+        {
+            title: 'Export & Import',
+            href: '/settings/export-import',
+        },
     ];
 
     // Add Company Logo for paid plans only
