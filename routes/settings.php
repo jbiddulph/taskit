@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\DashboardController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Auth;
@@ -22,6 +23,9 @@ Route::middleware(['auth', 'subscription.access'])->group(function () {
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/Appearance');
     })->name('appearance');
+
+    Route::get('settings/dashboard', [DashboardController::class, 'index'])->name('dashboard.settings');
+    Route::patch('settings/dashboard', [DashboardController::class, 'update'])->name('dashboard.settings.update');
 
     Route::get('settings/company-logo', function () {
         $user = Auth::user();

@@ -21,11 +21,13 @@ class Company extends Model
         'scheduled_change_date',
         'subscription_status',
         'logo_url',
+        'prune_completed_tasks',
     ];
 
     protected $casts = [
         'subscription_ends_at' => 'datetime',
         'scheduled_change_date' => 'datetime',
+        'prune_completed_tasks' => 'boolean',
     ];
 
     protected static function boot()
