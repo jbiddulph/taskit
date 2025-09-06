@@ -33,32 +33,24 @@ const props = defineProps<Props>();
 const page = usePage();
 
 const form = useForm({
-    prune_completed_tasks: props.company?.prune_completed_tasks || false,
+    prune_completed_tasks: false, // Initialize as false, will be set by watch
 });
 
 // Watch for changes in props.company and update form accordingly
 watch(() => props.company?.prune_completed_tasks, (newValue) => {
-    if (newValue !== undefined) {
-        form.prune_completed_tasks = newValue;
-    }
-}, { immediate: true });
+    console.log('DASHBOARD DEBUG: Props changed, prune_completed_tasks:', newValue);
+    console.log('DASHBOARD DEBUG: Full company props:', props.company);
+    // Update form whenever props change, including initial load
+    form.prune_completed_tasks = newValue || false;
+    console.log('DASHBOARD DEBUG: Form updated to:', form.prune_completed_tasks);
+}, { immediate: true }); // immediate: true ensures this runs on component mount
 
 const updateSettings = () => {
-    console.log('FRONTEND DEBUG: Starting form submission');
-    console.log('FRONTEND DEBUG: Form data:', { prune_completed_tasks: form.prune_completed_tasks });
-    
     form.patch(dashboardSettingsUpdate().url, {
         preserveScroll: true,
         onSuccess: (page) => {
-            console.log('FRONTEND DEBUG: Success response received');
-            console.log('FRONTEND DEBUG: Response company data:', page.props.company);
-            // Update form data with fresh data from the response
-            const updatedCompany = page.props.company as Company;
-            form.prune_completed_tasks = updatedCompany?.prune_completed_tasks || false;
-            console.log('FRONTEND DEBUG: Form updated with:', form.prune_completed_tasks);
-        },
-        onError: (errors) => {
-            console.log('FRONTEND DEBUG: Error response:', errors);
+            // The response data will trigger the watch which will update the form
+            // No need to manually update here since watch handles it
         }
     });
 };
