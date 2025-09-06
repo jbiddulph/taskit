@@ -198,7 +198,7 @@ class ExportImportController extends Controller
             fputcsv($output, ['=== COMPANY DATA ===']);
             if (isset($data['company'])) {
                 fputcsv($output, array_keys($data['company']));
-                fputcsv($output, array_values($data['company']));
+                fputcsv($output, $this->convertRowForCsv($data['company']));
             }
             
             fputcsv($output, ['']);
@@ -206,7 +206,7 @@ class ExportImportController extends Controller
             if (isset($data['users']) && !empty($data['users'])) {
                 fputcsv($output, array_keys($data['users'][0]));
                 foreach ($data['users'] as $user) {
-                    fputcsv($output, array_values($user));
+                    fputcsv($output, $this->convertRowForCsv($user));
                 }
             }
 
@@ -215,7 +215,7 @@ class ExportImportController extends Controller
             if (isset($data['projects']) && !empty($data['projects'])) {
                 fputcsv($output, array_keys($data['projects'][0]));
                 foreach ($data['projects'] as $project) {
-                    fputcsv($output, array_values($project));
+                    fputcsv($output, $this->convertRowForCsv($project));
                 }
             }
 
@@ -224,7 +224,7 @@ class ExportImportController extends Controller
             if (isset($data['todos']) && !empty($data['todos'])) {
                 fputcsv($output, array_keys($data['todos'][0]));
                 foreach ($data['todos'] as $todo) {
-                    fputcsv($output, array_values($todo));
+                    fputcsv($output, $this->convertRowForCsv($todo));
                 }
             }
 
@@ -233,7 +233,7 @@ class ExportImportController extends Controller
             if (isset($data['comments']) && !empty($data['comments'])) {
                 fputcsv($output, array_keys($data['comments'][0]));
                 foreach ($data['comments'] as $comment) {
-                    fputcsv($output, array_values($comment));
+                    fputcsv($output, $this->convertRowForCsv($comment));
                 }
             }
         } else {
@@ -241,7 +241,7 @@ class ExportImportController extends Controller
             if (!empty($data)) {
                 fputcsv($output, array_keys($data[0]));
                 foreach ($data as $row) {
-                    fputcsv($output, array_values($row));
+                    fputcsv($output, $this->convertRowForCsv($row));
                 }
             }
         }
@@ -403,5 +403,23 @@ class ExportImportController extends Controller
         }
 
         return $importedCount;
+    }
+
+    /**
+     * Convert a data row to CSV-compatible format
+     */
+    private function convertRowForCsv(array $row): array
+    {
+        $csvRow = [];
+        foreach ($row as $value) {
+            if (is_array($value)) {
+                $csvRow[] = json_encode($value);
+            } elseif (is_null($value)) {
+                $csvRow[] = '';
+            } else {
+                $csvRow[] = (string) $value;
+            }
+        }
+        return $csvRow;
     }
 }
