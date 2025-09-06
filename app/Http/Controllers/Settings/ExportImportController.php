@@ -291,8 +291,11 @@ class ExportImportController extends Controller
             
             // Debug: Log import data structure
             error_log("Import debug - Original data keys: " . json_encode(array_keys($data)));
+            error_log("Import debug - Original data type: " . gettype($data));
+            error_log("Import debug - Original data sample: " . json_encode(array_slice($data, 0, 2, true)));
             error_log("Import debug - Import type: " . $importType);
             error_log("Import debug - Processed data count: " . count($processData));
+            error_log("Import debug - Processed data sample: " . json_encode(array_slice($processData, 0, 1, true)));
             
             $importedCount = $this->processImport($company, $processData, $importType, $user);
 
