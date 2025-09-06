@@ -35,24 +35,43 @@ class CompanyLogoController extends Controller
             // Upload to Supabase storage in logos folder
             $path = 'logos/' . $filename;
             
+            \Log::info('Attempting logo upload', [
+                'company_id' => $company->id,
+                'filename' => $filename,
+                'path' => $path,
+                'file_size' => $file->getSize(),
+                'file_mime' => $file->getMimeType()
+            ]);
+            
             // Store file using the supabase disk
             $uploaded = Storage::disk('supabase')->put($path, file_get_contents($file->getRealPath()));
+            
+            \Log::info('Upload result', [
+                'uploaded' => $uploaded,
+                'upload_type' => gettype($uploaded)
+            ]);
             
             if ($uploaded) {
                 // Get the public URL from Supabase
                 $logoUrl = Storage::disk('supabase')->url($path);
+                
+                \Log::info('Generated logo URL', ['logo_url' => $logoUrl]);
                 
                 // Update company with logo URL
                 $company->update(['logo_url' => $logoUrl]);
                 
                 return back()->with('success', 'Company logo uploaded successfully!');
             } else {
+                \Log::error('Upload returned false', ['path' => $path]);
                 return back()->withErrors(['logo' => 'Failed to upload logo. Please try again.']);
             }
         } catch (\Exception $e) {
             \Log::error('Logo upload failed', [
                 'company_id' => $company->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'filename' => $filename,
+                'path' => $path
             ]);
             
             return back()->withErrors(['logo' => 'Failed to upload logo: ' . $e->getMessage()]);
