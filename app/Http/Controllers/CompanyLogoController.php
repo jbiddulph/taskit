@@ -87,14 +87,33 @@ class CompanyLogoController extends Controller
             ]);
             
             // Test if Supabase disk is accessible
+            error_log('LOGO UPLOAD DEBUG: Testing Supabase disk access');
+            error_log('LOGO UPLOAD DEBUG: Supabase bucket: ' . config('filesystems.disks.supabase.bucket'));
+            error_log('LOGO UPLOAD DEBUG: Supabase endpoint: ' . config('filesystems.disks.supabase.endpoint'));
+            error_log('LOGO UPLOAD DEBUG: Supabase key set: ' . (config('filesystems.disks.supabase.key') ? 'YES' : 'NO'));
             \Log::info('Testing Supabase disk access');
             $disks = Storage::disk('supabase');
             \Log::info('Supabase disk created successfully');
+            error_log('LOGO UPLOAD DEBUG: Supabase disk created successfully');
             
             // Store file using the supabase disk
             error_log('LOGO UPLOAD DEBUG: Attempting file upload to Supabase');
-            $uploaded = Storage::disk('supabase')->put($path, file_get_contents($file->getRealPath()));
-            error_log('LOGO UPLOAD DEBUG: Upload result: ' . ($uploaded ? 'SUCCESS' : 'FAILED'));
+            
+            // Try to get more detailed error information
+            try {
+                $fileContents = file_get_contents($file->getRealPath());
+                error_log('LOGO UPLOAD DEBUG: File contents read successfully, size: ' . strlen($fileContents));
+                
+                $uploaded = Storage::disk('supabase')->put($path, $fileContents);
+                error_log('LOGO UPLOAD DEBUG: Upload result: ' . ($uploaded ? 'SUCCESS' : 'FAILED'));
+                error_log('LOGO UPLOAD DEBUG: Upload response type: ' . gettype($uploaded));
+                error_log('LOGO UPLOAD DEBUG: Upload response value: ' . var_export($uploaded, true));
+                
+            } catch (\Exception $uploadException) {
+                error_log('LOGO UPLOAD DEBUG: Upload exception: ' . $uploadException->getMessage());
+                error_log('LOGO UPLOAD DEBUG: Upload exception trace: ' . $uploadException->getTraceAsString());
+                throw $uploadException;
+            }
             
             \Log::info('Upload result', [
                 'uploaded' => $uploaded,
