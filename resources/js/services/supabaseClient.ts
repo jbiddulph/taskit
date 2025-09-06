@@ -32,6 +32,9 @@ export async function uploadLogoToTaskitBucket(file: File, companyName: string, 
   const fileName = `${companyName.replace(/\s+/g, '_')}_${companyCode}_${timestamp}.${fileExt}`;
   const filePath = `logos/${fileName}`;
 
+  // Clean up old logo files before uploading new one
+  await cleanupOldLogoFiles(companyName, companyCode);
+
   const { error } = await supabase.storage.from('taskit').upload(filePath, file, {
     cacheControl: '1', // Short cache to prevent browser caching issues
     upsert: false, // Each logo upload now has unique filename
@@ -42,6 +45,44 @@ export async function uploadLogoToTaskitBucket(file: File, companyName: string, 
 
   const { data } = supabase.storage.from('taskit').getPublicUrl(filePath);
   return data.publicUrl;
+}
+
+async function cleanupOldLogoFiles(companyName: string, companyCode: string): Promise<void> {
+  try {
+    const filePattern = `${companyName.replace(/\s+/g, '_')}_${companyCode}`;
+    
+    // List all files in the logos folder
+    const { data: files, error } = await supabase.storage.from('taskit').list('logos');
+    
+    if (error) {
+      console.warn('Failed to list logo files for cleanup:', error);
+      return;
+    }
+    
+    if (!files) return;
+    
+    // Find files that match our company pattern
+    const filesToDelete = files.filter(file => 
+      file.name.startsWith(filePattern) && 
+      /\.(png|jpg|jpeg|svg|gif|webp)$/i.test(file.name)
+    );
+    
+    // Delete each matching file
+    for (const file of filesToDelete) {
+      const { error: deleteError } = await supabase.storage
+        .from('taskit')
+        .remove([`logos/${file.name}`]);
+        
+      if (deleteError) {
+        console.warn(`Failed to delete old logo file ${file.name}:`, deleteError);
+      } else {
+        console.log(`Cleaned up old logo file: ${file.name}`);
+      }
+    }
+  } catch (error) {
+    console.warn('Error during logo cleanup:', error);
+    // Don't throw - cleanup failures shouldn't prevent new uploads
+  }
 }
 
 function extractTaskitPathFromPublicUrl(url: string): string | null {

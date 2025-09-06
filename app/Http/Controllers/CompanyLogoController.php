@@ -111,18 +111,29 @@ class CompanyLogoController extends Controller
                 error_log('LOGO UPLOAD DEBUG: Local upload result: ' . ($localPath ? 'SUCCESS' : 'FAILED'));
                 
                 if ($localPath) {
-                    // Clean up old logo file if it exists
+                    // Clean up old logo files if they exist
                     if ($company->logo_url) {
                         try {
-                            // Extract old filename from URL and delete old local file
+                            // First, try to delete the exact file referenced in logo_url
                             $oldPath = str_replace(asset('storage/'), '', $company->logo_url);
                             if (Storage::disk('public')->exists($oldPath)) {
                                 Storage::disk('public')->delete($oldPath);
                                 error_log('LOGO UPLOAD DEBUG: Deleted old logo file: ' . $oldPath);
                             }
+                            
+                            // Also clean up any other logo files with the same company pattern
+                            $this->cleanupOldLogoFiles($company);
+                            
                         } catch (\Exception $cleanupException) {
                             error_log('LOGO UPLOAD DEBUG: Failed to delete old logo: ' . $cleanupException->getMessage());
                             // Don't fail the upload if old file deletion fails
+                        }
+                    } else {
+                        // Even if no logo_url is set, clean up any existing files with this company pattern
+                        try {
+                            $this->cleanupOldLogoFiles($company);
+                        } catch (\Exception $cleanupException) {
+                            error_log('LOGO UPLOAD DEBUG: Failed to cleanup old files: ' . $cleanupException->getMessage());
                         }
                     }
                     
@@ -243,6 +254,35 @@ class CompanyLogoController extends Controller
         $timestamp = time(); // Add timestamp to make filename unique
         
         return "{$companyName}_{$companyCode}_{$timestamp}.{$extension}";
+    }
+
+    /**
+     * Clean up old logo files based on company name and code pattern
+     */
+    private function cleanupOldLogoFiles($company)
+    {
+        $companyName = Str::slug($company->name, '_');
+        $companyCode = $company->code;
+        $filePattern = "{$companyName}_{$companyCode}";
+        
+        // Get all files in the logos directory
+        $logoFiles = Storage::disk('public')->files('logos');
+        
+        foreach ($logoFiles as $file) {
+            $filename = basename($file);
+            
+            // Check if this file matches our company pattern and has common image extensions
+            if (str_starts_with($filename, $filePattern) && 
+                preg_match('/\.(png|jpg|jpeg|svg|gif|webp)$/i', $filename)) {
+                
+                try {
+                    Storage::disk('public')->delete($file);
+                    error_log('LOGO CLEANUP DEBUG: Deleted old logo file: ' . $file);
+                } catch (\Exception $deleteException) {
+                    error_log('LOGO CLEANUP DEBUG: Failed to delete file ' . $file . ': ' . $deleteException->getMessage());
+                }
+            }
+        }
     }
 
     /**
