@@ -31,6 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         }
     })->name('subscription.change-plan');
     Route::post('/subscription/create-company-and-upgrade', [SubscriptionController::class, 'createCompanyAndUpgrade'])->name('subscription.create-company-and-upgrade');
+    Route::post('/subscription/reactivate', [SubscriptionController::class, 'reactivateSubscription'])->name('subscription.reactivate');
     Route::post('/subscription/test-csrf', function() {
         \Log::info('=== TEST CSRF ROUTE HIT ===', [
             'timestamp' => now()->toISOString(),

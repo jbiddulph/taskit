@@ -173,6 +173,16 @@ class StripeService
     }
 
     /**
+     * Reactivate a cancelled subscription (remove cancel_at_period_end)
+     */
+    public function reactivateSubscription(string $subscriptionId): Subscription
+    {
+        return Subscription::update($subscriptionId, [
+            'cancel_at_period_end' => false
+        ]);
+    }
+
+    /**
      * Create products and prices in Stripe (run once in setup)
      */
     public function createProducts(): array

@@ -312,7 +312,7 @@ onMounted(() => {
 });
 
 const cancelSubscription = async () => {
-    if (!confirm('Are you sure you want to cancel your subscription? Your account will be downgraded to the FREE plan.')) {
+    if (!confirm('Are you sure you want to cancel your subscription? You\'ll keep your current plan benefits until the end of your billing period, then be downgraded to the FREE plan.')) {
         return;
     }
     
@@ -343,6 +343,27 @@ const handleCompanyCreated = (companyData: any) => {
     // The modal will handle the redirect to Stripe checkout
     showCompanyModal.value = false;
     pendingPlan.value = '';
+};
+
+const reactivateSubscription = async () => {
+    if (!confirm('Are you sure you want to reactivate your subscription? This will cancel the scheduled downgrade.')) {
+        return;
+    }
+    
+    loading.value = true;
+    
+    router.post('/subscription/reactivate', {}, {
+        onSuccess: () => {
+            // Page will automatically reload with updated data
+        },
+        onError: (errors) => {
+            console.error('Error reactivating subscription:', errors);
+            alert('An error occurred while reactivating your subscription. Please try again.');
+        },
+        onFinish: () => {
+            loading.value = false;
+        }
+    });
 };
 </script>
 
@@ -428,6 +449,21 @@ const handleCompanyCreated = (companyData: any) => {
                         <p class="text-sm mt-2">
                             You'll continue to have access to your current {{ company?.pending_change?.current_plan }} plan features until then.
                         </p>
+                        
+                        <!-- Reactivation button for cancelled subscriptions -->
+                        <div v-if="company?.pending_change?.scheduled_plan === 'FREE'" class="mt-4">
+                            <Button
+                                @click="reactivateSubscription"
+                                :disabled="loading"
+                                variant="outline"
+                                class="bg-white text-orange-700 border-orange-300 hover:bg-orange-50 dark:bg-orange-900/50 dark:text-orange-300 dark:border-orange-600 dark:hover:bg-orange-800/50"
+                            >
+                                Reactivate Subscription
+                            </Button>
+                            <p class="text-xs mt-1">
+                                Cancel the scheduled downgrade and continue your subscription.
+                            </p>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -498,14 +534,14 @@ const handleCompanyCreated = (companyData: any) => {
             </div>
 
             <!-- Cancel Subscription -->
-            <Card v-if="currentPlan !== 'FREE' && company?.stripe_subscription_id" class="border-red-200 dark:border-red-800">
+            <Card v-if="currentPlan !== 'FREE' && company?.stripe_subscription_id && (!hasPendingChange || company?.pending_change?.scheduled_plan !== 'FREE')" class="border-red-200 dark:border-red-800">
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2 text-red-600 dark:text-red-400">
                         <AlertCircle class="w-5 h-5" />
                         Danger Zone
                     </CardTitle>
                     <CardDescription>
-                        Cancel your subscription and downgrade to the FREE plan
+                        Cancel your subscription. You'll keep your current plan benefits until the end of your billing period.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

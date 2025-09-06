@@ -160,9 +160,9 @@ class SubscriptionController extends Controller
     }
 
     /**
-     * Cancel subscription
+     * Cancel subscription (schedule cancellation at period end)
      */
-    public function cancelSubscription()
+public function cancelSubscription()
     {
         $user = Auth::user();
         $company = $user->company;
@@ -172,30 +172,29 @@ class SubscriptionController extends Controller
         }
 
         try {
-            $this->stripeService->cancelSubscription($company->stripe_subscription_id);
+            // Cancel subscription at period end instead of immediately
+            $subscription = $this->stripeService->cancelSubscriptionAtPeriodEnd($company->stripe_subscription_id);
+            $periodEnd = \Carbon\Carbon::createFromTimestamp($subscription->current_period_end);
             
-            \Log::info('Clearing all Stripe data for company', [
+            // Schedule the change to FREE in our database
+            $company->scheduleSubscriptionChange('FREE', $periodEnd);
+            
+            \Log::info('Scheduled subscription cancellation at period end', [
                 'company_id' => $company->id,
-                'clearing_customer_id' => $company->stripe_customer_id,
-                'clearing_subscription_id' => $company->stripe_subscription_id
-            ]);
-            
-            // Clear ALL Stripe-related data so company can resubscribe later
-            $company->update([
-                'subscription_type' => 'FREE',
-                'subscription_status' => 'active',         // Set to active for FREE plan
-                'stripe_customer_id' => null,             // Clear customer ID
-                'stripe_subscription_id' => null,         // Clear subscription ID
-                'subscription_ends_at' => null,           // Clear end date
+                'current_plan' => $company->subscription_type,
+                'scheduled_plan' => 'FREE',
+                'change_date' => $periodEnd->toISOString(),
+                'stripe_subscription_id' => $company->stripe_subscription_id
             ]);
 
-            \Log::info('Successfully cleared all Stripe data', [
-                'company_id' => $company->id,
-                'new_subscription_type' => 'FREE'
-            ]);
+            $message = "Your subscription has been cancelled and will end on {$periodEnd->format('F j, Y')}. You'll continue to have access to your current {$company->subscription_type} plan features until then.";
 
-            return back()->with('success', 'Subscription cancelled successfully');
+            return back()->with('success', $message);
         } catch (\Exception $e) {
+            \Log::error('Error cancelling subscription', [
+                'company_id' => $company->id,
+                'error' => $e->getMessage()
+            ]);
             return back()->withErrors(['subscription' => $e->getMessage()]);
         }
     }
@@ -377,6 +376,48 @@ class SubscriptionController extends Controller
             
             \Log::info('Returning JSON error response');
             return response()->json(['message' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Reactivate a cancelled subscription
+     */
+    public function reactivateSubscription()
+    {
+        $user = Auth::user();
+        $company = $user->company;
+
+        if (!$company || !$company->stripe_subscription_id) {
+            return back()->withErrors(['subscription' => 'No active subscription found']);
+        }
+
+        if (!$company->hasPendingSubscriptionChange() || $company->scheduled_subscription_type !== 'FREE') {
+            return back()->withErrors(['subscription' => 'No pending cancellation found']);
+        }
+
+        try {
+            // Reactivate the subscription in Stripe (remove cancel_at_period_end)
+            $subscription = $this->stripeService->reactivateSubscription($company->stripe_subscription_id);
+
+            // Clear the scheduled change in our database
+            $company->update([
+                'scheduled_subscription_type' => null,
+                'scheduled_change_date' => null,
+            ]);
+
+            \Log::info('Subscription reactivated successfully', [
+                'company_id' => $company->id,
+                'subscription_id' => $company->stripe_subscription_id,
+                'plan' => $company->subscription_type
+            ]);
+
+            return back()->with('success', 'Your subscription has been reactivated successfully! The scheduled cancellation has been cancelled.');
+        } catch (\Exception $e) {
+            \Log::error('Error reactivating subscription', [
+                'company_id' => $company->id,
+                'error' => $e->getMessage()
+            ]);
+            return back()->withErrors(['subscription' => 'Failed to reactivate subscription: ' . $e->getMessage()]);
         }
     }
 
