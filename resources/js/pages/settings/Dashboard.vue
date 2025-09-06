@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { update as dashboardSettingsUpdate } from '@/routes/dashboard/settings';
 import { Button } from '@/components/ui/button';
@@ -32,18 +32,34 @@ interface Props {
 const props = defineProps<Props>();
 const page = usePage();
 
+// Use a local reactive ref for the checkbox
+const pruneCompletedTasks = ref(false);
+
 const form = useForm({
-    prune_completed_tasks: false, // Initialize as false, will be set by watch
+    prune_completed_tasks: false,
 });
 
-// Watch for changes in props.company and update form accordingly
+// Watch for changes in props.company and update both form and local ref
 watch(() => props.company?.prune_completed_tasks, (newValue) => {
     console.log('DASHBOARD DEBUG: Props changed, prune_completed_tasks:', newValue);
     console.log('DASHBOARD DEBUG: Full company props:', props.company);
-    // Update form whenever props change, including initial load
-    form.prune_completed_tasks = newValue || false;
+    
+    const boolValue = newValue || false;
+    
+    // Update both the form and the local ref
+    form.prune_completed_tasks = boolValue;
+    pruneCompletedTasks.value = boolValue;
+    
     console.log('DASHBOARD DEBUG: Form updated to:', form.prune_completed_tasks);
+    console.log('DASHBOARD DEBUG: Local ref updated to:', pruneCompletedTasks.value);
 }, { immediate: true }); // immediate: true ensures this runs on component mount
+
+// Watch the local ref and sync changes back to the form
+watch(pruneCompletedTasks, (newValue) => {
+    console.log('DASHBOARD DEBUG: Local ref changed to:', newValue);
+    form.prune_completed_tasks = newValue;
+    console.log('DASHBOARD DEBUG: Form synced to:', form.prune_completed_tasks);
+});
 
 const updateSettings = () => {
     form.patch(dashboardSettingsUpdate().url, {
@@ -108,10 +124,10 @@ const successMessage = computed(() => page.props.flash?.success as string || '')
                     <CardContent class="space-y-4">
                         <!-- Prune Completed Tasks Setting -->
                         <div class="flex items-start space-x-3">
+                            <!-- Debug: form={{ form.prune_completed_tasks }}, ref={{ pruneCompletedTasks }} -->
                             <Checkbox 
                                 id="prune_completed_tasks"
-                                :checked="form.prune_completed_tasks"
-                                @update:checked="form.prune_completed_tasks = $event"
+                                v-model:checked="pruneCompletedTasks"
                             />
                             <div class="grid gap-1.5 leading-none">
                                 <Label 
