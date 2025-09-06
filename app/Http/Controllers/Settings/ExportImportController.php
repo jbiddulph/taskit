@@ -116,7 +116,7 @@ class ExportImportController extends Controller
         $projectIds = $company->projects()->pluck('id');
         
         return Todo::whereIn('project_id', $projectIds)
-            ->with(['project', 'assignedUser', 'createdBy'])
+            ->with(['project', 'user'])
             ->get()
             ->map(function ($todo) {
                 return [
@@ -125,11 +125,15 @@ class ExportImportController extends Controller
                     'description' => $todo->description,
                     'status' => $todo->status,
                     'priority' => $todo->priority,
+                    'type' => $todo->type,
+                    'tags' => $todo->tags,
+                    'assignee' => $todo->assignee,
                     'due_date' => $todo->due_date,
+                    'story_points' => $todo->story_points,
                     'project_name' => $todo->project->name,
                     'project_key' => $todo->project->key,
-                    'assigned_to' => $todo->assignedUser?->name,
-                    'created_by' => $todo->createdBy?->name,
+                    'created_by' => $todo->user?->name,
+                    'created_by_email' => $todo->user?->email,
                     'created_at' => $todo->created_at,
                     'updated_at' => $todo->updated_at,
                 ];
@@ -359,10 +363,13 @@ class ExportImportController extends Controller
                                 'description' => $todoData['description'] ?? '',
                                 'status' => $todoData['status'] ?? 'todo',
                                 'priority' => $todoData['priority'] ?? 'medium',
+                                'type' => $todoData['type'] ?? 'task',
+                                'tags' => isset($todoData['tags']) ? (is_array($todoData['tags']) ? $todoData['tags'] : json_decode($todoData['tags'], true)) : [],
+                                'assignee' => $todoData['assignee'] ?? $user->name,
                                 'due_date' => $todoData['due_date'] ?? null,
+                                'story_points' => $todoData['story_points'] ?? null,
                                 'project_id' => $project->id,
-                                'assigned_to' => $user->id,
-                                'created_by' => $user->id,
+                                'user_id' => $user->id, // Creator of the todo
                             ]);
                             $importedCount++;
                         }
