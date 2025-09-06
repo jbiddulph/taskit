@@ -5,6 +5,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check, CreditCard, AlertCircle, Crown } from 'lucide-vue-next';
+import CompanyCreationModal from '@/components/CompanyCreationModal.vue';
 
 interface User {
     id: number;
@@ -49,6 +50,10 @@ const page = usePage();
 const loading = ref(false);
 const currentPlan = computed(() => props.company?.subscription_type || 'FREE');
 const isActive = computed(() => props.company?.subscription_status === 'active');
+
+// Company creation modal state
+const showCompanyModal = ref(false);
+const pendingPlan = ref('');
 
 // Get error messages from the page
 const errors = computed(() => page.props.errors as Record<string, string> || {});
@@ -224,6 +229,14 @@ const changePlan = async (planType: string) => {
             console.error('Inertia request failed:', errors);
             console.log('Error details:', JSON.stringify(errors, null, 2));
             
+            // Check if the error is "No company found"
+            if (errors.plan && errors.plan.includes('No company found')) {
+                console.log('No company found error detected, showing company creation modal');
+                pendingPlan.value = planType;
+                showCompanyModal.value = true;
+                return;
+            }
+            
             let errorMessage = 'An error occurred while changing your plan. Please try again.';
             if (errors.plan) {
                 errorMessage = errors.plan;
@@ -309,6 +322,19 @@ const cancelSubscription = async () => {
             loading.value = false;
         }
     });
+};
+
+// Handle company creation modal events
+const handleCompanyModalClose = () => {
+    showCompanyModal.value = false;
+    pendingPlan.value = '';
+};
+
+const handleCompanyCreated = (companyData: any) => {
+    console.log('Company created successfully:', companyData);
+    // The modal will handle the redirect to Stripe checkout
+    showCompanyModal.value = false;
+    pendingPlan.value = '';
 };
 </script>
 
@@ -467,5 +493,13 @@ const cancelSubscription = async () => {
                 </CardContent>
             </Card>
         </div>
+        
+        <!-- Company Creation Modal -->
+        <CompanyCreationModal
+            :open="showCompanyModal"
+            :target-plan="pendingPlan"
+            @close="handleCompanyModalClose"
+            @success="handleCompanyCreated"
+        />
     </AppLayout>
 </template>

@@ -30,6 +30,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             throw $e; // Re-throw to maintain normal error handling
         }
     })->name('subscription.change-plan');
+    Route::post('/subscription/create-company-and-upgrade', [SubscriptionController::class, 'createCompanyAndUpgrade'])->name('subscription.create-company-and-upgrade');
     Route::post('/subscription/test-csrf', function() {
         \Log::info('=== TEST CSRF ROUTE HIT ===', [
             'timestamp' => now()->toISOString(),

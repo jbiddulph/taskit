@@ -399,4 +399,73 @@ class SubscriptionController extends Controller
             return response()->json(['message' => $e->getMessage()], 400);
         }
     }
+
+    /**
+     * Create company for individual user and proceed with subscription upgrade
+     */
+    public function createCompanyAndUpgrade(Request $request)
+    {
+        $request->validate([
+            'company_name' => 'required|string|max:255',
+            'target_plan' => 'required|in:MIDI,MAXI',
+        ]);
+
+        $user = Auth::user();
+
+        // Check if user already has a company
+        if ($user->company_id) {
+            return back()->withErrors(['company_name' => 'User already has a company']);
+        }
+
+        try {
+            // Create the company
+            $company = \App\Models\Company::create([
+                'name' => $request->company_name,
+                'code' => \App\Models\Company::generateUniqueCode(),
+                'subscription_type' => 'FREE',
+                'subscription_status' => 'active',
+            ]);
+
+            // Link user to the company
+            $user->update(['company_id' => $company->id]);
+
+            \Log::info('Company created for individual user', [
+                'user_id' => $user->id,
+                'company_id' => $company->id,
+                'company_name' => $company->name,
+                'company_code' => $company->code,
+                'target_plan' => $request->target_plan
+            ]);
+
+            // Now create checkout session for the target plan
+            $session = $this->stripeService->createCheckoutSession(
+                $company,
+                $request->target_plan,
+                $user->email,
+                route('subscription.success') . '?session_id={CHECKOUT_SESSION_ID}',
+                route('subscription.cancel')
+            );
+
+            \Log::info('Checkout session created for new company', [
+                'company_id' => $company->id,
+                'session_id' => $session->id,
+                'target_plan' => $request->target_plan
+            ]);
+
+            // Return redirect URL for Stripe checkout
+            return back()->with([
+                'success' => 'Company created successfully',
+                'redirect_url' => $session->url
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Company creation and upgrade failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()->withErrors(['company_name' => 'Failed to create company: ' . $e->getMessage()]);
+        }
+    }
 }
