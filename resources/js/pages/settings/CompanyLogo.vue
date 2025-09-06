@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, Info, Upload, Trash2, Image } from 'lucide-vue-next';
+import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { uploadLogoToTaskitBucket } from '@/services/supabaseClient';
 
@@ -114,7 +115,8 @@ const hasCustomLogo = computed(() => !!currentLogoUrl.value);
 <template>
     <Head title="Company Logo" />
     
-    <SettingsLayout>
+    <AppLayout>
+        <SettingsLayout>
         <div class="space-y-6">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Company Logo</h1>
@@ -277,5 +279,6 @@ const hasCustomLogo = computed(() => !!currentLogoUrl.value);
                 </CardContent>
             </Card>
         </div>
-    </SettingsLayout>
+        </SettingsLayout>
+    </AppLayout>
 </template>
