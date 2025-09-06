@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::command('taskit:send-due-notifications')->hourly();
 
 // Schedule subscription changes processing every 5 minutes
-Schedule::job(new \App\Jobs\ProcessScheduledSubscriptionChanges)->everyFiveMinutes();
+Schedule::command('subscription:process-scheduled-changes')->everyFiveMinutes();
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
