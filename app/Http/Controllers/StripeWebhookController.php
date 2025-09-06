@@ -108,12 +108,25 @@ class StripeWebhookController extends Controller
             return;
         }
 
+        // Determine subscription end date
+        $subscriptionEndsAt = null;
+        if ($subscription->current_period_end) {
+            $subscriptionEndsAt = now()->createFromTimestamp($subscription->current_period_end);
+        } else {
+            // Fallback: estimate next month from now for new subscriptions
+            $subscriptionEndsAt = now()->addMonth()->startOfDay();
+            Log::warning('Subscription missing current_period_end, using estimated date', [
+                'subscription_id' => $subscription->id,
+                'company_id' => $companyId,
+                'estimated_date' => $subscriptionEndsAt->toISOString()
+            ]);
+        }
+
         $company->update([
             'stripe_subscription_id' => $subscription->id,
             'subscription_type' => $planType ?? $company->subscription_type,
             'subscription_status' => $subscription->status,
-            'subscription_ends_at' => $subscription->current_period_end ? 
-                now()->createFromTimestamp($subscription->current_period_end) : null,
+            'subscription_ends_at' => $subscriptionEndsAt,
         ]);
 
         Log::info('Subscription created', [
@@ -146,10 +159,31 @@ class StripeWebhookController extends Controller
             }
         }
 
+        // Determine subscription end date with fallback
+        $subscriptionEndsAt = null;
+        if ($subscription->current_period_end) {
+            $subscriptionEndsAt = now()->createFromTimestamp($subscription->current_period_end);
+        } elseif ($company->subscription_ends_at) {
+            // Keep existing end date if Stripe doesn't provide one
+            $subscriptionEndsAt = $company->subscription_ends_at;
+            Log::info('Keeping existing subscription_ends_at date', [
+                'subscription_id' => $subscription->id,
+                'company_id' => $company->id,
+                'existing_date' => $subscriptionEndsAt->toISOString()
+            ]);
+        } else {
+            // Final fallback: estimate next month
+            $subscriptionEndsAt = now()->addMonth()->startOfDay();
+            Log::warning('Subscription update missing period end, using estimated date', [
+                'subscription_id' => $subscription->id,
+                'company_id' => $company->id,
+                'estimated_date' => $subscriptionEndsAt->toISOString()
+            ]);
+        }
+
         $updateData = [
             'subscription_status' => $subscription->status,
-            'subscription_ends_at' => $subscription->current_period_end ? 
-                now()->createFromTimestamp($subscription->current_period_end) : null,
+            'subscription_ends_at' => $subscriptionEndsAt,
         ];
 
         // If plan changed and it matches a scheduled change, apply it

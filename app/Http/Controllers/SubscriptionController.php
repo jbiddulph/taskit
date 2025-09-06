@@ -129,6 +129,15 @@ class SubscriptionController extends Controller
                 $subscription = $this->stripeService->retrieveSubscription($session->subscription);
                 if ($subscription && $subscription->current_period_end) {
                     $updateData['subscription_ends_at'] = now()->createFromTimestamp($subscription->current_period_end);
+                } else {
+                    // Fallback: estimate subscription end date as next month
+                    $updateData['subscription_ends_at'] = now()->addMonth()->startOfDay();
+                    \Log::warning('Subscription success callback missing period_end, using estimated date', [
+                        'company_id' => $company->id,
+                        'session_id' => $sessionId,
+                        'subscription_id' => $session->subscription,
+                        'estimated_date' => $updateData['subscription_ends_at']->toISOString()
+                    ]);
                 }
             }
 
