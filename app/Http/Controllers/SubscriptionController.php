@@ -175,16 +175,29 @@ public function cancelSubscription()
             // Cancel subscription at period end instead of immediately
             $subscription = $this->stripeService->cancelSubscriptionAtPeriodEnd($company->stripe_subscription_id);
             
-            if (!$subscription->current_period_end) {
-                \Log::error('Subscription missing current_period_end for cancellation', [
+            $periodEnd = null;
+            
+            // Try to get period end from Stripe subscription
+            if ($subscription->current_period_end) {
+                $periodEnd = \Carbon\Carbon::createFromTimestamp($subscription->current_period_end);
+            }
+            // Fallback to company's subscription_ends_at if available
+            elseif ($company->subscription_ends_at) {
+                $periodEnd = $company->subscription_ends_at;
+                \Log::info('Using company subscription_ends_at as fallback for cancellation', [
                     'company_id' => $company->id,
-                    'subscription_id' => $company->stripe_subscription_id,
+                    'fallback_date' => $periodEnd->toISOString()
+                ]);
+            }
+            // Final fallback: estimate next month from now
+            else {
+                $periodEnd = now()->addMonth()->startOfDay();
+                \Log::warning('Using estimated period end date for cancellation', [
+                    'company_id' => $company->id,
+                    'estimated_date' => $periodEnd->toISOString(),
                     'subscription_status' => $subscription->status ?? 'unknown'
                 ]);
-                throw new \Exception('Unable to determine billing period end date. Please contact support.');
             }
-            
-            $periodEnd = \Carbon\Carbon::createFromTimestamp($subscription->current_period_end);
             
             // Schedule the change to FREE in our database
             $company->scheduleSubscriptionChange('FREE', $periodEnd);
@@ -195,7 +208,8 @@ public function cancelSubscription()
                 'scheduled_plan' => 'FREE',
                 'change_date' => $periodEnd->toISOString(),
                 'stripe_subscription_id' => $company->stripe_subscription_id,
-                'period_end_timestamp' => $subscription->current_period_end
+                'stripe_period_end' => $subscription->current_period_end ?? 'null',
+                'used_fallback' => !$subscription->current_period_end
             ]);
 
             $message = "Your subscription has been cancelled and will end on {$periodEnd->format('F j, Y')}. You'll continue to have access to your current {$company->subscription_type} plan features until then.";
@@ -260,16 +274,29 @@ public function cancelSubscription()
                 if ($company->stripe_subscription_id) {
                     $subscription = $this->stripeService->cancelSubscriptionAtPeriodEnd($company->stripe_subscription_id);
                     
-                    if (!$subscription->current_period_end) {
-                        \Log::error('Subscription missing current_period_end for FREE downgrade', [
+                    $periodEnd = null;
+                    
+                    // Try to get period end from Stripe subscription
+                    if ($subscription->current_period_end) {
+                        $periodEnd = \Carbon\Carbon::createFromTimestamp($subscription->current_period_end);
+                    }
+                    // Fallback to company's subscription_ends_at if available
+                    elseif ($company->subscription_ends_at) {
+                        $periodEnd = $company->subscription_ends_at;
+                        \Log::info('Using company subscription_ends_at as fallback for FREE downgrade', [
                             'company_id' => $company->id,
-                            'subscription_id' => $company->stripe_subscription_id,
+                            'fallback_date' => $periodEnd->toISOString()
+                        ]);
+                    }
+                    // Final fallback: estimate next month from now
+                    else {
+                        $periodEnd = now()->addMonth()->startOfDay();
+                        \Log::warning('Using estimated period end date for FREE downgrade', [
+                            'company_id' => $company->id,
+                            'estimated_date' => $periodEnd->toISOString(),
                             'subscription_status' => $subscription->status ?? 'unknown'
                         ]);
-                        throw new \Exception('Unable to determine billing period end date. Please contact support.');
                     }
-                    
-                    $periodEnd = \Carbon\Carbon::createFromTimestamp($subscription->current_period_end);
                     
                     // Schedule the change in our database
                     $company->scheduleSubscriptionChange('FREE', $periodEnd);
@@ -280,7 +307,8 @@ public function cancelSubscription()
                         'scheduled_plan' => 'FREE',
                         'change_date' => $periodEnd->toISOString(),
                         'stripe_subscription_id' => $company->stripe_subscription_id,
-                        'period_end_timestamp' => $subscription->current_period_end
+                        'stripe_period_end' => $subscription->current_period_end ?? 'null',
+                        'used_fallback' => !$subscription->current_period_end
                     ]);
                     
                     $message = "Your subscription will be downgraded to FREE on {$periodEnd->format('F j, Y')}. You'll keep your current {$company->subscription_type} plan benefits until then.";
@@ -307,17 +335,29 @@ public function cancelSubscription()
                     // Schedule MAXI to MIDI downgrade at period end
                     $subscription = $this->stripeService->retrieveSubscription($company->stripe_subscription_id);
                     
-                    if (!$subscription->current_period_end) {
-                        \Log::error('Subscription missing current_period_end', [
-                            'company_id' => $company->id,
-                            'subscription_id' => $company->stripe_subscription_id,
-                            'subscription_status' => $subscription->status ?? 'unknown',
-                            'subscription_data' => json_encode($subscription)
-                        ]);
-                        throw new \Exception('Unable to determine billing period end date. Please contact support.');
-                    }
+                    $periodEnd = null;
                     
-                    $periodEnd = \Carbon\Carbon::createFromTimestamp($subscription->current_period_end);
+                    // Try to get period end from Stripe subscription
+                    if ($subscription->current_period_end) {
+                        $periodEnd = \Carbon\Carbon::createFromTimestamp($subscription->current_period_end);
+                    }
+                    // Fallback to company's subscription_ends_at if available
+                    elseif ($company->subscription_ends_at) {
+                        $periodEnd = $company->subscription_ends_at;
+                        \Log::info('Using company subscription_ends_at as fallback', [
+                            'company_id' => $company->id,
+                            'fallback_date' => $periodEnd->toISOString()
+                        ]);
+                    }
+                    // Final fallback: estimate next month from now
+                    else {
+                        $periodEnd = now()->addMonth()->startOfDay();
+                        \Log::warning('Using estimated period end date as final fallback', [
+                            'company_id' => $company->id,
+                            'estimated_date' => $periodEnd->toISOString(),
+                            'subscription_status' => $subscription->status ?? 'unknown'
+                        ]);
+                    }
                     
                     // Schedule the change in our database
                     $company->scheduleSubscriptionChange('MIDI', $periodEnd);
@@ -328,7 +368,8 @@ public function cancelSubscription()
                         'scheduled_plan' => 'MIDI',
                         'change_date' => $periodEnd->toISOString(),
                         'stripe_subscription_id' => $company->stripe_subscription_id,
-                        'period_end_timestamp' => $subscription->current_period_end
+                        'stripe_period_end' => $subscription->current_period_end ?? 'null',
+                        'used_fallback' => !$subscription->current_period_end
                     ]);
                     
                     $message = "Your subscription will be downgraded to MIDI on {$periodEnd->format('F j, Y')}. You'll keep your current MAXI plan benefits until then.";
