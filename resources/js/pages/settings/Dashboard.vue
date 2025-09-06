@@ -38,6 +38,11 @@ const form = useForm({
 const updateSettings = () => {
     form.patch('/settings/dashboard', {
         preserveScroll: true,
+        onSuccess: (page) => {
+            // Update form data with fresh data from the response
+            const updatedCompany = page.props.company as Company;
+            form.prune_completed_tasks = updatedCompany?.prune_completed_tasks || false;
+        }
     });
 };
 

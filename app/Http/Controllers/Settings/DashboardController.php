@@ -12,6 +12,7 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $user->load('company'); // Ensure company is loaded
         $company = $user->company;
 
         return Inertia::render('settings/Dashboard', [
@@ -36,6 +37,10 @@ class DashboardController extends Controller
         $company->update([
             'prune_completed_tasks' => $request->boolean('prune_completed_tasks'),
         ]);
+
+        // Reload the company to get fresh data
+        $company->refresh();
+        $user->load('company');
 
         return back()->with('success', 'Dashboard settings updated successfully.');
     }
