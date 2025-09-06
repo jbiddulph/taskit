@@ -281,7 +281,7 @@ class ExportImportController extends Controller
             error_log("File debug - Content length: " . strlen($content));
             error_log("File debug - Content preview: " . substr($content, 0, 100));
 
-            if ($extension === 'json') {
+            if (strtolower($extension) === 'json') {
                 $data = json_decode($content, true);
                 $jsonError = json_last_error();
                 error_log("File debug - JSON decode error: " . $jsonError);
