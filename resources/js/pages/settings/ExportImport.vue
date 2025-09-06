@@ -44,14 +44,71 @@ const importForm = useForm({
 });
 
 const fileInput = ref<HTMLInputElement>();
+const downloadMessage = ref('');
+const downloadError = ref('');
 
-const exportData = () => {
-    exportForm.post('/settings/export', {
-        preserveScroll: true,
-        onSuccess: () => {
-            // File download is handled by the browser
+const exportData = async () => {
+    if (!exportForm.data_type || !exportForm.format) {
+        return;
+    }
+
+    exportForm.processing = true;
+    downloadMessage.value = '';
+    downloadError.value = '';
+
+    try {
+        // Use fetch to trigger proper file download
+        const response = await fetch('/settings/export', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({
+                data_type: exportForm.data_type,
+                format: exportForm.format,
+            }),
+        });
+
+        if (response.ok) {
+            // Get the filename from the Content-Disposition header
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = `export.${exportForm.format}`;
+            
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                if (filenameMatch) {
+                    filename = filenameMatch[1];
+                }
+            }
+
+            // Create blob and trigger download
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            // Show success message
+            downloadMessage.value = `✅ ${filename} downloaded successfully!`;
+            
+            // Reset form
+            exportForm.reset();
+        } else {
+            const errorText = await response.text();
+            throw new Error(`Export failed: ${response.status} ${response.statusText}`);
         }
-    });
+    } catch (error) {
+        console.error('Export error:', error);
+        downloadError.value = `Failed to download export: ${error.message}`;
+    } finally {
+        exportForm.processing = false;
+    }
 };
 
 const handleFileSelect = (event: Event) => {
@@ -120,6 +177,46 @@ const importTypeOptions = [
                         </div>
                         <div class="ml-3">
                             <p class="text-sm font-medium text-green-800">{{ successMessage }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Download Success Message -->
+                <div v-if="downloadMessage" class="rounded-md bg-blue-50 p-4 border border-blue-200">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <Download class="h-5 w-5 text-blue-400" />
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-blue-800">{{ downloadMessage }}</p>
+                        </div>
+                        <div class="ml-auto pl-3">
+                            <button @click="downloadMessage = ''" class="text-blue-400 hover:text-blue-600">
+                                <span class="sr-only">Dismiss</span>
+                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Download Error Message -->
+                <div v-if="downloadError" class="rounded-md bg-red-50 p-4 border border-red-200">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <AlertCircle class="h-5 w-5 text-red-400" />
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-red-800">{{ downloadError }}</p>
+                        </div>
+                        <div class="ml-auto pl-3">
+                            <button @click="downloadError = ''" class="text-red-400 hover:text-red-600">
+                                <span class="sr-only">Dismiss</span>
+                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 </div>
