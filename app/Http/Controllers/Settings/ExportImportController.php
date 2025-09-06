@@ -275,11 +275,20 @@ class ExportImportController extends Controller
 
             $content = file_get_contents($file->getPathname());
             $extension = $file->getClientOriginalExtension();
+            
+            // Debug file parsing
+            error_log("File debug - Extension: " . $extension);
+            error_log("File debug - Content length: " . strlen($content));
+            error_log("File debug - Content preview: " . substr($content, 0, 100));
 
             if ($extension === 'json') {
                 $data = json_decode($content, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    throw new \Exception('Invalid JSON format');
+                $jsonError = json_last_error();
+                error_log("File debug - JSON decode error: " . $jsonError);
+                error_log("File debug - JSON error message: " . json_last_error_msg());
+                
+                if ($jsonError !== JSON_ERROR_NONE) {
+                    throw new \Exception('Invalid JSON format: ' . json_last_error_msg());
                 }
             } else {
                 // Parse CSV
