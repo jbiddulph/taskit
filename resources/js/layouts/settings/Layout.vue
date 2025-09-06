@@ -2,7 +2,7 @@
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { appearance } from '@/routes';
+import { appearance, companyLogo } from '@/routes';
 import { edit as editPassword } from '@/routes/password';
 import { edit } from '@/routes/profile';
 import { type NavItem } from '@/types';
@@ -34,7 +34,7 @@ const sidebarNavItems = computed(() => {
     if (company && ['MIDI', 'MAXI'].includes(company.subscription_type)) {
         items.push({
             title: 'Company Logo',
-            href: '/settings/company-logo',
+            href: companyLogo(),
         });
     }
 
