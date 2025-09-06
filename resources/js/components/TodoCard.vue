@@ -1,6 +1,11 @@
 <template>
   <div
-    class="group relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+    :class="[
+      'group relative rounded-lg border p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer',
+      isOverdueAndNotDone 
+        ? 'bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-700' 
+        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+    ]"
     @click="handleClick"
   >
     <!-- Priority indicator -->
@@ -229,6 +234,20 @@ const getTypeIcon = (type: string): string => {
 
 const firstImageSrc = computed(() => getFirstImageSrc((props as any).todo?.description));
 const plainTextDescription = computed(() => stripHtml((props as any).todo?.description));
+
+// Check if todo is overdue and not in Done status
+const isOverdueAndNotDone = computed(() => {
+  if (!props.todo.due_date || props.todo.status === 'done') {
+    return false;
+  }
+  
+  const dueDate = new Date(props.todo.due_date);
+  const now = new Date();
+  const diffTime = dueDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  return diffDays < 0; // Overdue if due date is in the past
+});
 
 // Title editing methods
 const startEditTitle = () => {
