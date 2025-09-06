@@ -31,16 +31,6 @@ const sidebarNavItems = computed(() => {
     const user = (page.props.auth as any)?.user;
     const company = user?.company;
     
-    // Debug logging
-    console.log('Settings Layout Debug:', {
-        user,
-        company,
-        subscription_type: company?.subscription_type,
-        hasUser: !!user,
-        hasCompany: !!company,
-        canShowLogo: company && ['MIDI', 'MAXI'].includes(company.subscription_type)
-    });
-    
     if (company && ['MIDI', 'MAXI'].includes(company.subscription_type)) {
         items.push({
             title: 'Company Logo',
@@ -48,7 +38,6 @@ const sidebarNavItems = computed(() => {
         });
     }
 
-    console.log('Final sidebar items:', items);
     return items;
 });
 

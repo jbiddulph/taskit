@@ -26,27 +26,9 @@ class CheckSubscriptionAccess
         
         $company = $user->company;
         
-        // Debug logging
-        \Log::info('CheckSubscriptionAccess middleware', [
-            'user_id' => $user->id,
-            'user_email' => $user->email,
-            'company_id' => $company->id,
-            'subscription_type' => $company->subscription_type,
-            'member_limit' => $company->getMemberLimit(),
-            'current_member_count' => $company->getCurrentMemberCount(),
-        ]);
-        
         // Check if user has access based on subscription limits
         $canAccess = $company->userCanAccess($user);
-        \Log::info('User access check result', [
-            'user_id' => $user->id,
-            'can_access' => $canAccess,
-            'accessible_user_ids' => $company->accessibleUsers()->pluck('id')->toArray()
-        ]);
         
-        // TEMPORARILY DISABLED - Allow all users to access so they can upgrade subscription
-        // TODO: Re-enable after subscription is upgraded
-        /*
         if (!$canAccess) {
             Auth::logout();
             
@@ -59,7 +41,6 @@ class CheckSubscriptionAccess
                 'subscription' => 'Access denied. Your company has exceeded the user limit for the current subscription plan. Please upgrade your plan to regain access.'
             ]);
         }
-        */
         
         return $next($request);
     }

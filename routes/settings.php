@@ -27,14 +27,6 @@ Route::middleware(['auth', 'subscription.access'])->group(function () {
         $user = Auth::user();
         $user->load('company'); // Ensure company is loaded
         
-        // Debug logging
-        \Log::info('Company Logo Route Debug', [
-            'user_email' => $user->email,
-            'company_id' => $user->company_id,
-            'company' => $user->company,
-            'subscription_type' => $user->company?->subscription_type,
-        ]);
-        
         return Inertia::render('settings/CompanyLogo', [
             'user' => $user,
             'company' => $user->company,
