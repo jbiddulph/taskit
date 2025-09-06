@@ -162,6 +162,28 @@ class CompanyLogoController extends Controller
     }
 
     /**
+     * Update company logo URL (from Supabase direct upload)
+     */
+    public function updateUrl(Request $request)
+    {
+        $user = Auth::user();
+        $company = $user->company;
+
+        if (!$company || !in_array($company->subscription_type, ['MIDI', 'MAXI'])) {
+            return back()->withErrors(['logo' => 'Company logo upload is only available for MIDI and MAXI plans.']);
+        }
+
+        $request->validate([
+            'logo_url' => 'required|url',
+        ]);
+
+        // Update company with the Supabase logo URL
+        $company->update(['logo_url' => $request->logo_url]);
+
+        return back()->with('success', 'Company logo uploaded successfully!');
+    }
+
+    /**
      * Remove company logo
      */
     public function remove(Request $request)

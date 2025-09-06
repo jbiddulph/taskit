@@ -35,5 +35,6 @@ Route::middleware(['auth', 'subscription.access'])->group(function () {
 
     // Company logo routes (only for paid plans)
     Route::post('settings/company-logo/upload', [App\Http\Controllers\CompanyLogoController::class, 'upload'])->name('company-logo.upload');
+    Route::post('settings/company-logo/update-url', [App\Http\Controllers\CompanyLogoController::class, 'updateUrl'])->name('company-logo.update-url');
     Route::delete('settings/company-logo/remove', [App\Http\Controllers\CompanyLogoController::class, 'remove'])->name('company-logo.remove');
 });

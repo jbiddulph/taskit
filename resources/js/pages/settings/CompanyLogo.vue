@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage, router } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, Info, Upload, Trash2, Image } from 'lucide-vue-next';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
+import { uploadLogoToTaskitBucket } from '@/services/supabaseClient';
 
 interface User {
     id: number;
@@ -35,42 +36,60 @@ const hasAccess = computed(() => {
     return props.company && ['MIDI', 'MAXI'].includes(props.company.subscription_type);
 });
 
-// Form for logo upload
-const uploadForm = useForm({
-    logo: null as File | null,
-});
-
-// Form for logo removal
+// Form for logo removal (still uses Laravel backend)
 const removeForm = useForm({});
 
 const fileInput = ref<HTMLInputElement>();
 const uploading = ref(false);
 const removing = ref(false);
+const selectedFile = ref<File | null>(null);
+const uploadError = ref<string>('');
 
 const handleFileSelect = (event: Event) => {
     const target = event.target as HTMLInputElement;
     if (target.files && target.files[0]) {
-        uploadForm.logo = target.files[0];
+        selectedFile.value = target.files[0];
+        uploadError.value = '';
     }
 };
 
-const uploadLogo = () => {
-    if (!uploadForm.logo) return;
+const uploadLogo = async () => {
+    if (!selectedFile.value || !props.company) return;
     
     uploading.value = true;
+    uploadError.value = '';
     
-    uploadForm.post('/settings/company-logo/upload', {
-        forceFormData: true,
-        onSuccess: () => {
-            uploadForm.reset();
-            if (fileInput.value) {
-                fileInput.value.value = '';
+    try {
+        // Upload directly to Supabase (same method as todo images)
+        const logoUrl = await uploadLogoToTaskitBucket(
+            selectedFile.value, 
+            props.company.name, 
+            props.company.code
+        );
+        
+        // Update the backend with the Supabase URL
+        router.post('/settings/company-logo/update-url', {
+            logo_url: logoUrl
+        }, {
+            onSuccess: () => {
+                selectedFile.value = null;
+                if (fileInput.value) {
+                    fileInput.value.value = '';
+                }
+                // Force page refresh to show new logo
+                router.reload();
+            },
+            onError: (errors) => {
+                uploadError.value = errors.logo || 'Failed to update logo URL';
             }
-        },
-        onFinish: () => {
-            uploading.value = false;
-        }
-    });
+        });
+        
+    } catch (error) {
+        console.error('Logo upload failed:', error);
+        uploadError.value = 'Failed to upload logo to storage. Please try again.';
+    } finally {
+        uploading.value = false;
+    }
 };
 
 const removeLogo = () => {
@@ -132,12 +151,12 @@ const hasCustomLogo = computed(() => !!currentLogoUrl.value);
             </div>
 
             <!-- Error Messages -->
-            <div v-if="errors.logo" class="mb-6">
+            <div v-if="errors.logo || uploadError" class="mb-6">
                 <Card class="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
                     <CardContent class="p-4">
                         <div class="flex items-center gap-2 text-red-700 dark:text-red-300">
                             <AlertCircle class="w-5 h-5 flex-shrink-0" />
-                            <p class="text-sm font-medium">{{ errors.logo }}</p>
+                            <p class="text-sm font-medium">{{ errors.logo || uploadError }}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -237,14 +256,14 @@ const hasCustomLogo = computed(() => !!currentLogoUrl.value);
                     </div>
 
                     <!-- Upload Preview -->
-                    <div v-if="uploadForm.logo" class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div v-if="selectedFile" class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <Image class="w-5 h-5 text-gray-600 dark:text-gray-400" />
                         <div class="flex-1">
                             <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                {{ uploadForm.logo.name }}
+                                {{ selectedFile.name }}
                             </p>
                             <p class="text-xs text-gray-600 dark:text-gray-400">
-                                {{ (uploadForm.logo.size / 1024).toFixed(1) }} KB
+                                {{ (selectedFile.size / 1024).toFixed(1) }} KB
                             </p>
                         </div>
                         <Button
