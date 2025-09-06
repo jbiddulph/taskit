@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +34,13 @@ const page = usePage();
 const form = useForm({
     prune_completed_tasks: props.company?.prune_completed_tasks || false,
 });
+
+// Watch for changes in props.company and update form accordingly
+watch(() => props.company?.prune_completed_tasks, (newValue) => {
+    if (newValue !== undefined) {
+        form.prune_completed_tasks = newValue;
+    }
+}, { immediate: true });
 
 const updateSettings = () => {
     form.patch('/settings/dashboard', {
