@@ -14,12 +14,17 @@ class CompanyLogoController extends Controller
      */
     public function upload(Request $request)
     {
+        // Immediate logging to see if we reach the controller
+        error_log('LOGO UPLOAD CONTROLLER REACHED');
         \Log::info('Logo upload request started', [
             'user_id' => Auth::id(),
             'has_file' => $request->hasFile('logo'),
             'request_data' => $request->all(),
             'files' => $request->allFiles()
         ]);
+
+        // TEMPORARY TEST - just return success to check if route works
+        return back()->with('success', 'TEST: Controller reached successfully!');
 
         $user = Auth::user();
         $company = $user->company;
