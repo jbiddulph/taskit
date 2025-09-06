@@ -111,6 +111,21 @@ class CompanyLogoController extends Controller
                 error_log('LOGO UPLOAD DEBUG: Local upload result: ' . ($localPath ? 'SUCCESS' : 'FAILED'));
                 
                 if ($localPath) {
+                    // Clean up old logo file if it exists
+                    if ($company->logo_url) {
+                        try {
+                            // Extract old filename from URL and delete old local file
+                            $oldPath = str_replace(asset('storage/'), '', $company->logo_url);
+                            if (Storage::disk('public')->exists($oldPath)) {
+                                Storage::disk('public')->delete($oldPath);
+                                error_log('LOGO UPLOAD DEBUG: Deleted old logo file: ' . $oldPath);
+                            }
+                        } catch (\Exception $cleanupException) {
+                            error_log('LOGO UPLOAD DEBUG: Failed to delete old logo: ' . $cleanupException->getMessage());
+                            // Don't fail the upload if old file deletion fails
+                        }
+                    }
+                    
                     // Generate the public URL for the locally stored file
                     $logoUrl = asset('storage/' . $localPath);
                     error_log('LOGO UPLOAD DEBUG: Generated local URL: ' . $logoUrl);
@@ -219,14 +234,15 @@ class CompanyLogoController extends Controller
     }
 
     /**
-     * Generate filename for logo: CompanyName_CompanyCode.extension
+     * Generate filename for logo: CompanyName_CompanyCode_timestamp.extension
      */
     private function generateLogoFilename($company, $extension)
     {
         $companyName = Str::slug($company->name, '_');
         $companyCode = $company->code;
+        $timestamp = time(); // Add timestamp to make filename unique
         
-        return "{$companyName}_{$companyCode}.{$extension}";
+        return "{$companyName}_{$companyCode}_{$timestamp}.{$extension}";
     }
 
     /**

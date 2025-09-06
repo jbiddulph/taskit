@@ -28,12 +28,13 @@ export async function uploadImageToTaskitBucket(file: File): Promise<string> {
 
 export async function uploadLogoToTaskitBucket(file: File, companyName: string, companyCode: string): Promise<string> {
   const fileExt = file.name.split('.').pop();
-  const fileName = `${companyName.replace(/\s+/g, '_')}_${companyCode}.${fileExt}`;
+  const timestamp = Date.now(); // Add timestamp to make filename unique
+  const fileName = `${companyName.replace(/\s+/g, '_')}_${companyCode}_${timestamp}.${fileExt}`;
   const filePath = `logos/${fileName}`;
 
   const { error } = await supabase.storage.from('taskit').upload(filePath, file, {
-    cacheControl: '3600',
-    upsert: true, // Allow overwriting existing logo
+    cacheControl: '1', // Short cache to prevent browser caching issues
+    upsert: false, // Each logo upload now has unique filename
     contentType: file.type,
   });
 
