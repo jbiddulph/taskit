@@ -181,8 +181,7 @@ const hasCustomLogo = computed(() => !!currentLogoUrl.value);
                                     v-if="hasCustomLogo" 
                                     :src="currentLogoUrl"
                                     :alt="company?.name + ' logo'"
-                                    class="max-w-full max-h-full object-contain"
-                                    style="max-height: 46px;"
+                                    class="object-contain"
                                 />
                                 <div v-else class="flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400">
                                     <div class="w-6 h-6 bg-blue-600 dark:bg-blue-400 rounded text-white dark:text-gray-900 flex items-center justify-center">
@@ -234,10 +233,10 @@ const hasCustomLogo = computed(() => !!currentLogoUrl.value);
                         <div class="text-sm text-blue-700 dark:text-blue-300">
                             <p class="font-medium mb-1">Logo Requirements:</p>
                             <ul class="space-y-1 text-xs">
-                                <li>• Maximum height: 46px (32px height is ideal)</li>
+                                <li>• Recommended size: 216px width × 48px height</li>
                                 <li>• Supported formats: PNG, JPG, JPEG, SVG</li>
                                 <li>• Maximum file size: 2MB</li>
-                                <li>• Filename will be: {{ company?.name?.replace(/\s+/g, '_') }}_{{ company?.code }}</li>
+                                <li>• Filename will be: {{ company?.name?.replace(/\s+/g, '_') }}_{{ company?.code }}_timestamp</li>
                             </ul>
                         </div>
                     </div>

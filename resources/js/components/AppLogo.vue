@@ -18,7 +18,6 @@ const hasCustomLogo = computed(() => !!customLogoUrl.value);
             :src="customLogoUrl"
             :alt="company?.name + ' logo'"
             class="object-contain"
-            style="max-width: 248px; max-height: 46px;"
         />
     </div>
 
