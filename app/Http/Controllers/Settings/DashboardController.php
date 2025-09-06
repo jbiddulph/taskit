@@ -18,7 +18,6 @@ class DashboardController extends Controller
         // Refresh company to ensure we have the latest data
         if ($company) {
             $company->refresh();
-            error_log('DASHBOARD INDEX DEBUG: Company prune_completed_tasks: ' . ($company->prune_completed_tasks ? 'true' : 'false'));
         }
 
         return Inertia::render('settings/Dashboard', [

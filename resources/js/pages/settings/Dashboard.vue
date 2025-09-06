@@ -41,24 +41,16 @@ const form = useForm({
 
 // Watch for changes in props.company and update both form and local ref
 watch(() => props.company?.prune_completed_tasks, (newValue) => {
-    console.log('DASHBOARD DEBUG: Props changed, prune_completed_tasks:', newValue);
-    console.log('DASHBOARD DEBUG: Full company props:', props.company);
-    
     const boolValue = newValue || false;
     
     // Update both the form and the local ref
     form.prune_completed_tasks = boolValue;
     pruneCompletedTasks.value = boolValue;
-    
-    console.log('DASHBOARD DEBUG: Form updated to:', form.prune_completed_tasks);
-    console.log('DASHBOARD DEBUG: Local ref updated to:', pruneCompletedTasks.value);
 }, { immediate: true }); // immediate: true ensures this runs on component mount
 
 // Watch the local ref and sync changes back to the form
 watch(pruneCompletedTasks, (newValue) => {
-    console.log('DASHBOARD DEBUG: Local ref changed to:', newValue);
     form.prune_completed_tasks = newValue;
-    console.log('DASHBOARD DEBUG: Form synced to:', form.prune_completed_tasks);
 });
 
 const updateSettings = () => {
@@ -124,7 +116,6 @@ const successMessage = computed(() => page.props.flash?.success as string || '')
                     <CardContent class="space-y-4">
                         <!-- Prune Completed Tasks Setting -->
                         <div class="flex items-start space-x-3">
-                            <!-- Debug: form={{ form.prune_completed_tasks }}, ref={{ pruneCompletedTasks }} -->
                             <Checkbox 
                                 id="prune_completed_tasks"
                                 v-model:checked="pruneCompletedTasks"

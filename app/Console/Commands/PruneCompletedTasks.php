@@ -48,11 +48,13 @@ class PruneCompletedTasks extends Command
             $this->info("Processing company: {$company->name} ({$company->code})");
             
             // Get completed todos for this company through projects
-            $completedTodos = Todo::whereHas('project', function ($query) use ($company) {
-                $query->where('company_id', $company->id);
-            })
-            ->where('status', 'done')
-            ->get();
+            // First get all project IDs for this company
+            $projectIds = $company->projects()->pluck('id');
+            
+            // Then get completed todos for those projects
+            $completedTodos = Todo::whereIn('project_id', $projectIds)
+                ->where('status', 'done')
+                ->get();
             
             if ($completedTodos->isEmpty()) {
                 $this->line("  No completed tasks found for {$company->name}");
