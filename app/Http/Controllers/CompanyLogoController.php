@@ -104,17 +104,33 @@ class CompanyLogoController extends Controller
                 $fileContents = file_get_contents($file->getRealPath());
                 error_log('LOGO UPLOAD DEBUG: File contents read successfully, size: ' . strlen($fileContents));
                 
-                // Try with putFileAs method for more detailed error info
-                $uploaded = Storage::disk('supabase')->putFileAs('logos', $file, basename($path));
-                error_log('LOGO UPLOAD DEBUG: Upload result: ' . ($uploaded ? 'SUCCESS' : 'FAILED'));
-                error_log('LOGO UPLOAD DEBUG: Upload response type: ' . gettype($uploaded));
-                error_log('LOGO UPLOAD DEBUG: Upload response value: ' . var_export($uploaded, true));
+                // Try using the local storage first (like todo attachments do)
+                error_log('LOGO UPLOAD DEBUG: Trying local storage upload first');
+                $localPath = $file->storeAs('logos', basename($path), 'public');
+                error_log('LOGO UPLOAD DEBUG: Local upload result: ' . ($localPath ? 'SUCCESS' : 'FAILED'));
                 
-                // If putFileAs fails, try the original method for comparison
-                if (!$uploaded) {
-                    error_log('LOGO UPLOAD DEBUG: Trying alternative upload method');
-                    $uploaded = Storage::disk('supabase')->put($path, $fileContents);
-                    error_log('LOGO UPLOAD DEBUG: Alternative upload result: ' . ($uploaded ? 'SUCCESS' : 'FAILED'));
+                if ($localPath) {
+                    // If local works, we know the file processing is fine
+                    // Now try Supabase with the exact method that works for todo images
+                    error_log('LOGO UPLOAD DEBUG: Local worked, now trying Supabase putFileAs');
+                    $uploaded = Storage::disk('supabase')->putFileAs('logos', $file, basename($path));
+                    error_log('LOGO UPLOAD DEBUG: Supabase putFileAs result: ' . ($uploaded ? 'SUCCESS' : 'FAILED'));
+                    
+                    // If putFileAs fails, try the original method for comparison
+                    if (!$uploaded) {
+                        error_log('LOGO UPLOAD DEBUG: Trying Supabase put method');
+                        $uploaded = Storage::disk('supabase')->put($path, $fileContents);
+                        error_log('LOGO UPLOAD DEBUG: Supabase put result: ' . ($uploaded ? 'SUCCESS' : 'FAILED'));
+                    }
+                    
+                    // Clean up local file if Supabase worked
+                    if ($uploaded) {
+                        Storage::disk('public')->delete('logos/' . basename($path));
+                        error_log('LOGO UPLOAD DEBUG: Cleaned up local file');
+                    }
+                } else {
+                    error_log('LOGO UPLOAD DEBUG: Local upload failed - file processing issue');
+                    $uploaded = false;
                 }
                 
             } catch (\Exception $uploadException) {
