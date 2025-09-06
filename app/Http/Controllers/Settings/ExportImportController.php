@@ -408,11 +408,14 @@ class ExportImportController extends Controller
                         $project = null;
                         if (isset($todoData['project_key'])) {
                             $project = $company->projects()->where('key', $todoData['project_key'])->first();
+                            error_log("Todo import - Looking for project by key: " . $todoData['project_key'] . " - Found: " . ($project ? $project->id : 'null'));
                         } elseif (isset($todoData['project_name'])) {
                             $project = $company->projects()->where('name', $todoData['project_name'])->first();
+                            error_log("Todo import - Looking for project by name: " . $todoData['project_name'] . " - Found: " . ($project ? $project->id : 'null'));
                         }
 
                         if ($project) {
+                            error_log("Todo import - Creating todo: " . $todoData['title'] . " in project: " . $project->name);
                             Todo::create([
                                 'title' => $todoData['title'],
                                 'description' => $todoData['description'] ?? '',
@@ -427,6 +430,8 @@ class ExportImportController extends Controller
                                 'user_id' => $user->id, // Creator of the todo
                             ]);
                             $importedCount++;
+                        } else {
+                            error_log("Todo import - No project found for todo: " . $todoData['title'] . " - project_key: " . ($todoData['project_key'] ?? 'null') . " - project_name: " . ($todoData['project_name'] ?? 'null'));
                         }
                     }
                 }
