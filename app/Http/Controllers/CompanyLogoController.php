@@ -104,10 +104,18 @@ class CompanyLogoController extends Controller
                 $fileContents = file_get_contents($file->getRealPath());
                 error_log('LOGO UPLOAD DEBUG: File contents read successfully, size: ' . strlen($fileContents));
                 
-                $uploaded = Storage::disk('supabase')->put($path, $fileContents);
+                // Try with putFileAs method for more detailed error info
+                $uploaded = Storage::disk('supabase')->putFileAs('logos', $file, basename($path));
                 error_log('LOGO UPLOAD DEBUG: Upload result: ' . ($uploaded ? 'SUCCESS' : 'FAILED'));
                 error_log('LOGO UPLOAD DEBUG: Upload response type: ' . gettype($uploaded));
                 error_log('LOGO UPLOAD DEBUG: Upload response value: ' . var_export($uploaded, true));
+                
+                // If putFileAs fails, try the original method for comparison
+                if (!$uploaded) {
+                    error_log('LOGO UPLOAD DEBUG: Trying alternative upload method');
+                    $uploaded = Storage::disk('supabase')->put($path, $fileContents);
+                    error_log('LOGO UPLOAD DEBUG: Alternative upload result: ' . ($uploaded ? 'SUCCESS' : 'FAILED'));
+                }
                 
             } catch (\Exception $uploadException) {
                 error_log('LOGO UPLOAD DEBUG: Upload exception: ' . $uploadException->getMessage());
