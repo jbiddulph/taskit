@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { update as dashboardSettingsUpdate } from '@/routes/dashboard/settings';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -43,12 +44,21 @@ watch(() => props.company?.prune_completed_tasks, (newValue) => {
 }, { immediate: true });
 
 const updateSettings = () => {
-    form.patch('/settings/dashboard', {
+    console.log('FRONTEND DEBUG: Starting form submission');
+    console.log('FRONTEND DEBUG: Form data:', { prune_completed_tasks: form.prune_completed_tasks });
+    
+    form.patch(dashboardSettingsUpdate().url, {
         preserveScroll: true,
         onSuccess: (page) => {
+            console.log('FRONTEND DEBUG: Success response received');
+            console.log('FRONTEND DEBUG: Response company data:', page.props.company);
             // Update form data with fresh data from the response
             const updatedCompany = page.props.company as Company;
             form.prune_completed_tasks = updatedCompany?.prune_completed_tasks || false;
+            console.log('FRONTEND DEBUG: Form updated with:', form.prune_completed_tasks);
+        },
+        onError: (errors) => {
+            console.log('FRONTEND DEBUG: Error response:', errors);
         }
     });
 };
