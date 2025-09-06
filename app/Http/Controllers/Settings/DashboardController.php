@@ -57,8 +57,13 @@ class DashboardController extends Controller
         $user->load('company');
         
         error_log('DASHBOARD UPDATE DEBUG: After update prune_completed_tasks: ' . ($company->prune_completed_tasks ? 'true' : 'false'));
+        error_log('DASHBOARD UPDATE DEBUG: Company data being returned: ' . json_encode($company->toArray()));
         error_log('DASHBOARD UPDATE DEBUG: Update completed successfully');
 
-        return back()->with('success', 'Dashboard settings updated successfully.');
+        // Return with fresh company data to ensure frontend gets updated values
+        return Inertia::render('settings/Dashboard', [
+            'user' => $user,
+            'company' => $company,
+        ])->with('success', 'Dashboard settings updated successfully.');
     }
 }
