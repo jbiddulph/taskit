@@ -286,11 +286,23 @@ class ExportImportController extends Controller
                 $data = $this->parseCsv($content);
             }
 
-            $importedCount = $this->processImport($company, $data, $importType, $user);
+            // Handle different data formats
+            $processData = $this->normalizeImportData($data, $importType);
+            
+            // Debug: Log import data structure
+            error_log("Import debug - Original data keys: " . json_encode(array_keys($data)));
+            error_log("Import debug - Import type: " . $importType);
+            error_log("Import debug - Processed data count: " . count($processData));
+            
+            $importedCount = $this->processImport($company, $processData, $importType, $user);
 
             DB::commit();
 
-            return back()->with('success', "Successfully imported {$importedCount} {$importType}.");
+            if ($importedCount > 0) {
+                return back()->with('success', "Successfully imported {$importedCount} {$importType}.");
+            } else {
+                return back()->withErrors(['error' => "No {$importType} were imported. Please check your file format and data."]);
+            }
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -322,6 +334,37 @@ class ExportImportController extends Controller
         }
 
         return $data;
+    }
+
+    private function normalizeImportData(array $data, string $importType): array
+    {
+        // Handle different data formats for import
+        switch ($importType) {
+            case 'todos':
+                // If data has a 'todos' key, extract it
+                if (isset($data['todos']) && is_array($data['todos'])) {
+                    return $data['todos'];
+                }
+                // If data is already a flat array, use it as is
+                return $data;
+
+            case 'projects':
+                // If data has a 'projects' key, extract it
+                if (isset($data['projects']) && is_array($data['projects'])) {
+                    return $data['projects'];
+                }
+                return $data;
+
+            case 'comments':
+                // If data has a 'comments' key, extract it
+                if (isset($data['comments']) && is_array($data['comments'])) {
+                    return $data['comments'];
+                }
+                return $data;
+
+            default:
+                return $data;
+        }
     }
 
     private function processImport(Company $company, array $data, string $importType, User $user): int
