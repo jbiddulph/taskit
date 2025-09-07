@@ -128,12 +128,22 @@
         <span v-else class="text-gray-400">Unassigned</span>
         
         <!-- Todo Unique ID -->
-        <span 
-          class="px-2 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded border"
-          :title="`Todo ID: ${todoUniqueId}`"
+        <button
+          @click.stop="copyTodoId"
+          :class="[
+            'px-2 py-0.5 text-xs font-mono rounded border transition-all duration-200 cursor-pointer',
+            copyFeedback === 'copied' 
+              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600' 
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
+          ]"
+          :title="copyFeedback === 'copied' ? 'Copied!' : `Click to copy Todo ID: ${todoUniqueId}`"
         >
-          {{ todoUniqueId }}
-        </span>
+          <span v-if="copyFeedback === 'copied'" class="flex items-center gap-1">
+            <Icon name="Check" class="w-3 h-3" />
+            Copied!
+          </span>
+          <span v-else>{{ todoUniqueId }}</span>
+        </button>
       </div>
       
       <div class="flex items-center gap-1 text-gray-500">
@@ -177,6 +187,9 @@ const emit = defineEmits<{
 const editingTitle = ref(false);
 const editingTitleText = ref('');
 const titleInput = ref<HTMLInputElement | null>(null);
+
+// Copy feedback state
+const copyFeedback = ref('');
 
 const priorityClasses = {
   Low: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-yellow-200',
@@ -316,6 +329,56 @@ const saveTitle = async () => {
 const cancelEditTitle = () => {
   editingTitle.value = false;
   editingTitleText.value = '';
+};
+
+// Copy Todo ID to clipboard
+const copyTodoId = async () => {
+  try {
+    await navigator.clipboard.writeText(todoUniqueId.value);
+    
+    // Show success feedback
+    copyFeedback.value = 'copied';
+    
+    // Clear feedback after 2 seconds
+    setTimeout(() => {
+      copyFeedback.value = '';
+    }, 2000);
+    
+    // Show success notification if available
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'success',
+        title: 'Copied!',
+        message: `Todo ID "${todoUniqueId.value}" copied to clipboard`
+      });
+    }
+  } catch (error) {
+    console.error('Failed to copy to clipboard:', error);
+    
+    // Fallback: try to select text for manual copy
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = todoUniqueId.value;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      copyFeedback.value = 'copied';
+      setTimeout(() => {
+        copyFeedback.value = '';
+      }, 2000);
+    } catch (fallbackError) {
+      console.error('Fallback copy failed:', fallbackError);
+      if ((window as any).$notify) {
+        (window as any).$notify({
+          type: 'error',
+          title: 'Copy Failed',
+          message: 'Unable to copy to clipboard. Please copy manually.'
+        });
+      }
+    }
+  }
 };
 </script>
 
