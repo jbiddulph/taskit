@@ -82,6 +82,7 @@
             @edit="$emit('edit', $event)"
             @delete="$emit('delete', $event)"
             @update="$emit('update', $event)"
+            @add-subtask="$emit('add-subtask', $event)"
           />
         </div>
       </TransitionGroup>
@@ -115,6 +116,7 @@ const emit = defineEmits<{
   update: [todo: Todo];
   menu: [];
   drop: [todo: Todo, newStatus: string];
+  'add-subtask': [todo: Todo];
 }>();
 
 const dropZone = ref<HTMLElement>();

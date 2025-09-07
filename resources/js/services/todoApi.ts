@@ -24,6 +24,7 @@ export interface Todo {
     id: number;
     user_id: number;
     project_id: number;
+    parent_task_id?: number;
     title: string;
     description?: string;
     priority: 'Low' | 'Medium' | 'High' | 'Critical';
@@ -39,6 +40,8 @@ export interface Todo {
     attachments?: TodoAttachment[];
     project?: Project;
     is_new_assigned?: boolean;
+    subtasks?: Todo[];
+    parent_task?: Todo;
 }
 
 export interface TodoComment {
@@ -160,6 +163,16 @@ class TodoApiService {
             method: 'POST',
             url: '/todos',
             data: todoData,
+        });
+        return response.data;
+    }
+
+    // Create a subtask for an existing todo
+    async createSubtask(parentTodoId: number, subtaskData: Partial<Todo>): Promise<Todo> {
+        const response = await this.request<ApiResponse<Todo>>({
+            method: 'POST',
+            url: `/todos/${parentTodoId}/subtasks`,
+            data: subtaskData,
         });
         return response.data;
     }

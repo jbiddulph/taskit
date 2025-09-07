@@ -162,6 +162,45 @@
         NEW
       </span>
     </div>
+
+    <!-- Add Subtask Button (only for non-subtasks) -->
+    <div v-if="!todo.parent_task_id" class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+      <button
+        @click.stop="$emit('add-subtask', todo)"
+        class="flex items-center gap-2 text-xs text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+      >
+        <Icon name="Plus" class="w-3 h-3" />
+        Add Subtask
+      </button>
+    </div>
+  </div>
+
+  <!-- Subtasks -->
+  <div v-if="todo.subtasks && todo.subtasks.length > 0" class="mt-2">
+    <div
+      v-for="(subtask, index) in todo.subtasks"
+      :key="subtask.id"
+      class="relative ml-6"
+    >
+      <!-- Tree line -->
+      <div class="absolute -left-4 top-0 bottom-0 w-px bg-gray-300 dark:bg-gray-600"></div>
+      <div class="absolute -left-4 top-4 w-3 h-px bg-gray-300 dark:bg-gray-600"></div>
+      
+      <!-- Last subtask - end the tree line -->
+      <div 
+        v-if="index === todo.subtasks.length - 1" 
+        class="absolute -left-4 top-4 bottom-0 w-px bg-white dark:bg-gray-800"
+      ></div>
+
+      <!-- Subtask card -->
+      <TodoCard
+        :todo="subtask"
+        @edit="$emit('edit', $event)"
+        @delete="$emit('delete', $event)"
+        @update="$emit('update', $event)"
+        class="transform scale-95 origin-top-left"
+      />
+    </div>
   </div>
 </template>
 
@@ -181,6 +220,7 @@ const emit = defineEmits<{
   edit: [todo: Todo];
   delete: [id: string];
   update: [todo: Todo];
+  'add-subtask': [todo: Todo];
 }>();
 
 // Title editing state

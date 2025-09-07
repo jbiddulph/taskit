@@ -230,6 +230,7 @@
         @update="updateTodo"
         @drop="handleDrop"
         @menu="() => {}"
+        @add-subtask="handleAddSubtask"
       />
       
       <TodoColumn
@@ -242,6 +243,7 @@
         @update="updateTodo"
         @drop="handleDrop"
         @menu="() => {}"
+        @add-subtask="handleAddSubtask"
       />
       
       <TodoColumn
@@ -254,6 +256,7 @@
         @update="updateTodo"
         @drop="handleDrop"
         @menu="() => {}"
+        @add-subtask="handleAddSubtask"
       />
       
       <TodoColumn
@@ -266,6 +269,7 @@
         @update="updateTodo"
         @drop="handleDrop"
         @menu="() => {}"
+        @add-subtask="handleAddSubtask"
       />
     </div>
 
@@ -640,6 +644,29 @@ const handleEditTodoFromCalendar = (todo: Todo) => {
   showForm.value = true;
 };
 
+const handleAddSubtask = (parentTodo: Todo) => {
+  // Set up form for creating a subtask
+  editingTodo.value = {
+    id: 0,
+    user_id: 0,
+    project_id: parentTodo.project_id,
+    parent_task_id: parentTodo.id,
+    title: '',
+    description: '',
+    priority: parentTodo.priority,
+    type: parentTodo.type,
+    tags: [],
+    assignee: parentTodo.assignee,
+    due_date: '',
+    story_points: 1,
+    status: 'todo',
+    created_at: '',
+    updated_at: '',
+    subtasks: [],
+  } as Todo;
+  showForm.value = true;
+};
+
 const saveTodo = async (todo: Todo) => {
   try {
     if (!currentProject.value) {
@@ -670,18 +697,37 @@ const saveTodo = async (todo: Todo) => {
         });
       }
     } else {
-      // Add new todo
-      const newTodo = await todoApi.createTodo({
-        ...todo,
-        project_id: currentProject.value.id
-      });
-      todos.value.push(newTodo);
+      // Add new todo or subtask
+      let newTodo;
+      if (todo.parent_task_id) {
+        // Create subtask
+        newTodo = await todoApi.createSubtask(todo.parent_task_id, {
+          ...todo,
+          project_id: currentProject.value.id
+        });
+        
+        // Find parent todo and add subtask to it
+        const parentIndex = todos.value.findIndex(t => t.id === todo.parent_task_id);
+        if (parentIndex !== -1) {
+          if (!todos.value[parentIndex].subtasks) {
+            todos.value[parentIndex].subtasks = [];
+          }
+          todos.value[parentIndex].subtasks!.push(newTodo);
+        }
+      } else {
+        // Create regular todo
+        newTodo = await todoApi.createTodo({
+          ...todo,
+          project_id: currentProject.value.id
+        });
+        todos.value.push(newTodo);
+      }
       
       if ((window as any).$notify) {
         (window as any).$notify({
           type: 'success',
-          title: 'Todo Created',
-          message: `Todo "${newTodo.title}" has been created successfully.`
+          title: todo.parent_task_id ? 'Subtask Created' : 'Todo Created',
+          message: `${todo.parent_task_id ? 'Subtask' : 'Todo'} "${newTodo.title}" has been created successfully.`
         });
       }
     }
