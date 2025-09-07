@@ -1,6 +1,11 @@
 <template>
   <div
-    class="group relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+    :class="[
+      'group relative rounded-lg border p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer',
+      isOverdueAndNotDone 
+        ? 'bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-700' 
+        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+    ]"
     @click="handleClick"
   >
     <!-- Priority indicator -->
@@ -121,6 +126,24 @@
           {{ todo.assignee.charAt(0).toUpperCase() }}
         </div>
         <span v-else class="text-gray-400">Unassigned</span>
+        
+        <!-- Todo Unique ID -->
+        <button
+          @click.stop="copyTodoId"
+          :class="[
+            'px-2 py-0.5 text-xs font-mono rounded border transition-all duration-200 cursor-pointer',
+            copyFeedback === 'copied' 
+              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600' 
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
+          ]"
+          :title="copyFeedback === 'copied' ? 'Copied!' : `Click to copy Todo ID: ${todoUniqueId}`"
+        >
+          <span v-if="copyFeedback === 'copied'" class="flex items-center gap-1">
+            <Icon name="Check" class="w-3 h-3" />
+            Copied!
+          </span>
+          <span v-else>{{ todoUniqueId }}</span>
+        </button>
       </div>
       
       <div class="flex items-center gap-1 text-gray-500">
@@ -130,8 +153,8 @@
       </div>
     </div>
 
-    <!-- Story points -->
-    <div class="absolute top-2 right-2 flex items-center gap-1">
+    <!-- Story points (only show on main todos, not subtasks) -->
+    <div v-if="!todo.parent_task_id" class="absolute top-2 right-2 flex items-center gap-1">
       <span v-if="todo.story_points" class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300">
         {{ todo.story_points }}
       </span>
@@ -139,7 +162,73 @@
         NEW
       </span>
     </div>
+
+    <!-- Subtask indicator for subtasks -->
+    <div v-if="todo.parent_task_id" class="absolute top-2 right-2 flex items-center gap-1">
+      <span v-if="todo.is_new_assigned" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-700">
+        NEW
+      </span>
+    </div>
+
+    <!-- Subtask Controls (only for non-subtasks) -->
+    <div v-if="!todo.parent_task_id" class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+      <div class="flex items-center justify-between">
+        <button
+          @click.stop="$emit('add-subtask', todo)"
+          class="flex items-center gap-2 text-xs text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        >
+          <Icon name="Plus" class="w-3 h-3" />
+          Add Subtask
+        </button>
+        
+        <!-- Show/Hide Subtasks Toggle (only if subtasks exist) -->
+        <button
+          v-if="todo.subtasks && todo.subtasks.length > 0"
+          @click.stop="toggleSubtasks"
+          class="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+        >
+          <Icon 
+            :name="subtasksVisible ? 'ChevronUp' : 'ChevronDown'" 
+            class="w-3 h-3" 
+          />
+          {{ subtasksVisible ? 'Hide' : 'Show' }} Subtasks ({{ todo.subtasks.length }})
+        </button>
+      </div>
+    </div>
   </div>
+
+  <!-- Subtasks with Collapse Animation -->
+  <Transition name="subtasks">
+    <div v-if="todo.subtasks && todo.subtasks.length > 0 && subtasksVisible" class="mt-2 overflow-hidden">
+      <TransitionGroup name="subtask-item" tag="div">
+        <div
+          v-for="(subtask, index) in todo.subtasks"
+          :key="subtask.id"
+          class="relative ml-6"
+        >
+          <!-- Tree line -->
+          <div class="absolute -left-4 top-0 bottom-0 w-px bg-gray-300 dark:bg-gray-600"></div>
+          <div class="absolute -left-4 top-4 w-3 h-px bg-gray-300 dark:bg-gray-600"></div>
+          
+          <!-- Last subtask - end the tree line -->
+          <div 
+            v-if="index === todo.subtasks.length - 1" 
+            class="absolute -left-4 top-4 bottom-0 w-px bg-white dark:bg-gray-800"
+          ></div>
+
+          <!-- Subtask card -->
+          <TodoCard
+            :todo="subtask"
+            @edit="$emit('edit', $event)"
+            @delete="$emit('delete', $event)"
+            @update="$emit('update', $event)"
+            @add-subtask="$emit('add-subtask', $event)"
+            class="transform scale-95 origin-top-left"
+          />
+        </div>
+      </TransitionGroup>
+    </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">
@@ -158,6 +247,7 @@ const emit = defineEmits<{
   edit: [todo: Todo];
   delete: [id: string];
   update: [todo: Todo];
+  'add-subtask': [todo: Todo];
 }>();
 
 // Title editing state
@@ -165,12 +255,24 @@ const editingTitle = ref(false);
 const editingTitleText = ref('');
 const titleInput = ref<HTMLInputElement | null>(null);
 
+// Subtask visibility state
+const subtasksVisible = ref(true);
+
+// Copy feedback state
+const copyFeedback = ref('');
+
 const priorityClasses = {
   Low: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-yellow-200',
   Medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
   High: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
   Critical: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
 };
+
+// Generate unique Todo ID (first 4 chars of project + todo ID)
+const todoUniqueId = computed(() => {
+  const projectPrefix = props.todo.project?.name?.substring(0, 4).toUpperCase() || 'UNKN';
+  return `${projectPrefix}-${props.todo.id}`;
+});
 
 // Track if we're dragging to prevent click during drag
 let isDragging = false;
@@ -230,6 +332,20 @@ const getTypeIcon = (type: string): string => {
 const firstImageSrc = computed(() => getFirstImageSrc((props as any).todo?.description));
 const plainTextDescription = computed(() => stripHtml((props as any).todo?.description));
 
+// Check if todo is overdue and not in Done status
+const isOverdueAndNotDone = computed(() => {
+  if (!props.todo.due_date || props.todo.status === 'done') {
+    return false;
+  }
+  
+  const dueDate = new Date(props.todo.due_date);
+  const now = new Date();
+  const diffTime = dueDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  return diffDays < 0; // Overdue if due date is in the past
+});
+
 // Title editing methods
 const startEditTitle = () => {
   editingTitle.value = true;
@@ -284,6 +400,61 @@ const cancelEditTitle = () => {
   editingTitle.value = false;
   editingTitleText.value = '';
 };
+
+// Copy Todo ID to clipboard
+const copyTodoId = async () => {
+  try {
+    await navigator.clipboard.writeText(todoUniqueId.value);
+    
+    // Show success feedback
+    copyFeedback.value = 'copied';
+    
+    // Clear feedback after 2 seconds
+    setTimeout(() => {
+      copyFeedback.value = '';
+    }, 2000);
+    
+    // Show success notification if available
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'success',
+        title: 'Copied!',
+        message: `Todo ID "${todoUniqueId.value}" copied to clipboard`
+      });
+    }
+  } catch (error) {
+    console.error('Failed to copy to clipboard:', error);
+    
+    // Fallback: try to select text for manual copy
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = todoUniqueId.value;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      copyFeedback.value = 'copied';
+      setTimeout(() => {
+        copyFeedback.value = '';
+      }, 2000);
+    } catch (fallbackError) {
+      console.error('Fallback copy failed:', fallbackError);
+      if ((window as any).$notify) {
+        (window as any).$notify({
+          type: 'error',
+          title: 'Copy Failed',
+          message: 'Unable to copy to clipboard. Please copy manually.'
+        });
+      }
+    }
+  }
+};
+
+// Toggle subtasks visibility
+const toggleSubtasks = () => {
+  subtasksVisible.value = !subtasksVisible.value;
+};
 </script>
 
 <style scoped>
@@ -292,5 +463,47 @@ const cancelEditTitle = () => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Subtasks collapse/expand animations */
+.subtasks-enter-active,
+.subtasks-leave-active {
+  transition: all 0.3s ease;
+  transform-origin: top;
+}
+
+.subtasks-enter-from {
+  opacity: 0;
+  transform: scaleY(0);
+  max-height: 0;
+}
+
+.subtasks-leave-to {
+  opacity: 0;
+  transform: scaleY(0);
+  max-height: 0;
+}
+
+.subtasks-enter-to,
+.subtasks-leave-from {
+  opacity: 1;
+  transform: scaleY(1);
+  max-height: 1000px; /* Large enough to accommodate content */
+}
+
+/* Individual subtask item animations */
+.subtask-item-enter-active,
+.subtask-item-leave-active {
+  transition: all 0.2s ease;
+}
+
+.subtask-item-enter-from,
+.subtask-item-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.subtask-item-move {
+  transition: transform 0.2s ease;
 }
 </style>

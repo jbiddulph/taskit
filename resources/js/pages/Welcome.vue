@@ -41,7 +41,7 @@ import { Head, Link } from '@inertiajs/vue3';
                 >
                     <h1 class="mb-1 font-medium">Let's get started</h1>
                     <p class="mb-2 text-[#706f6c] dark:text-[#A1A09A]">
-                        TaskIT is a powerful task management system. <br />Get started with these features.
+                        ZapTask is a powerful task management system. <br />Get started with these features.
                     </p>
                     <ul class="mb-4 flex flex-col lg:mb-6">
                         <li
@@ -119,24 +119,29 @@ import { Head, Link } from '@inertiajs/vue3';
                 <div
                     class="relative -mb-px aspect-335/376 w-full shrink-0 overflow-hidden rounded-t-lg bg-gradient-to-br from-blue-50 to-indigo-100 lg:mb-0 lg:-ml-px lg:aspect-auto lg:w-[438px] lg:rounded-t-none lg:rounded-r-lg dark:from-blue-900/20 dark:to-indigo-900/30"
                 >
-                    <!-- TaskIT Logo and Branding -->
+                    <!-- ZapTask Logo and Branding -->
                     <div class="flex flex-col items-center justify-center h-full p-8 text-center">
-                        <!-- TaskIT Icon -->
+                        <!-- ZapTask Icon -->
                         <div class="mb-6">
-                            <svg 
-                                class="w-24 h-24 text-blue-600 dark:text-blue-400 opacity-100 transition-all duration-750 starting:translate-y-6 starting:opacity-0" 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                viewBox="0 0 24 24" 
-                                fill="currentColor"
-                            >
-                                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                            </svg>
+                            <!-- Light mode: PNG -->
+                            <img 
+                                src="/zap_icon.png" 
+                                alt="ZapTask Logo"
+                                class="w-24 h-24 opacity-100 transition-all duration-750 starting:translate-y-6 starting:opacity-0 dark:hidden" 
+                            />
+                            
+                            <!-- Dark mode: White SVG -->
+                            <img 
+                                src="/zap_icon_white.svg" 
+                                alt="ZapTask Logo"
+                                class="w-24 h-24 opacity-100 transition-all duration-750 starting:translate-y-6 starting:opacity-0 hidden dark:block" 
+                            />
                         </div>
                         
-                        <!-- TaskIT Text -->
+                        <!-- ZapTask Text -->
                         <div class="space-y-2 opacity-100 transition-all delay-300 duration-750 starting:translate-y-4 starting:opacity-0">
                             <h2 class="text-4xl font-bold text-gray-900 dark:text-white">
-                                TaskIT
+                                ZapTask
                             </h2>
                             <p class="text-lg text-gray-600 dark:text-gray-300 font-medium">
                                 Task Management Made Simple

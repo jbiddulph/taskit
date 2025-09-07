@@ -230,6 +230,7 @@
         @update="updateTodo"
         @drop="handleDrop"
         @menu="() => {}"
+        @add-subtask="handleAddSubtask"
       />
       
       <TodoColumn
@@ -242,6 +243,7 @@
         @update="updateTodo"
         @drop="handleDrop"
         @menu="() => {}"
+        @add-subtask="handleAddSubtask"
       />
       
       <TodoColumn
@@ -254,6 +256,7 @@
         @update="updateTodo"
         @drop="handleDrop"
         @menu="() => {}"
+        @add-subtask="handleAddSubtask"
       />
       
       <TodoColumn
@@ -266,6 +269,7 @@
         @update="updateTodo"
         @drop="handleDrop"
         @menu="() => {}"
+        @add-subtask="handleAddSubtask"
       />
     </div>
 
@@ -640,6 +644,29 @@ const handleEditTodoFromCalendar = (todo: Todo) => {
   showForm.value = true;
 };
 
+const handleAddSubtask = (parentTodo: Todo) => {
+  // Set up form for creating a subtask
+  editingTodo.value = {
+    id: 0,
+    user_id: 0,
+    project_id: parentTodo.project_id,
+    parent_task_id: parentTodo.id,
+    title: '',
+    description: '',
+    priority: parentTodo.priority,
+    type: parentTodo.type,
+    tags: [],
+    assignee: parentTodo.assignee,
+    due_date: '',
+    story_points: 1,
+    status: 'todo',
+    created_at: '',
+    updated_at: '',
+    subtasks: [],
+  } as Todo;
+  showForm.value = true;
+};
+
 const saveTodo = async (todo: Todo) => {
   try {
     if (!currentProject.value) {
@@ -653,12 +680,29 @@ const saveTodo = async (todo: Todo) => {
       return;
     }
     
-    if (editingTodo.value) {
+    if (editingTodo.value && editingTodo.value.id > 0) {
       // Update existing todo
       const updatedTodo = await todoApi.updateTodo(todo.id, todo);
       const index = todos.value.findIndex(t => t.id === todo.id);
       if (index !== -1) {
         todos.value[index] = updatedTodo;
+        
+        // Force reactivity update to ensure UI changes immediately
+        todos.value = [...todos.value];
+      } else {
+        // Check if it's a subtask - find the parent and update the subtask
+        for (let i = 0; i < todos.value.length; i++) {
+          if (todos.value[i].subtasks) {
+            const subtaskIndex = todos.value[i].subtasks!.findIndex(subtask => subtask.id === todo.id);
+            if (subtaskIndex !== -1) {
+              todos.value[i].subtasks![subtaskIndex] = updatedTodo;
+              
+              // Force reactivity update
+              todos.value = [...todos.value];
+              break;
+            }
+          }
+        }
       }
       editingTodo.value = null;
       
@@ -670,18 +714,37 @@ const saveTodo = async (todo: Todo) => {
         });
       }
     } else {
-      // Add new todo
-      const newTodo = await todoApi.createTodo({
-        ...todo,
-        project_id: currentProject.value.id
-      });
-      todos.value.push(newTodo);
+      // Add new todo or subtask
+      let newTodo;
+      if (todo.parent_task_id) {
+        // Create subtask
+        newTodo = await todoApi.createSubtask(todo.parent_task_id, {
+          ...todo,
+          project_id: currentProject.value.id
+        });
+        
+        // Find parent todo and add subtask to it
+        const parentIndex = todos.value.findIndex(t => t.id === todo.parent_task_id);
+        if (parentIndex !== -1) {
+          if (!todos.value[parentIndex].subtasks) {
+            todos.value[parentIndex].subtasks = [];
+          }
+          todos.value[parentIndex].subtasks!.push(newTodo);
+        }
+      } else {
+        // Create regular todo
+        newTodo = await todoApi.createTodo({
+          ...todo,
+          project_id: currentProject.value.id
+        });
+        todos.value.push(newTodo);
+      }
       
       if ((window as any).$notify) {
         (window as any).$notify({
           type: 'success',
-          title: 'Todo Created',
-          message: `Todo "${newTodo.title}" has been created successfully.`
+          title: todo.parent_task_id ? 'Subtask Created' : 'Todo Created',
+          message: `${todo.parent_task_id ? 'Subtask' : 'Todo'} "${newTodo.title}" has been created successfully.`
         });
       }
     }
@@ -936,6 +999,29 @@ const updateTodo = (updatedTodo: Todo) => {
   const index = todos.value.findIndex(todo => todo.id === updatedTodo.id);
   if (index !== -1) {
     todos.value[index] = updatedTodo;
+    
+    // Force reactivity update to ensure UI changes immediately
+    todos.value = [...todos.value];
+    
+    // Dispatch event to refresh sidebar project stats
+    window.dispatchEvent(new CustomEvent('todoChanged'));
+  } else {
+    // Check if it's a subtask - find the parent and update the subtask
+    for (let i = 0; i < todos.value.length; i++) {
+      if (todos.value[i].subtasks) {
+        const subtaskIndex = todos.value[i].subtasks!.findIndex(subtask => subtask.id === updatedTodo.id);
+        if (subtaskIndex !== -1) {
+          todos.value[i].subtasks![subtaskIndex] = updatedTodo;
+          
+          // Force reactivity update
+          todos.value = [...todos.value];
+          
+          // Dispatch event to refresh sidebar project stats
+          window.dispatchEvent(new CustomEvent('todoChanged'));
+          break;
+        }
+      }
+    }
   }
 };
 
@@ -1304,6 +1390,34 @@ onMounted(async () => {
       currentProject.value = null;
       selectedProjectId.value = '';
       todos.value = [];
+    }
+  });
+  
+  // Listen for subscription downgrades to reload projects and check current project access
+  window.addEventListener('subscription-downgrade', async (e: any) => {
+    console.log('Subscription downgrade detected in TodoBoard, reloading projects:', e.detail);
+    await loadProjects();
+    
+    // Check if current project is still accessible after downgrade
+    if (currentProject.value) {
+      const projectStillAccessible = projects.value.find(p => p.id === currentProject.value!.id);
+      if (!projectStillAccessible) {
+        console.log('Current project is no longer accessible after downgrade, clearing selection');
+        currentProject.value = null;
+        selectedProjectId.value = '';
+        localStorage.removeItem('currentProjectId');
+        todos.value = [];
+        
+        // Auto-select first available project if any
+        if (projects.value.length > 0) {
+          const firstProject = projects.value[0];
+          currentProject.value = firstProject;
+          selectedProjectId.value = firstProject.id.toString();
+          localStorage.setItem('currentProjectId', firstProject.id.toString());
+          await loadTodos();
+          console.log('Auto-selected first accessible project after downgrade:', firstProject.name);
+        }
+      }
     }
   });
 

@@ -33,12 +33,14 @@ class TodoController extends Controller
         if ($user->company_id) {
             // Show all todos from the same company
             $query = Todo::forCompany($user->company_id)
-                ->with(['comments', 'attachments', 'project'])
+                ->with(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask'])
+                ->whereNull('parent_task_id') // Only load parent tasks, subtasks will be loaded via the 'subtasks' relationship
                 ->orderBy('created_at', 'desc');
         } else {
             // Fallback to user's own todos if no company
             $query = Todo::forUser($user)
-                ->with(['comments', 'attachments', 'project'])
+                ->with(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask'])
+                ->whereNull('parent_task_id') // Only load parent tasks, subtasks will be loaded via the 'subtasks' relationship
                 ->orderBy('created_at', 'desc');
         }
 
@@ -125,6 +127,7 @@ class TodoController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'project_id' => 'required|exists:taskit_projects,id',
+            'parent_task_id' => 'nullable|exists:taskit_todos,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'priority' => 'required|in:Low,Medium,High,Critical',
@@ -147,6 +150,7 @@ class TodoController extends Controller
         $todo = Todo::create([
             'user_id' => Auth::id(),
             'project_id' => $request->project_id,
+            'parent_task_id' => $request->parent_task_id,
             'title' => $request->title,
             'description' => $request->description,
             'priority' => $request->priority,
@@ -158,7 +162,7 @@ class TodoController extends Controller
             'status' => $request->status,
         ]);
 
-        $todo->load(['comments', 'attachments']);
+        $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
 
         // Send real-time notification
         $this->webSocketService->todoCreated($todo);
@@ -187,7 +191,7 @@ class TodoController extends Controller
             ], 403);
         }
 
-        $todo->load(['comments.user', 'attachments']);
+        $todo->load(['comments.user', 'attachments', 'project', 'subtasks.project', 'parentTask']);
 
         return response()->json([
             'success' => true,
@@ -237,7 +241,7 @@ class TodoController extends Controller
             'assignee', 'due_date', 'story_points', 'status'
         ]));
 
-        $todo->load(['comments', 'attachments']);
+        $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
 
         // Send real-time notification
         $this->webSocketService->todoUpdated($todo);
@@ -338,6 +342,9 @@ class TodoController extends Controller
         $oldStatus = $todo->status;
         $todo->update(['status' => $request->status]);
 
+        // Load relationships to ensure complete data is returned
+        $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
+
         // Send real-time notification
         $this->webSocketService->todoStatusChanged($todo, $oldStatus);
 
@@ -366,5 +373,66 @@ class TodoController extends Controller
             'success' => true,
             'data' => $assignees
         ]);
+    }
+
+    /**
+     * Create a subtask for an existing todo
+     */
+    public function createSubtask(Request $request, Todo $todo): JsonResponse
+    {
+        $user = Auth::user();
+        
+        if (!$todo->canAccess($user)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'priority' => 'nullable|in:Low,Medium,High,Critical',
+            'type' => 'nullable|in:Bug,Feature,Task,Story,Epic',
+            'assignee' => 'nullable|string|max:255',
+            'due_date' => 'nullable|date|after:today',
+            'story_points' => 'nullable|integer|min:1|max:21',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $subtask = Todo::create([
+            'user_id' => Auth::id(),
+            'project_id' => $todo->project_id,
+            'parent_task_id' => $todo->id,
+            'title' => $request->title,
+            'description' => $request->description,
+            'priority' => $request->priority ?? $todo->priority, // Inherit parent priority if not specified
+            'type' => $request->type,
+            'tags' => [],
+            'assignee' => $request->assignee ?? $todo->assignee, // Inherit parent assignee if not specified
+            'due_date' => $request->due_date,
+            'story_points' => $request->story_points,
+            'status' => 'todo', // Subtasks always start as 'todo'
+        ]);
+
+        $subtask->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
+
+        // Send real-time notification
+        $this->webSocketService->todoCreated($subtask);
+
+        // Send assignment notification if subtask is assigned to someone
+        $this->assignmentNotificationService->sendNewTodoAssignmentNotification($subtask);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Subtask created successfully',
+            'data' => $subtask
+        ], 201);
     }
 }

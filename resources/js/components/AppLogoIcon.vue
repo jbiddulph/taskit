@@ -13,10 +13,19 @@ defineProps<Props>();
 </script>
 
 <template>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" :class="className" v-bind="$attrs">
-        <path
-            fill="currentColor"
-            d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
-        />
-    </svg>
+    <!-- Light mode: PNG -->
+    <img 
+        src="/zap_icon.png" 
+        alt="ZapTask Logo" 
+        :class="['dark:hidden', className]" 
+        v-bind="$attrs"
+    />
+    
+    <!-- Dark mode: White SVG -->
+    <img 
+        src="/zap_icon_white.svg" 
+        alt="ZapTask Logo" 
+        :class="['hidden dark:block', className]" 
+        v-bind="$attrs"
+    />
 </template>

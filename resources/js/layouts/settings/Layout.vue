@@ -2,26 +2,53 @@
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { appearance } from '@/routes';
+import { appearance, companyLogo } from '@/routes';
+import { settings as dashboardSettings } from '@/routes/dashboard';
 import { edit as editPassword } from '@/routes/password';
 import { edit } from '@/routes/profile';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
-const sidebarNavItems: NavItem[] = [
-    {
-        title: 'Profile',
-        href: edit(),
-    },
-    {
-        title: 'Password',
-        href: editPassword(),
-    },
-    {
-        title: 'Appearance',
-        href: appearance(),
-    },
-];
+const page = usePage();
+
+const sidebarNavItems = computed(() => {
+    const items: NavItem[] = [
+        {
+            title: 'Profile',
+            href: edit(),
+        },
+        {
+            title: 'Password',
+            href: editPassword(),
+        },
+        {
+            title: 'Appearance',
+            href: appearance(),
+        },
+        {
+            title: 'Dashboard',
+            href: dashboardSettings(),
+        },
+        {
+            title: 'Export & Import',
+            href: '/settings/export-import',
+        },
+    ];
+
+    // Add Company Logo for paid plans only
+    const user = (page.props.auth as any)?.user;
+    const company = user?.company;
+    
+    if (company && ['MIDI', 'MAXI'].includes(company.subscription_type)) {
+        items.push({
+            title: 'Company Logo',
+            href: companyLogo(),
+        });
+    }
+
+    return items;
+});
 
 const currentPath = typeof window !== undefined ? window.location.pathname : '';
 </script>

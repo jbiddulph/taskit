@@ -2,7 +2,11 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}"  @class(['dark' => ($appearance ?? 'system') == 'dark'])>
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="theme-color" content="#3B82F6">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
@@ -31,7 +35,7 @@
             }
         </style>
 
-        <title inertia>{{ config('app.name', 'TaskIT') }}</title>
+        <title inertia>{{ config('app.name', 'ZapTask') }}</title>
 
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -49,6 +53,25 @@
         <script>
             window.VITE_SUPABASE_URL = "{{ env('VITE_SUPABASE_URL') }}";
             window.VITE_SUPABASE_ANON_KEY = "{{ env('VITE_SUPABASE_ANON_KEY') }}";
+            
+            // Mobile debugging - log errors to help diagnose issues
+            window.addEventListener('error', function(e) {
+                console.error('JavaScript Error:', e.error, e.filename, e.lineno);
+            });
+            
+            window.addEventListener('unhandledrejection', function(e) {
+                console.error('Unhandled Promise Rejection:', e.reason);
+            });
+            
+            // Log device info for debugging
+            console.log('Device Info:', {
+                userAgent: navigator.userAgent,
+                viewport: {
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                },
+                pixelRatio: window.devicePixelRatio
+            });
         </script>
         @inertia
         <div id="notification-container"></div>

@@ -25,7 +25,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 // Todo routes
-Route::middleware(['web', 'auth'])->group(function () {
+Route::middleware(['web', 'auth', 'subscription.access'])->group(function () {
     // Project routes (place specific routes BEFORE resource to avoid {project} capturing)
     Route::patch('projects/update-order', [ProjectController::class, 'updateOrder']);
     Route::apiResource('projects', ProjectController::class);
@@ -37,6 +37,7 @@ Route::delete('projects/{project}/with-todos', [ProjectController::class, 'destr
     Route::apiResource('todos', TodoController::class);
     Route::patch('todos/{todo}/status', [TodoController::class, 'updateStatus']);
     Route::post('todos/{todo}/mark-assignment-seen', [TodoController::class, 'markAssignmentSeen']);
+    Route::post('todos/{todo}/subtasks', [TodoController::class, 'createSubtask']);
     Route::get('todos/assignees', [TodoController::class, 'assignees']);
     
     // Todo comments

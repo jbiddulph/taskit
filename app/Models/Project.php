@@ -70,6 +70,29 @@ class Project extends Model
     }
 
     /**
+     * Get visible projects for a company (respecting subscription limits)
+     */
+    public function scopeVisibleForCompany($query, int $companyId)
+    {
+        $company = Company::find($companyId);
+        if (!$company) {
+            return $query->whereRaw('1 = 0'); // Return empty result
+        }
+
+        $baseQuery = $query->whereHas('owner', function ($q) use ($companyId) {
+            $q->where('company_id', $companyId);
+        })->where('is_active', true)->orderBy('viewing_order');
+
+        // Apply subscription-based limits
+        $limit = $company->getProjectLimit();
+        if ($limit !== PHP_INT_MAX) {
+            $baseQuery->limit($limit);
+        }
+
+        return $baseQuery;
+    }
+
+    /**
      * Get projects by key
      */
     public function scopeByKey($query, string $key)
@@ -130,8 +153,16 @@ class Project extends Model
             return $this->owner_id === $userId;
         }
         
-        // User can access if they own it OR if they're in the same company as the owner
-        return $this->owner_id === $userId || $this->owner->company_id === $user->company_id;
+        // Basic access check: User can access if they own it OR if they're in the same company as the owner
+        $hasBasicAccess = $this->owner_id === $userId || $this->owner->company_id === $user->company_id;
+        
+        if (!$hasBasicAccess) {
+            return false;
+        }
+        
+        // Additional check: Project must be within subscription limits (visible)
+        $visibleProjectIds = static::visibleForCompany($user->company_id)->pluck('id')->toArray();
+        return in_array($this->id, $visibleProjectIds);
     }
 
     /**

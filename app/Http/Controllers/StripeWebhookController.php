@@ -19,6 +19,12 @@ class StripeWebhookController extends Controller
         $payload = $request->getContent();
         $sigHeader = $request->header('Stripe-Signature');
         $endpointSecret = config('stripe.webhook_secret');
+        
+        Log::info('Stripe webhook received', [
+            'has_signature' => !empty($sigHeader),
+            'has_secret' => !empty($endpointSecret),
+            'payload_length' => strlen($payload)
+        ]);
 
         try {
             $event = Webhook::constructEvent($payload, $sigHeader, $endpointSecret);
@@ -108,12 +114,25 @@ class StripeWebhookController extends Controller
             return;
         }
 
+        // Determine subscription end date
+        $subscriptionEndsAt = null;
+        if ($subscription->current_period_end) {
+            $subscriptionEndsAt = now()->createFromTimestamp($subscription->current_period_end);
+        } else {
+            // Fallback: estimate next month from now for new subscriptions
+            $subscriptionEndsAt = now()->addMonth()->startOfDay();
+            Log::warning('Subscription missing current_period_end, using estimated date', [
+                'subscription_id' => $subscription->id,
+                'company_id' => $companyId,
+                'estimated_date' => $subscriptionEndsAt->toISOString()
+            ]);
+        }
+
         $company->update([
             'stripe_subscription_id' => $subscription->id,
             'subscription_type' => $planType ?? $company->subscription_type,
             'subscription_status' => $subscription->status,
-            'subscription_ends_at' => $subscription->current_period_end ? 
-                now()->createFromTimestamp($subscription->current_period_end) : null,
+            'subscription_ends_at' => $subscriptionEndsAt,
         ]);
 
         Log::info('Subscription created', [
@@ -132,16 +151,79 @@ class StripeWebhookController extends Controller
             return;
         }
 
-        $company->update([
-            'subscription_status' => $subscription->status,
-            'subscription_ends_at' => $subscription->current_period_end ? 
-                now()->createFromTimestamp($subscription->current_period_end) : null,
-        ]);
+        // Detect plan changes by checking the current price against our configured plans
+        $currentPrice = $subscription->items->data[0]->price ?? null;
+        $newPlanType = null;
+        
+        if ($currentPrice) {
+            $plans = config('stripe.plans');
+            foreach ($plans as $planKey => $planData) {
+                if (isset($planData['stripe_price_id']) && $planData['stripe_price_id'] === $currentPrice->id) {
+                    $newPlanType = $planKey;
+                    break;
+                }
+            }
+        }
 
-        Log::info('Subscription updated', [
+        // Determine subscription end date with fallback
+        $subscriptionEndsAt = null;
+        if ($subscription->current_period_end) {
+            $subscriptionEndsAt = now()->createFromTimestamp($subscription->current_period_end);
+        } elseif ($company->subscription_ends_at) {
+            // Keep existing end date if Stripe doesn't provide one
+            $subscriptionEndsAt = $company->subscription_ends_at;
+            Log::info('Keeping existing subscription_ends_at date', [
+                'subscription_id' => $subscription->id,
+                'company_id' => $company->id,
+                'existing_date' => $subscriptionEndsAt->toISOString()
+            ]);
+        } else {
+            // Final fallback: estimate next month
+            $subscriptionEndsAt = now()->addMonth()->startOfDay();
+            Log::warning('Subscription update missing period end, using estimated date', [
+                'subscription_id' => $subscription->id,
+                'company_id' => $company->id,
+                'estimated_date' => $subscriptionEndsAt->toISOString()
+            ]);
+        }
+
+        $updateData = [
+            'subscription_status' => $subscription->status,
+            'subscription_ends_at' => $subscriptionEndsAt,
+        ];
+
+        // If plan changed and it matches a scheduled change, apply it
+        if ($newPlanType && $newPlanType !== $company->subscription_type) {
+            if ($company->scheduled_subscription_type === $newPlanType && $company->scheduled_change_date) {
+                Log::info('Applying scheduled plan change via webhook', [
+                    'company_id' => $company->id,
+                    'from_plan' => $company->subscription_type,
+                    'to_plan' => $newPlanType,
+                    'scheduled_date' => $company->scheduled_change_date->toISOString()
+                ]);
+                
+                // Apply the scheduled change
+                $company->applyScheduledChange();
+                $updateData['subscription_type'] = $newPlanType;
+            } else {
+                // Immediate plan change (upgrade)
+                $updateData['subscription_type'] = $newPlanType;
+                Log::info('Immediate plan change detected', [
+                    'company_id' => $company->id,
+                    'old_plan' => $company->subscription_type,
+                    'new_plan' => $newPlanType
+                ]);
+            }
+        }
+
+        $company->update($updateData);
+
+        Log::info('Subscription updated via webhook', [
             'company_id' => $company->id,
             'subscription_id' => $subscription->id,
-            'status' => $subscription->status
+            'status' => $subscription->status,
+            'plan_changed' => $newPlanType ? ($newPlanType !== $company->getOriginal('subscription_type')) : false,
+            'new_plan' => $newPlanType
         ]);
     }
 
@@ -154,16 +236,41 @@ class StripeWebhookController extends Controller
             return;
         }
 
-        $company->update([
-            'subscription_type' => 'FREE',
-            'subscription_status' => 'canceled',
-            'stripe_subscription_id' => null,
-            'subscription_ends_at' => null,
+        Log::info('Processing subscription deletion webhook', [
+            'company_id' => $company->id,
+            'current_subscription_type' => $company->subscription_type,
+            'scheduled_subscription_type' => $company->scheduled_subscription_type,
+            'subscription_id' => $subscription->id
         ]);
 
-        Log::info('Subscription deleted', [
+        // Check if this is a scheduled downgrade to FREE
+        if ($company->scheduled_subscription_type === 'FREE' && $company->scheduled_change_date) {
+            Log::info('Applying scheduled FREE downgrade via webhook', [
+                'company_id' => $company->id,
+                'from_plan' => $company->subscription_type,
+                'to_plan' => 'FREE',
+                'scheduled_date' => $company->scheduled_change_date->toISOString()
+            ]);
+            
+            // Apply the scheduled change
+            $company->applyScheduledChange();
+        }
+
+        // Clear ALL Stripe-related data so company can resubscribe later
+        $company->update([
+            'subscription_type' => $company->scheduled_subscription_type ?: 'FREE',
+            'subscription_status' => 'active',        // Set to active for FREE plan
+            'stripe_customer_id' => null,            // Clear customer ID
+            'stripe_subscription_id' => null,        // Clear subscription ID
+            'subscription_ends_at' => null,          // Clear end date
+            'scheduled_subscription_type' => null,   // Clear scheduled change
+            'scheduled_change_date' => null,         // Clear scheduled date
+        ]);
+
+        Log::info('Successfully processed subscription deletion via webhook', [
             'company_id' => $company->id,
-            'subscription_id' => $subscription->id
+            'subscription_id' => $subscription->id,
+            'new_subscription_type' => $company->subscription_type
         ]);
     }
 

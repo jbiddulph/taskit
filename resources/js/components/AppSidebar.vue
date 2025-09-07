@@ -16,11 +16,9 @@ import AppLogo from './AppLogo.vue';
         <SidebarHeader>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton size="lg" as-child>
-                        <Link :href="dashboard()">
-                            <AppLogo />
-                        </Link>
-                    </SidebarMenuButton>
+                    <Link :href="dashboard()" class="flex items-center gap-1 p-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+                        <AppLogo />
+                    </Link>
                 </SidebarMenuItem>
             </SidebarMenu>
         </SidebarHeader>

@@ -24,11 +24,27 @@ class StripeService
     {
         if ($company->stripe_customer_id) {
             try {
+                \Log::info('Attempting to retrieve existing Stripe customer', [
+                    'customer_id' => $company->stripe_customer_id,
+                    'company_id' => $company->id
+                ]);
                 return Customer::retrieve($company->stripe_customer_id);
             } catch (\Exception $e) {
-                // Customer doesn't exist, create new one
+                \Log::warning('Existing Stripe customer not found, clearing ID and creating new one', [
+                    'old_customer_id' => $company->stripe_customer_id,
+                    'company_id' => $company->id,
+                    'error' => $e->getMessage()
+                ]);
+                // Clear the invalid customer ID
+                $company->update(['stripe_customer_id' => null]);
             }
         }
+
+        \Log::info('Creating new Stripe customer', [
+            'company_id' => $company->id,
+            'email' => $email,
+            'company_name' => $company->name
+        ]);
 
         $customer = Customer::create([
             'email' => $email,
@@ -40,6 +56,11 @@ class StripeService
         ]);
 
         $company->update(['stripe_customer_id' => $customer->id]);
+
+        \Log::info('New Stripe customer created successfully', [
+            'customer_id' => $customer->id,
+            'company_id' => $company->id
+        ]);
 
         return $customer;
     }
@@ -56,29 +77,61 @@ class StripeService
             throw new \InvalidArgumentException("Invalid plan type: {$planType}");
         }
 
-        return Session::create([
-            'customer' => $customer->id,
-            'payment_method_types' => ['card'],
-            'line_items' => [
-                [
-                    'price' => $plan['stripe_price_id'],
-                    'quantity' => 1,
-                ]
-            ],
-            'mode' => 'subscription',
-            'success_url' => $successUrl,
-            'cancel_url' => $cancelUrl,
-            'metadata' => [
-                'company_id' => $company->id,
-                'plan_type' => $planType,
-            ],
-            'subscription_data' => [
+        \Log::info('Creating Stripe checkout session', [
+            'company_id' => $company->id,
+            'plan_type' => $planType,
+            'price_id' => $plan['stripe_price_id'],
+            'customer_id' => $customer->id,
+            'email' => $email
+        ]);
+
+        try {
+            $session = Session::create([
+                'customer' => $customer->id,
+                'payment_method_types' => ['card'],
+                'line_items' => [
+                    [
+                        'price' => $plan['stripe_price_id'],
+                        'quantity' => 1,
+                    ]
+                ],
+                'mode' => 'subscription',
+                'success_url' => $successUrl,
+                'cancel_url' => $cancelUrl,
+                'billing_address_collection' => 'required',
+                'customer_update' => [
+                    'address' => 'auto',
+                    'name' => 'auto'
+                ],
                 'metadata' => [
                     'company_id' => $company->id,
                     'plan_type' => $planType,
-                ]
-            ]
-        ]);
+                ],
+                'subscription_data' => [
+                    'metadata' => [
+                        'company_id' => $company->id,
+                        'plan_type' => $planType,
+                    ]
+                ],
+                'payment_method_collection' => 'always'
+            ]);
+
+            \Log::info('Stripe checkout session created successfully', [
+                'session_id' => $session->id,
+                'url' => $session->url,
+                'company_id' => $company->id
+            ]);
+
+            return $session;
+        } catch (\Exception $e) {
+            \Log::error('Failed to create Stripe checkout session', [
+                'error' => $e->getMessage(),
+                'company_id' => $company->id,
+                'plan_type' => $planType,
+                'price_id' => $plan['stripe_price_id']
+            ]);
+            throw $e;
+        }
     }
 
     /**
@@ -98,7 +151,7 @@ class StripeService
     }
 
     /**
-     * Cancel a subscription
+     * Cancel a subscription immediately
      */
     public function cancelSubscription(string $subscriptionId): Subscription
     {
@@ -106,7 +159,17 @@ class StripeService
     }
 
     /**
-     * Update subscription to new plan
+     * Cancel a subscription at the end of the current period
+     */
+    public function cancelSubscriptionAtPeriodEnd(string $subscriptionId): Subscription
+    {
+        return Subscription::update($subscriptionId, [
+            'cancel_at_period_end' => true
+        ]);
+    }
+
+    /**
+     * Update subscription to new plan immediately
      */
     public function updateSubscription(string $subscriptionId, string $newPlanType): Subscription
     {
@@ -129,11 +192,47 @@ class StripeService
     }
 
     /**
+     * Schedule a subscription plan change at the end of the current period
+     */
+    public function scheduleSubscriptionChange(string $subscriptionId, string $newPlanType): Subscription
+    {
+        $plan = config("stripe.plans.{$newPlanType}");
+        
+        if (!$plan || !$plan['stripe_price_id']) {
+            throw new \InvalidArgumentException("Invalid plan type: {$newPlanType}");
+        }
+
+        $subscription = Subscription::retrieve($subscriptionId);
+        
+        // For downgrades, we schedule the change at period end
+        return Subscription::update($subscriptionId, [
+            'items' => [
+                [
+                    'id' => $subscription->items->data[0]->id,
+                    'price' => $plan['stripe_price_id'],
+                ]
+            ],
+            'proration_behavior' => 'none', // Don't prorate for downgrades
+            'billing_cycle_anchor' => 'unchanged' // Keep the same billing cycle
+        ]);
+    }
+
+    /**
      * Get subscription details
      */
     public function getSubscription(string $subscriptionId): Subscription
     {
         return Subscription::retrieve($subscriptionId);
+    }
+
+    /**
+     * Reactivate a cancelled subscription (remove cancel_at_period_end)
+     */
+    public function reactivateSubscription(string $subscriptionId): Subscription
+    {
+        return Subscription::update($subscriptionId, [
+            'cancel_at_period_end' => false
+        ]);
     }
 
     /**

@@ -65,9 +65,29 @@ class RegisteredUserController extends Controller
             ]);
             $companyId = $company->id;
         } elseif ($request->company_type === 'join') {
-            // Find existing company by code and update subscription type
+            // Find existing company by code
             $company = Company::where('code', strtoupper($request->company_code))->first();
-            $company->update(['subscription_type' => $request->subscription_type]);
+            
+            if (!$company) {
+                return back()->withErrors(['company_code' => 'Invalid company code.']);
+            }
+
+            // Check if company can accept new members
+            if (!$company->canAcceptNewMembers()) {
+                $currentCount = $company->getCurrentMemberCount();
+                $limit = $company->getMemberLimit();
+                
+                if ($company->subscription_type === 'FREE') {
+                    return back()->withErrors([
+                        'company_code' => "This company has reached its member limit ({$limit} members). A registered member needs to upgrade to MIDI (£6/month) or MAXI (£9/month) to add more members."
+                    ]);
+                } elseif ($company->subscription_type === 'MIDI') {
+                    return back()->withErrors([
+                        'company_code' => "This company has reached its member limit ({$limit} members). A registered member needs to upgrade to MAXI (£9/month) to add more members."
+                    ]);
+                }
+            }
+            
             $companyId = $company->id;
         } elseif ($request->company_type === 'individual') {
             // Individual user - no company association
@@ -85,8 +105,8 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        // Handle paid subscriptions
-        if (in_array($request->subscription_type, ['MIDI', 'MAXI']) && $companyId) {
+        // Handle paid subscriptions (only for new companies, not when joining existing ones)
+        if (in_array($request->subscription_type, ['MIDI', 'MAXI']) && $companyId && $request->company_type === 'create') {
             try {
                 $company = Company::find($companyId);
                 $session = $this->stripeService->createCheckoutSession(

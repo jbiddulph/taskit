@@ -17,6 +17,7 @@ class Todo extends Model
     protected $fillable = [
         'user_id',
         'project_id',
+        'parent_task_id',
         'title',
         'description',
         'priority',
@@ -59,6 +60,29 @@ class Todo extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(TodoAttachment::class)->orderBy('created_at', 'desc');
+    }
+
+    // Parent-child relationships for subtasks
+    public function parentTask(): BelongsTo
+    {
+        return $this->belongsTo(Todo::class, 'parent_task_id');
+    }
+
+    public function subtasks(): HasMany
+    {
+        return $this->hasMany(Todo::class, 'parent_task_id')->orderBy('created_at', 'asc');
+    }
+
+    // Check if this todo is a subtask
+    public function isSubtask(): bool
+    {
+        return !is_null($this->parent_task_id);
+    }
+
+    // Check if this todo has subtasks
+    public function hasSubtasks(): bool
+    {
+        return $this->subtasks()->count() > 0;
     }
 
     // Scopes

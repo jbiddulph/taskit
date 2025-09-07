@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\Settings\DashboardController;
+use App\Http\Controllers\Settings\ExportImportController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'subscription.access'])->group(function () {
     Route::redirect('settings', '/settings/profile');
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -21,4 +24,27 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/Appearance');
     })->name('appearance');
+
+    Route::get('settings/dashboard', [DashboardController::class, 'index'])->name('dashboard.settings');
+    Route::patch('settings/dashboard', [DashboardController::class, 'update'])->name('dashboard.settings.update');
+
+    // Export/Import routes
+    Route::get('settings/export-import', [ExportImportController::class, 'index'])->name('export-import.settings');
+    Route::post('settings/export', [ExportImportController::class, 'export'])->name('export.settings');
+    Route::post('settings/import', [ExportImportController::class, 'import'])->name('import.settings');
+
+    Route::get('settings/company-logo', function () {
+        $user = Auth::user();
+        $user->load('company'); // Ensure company is loaded
+        
+        return Inertia::render('settings/CompanyLogo', [
+            'user' => $user,
+            'company' => $user->company,
+        ]);
+    })->name('company-logo');
+
+    // Company logo routes (only for paid plans)
+    Route::post('settings/company-logo/upload', [App\Http\Controllers\CompanyLogoController::class, 'upload'])->name('company-logo.upload');
+    Route::post('settings/company-logo/update-url', [App\Http\Controllers\CompanyLogoController::class, 'updateUrl'])->name('company-logo.update-url');
+    Route::delete('settings/company-logo/remove', [App\Http\Controllers\CompanyLogoController::class, 'remove'])->name('company-logo.remove');
 });
