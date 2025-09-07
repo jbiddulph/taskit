@@ -123,10 +123,18 @@ import { Head, Link } from '@inertiajs/vue3';
                     <div class="flex flex-col items-center justify-center h-full p-8 text-center">
                         <!-- ZapTask Icon -->
                         <div class="mb-6">
+                            <!-- Light mode: PNG -->
                             <img 
                                 src="/zap_icon.png" 
                                 alt="ZapTask Logo"
-                                class="w-24 h-24 opacity-100 transition-all duration-750 starting:translate-y-6 starting:opacity-0 dark:bg-white dark:rounded-lg dark:p-2" 
+                                class="w-24 h-24 opacity-100 transition-all duration-750 starting:translate-y-6 starting:opacity-0 dark:hidden" 
+                            />
+                            
+                            <!-- Dark mode: White SVG -->
+                            <img 
+                                src="/zap_icon_white.svg" 
+                                alt="ZapTask Logo"
+                                class="w-24 h-24 opacity-100 transition-all duration-750 starting:translate-y-6 starting:opacity-0 hidden dark:block" 
                             />
                         </div>
                         

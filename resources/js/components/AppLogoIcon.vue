@@ -13,10 +13,19 @@ defineProps<Props>();
 </script>
 
 <template>
+    <!-- Light mode: PNG -->
     <img 
         src="/zap_icon.png" 
         alt="ZapTask Logo" 
-        :class="['dark:bg-white dark:rounded-md dark:p-1', className]" 
+        :class="['dark:hidden', className]" 
+        v-bind="$attrs"
+    />
+    
+    <!-- Dark mode: White SVG -->
+    <img 
+        src="/zap_icon_white.svg" 
+        alt="ZapTask Logo" 
+        :class="['hidden dark:block', className]" 
         v-bind="$attrs"
     />
 </template>
