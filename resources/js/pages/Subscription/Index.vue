@@ -377,7 +377,7 @@ const reactivateSubscription = async () => {
                     Subscription Management
                 </h1>
                 <p class="text-gray-600 dark:text-gray-400">
-                    Manage your TaskIT subscription and billing settings
+                    Manage your ZapTask subscription and billing settings
                 </p>
             </div>
 

@@ -185,18 +185,18 @@ const hasCustomLogo = computed(() => !!currentLogoUrl.value);
                                 />
                                 <div v-else class="flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400">
                                     <div class="w-6 h-6 bg-blue-600 dark:bg-blue-400 rounded text-white dark:text-gray-900 flex items-center justify-center">
-                                        T
+                                        <img src="/zap_icon.png" alt="ZapTask" class="w-4 h-4" />
                                     </div>
-                                    <span>TaskIT</span>
+                                    <span>ZapTask</span>
                                 </div>
                             </div>
                             
                             <div>
                                 <p class="font-medium text-gray-900 dark:text-gray-100">
-                                    {{ hasCustomLogo ? 'Custom Logo' : 'Default TaskIT Logo' }}
+                                    {{ hasCustomLogo ? 'Custom Logo' : 'Default ZapTask Logo' }}
                                 </p>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                                    {{ hasCustomLogo ? 'Your company\'s custom logo' : 'Standard TaskIT branding' }}
+                                    {{ hasCustomLogo ? 'Your company\'s custom logo' : 'Standard ZapTask branding' }}
                                 </p>
                             </div>
                         </div>
@@ -223,7 +223,7 @@ const hasCustomLogo = computed(() => !!currentLogoUrl.value);
                         Upload New Logo
                     </CardTitle>
                     <CardDescription>
-                        Upload a custom logo for your company. The logo will replace the TaskIT branding.
+                        Upload a custom logo for your company. The logo will replace the ZapTask branding.
                     </CardDescription>
                 </CardHeader>
                 <CardContent class="space-y-4">
