@@ -26,6 +26,25 @@ defineProps<{
             {{ status }}
         </div>
 
+        <!-- Demo Account Info -->
+        <div class="mb-6 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4">
+            <div class="text-center">
+                <h3 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">
+                    Try ZapTask Demo
+                </h3>
+                <div class="space-y-2 text-xs">
+                    <div class="flex items-center justify-between bg-white dark:bg-blue-900/30 px-3 py-2 rounded border">
+                        <span class="text-blue-700 dark:text-blue-300">Email:</span>
+                        <span class="font-mono text-blue-900 dark:text-blue-100 select-all">demo@zaptask.co.uk</span>
+                    </div>
+                    <div class="flex items-center justify-between bg-white dark:bg-blue-900/30 px-3 py-2 rounded border">
+                        <span class="text-blue-700 dark:text-blue-300">Password:</span>
+                        <span class="font-mono text-blue-900 dark:text-blue-100 select-all">zaptask123</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <Form
             v-bind="AuthenticatedSessionController.store.form()"
             :reset-on-success="['password']"

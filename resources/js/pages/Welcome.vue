@@ -326,6 +326,39 @@ import { Head, Link } from '@inertiajs/vue3';
             </div>
         </section>
         
+        <!-- Demo Account Section -->
+        <section class="w-full max-w-4xl mx-auto px-6 py-12">
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/30 rounded-lg p-8 text-center border border-blue-200 dark:border-blue-800">
+                <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">
+                    Try ZapTask Demo
+                </h3>
+                <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] mb-6">
+                    Experience ZapTask with our pre-configured demo account
+                </p>
+                <div class="bg-white dark:bg-[#161615] rounded-lg p-6 max-w-md mx-auto border border-blue-300 dark:border-blue-700">
+                    <div class="space-y-3">
+                        <div class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Demo Login Credentials:</div>
+                        <div class="text-left space-y-2">
+                            <div class="flex items-center justify-between bg-gray-50 dark:bg-[#1a1a19] px-3 py-2 rounded">
+                                <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Email:</span>
+                                <span class="text-sm font-mono text-[#1b1b18] dark:text-[#EDEDEC] select-all">demo@zaptask.co.uk</span>
+                            </div>
+                            <div class="flex items-center justify-between bg-gray-50 dark:bg-[#1a1a19] px-3 py-2 rounded">
+                                <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Password:</span>
+                                <span class="text-sm font-mono text-[#1b1b18] dark:text-[#EDEDEC] select-all">zaptask123</span>
+                            </div>
+                        </div>
+                    </div>
+                    <Link
+                        :href="login()"
+                        class="mt-4 w-full inline-block text-center rounded-lg bg-blue-500 px-6 py-3 text-sm font-medium text-white hover:bg-blue-600 transition-colors duration-200"
+                    >
+                        Try Demo Now
+                    </Link>
+                </div>
+            </div>
+        </section>
+        
         <div class="hidden h-14.5 lg:block"></div>
     </div>
 </template>
