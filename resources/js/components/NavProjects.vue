@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { todoApi, type Project } from '@/services/todoApi';
 import Icon from '@/components/Icon.vue';
@@ -10,6 +10,11 @@ const projects = ref<Project[]>([]);
 const currentProject = ref<Project | null>(null);
 const loading = ref(false);
 const isUpdatingProject = ref(false); // Flag to prevent circular events
+
+// Check if we're on the subscription page
+const isOnSubscriptionPage = computed(() => {
+  return window.location.pathname === '/subscription';
+});
 
 // Load projects on mount
 onMounted(async () => {
@@ -268,6 +273,18 @@ const deleteProject = async (project: Project, event: Event) => {
 };
 
 const createProject = () => {
+  // Don't allow project creation on subscription page
+  if (isOnSubscriptionPage.value) {
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'warning',
+        title: 'Project Creation Unavailable',
+        message: 'Please complete your subscription upgrade to create new projects.'
+      });
+    }
+    return;
+  }
+  
   // Dispatch event to open project creation modal in TodoBoard
   window.dispatchEvent(new CustomEvent('openCreateProjectModal'));
 };
@@ -358,7 +375,11 @@ const handleDragEnd = () => {
     <SidebarMenu>
       <!-- Create Project Button -->
       <SidebarMenuItem>
-        <SidebarMenuButton @click="createProject" :tooltip="'Create New Project'">
+        <SidebarMenuButton 
+          @click="createProject" 
+          :tooltip="isOnSubscriptionPage ? 'Complete subscription upgrade to create projects' : 'Create New Project'"
+          :class="{ 'opacity-50 cursor-not-allowed': isOnSubscriptionPage }"
+        >
           <Icon name="Plus" class="w-4 h-4" />
           <span>New Project</span>
         </SidebarMenuButton>
