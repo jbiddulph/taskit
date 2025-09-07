@@ -262,6 +262,15 @@ onMounted(() => {
 watch(() => props.todo, (newTodo) => {
   if (newTodo) {
     form.value = { ...newTodo };
+    
+    // Fix date format for HTML date input (YYYY-MM-DD)
+    if (newTodo.due_date) {
+      // Convert from datetime to date format
+      const date = new Date(newTodo.due_date);
+      if (!isNaN(date.getTime())) {
+        form.value.due_date = date.toISOString().split('T')[0];
+      }
+    }
   } else {
     resetForm();
     // Auto-assign current user on create
