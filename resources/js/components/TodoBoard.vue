@@ -680,7 +680,7 @@ const saveTodo = async (todo: Todo) => {
       return;
     }
     
-    if (editingTodo.value) {
+    if (editingTodo.value && editingTodo.value.id > 0) {
       // Update existing todo
       const updatedTodo = await todoApi.updateTodo(todo.id, todo);
       const index = todos.value.findIndex(t => t.id === todo.id);
