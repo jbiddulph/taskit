@@ -185,7 +185,7 @@ const hasCustomLogo = computed(() => !!currentLogoUrl.value);
                                 />
                                 <div v-else class="flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400">
                                     <div class="w-6 h-6 bg-blue-600 dark:bg-blue-400 rounded text-white dark:text-gray-900 flex items-center justify-center">
-                                        <img src="/zap_icon.png" alt="ZapTask" class="w-4 h-4" />
+                                        <img src="/zap_icon.png" alt="ZapTask" class="w-4 h-4 dark:bg-white dark:rounded-sm dark:p-0.5" />
                                     </div>
                                     <span>ZapTask</span>
                                 </div>

@@ -126,7 +126,7 @@ import { Head, Link } from '@inertiajs/vue3';
                             <img 
                                 src="/zap_icon.png" 
                                 alt="ZapTask Logo"
-                                class="w-24 h-24 opacity-100 transition-all duration-750 starting:translate-y-6 starting:opacity-0" 
+                                class="w-24 h-24 opacity-100 transition-all duration-750 starting:translate-y-6 starting:opacity-0 dark:bg-white dark:rounded-lg dark:p-2" 
                             />
                         </div>
                         

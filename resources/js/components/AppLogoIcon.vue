@@ -16,7 +16,7 @@ defineProps<Props>();
     <img 
         src="/zap_icon.png" 
         alt="ZapTask Logo" 
-        :class="className" 
+        :class="['dark:bg-white dark:rounded-md dark:p-1', className]" 
         v-bind="$attrs"
     />
 </template>
