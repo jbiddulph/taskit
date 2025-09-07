@@ -24,13 +24,5 @@ class AppServiceProvider extends ServiceProvider
         if (config('app.force_https', false)) {
             URL::forceScheme('https');
         }
-        
-        // Handle custom domain asset URLs
-        // If accessed via custom domain, use that domain for assets too
-        if (request()->getHost() !== 'task-it-9b20e77d6638.herokuapp.com') {
-            $currentUrl = request()->getScheme() . '://' . request()->getHost();
-            URL::forceRootUrl($currentUrl);
-            config(['app.url' => $currentUrl]);
-        }
     }
 }

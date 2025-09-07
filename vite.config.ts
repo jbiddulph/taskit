@@ -24,18 +24,4 @@ export default defineConfig({
             },
         }),
     ],
-    build: {
-        // Generate relative URLs for assets instead of absolute ones
-        assetsDir: 'build/assets',
-        rollupOptions: {
-            output: {
-                // Use relative paths for assets
-                assetFileNames: 'assets/[name]-[hash][extname]',
-                chunkFileNames: 'assets/[name]-[hash].js',
-                entryFileNames: 'assets/[name]-[hash].js'
-            }
-        }
-    },
-    // Force relative base path in production
-    base: './',
 });
