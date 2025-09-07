@@ -162,7 +162,7 @@ class TodoController extends Controller
             'status' => $request->status,
         ]);
 
-        $todo->load(['comments', 'attachments']);
+        $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
 
         // Send real-time notification
         $this->webSocketService->todoCreated($todo);
@@ -191,7 +191,7 @@ class TodoController extends Controller
             ], 403);
         }
 
-        $todo->load(['comments.user', 'attachments']);
+        $todo->load(['comments.user', 'attachments', 'project', 'subtasks.project', 'parentTask']);
 
         return response()->json([
             'success' => true,
@@ -241,7 +241,7 @@ class TodoController extends Controller
             'assignee', 'due_date', 'story_points', 'status'
         ]));
 
-        $todo->load(['comments', 'attachments']);
+        $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
 
         // Send real-time notification
         $this->webSocketService->todoUpdated($todo);
@@ -342,6 +342,9 @@ class TodoController extends Controller
         $oldStatus = $todo->status;
         $todo->update(['status' => $request->status]);
 
+        // Load relationships to ensure complete data is returned
+        $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
+
         // Send real-time notification
         $this->webSocketService->todoStatusChanged($todo, $oldStatus);
 
@@ -418,7 +421,7 @@ class TodoController extends Controller
             'status' => 'todo', // Subtasks always start as 'todo'
         ]);
 
-        $subtask->load(['comments', 'attachments', 'project']);
+        $subtask->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
 
         // Send real-time notification
         $this->webSocketService->todoCreated($subtask);
