@@ -24,11 +24,27 @@ class StripeService
     {
         if ($company->stripe_customer_id) {
             try {
+                \Log::info('Attempting to retrieve existing Stripe customer', [
+                    'customer_id' => $company->stripe_customer_id,
+                    'company_id' => $company->id
+                ]);
                 return Customer::retrieve($company->stripe_customer_id);
             } catch (\Exception $e) {
-                // Customer doesn't exist, create new one
+                \Log::warning('Existing Stripe customer not found, clearing ID and creating new one', [
+                    'old_customer_id' => $company->stripe_customer_id,
+                    'company_id' => $company->id,
+                    'error' => $e->getMessage()
+                ]);
+                // Clear the invalid customer ID
+                $company->update(['stripe_customer_id' => null]);
             }
         }
+
+        \Log::info('Creating new Stripe customer', [
+            'company_id' => $company->id,
+            'email' => $email,
+            'company_name' => $company->name
+        ]);
 
         $customer = Customer::create([
             'email' => $email,
@@ -40,6 +56,11 @@ class StripeService
         ]);
 
         $company->update(['stripe_customer_id' => $customer->id]);
+
+        \Log::info('New Stripe customer created successfully', [
+            'customer_id' => $customer->id,
+            'company_id' => $company->id
+        ]);
 
         return $customer;
     }
