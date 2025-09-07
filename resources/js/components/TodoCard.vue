@@ -153,8 +153,8 @@
       </div>
     </div>
 
-    <!-- Story points -->
-    <div class="absolute top-2 right-2 flex items-center gap-1">
+    <!-- Story points (only show on main todos, not subtasks) -->
+    <div v-if="!todo.parent_task_id" class="absolute top-2 right-2 flex items-center gap-1">
       <span v-if="todo.story_points" class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300">
         {{ todo.story_points }}
       </span>
@@ -163,45 +163,72 @@
       </span>
     </div>
 
-    <!-- Add Subtask Button (only for non-subtasks) -->
+    <!-- Subtask indicator for subtasks -->
+    <div v-if="todo.parent_task_id" class="absolute top-2 right-2 flex items-center gap-1">
+      <span v-if="todo.is_new_assigned" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-700">
+        NEW
+      </span>
+    </div>
+
+    <!-- Subtask Controls (only for non-subtasks) -->
     <div v-if="!todo.parent_task_id" class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-      <button
-        @click.stop="$emit('add-subtask', todo)"
-        class="flex items-center gap-2 text-xs text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-      >
-        <Icon name="Plus" class="w-3 h-3" />
-        Add Subtask
-      </button>
+      <div class="flex items-center justify-between">
+        <button
+          @click.stop="$emit('add-subtask', todo)"
+          class="flex items-center gap-2 text-xs text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        >
+          <Icon name="Plus" class="w-3 h-3" />
+          Add Subtask
+        </button>
+        
+        <!-- Show/Hide Subtasks Toggle (only if subtasks exist) -->
+        <button
+          v-if="todo.subtasks && todo.subtasks.length > 0"
+          @click.stop="toggleSubtasks"
+          class="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+        >
+          <Icon 
+            :name="subtasksVisible ? 'ChevronUp' : 'ChevronDown'" 
+            class="w-3 h-3" 
+          />
+          {{ subtasksVisible ? 'Hide' : 'Show' }} Subtasks ({{ todo.subtasks.length }})
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Subtasks -->
-  <div v-if="todo.subtasks && todo.subtasks.length > 0" class="mt-2">
-    <div
-      v-for="(subtask, index) in todo.subtasks"
-      :key="subtask.id"
-      class="relative ml-6"
-    >
-      <!-- Tree line -->
-      <div class="absolute -left-4 top-0 bottom-0 w-px bg-gray-300 dark:bg-gray-600"></div>
-      <div class="absolute -left-4 top-4 w-3 h-px bg-gray-300 dark:bg-gray-600"></div>
-      
-      <!-- Last subtask - end the tree line -->
-      <div 
-        v-if="index === todo.subtasks.length - 1" 
-        class="absolute -left-4 top-4 bottom-0 w-px bg-white dark:bg-gray-800"
-      ></div>
+  <!-- Subtasks with Collapse Animation -->
+  <Transition name="subtasks">
+    <div v-if="todo.subtasks && todo.subtasks.length > 0 && subtasksVisible" class="mt-2 overflow-hidden">
+      <TransitionGroup name="subtask-item" tag="div">
+        <div
+          v-for="(subtask, index) in todo.subtasks"
+          :key="subtask.id"
+          class="relative ml-6"
+        >
+          <!-- Tree line -->
+          <div class="absolute -left-4 top-0 bottom-0 w-px bg-gray-300 dark:bg-gray-600"></div>
+          <div class="absolute -left-4 top-4 w-3 h-px bg-gray-300 dark:bg-gray-600"></div>
+          
+          <!-- Last subtask - end the tree line -->
+          <div 
+            v-if="index === todo.subtasks.length - 1" 
+            class="absolute -left-4 top-4 bottom-0 w-px bg-white dark:bg-gray-800"
+          ></div>
 
-      <!-- Subtask card -->
-      <TodoCard
-        :todo="subtask"
-        @edit="$emit('edit', $event)"
-        @delete="$emit('delete', $event)"
-        @update="$emit('update', $event)"
-        class="transform scale-95 origin-top-left"
-      />
+          <!-- Subtask card -->
+          <TodoCard
+            :todo="subtask"
+            @edit="$emit('edit', $event)"
+            @delete="$emit('delete', $event)"
+            @update="$emit('update', $event)"
+            @add-subtask="$emit('add-subtask', $event)"
+            class="transform scale-95 origin-top-left"
+          />
+        </div>
+      </TransitionGroup>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">
@@ -227,6 +254,9 @@ const emit = defineEmits<{
 const editingTitle = ref(false);
 const editingTitleText = ref('');
 const titleInput = ref<HTMLInputElement | null>(null);
+
+// Subtask visibility state
+const subtasksVisible = ref(true);
 
 // Copy feedback state
 const copyFeedback = ref('');
@@ -420,6 +450,11 @@ const copyTodoId = async () => {
     }
   }
 };
+
+// Toggle subtasks visibility
+const toggleSubtasks = () => {
+  subtasksVisible.value = !subtasksVisible.value;
+};
 </script>
 
 <style scoped>
@@ -428,5 +463,47 @@ const copyTodoId = async () => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Subtasks collapse/expand animations */
+.subtasks-enter-active,
+.subtasks-leave-active {
+  transition: all 0.3s ease;
+  transform-origin: top;
+}
+
+.subtasks-enter-from {
+  opacity: 0;
+  transform: scaleY(0);
+  max-height: 0;
+}
+
+.subtasks-leave-to {
+  opacity: 0;
+  transform: scaleY(0);
+  max-height: 0;
+}
+
+.subtasks-enter-to,
+.subtasks-leave-from {
+  opacity: 1;
+  transform: scaleY(1);
+  max-height: 1000px; /* Large enough to accommodate content */
+}
+
+/* Individual subtask item animations */
+.subtask-item-enter-active,
+.subtask-item-leave-active {
+  transition: all 0.2s ease;
+}
+
+.subtask-item-enter-from,
+.subtask-item-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.subtask-item-move {
+  transition: transform 0.2s ease;
 }
 </style>
