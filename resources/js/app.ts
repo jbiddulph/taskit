@@ -5,6 +5,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import { initializeTheme } from './composables/useAppearance';
+import { router } from '@inertiajs/vue3';
 
 const appName = import.meta.env.VITE_APP_NAME || 'ZapTask';
 
@@ -23,3 +24,20 @@ createInertiaApp({
 
 // This will set light / dark mode on page load...
 initializeTheme();
+
+// Google Analytics page tracking for Inertia navigation
+declare global {
+    interface Window {
+        gtag: (...args: any[]) => void;
+    }
+}
+
+// Track page views on Inertia navigation
+router.on('navigate', (event) => {
+    if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('config', window.gtag, {
+            page_title: document.title,
+            page_location: window.location.href,
+        });
+    }
+});

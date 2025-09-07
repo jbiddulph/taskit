@@ -165,6 +165,7 @@ import TodoComments from '@/components/TodoComments.vue';
 import { todoApi, type Project } from '@/services/todoApi';
 import type { Todo } from '@/services/todoApi';
 import { uploadImageToTaskitBucket } from '@/services/supabaseClient';
+import { useAnalytics } from '../composables/useAnalytics';
 
 interface Props {
   todo?: Todo;
@@ -184,6 +185,7 @@ const emit = defineEmits<{
 const page = usePage();
 const currentUser = (page.props as any)?.auth?.user || null;
 const currentUserName = currentUser?.name || '';
+const { trackTodoEvent } = useAnalytics();
 
 
 type SimpleUser = { id: number; name: string; email: string };
@@ -314,6 +316,26 @@ const handleSubmit = async () => {
     
     if (props.isEditing) {
       todoData.id = parseInt(form.value.id);
+      // Track todo update event
+      trackTodoEvent('updated', {
+        todo_id: todoData.id,
+        project_id: props.currentProject.id,
+        project_name: props.currentProject.name,
+        priority: todoData.priority,
+        type: todoData.type,
+        has_due_date: !!todoData.due_date,
+        has_assignee: !!todoData.assignee,
+      });
+    } else {
+      // Track todo creation event
+      trackTodoEvent('created', {
+        project_id: props.currentProject.id,
+        project_name: props.currentProject.name,
+        priority: todoData.priority,
+        type: todoData.type,
+        has_due_date: !!todoData.due_date,
+        has_assignee: !!todoData.assignee,
+      });
     }
     
     emit('save', todoData);

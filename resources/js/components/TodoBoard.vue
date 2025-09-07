@@ -479,6 +479,7 @@ import TypeFilter from './TypeFilter.vue';
 import CalendarView from './CalendarView.vue';
 import { todoApi, type Project, type Todo } from '@/services/todoApi';
 import { deleteImagesInHtml } from '@/services/supabaseClient';
+import { useAnalytics } from '../composables/useAnalytics';
 
 const todos = ref<Todo[]>([]);
 const projects = ref<Project[]>([]);
@@ -487,6 +488,7 @@ const showCreateProject = ref(false);
 const showEditProject = ref(false);
 const showCalendar = ref(false);
 const showSaveViewModal = ref(false);
+const { trackTodoEvent, trackProjectEvent } = useAnalytics();
 
 const currentProject = ref<Project | null>(null);
 const selectedProjectId = ref<string>('');
@@ -778,6 +780,17 @@ const deleteTodo = async (id: string) => {
   try {
     const toDelete = todos.value.find(t => t.id === id);
     await todoApi.deleteTodo(id);
+    
+    // Track todo deletion event
+    trackTodoEvent('deleted', {
+      todo_id: id,
+      project_id: currentProject.value?.id,
+      project_name: currentProject.value?.name,
+      priority: toDelete?.priority,
+      type: toDelete?.type,
+      status: toDelete?.status,
+    });
+    
     // Attempt to cleanup images from Supabase storage
     if (toDelete?.description) {
       deleteImagesInHtml(toDelete.description).catch(() => {});
@@ -835,6 +848,17 @@ const handleDrop = async (todo: Todo, newStatus: string) => {
   try {
     const updatedTodo = await todoApi.updateTodoStatus(todo.id, newStatus as 'todo' | 'in-progress' | 'done');
     console.log('API response:', updatedTodo);
+    
+    // Track todo status change event
+    trackTodoEvent('status_changed', {
+      todo_id: todo.id,
+      project_id: currentProject.value.id,
+      project_name: currentProject.value.name,
+      old_status: todo.status,
+      new_status: newStatus,
+      priority: todo.priority,
+      type: todo.type,
+    });
     
     // Find the todo by ID, ensuring type consistency
     const index = todos.value.findIndex(t => String(t.id) === String(todo.id));
@@ -1052,6 +1076,15 @@ const createProject = async () => {
     };
     
     const newProjectCreated = await todoApi.createProject(projectData);
+    
+    // Track project creation event
+    trackProjectEvent('created', {
+      project_id: newProjectCreated.id,
+      project_name: newProjectCreated.name,
+      has_description: !!newProjectCreated.description,
+      has_custom_key: !!newProjectCreated.key,
+      color: newProjectCreated.color,
+    });
     
     // Set as current project
     currentProject.value = newProjectCreated;
