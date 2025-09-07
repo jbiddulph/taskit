@@ -686,6 +686,23 @@ const saveTodo = async (todo: Todo) => {
       const index = todos.value.findIndex(t => t.id === todo.id);
       if (index !== -1) {
         todos.value[index] = updatedTodo;
+        
+        // Force reactivity update to ensure UI changes immediately
+        todos.value = [...todos.value];
+      } else {
+        // Check if it's a subtask - find the parent and update the subtask
+        for (let i = 0; i < todos.value.length; i++) {
+          if (todos.value[i].subtasks) {
+            const subtaskIndex = todos.value[i].subtasks!.findIndex(subtask => subtask.id === todo.id);
+            if (subtaskIndex !== -1) {
+              todos.value[i].subtasks![subtaskIndex] = updatedTodo;
+              
+              // Force reactivity update
+              todos.value = [...todos.value];
+              break;
+            }
+          }
+        }
       }
       editingTodo.value = null;
       
@@ -982,6 +999,29 @@ const updateTodo = (updatedTodo: Todo) => {
   const index = todos.value.findIndex(todo => todo.id === updatedTodo.id);
   if (index !== -1) {
     todos.value[index] = updatedTodo;
+    
+    // Force reactivity update to ensure UI changes immediately
+    todos.value = [...todos.value];
+    
+    // Dispatch event to refresh sidebar project stats
+    window.dispatchEvent(new CustomEvent('todoChanged'));
+  } else {
+    // Check if it's a subtask - find the parent and update the subtask
+    for (let i = 0; i < todos.value.length; i++) {
+      if (todos.value[i].subtasks) {
+        const subtaskIndex = todos.value[i].subtasks!.findIndex(subtask => subtask.id === updatedTodo.id);
+        if (subtaskIndex !== -1) {
+          todos.value[i].subtasks![subtaskIndex] = updatedTodo;
+          
+          // Force reactivity update
+          todos.value = [...todos.value];
+          
+          // Dispatch event to refresh sidebar project stats
+          window.dispatchEvent(new CustomEvent('todoChanged'));
+          break;
+        }
+      }
+    }
   }
 };
 
