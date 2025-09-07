@@ -126,6 +126,14 @@
           {{ todo.assignee.charAt(0).toUpperCase() }}
         </div>
         <span v-else class="text-gray-400">Unassigned</span>
+        
+        <!-- Todo Unique ID -->
+        <span 
+          class="px-2 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded border"
+          :title="`Todo ID: ${todoUniqueId}`"
+        >
+          {{ todoUniqueId }}
+        </span>
       </div>
       
       <div class="flex items-center gap-1 text-gray-500">
@@ -176,6 +184,12 @@ const priorityClasses = {
   High: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
   Critical: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
 };
+
+// Generate unique Todo ID (first 4 chars of project + todo ID)
+const todoUniqueId = computed(() => {
+  const projectPrefix = props.todo.project?.name?.substring(0, 4).toUpperCase() || 'UNKN';
+  return `${projectPrefix}-${props.todo.id}`;
+});
 
 // Track if we're dragging to prevent click during drag
 let isDragging = false;
