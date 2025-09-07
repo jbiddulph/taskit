@@ -274,7 +274,9 @@ public function cancelSubscription()
             'stripe_customer_id' => $company->stripe_customer_id,
             'stripe_subscription_id' => $company->stripe_subscription_id,
             'subscription_status' => $company->subscription_status,
-            'requested_plan' => $request->plan
+            'requested_plan' => $request->plan,
+            'has_existing_subscription' => !empty($company->stripe_subscription_id),
+            'plan_comparison' => $company->subscription_type === $request->plan ? 'SAME' : 'DIFFERENT'
         ]);
 
         try {
@@ -443,6 +445,11 @@ public function cancelSubscription()
                 
                 // For Stripe checkout, use Inertia's external location redirect
                 // This works for both Inertia and regular requests
+                \Log::info('About to redirect to Stripe checkout', [
+                    'url' => $session->url,
+                    'request_wants_json' => $request->wantsJson(),
+                    'has_inertia_header' => $request->header('X-Inertia') ? true : false
+                ]);
                 return \Inertia\Inertia::location($session->url);
             }
         } catch (\Exception $e) {
