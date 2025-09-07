@@ -56,34 +56,64 @@ class StripeService
             throw new \InvalidArgumentException("Invalid plan type: {$planType}");
         }
 
-        return Session::create([
-            'customer' => $customer->id,
-            'payment_method_types' => ['card'],
-            'line_items' => [
-                [
-                    'price' => $plan['stripe_price_id'],
-                    'quantity' => 1,
-                ]
-            ],
-            'mode' => 'subscription',
-            'success_url' => $successUrl,
-            'cancel_url' => $cancelUrl,
-            'billing_address_collection' => 'required',
-            'customer_update' => [
-                'address' => 'auto',
-                'name' => 'auto'
-            ],
-            'metadata' => [
-                'company_id' => $company->id,
-                'plan_type' => $planType,
-            ],
-            'subscription_data' => [
+        \Log::info('Creating Stripe checkout session', [
+            'company_id' => $company->id,
+            'plan_type' => $planType,
+            'price_id' => $plan['stripe_price_id'],
+            'customer_id' => $customer->id,
+            'email' => $email
+        ]);
+
+        try {
+            $session = Session::create([
+                'customer' => $customer->id,
+                'payment_method_types' => ['card'],
+                'line_items' => [
+                    [
+                        'price' => $plan['stripe_price_id'],
+                        'quantity' => 1,
+                    ]
+                ],
+                'mode' => 'subscription',
+                'success_url' => $successUrl,
+                'cancel_url' => $cancelUrl,
+                'billing_address_collection' => 'required',
+                'customer_update' => [
+                    'address' => 'auto',
+                    'name' => 'auto'
+                ],
                 'metadata' => [
                     'company_id' => $company->id,
                     'plan_type' => $planType,
+                ],
+                'subscription_data' => [
+                    'metadata' => [
+                        'company_id' => $company->id,
+                        'plan_type' => $planType,
+                    ]
+                ],
+                'payment_method_collection' => 'always',
+                'invoice_creation' => [
+                    'enabled' => true
                 ]
-            ]
-        ]);
+            ]);
+
+            \Log::info('Stripe checkout session created successfully', [
+                'session_id' => $session->id,
+                'url' => $session->url,
+                'company_id' => $company->id
+            ]);
+
+            return $session;
+        } catch (\Exception $e) {
+            \Log::error('Failed to create Stripe checkout session', [
+                'error' => $e->getMessage(),
+                'company_id' => $company->id,
+                'plan_type' => $planType,
+                'price_id' => $plan['stripe_price_id']
+            ]);
+            throw $e;
+        }
     }
 
     /**
