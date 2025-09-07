@@ -92,10 +92,7 @@ class StripeService
                         'plan_type' => $planType,
                     ]
                 ],
-                'payment_method_collection' => 'always',
-                'invoice_creation' => [
-                    'enabled' => true
-                ]
+                'payment_method_collection' => 'always'
             ]);
 
             \Log::info('Stripe checkout session created successfully', [
