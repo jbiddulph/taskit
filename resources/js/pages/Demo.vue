@@ -1,13 +1,7 @@
 <script setup lang="ts">
-import { Head, Link, Form } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { login, register } from '@/routes';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
-import AuthenticatedSessionController from '@/actions/App/Http/Controllers/Auth/AuthenticatedSessionController';
-import InputError from '@/components/InputError.vue';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { LoaderCircle } from 'lucide-vue-next';
 
 defineOptions({
     layout: false,
@@ -56,52 +50,27 @@ defineOptions({
                         Experience ZapTask with our pre-configured demo account. Explore all features and see how easy project management can be.
                     </p>
                     
-                    <!-- Demo Login Form -->
+                    <!-- Demo Login Credentials -->
                     <div class="bg-white dark:bg-[#161615] rounded-lg p-8 max-w-md mx-auto border border-blue-300 dark:border-blue-700 mb-8">
-                        <div class="text-lg font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-6 text-center">Demo Login</div>
-                        
-                        <Form 
-                            :action="AuthenticatedSessionController.store().url"
-                            v-slot="{ errors, processing }"
-                            class="space-y-4"
+                        <div class="space-y-4">
+                            <div class="text-lg font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Demo Login Credentials</div>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between bg-gray-50 dark:bg-[#1a1a19] px-4 py-3 rounded">
+                                    <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Email:</span>
+                                    <span class="text-sm font-mono text-[#1b1b18] dark:text-[#EDEDEC] select-all font-medium">demo@zaptask.co.uk</span>
+                                </div>
+                                <div class="flex items-center justify-between bg-gray-50 dark:bg-[#1a1a19] px-4 py-3 rounded">
+                                    <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Password:</span>
+                                    <span class="text-sm font-mono text-[#1b1b18] dark:text-[#EDEDEC] select-all font-medium">zaptask123</span>
+                                </div>
+                            </div>
+                        </div>
+                        <Link
+                            :href="login()"
+                            class="mt-6 w-full inline-block text-center rounded-lg bg-blue-500 px-6 py-3 text-sm font-medium text-white hover:bg-blue-600 transition-colors duration-200"
                         >
-                            <div class="grid gap-2">
-                                <Label for="demo-email" class="text-sm">Email address</Label>
-                                <Input
-                                    id="demo-email"
-                                    type="email"
-                                    name="email"
-                                    value="demo@zaptask.co.uk"
-                                    required
-                                    autocomplete="email"
-                                    class="text-sm"
-                                />
-                                <InputError :message="errors.email" />
-                            </div>
-
-                            <div class="grid gap-2">
-                                <Label for="demo-password" class="text-sm">Password</Label>
-                                <Input
-                                    id="demo-password"
-                                    type="password"
-                                    name="password"
-                                    value="zaptask123"
-                                    required
-                                    autocomplete="current-password"
-                                    class="text-sm"
-                                />
-                                <InputError :message="errors.password" />
-                            </div>
-
-                            <Button 
-                                type="submit" 
-                                class="w-full mt-6 bg-blue-500 hover:bg-blue-600 text-white" 
-                                :disabled="processing"
-                            >
-                                <LoaderCircle v-if="processing" class="h-4 w-4 animate-spin mr-2" />
-                                {{ processing ? 'Logging in...' : 'Login to Demo Account' }}
-                            </Button>
-                        </Form>
+                            Try Demo Now
+                        </Link>
                     </div>
                 </div>
             </section>
