@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import { dashboard, login, register } from '@/routes';
 import { Head, Link } from '@inertiajs/vue3';
+
+// Smooth scroll function
+const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+        element.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }
+};
 </script>
 
 <template>
@@ -9,23 +20,23 @@ import { Head, Link } from '@inertiajs/vue3';
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
     </Head>
     <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <!-- Header -->
-        <header class="bg-white dark:bg-gray-800 shadow">
+        <!-- Fixed Header -->
+        <header class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 shadow">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center py-6">
+                <div class="flex justify-between items-center py-4">
                     <div class="flex items-center">
-                        <div class="flex items-center space-x-2">
+                        <Link href="/" class="flex items-center space-x-2">
                             <img src="/zap_icon.png" alt="ZapTask" class="w-8 h-8 dark:bg-white dark:rounded-md dark:p-1">
                             <span class="text-xl font-bold text-gray-900 dark:text-white">ZapTask</span>
-                        </div>
+                        </Link>
                     </div>
                     <nav class="hidden md:flex items-center space-x-8">
-                        <a href="#features" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                        <button @click="scrollToSection('features')" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer">
                             Features
-                        </a>
-                        <a href="#pricing" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                        </button>
+                        <button @click="scrollToSection('pricing')" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer">
                             Pricing
-                        </a>
+                        </button>
                         <a href="/demo" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                             Demo
                         </a>
@@ -60,8 +71,8 @@ import { Head, Link } from '@inertiajs/vue3';
             </div>
         </header>
 
-        <!-- Main Content -->
-        <div class="flex min-h-screen flex-col items-center bg-[#FDFDFC] text-[#1b1b18] lg:justify-center lg:pt-8 dark:bg-[#0a0a0a] pt-6">
+        <!-- Main Content with padding for fixed header -->
+        <div class="flex min-h-screen flex-col items-center bg-[#FDFDFC] text-[#1b1b18] lg:justify-center lg:pt-8 dark:bg-[#0a0a0a] pt-24">
         <div class="flex w-full items-center justify-center opacity-100 transition-opacity duration-750 lg:grow starting:opacity-0">
             <main class="flex w-full max-w-[335px] flex-col-reverse overflow-hidden rounded-lg lg:max-w-4xl lg:flex-row">
                 <div
@@ -72,7 +83,8 @@ import { Head, Link } from '@inertiajs/vue3';
                         The ultimate task management platform designed for teams that want to get things done efficiently.
                     </p>
                     
-                    <div class="mb-6 space-y-4">
+                    <!-- Features Section -->
+                    <div id="features" class="mb-6 space-y-4">
                         <div class="flex items-start gap-3">
                             <div class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
                                 <svg class="h-3 w-3 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
@@ -165,7 +177,7 @@ import { Head, Link } from '@inertiajs/vue3';
         </div>
         
         <!-- Pricing Section -->
-        <section class="w-full py-8 lg:py-12 mt-12" style="background-color: #E1E7FF;">
+        <section id="pricing" class="w-full py-8 lg:py-12 mt-12" style="background-color: #E1E7FF;">
             <div class="max-w-6xl mx-auto px-6">
                 <div class="text-center mb-12">
                     <h2 class="text-3xl lg:text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">
