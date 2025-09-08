@@ -11,6 +11,12 @@ import { Head, Link } from '@inertiajs/vue3';
     <div class="flex min-h-screen flex-col items-center bg-[#FDFDFC] text-[#1b1b18] lg:justify-center lg:pt-8 dark:bg-[#0a0a0a] pt-6">
         <header class="mb-6 w-full max-w-[335px] text-sm not-has-[nav]:hidden lg:max-w-4xl">
             <nav class="flex items-center justify-end gap-4">
+                <a
+                    href="/demo"
+                    class="inline-block rounded-sm border border-transparent px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#19140035] dark:text-[#EDEDEC] dark:hover:border-[#3E3E3A]"
+                >
+                    Demo
+                </a>
                 <Link
                     v-if="$page.props.auth.user"
                     :href="dashboard()"
@@ -375,9 +381,9 @@ import { Head, Link } from '@inertiajs/vue3';
                                 </a>
                             </li>
                             <li>
-                                <Link :href="login()" class="text-gray-300 hover:text-white transition-colors">
-                                    Demo
-                                </Link>
+                                <a href="/demo" class="text-gray-300 hover:text-white transition-colors">
+                                    Demo Guide
+                                </a>
                             </li>
                         </ul>
                     </div>

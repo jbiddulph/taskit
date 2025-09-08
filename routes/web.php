@@ -7,6 +7,10 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
+Route::get('/demo', function () {
+    return Inertia::render('Demo');
+})->name('demo');
+
 Route::get('dashboard', function () {
     $user = Auth::user();
     $company = $user->company;
