@@ -41,7 +41,15 @@ Route::get('/test-email', function () {
         return response()->json([
             'status' => 'Email failed',
             'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
+            'config' => [
+                'driver' => config('mail.default'),
+                'host' => config('mail.mailers.smtp.host'),
+                'port' => config('mail.mailers.smtp.port'),
+                'username' => config('mail.mailers.smtp.username'),
+                'encryption' => config('mail.mailers.smtp.encryption'),
+                'password_set' => config('mail.mailers.smtp.password') ? 'YES' : 'NO',
+                'password_length' => strlen(config('mail.mailers.smtp.password')),
+            ]
         ], 500);
     }
 });
