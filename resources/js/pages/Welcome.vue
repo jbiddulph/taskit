@@ -143,7 +143,7 @@ import { Head, Link } from '@inertiajs/vue3';
         </div>
         
         <!-- Pricing Section -->
-        <section class="w-full bg-blue-200 dark:bg-[#0f0f0e] py-8 lg:py-12 mt-12">
+        <section class="w-full py-8 lg:py-12 mt-12" style="background-color: #E1E7FF;">
             <div class="max-w-6xl mx-auto px-6">
                 <div class="text-center mb-12">
                     <h2 class="text-3xl lg:text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">
