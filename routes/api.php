@@ -51,6 +51,9 @@ Route::delete('projects/{project}/with-todos', [ProjectController::class, 'destr
     // User routes
     Route::get('users', [UserController::class, 'index']);
     
+    // Client routes
+    Route::get('clients', [App\Http\Controllers\Api\ClientController::class, 'index']);
+    
     // Notification routes
     Route::get('notifications', [NotificationController::class, 'index']);
     Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);

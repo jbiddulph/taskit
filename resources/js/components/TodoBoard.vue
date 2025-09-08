@@ -1114,7 +1114,7 @@ const resetNewProject = () => {
 
 const loadClients = async () => {
   try {
-    const response = await fetch('/clients', {
+    const response = await fetch('/api/clients', {
       headers: {
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest'
@@ -1123,7 +1123,7 @@ const loadClients = async () => {
     
     if (response.ok) {
       const data = await response.json();
-      clients.value = data.clients || [];
+      clients.value = data.data || [];
     }
   } catch (error) {
     console.error('Failed to load clients:', error);
