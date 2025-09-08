@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
-import { AlertCircle, Download, Upload, Database, FileJson, FileSpreadsheet, Package, MessageSquare, FolderOpen } from 'lucide-vue-next';
+import { AlertCircle, Download, Upload, Database, FileJson, Package, MessageSquare, FolderOpen } from 'lucide-vue-next';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 
@@ -141,9 +141,7 @@ const dataTypeOptions = [
     { value: 'comments', label: 'Comments Only', icon: MessageSquare, description: 'Export only comment information' },
 ];
 
-const formatOptions = [
-    { value: 'json', label: 'JSON Format', icon: FileJson, description: 'Structured data format, perfect for backup and restore' },
-];
+// formatOptions removed - only JSON format is supported
 
 const importTypeOptions = [
     { value: 'all', label: 'All Data', icon: Database, description: 'Import everything: company, projects, todos, and comments' },
