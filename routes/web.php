@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ClientController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -45,6 +46,11 @@ Route::get('dashboard', function () {
         ] : null,
     ]);
 })->middleware(['auth', 'verified', 'subscription.access'])->name('dashboard');
+
+// Client management routes
+Route::middleware(['auth', 'verified', 'subscription.access'])->group(function () {
+    Route::resource('clients', ClientController::class);
+});
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

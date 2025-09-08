@@ -21,6 +21,7 @@ class Project extends Model
         'is_active',
         'owner_id',
         'viewing_order',
+        'client_id',
     ];
 
     protected $casts = [
@@ -33,6 +34,14 @@ class Project extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
+     * Get the client for this project
+     */
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
     }
 
     /**

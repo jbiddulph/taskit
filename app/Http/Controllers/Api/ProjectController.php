@@ -265,18 +265,19 @@ class ProjectController extends Controller
         if ($user->company_id) {
             // Show visible projects from the same company (respecting subscription limits)
             $projects = Project::visibleForCompany($user->company_id)
-                ->with(['todos'])
+                ->with(['todos', 'client'])
                 ->get()
                 ->map(function ($project) {
                     $stats = $project->getStats();
                     $project->stats = $stats;
                     $project->total_todos = $stats['total'];
+                    $project->client_name = $project->client ? $project->client->name : null;
                     return $project;
                 });
         } else {
             // Fallback to user's own projects if no company
             $projects = Project::forUser($user->id)
-                ->with(['todos'])
+                ->with(['todos', 'client'])
                 ->orderBy('viewing_order')
                 ->orderBy('name')
                 ->get()
@@ -284,13 +285,36 @@ class ProjectController extends Controller
                     $stats = $project->getStats();
                     $project->stats = $stats;
                     $project->total_todos = $stats['total'];
+                    $project->client_name = $project->client ? $project->client->name : null;
                     return $project;
                 });
         }
 
+        // Group projects by client for better organization
+        $groupedProjects = [
+            'no_client' => [],
+            'clients' => []
+        ];
+
+        foreach ($projects as $project) {
+            if ($project->client_name) {
+                if (!isset($groupedProjects['clients'][$project->client_name])) {
+                    $groupedProjects['clients'][$project->client_name] = [
+                        'id' => $project->client_id,
+                        'name' => $project->client_name,
+                        'projects' => []
+                    ];
+                }
+                $groupedProjects['clients'][$project->client_name]['projects'][] = $project;
+            } else {
+                $groupedProjects['no_client'][] = $project;
+            }
+        }
+
         return response()->json([
             'success' => true,
-            'data' => $projects
+            'data' => $projects, // Keep original flat structure for backward compatibility
+            'grouped' => $groupedProjects // Add grouped structure for new sidebar
         ]);
     }
 

@@ -18,6 +18,8 @@ export interface Project {
     total_todos?: number;
     stats?: TodoStats;
     viewing_order?: number;
+    client_id?: number;
+    client_name?: string;
 }
 
 export interface Todo {

@@ -5,9 +5,11 @@ import { todoApi, type Project } from '@/services/todoApi';
 import Icon from '@/components/Icon.vue';
 // import { usePage } from '@inertiajs/vue3';
 const projects = ref<Project[]>([]);
+const groupedProjects = ref<any>(null);
 const currentProject = ref<Project | null>(null);
 const loading = ref(false);
 const isUpdatingProject = ref(false); // Flag to prevent circular events
+const collapsedClients = ref<Set<string>>(new Set()); // Track collapsed client sections
 
 // Check if we're on the subscription page
 const isOnSubscriptionPage = computed(() => {
@@ -54,14 +56,25 @@ onMounted(async () => {
 const loadProjects = async () => {
   try {
     loading.value = true;
-    const projectsData = await todoApi.getProjectsWithStats();
-    console.log('Projects with stats:', projectsData);
-    projects.value = projectsData;
+    const response = await todoApi.getProjectsWithStats();
+    console.log('Projects with stats:', response);
+    
+    // Handle both flat array and object with data property
+    if (Array.isArray(response)) {
+      projects.value = response;
+      groupedProjects.value = null; // No grouped data available
+    } else if (response.data && Array.isArray(response.data)) {
+      projects.value = response.data;
+      groupedProjects.value = response.grouped || null;
+    } else {
+      projects.value = [];
+      groupedProjects.value = null;
+    }
     
     // Set current project from URL or localStorage
     const projectId = localStorage.getItem('currentProjectId');
     if (projectId) {
-      const project = projectsData.find(p => p.id === parseInt(projectId));
+      const project = projects.value.find(p => p.id === parseInt(projectId));
       if (project) {
         currentProject.value = project;
       }
@@ -364,6 +377,18 @@ const handleDragEnd = () => {
   draggedOverIndex.value = null;
 };
 
+const toggleClientCollapse = (clientName: string) => {
+  if (collapsedClients.value.has(clientName)) {
+    collapsedClients.value.delete(clientName);
+  } else {
+    collapsedClients.value.add(clientName);
+  }
+};
+
+const isClientCollapsed = (clientName: string) => {
+  return collapsedClients.value.has(clientName);
+};
+
 
 </script>
 
@@ -383,61 +408,178 @@ const handleDragEnd = () => {
         </SidebarMenuButton>
       </SidebarMenuItem>
       
-      <!-- Project List -->
-      <SidebarMenuItem 
-        v-for="(project, index) in projects" 
-        :key="project.id"
-        @dragover="handleDragOver($event, index)"
-        @dragleave="handleDragLeave"
-        @drop="handleDrop($event, index)"
-        :class="{
-          'drag-over': draggedOverIndex === index
-        }"
-      >
-        <SidebarMenuButton 
-          @click="selectProject(project)" 
-          :is-active="currentProject?.id === project.id"
-          :tooltip="project.name"
-          class="group relative"
-          :class="{
-            'selected-project': currentProject?.id === project.id
-          }"
-          :style="currentProject?.id === project.id ? {
-            borderTop: `1px solid ${project.color}`,
-            borderLeft: `1px solid ${project.color}`,
-            borderBottom: `1px solid ${project.color}`,
-            borderRight: 'none',
-            marginRight: '-2px',
-            borderRadius: '15px 0px 0px 15px'
-          } : {}"
-        >
-          <div class="flex items-center gap-2 w-full">
-            <div 
-              class="w-3 h-3 rounded-full flex-shrink-0 cursor-move hover:scale-110 transition-transform"
-              :style="{ backgroundColor: project.color }"
-              draggable="true"
-              @dragstart="handleDragStart($event, project)"
-              @dragend="handleDragEnd"
-              title="Drag to reorder"
-            ></div>
-            
-            <span class="flex-1 truncate">{{ project.name }}</span>
-            
-            <span class="text-xs text-gray-500 flex-shrink-0">{{ project.total_todos || 0 }}</span>
-            
-            <!-- Delete Button (only visible on hover) -->
-            <div class="opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                @click="deleteProject(project, $event)"
-                class="text-gray-400 hover:text-red-500 transition-colors"
-                :tooltip="`Delete ${project.name}`"
+      <!-- Grouped Project List (with clients) -->
+      <template v-if="groupedProjects">
+        <!-- Projects without clients -->
+        <template v-if="groupedProjects.no_client && groupedProjects.no_client.length > 0">
+          <SidebarMenuItem>
+            <div class="px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">No Client</div>
+          </SidebarMenuItem>
+          <SidebarMenuItem 
+            v-for="(project, index) in groupedProjects.no_client" 
+            :key="`no-client-${project.id}`"
+            @dragover="handleDragOver($event, index)"
+            @dragleave="handleDragLeave"
+            @drop="handleDrop($event, index)"
+            :class="{ 'drag-over': draggedOverIndex === index }"
+          >
+            <SidebarMenuButton 
+              @click="selectProject(project)" 
+              :is-active="currentProject?.id === project.id"
+              :tooltip="project.name"
+              class="group relative ml-2"
+              :class="{ 'selected-project': currentProject?.id === project.id }"
+              :style="currentProject?.id === project.id ? {
+                borderTop: `1px solid ${project.color}`,
+                borderLeft: `1px solid ${project.color}`,
+                borderBottom: `1px solid ${project.color}`,
+                borderRight: 'none',
+                marginRight: '-2px',
+                borderRadius: '15px 0px 0px 15px'
+              } : {}"
+            >
+              <div class="flex items-center gap-2 w-full">
+                <div 
+                  class="w-3 h-3 rounded-full flex-shrink-0 cursor-move hover:scale-110 transition-transform"
+                  :style="{ backgroundColor: project.color }"
+                  draggable="true"
+                  @dragstart="handleDragStart($event, project)"
+                  @dragend="handleDragEnd"
+                  title="Drag to reorder"
+                ></div>
+                <span class="flex-1 truncate">{{ project.name }}</span>
+                <span class="text-xs text-gray-500 flex-shrink-0">{{ project.total_todos || 0 }}</span>
+                <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    @click="deleteProject(project, $event)"
+                    class="text-gray-400 hover:text-red-500 transition-colors"
+                    :tooltip="`Delete ${project.name}`"
+                  >
+                    <Icon name="Trash2" class="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </template>
+
+        <!-- Projects grouped by clients -->
+        <template v-for="client in Object.values(groupedProjects.clients)" :key="`client-${client.id}`">
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              @click="toggleClientCollapse(client.name)"
+              class="text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              <Icon 
+                :name="isClientCollapsed(client.name) ? 'ChevronRight' : 'ChevronDown'" 
+                class="w-3 h-3" 
+              />
+              <span class="flex-1 truncate">{{ client.name }}</span>
+              <span class="text-xs text-gray-500">{{ client.projects.length }}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          <!-- Client's projects (collapsible) -->
+          <template v-if="!isClientCollapsed(client.name)">
+            <SidebarMenuItem 
+              v-for="(project, index) in client.projects" 
+              :key="`client-${client.id}-project-${project.id}`"
+              @dragover="handleDragOver($event, index)"
+              @dragleave="handleDragLeave"
+              @drop="handleDrop($event, index)"
+              :class="{ 'drag-over': draggedOverIndex === index }"
+            >
+              <SidebarMenuButton 
+                @click="selectProject(project)" 
+                :is-active="currentProject?.id === project.id"
+                :tooltip="project.name"
+                class="group relative ml-4"
+                :class="{ 'selected-project': currentProject?.id === project.id }"
+                :style="currentProject?.id === project.id ? {
+                  borderTop: `1px solid ${project.color}`,
+                  borderLeft: `1px solid ${project.color}`,
+                  borderBottom: `1px solid ${project.color}`,
+                  borderRight: 'none',
+                  marginRight: '-2px',
+                  borderRadius: '15px 0px 0px 15px'
+                } : {}"
               >
-                <Icon name="Trash2" class="w-3 h-3" />
-              </button>
+                <div class="flex items-center gap-2 w-full">
+                  <div 
+                    class="w-3 h-3 rounded-full flex-shrink-0 cursor-move hover:scale-110 transition-transform"
+                    :style="{ backgroundColor: project.color }"
+                    draggable="true"
+                    @dragstart="handleDragStart($event, project)"
+                    @dragend="handleDragEnd"
+                    title="Drag to reorder"
+                  ></div>
+                  <span class="flex-1 truncate">{{ project.name }}</span>
+                  <span class="text-xs text-gray-500 flex-shrink-0">{{ project.total_todos || 0 }}</span>
+                  <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      @click="deleteProject(project, $event)"
+                      class="text-gray-400 hover:text-red-500 transition-colors"
+                      :tooltip="`Delete ${project.name}`"
+                    >
+                      <Icon name="Trash2" class="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </template>
+        </template>
+      </template>
+      
+      <!-- Fallback: Flat Project List (when no grouping available) -->
+      <template v-else>
+        <SidebarMenuItem 
+          v-for="(project, index) in projects" 
+          :key="project.id"
+          @dragover="handleDragOver($event, index)"
+          @dragleave="handleDragLeave"
+          @drop="handleDrop($event, index)"
+          :class="{ 'drag-over': draggedOverIndex === index }"
+        >
+          <SidebarMenuButton 
+            @click="selectProject(project)" 
+            :is-active="currentProject?.id === project.id"
+            :tooltip="project.name"
+            class="group relative"
+            :class="{ 'selected-project': currentProject?.id === project.id }"
+            :style="currentProject?.id === project.id ? {
+              borderTop: `1px solid ${project.color}`,
+              borderLeft: `1px solid ${project.color}`,
+              borderBottom: `1px solid ${project.color}`,
+              borderRight: 'none',
+              marginRight: '-2px',
+              borderRadius: '15px 0px 0px 15px'
+            } : {}"
+          >
+            <div class="flex items-center gap-2 w-full">
+              <div 
+                class="w-3 h-3 rounded-full flex-shrink-0 cursor-move hover:scale-110 transition-transform"
+                :style="{ backgroundColor: project.color }"
+                draggable="true"
+                @dragstart="handleDragStart($event, project)"
+                @dragend="handleDragEnd"
+                title="Drag to reorder"
+              ></div>
+              <span class="flex-1 truncate">{{ project.name }}</span>
+              <span class="text-xs text-gray-500 flex-shrink-0">{{ project.total_todos || 0 }}</span>
+              <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  @click="deleteProject(project, $event)"
+                  class="text-gray-400 hover:text-red-500 transition-colors"
+                  :tooltip="`Delete ${project.name}`"
+                >
+                  <Icon name="Trash2" class="w-3 h-3" />
+                </button>
+              </div>
             </div>
-          </div>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </template>
       
       <!-- Loading State -->
       <SidebarMenuItem v-if="loading">
