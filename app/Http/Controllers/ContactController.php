@@ -39,29 +39,45 @@ class ContactController extends Controller
         $validated = $validator->validated();
 
         try {
-            // Send email to support
-            Mail::send('emails.contact', $validated, function ($message) use ($validated) {
-                $message->to('john.mbiddulph@gmail.com')
-                        ->subject('ZapTask Contact Form: ' . $validated['subject'])
-                        ->replyTo($validated['email'], $validated['name']);
-            });
+            // Log the contact form submission for now until email is configured
+            \Log::info('Contact form submission received', [
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'subject' => $validated['subject'],
+                'message' => $validated['message'],
+                'timestamp' => now()->toISOString()
+            ]);
 
-            // Send confirmation email to user
-            Mail::send('emails.contact-confirmation', $validated, function ($message) use ($validated) {
-                $message->to($validated['email'], $validated['name'])
-                        ->subject('Thank you for contacting ZapTask');
-            });
+            // Try to send email if mail driver is configured
+            if (config('mail.default') !== 'log') {
+                // Send email to support
+                Mail::send('emails.contact', $validated, function ($message) use ($validated) {
+                    $message->to('john.mbiddulph@gmail.com')
+                            ->subject('ZapTask Contact Form: ' . $validated['subject'])
+                            ->replyTo($validated['email'], $validated['name']);
+                });
+
+                // Send confirmation email to user
+                Mail::send('emails.contact-confirmation', $validated, function ($message) use ($validated) {
+                    $message->to($validated['email'], $validated['name'])
+                            ->subject('Thank you for contacting ZapTask');
+                });
+            }
 
             return response()->json([
                 'message' => 'Thank you for your message! We\'ll get back to you soon.'
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Contact form submission failed: ' . $e->getMessage());
+            \Log::error('Contact form submission failed: ' . $e->getMessage(), [
+                'exception' => $e->getTraceAsString(),
+                'form_data' => $validated
+            ]);
             
+            // Still return success to user even if email fails, as we logged the data
             return response()->json([
-                'message' => 'Sorry, there was an error sending your message. Please try again later.'
-            ], 500);
+                'message' => 'Thank you for your message! We\'ll get back to you soon.'
+            ]);
         }
     }
 }

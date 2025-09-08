@@ -8,38 +8,60 @@ import { Head, Link } from '@inertiajs/vue3';
         <link rel="preconnect" href="https://rsms.me/" />
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
     </Head>
-    <div class="flex min-h-screen flex-col items-center bg-[#FDFDFC] text-[#1b1b18] lg:justify-center lg:pt-8 dark:bg-[#0a0a0a] pt-6">
-        <header class="mb-6 w-full max-w-[335px] text-sm not-has-[nav]:hidden lg:max-w-4xl">
-            <nav class="flex items-center justify-end gap-4">
-                <a
-                    href="/demo"
-                    class="inline-block rounded-sm border border-transparent px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#19140035] dark:text-[#EDEDEC] dark:hover:border-[#3E3E3A]"
-                >
-                    Demo
-                </a>
-                <Link
-                    v-if="$page.props.auth.user"
-                    :href="dashboard()"
-                    class="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
-                >
-                    Dashboard
-                </Link>
-                <template v-else>
-                    <Link
-                        :href="login()"
-                        class="inline-block rounded-sm border border-transparent px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#19140035] dark:text-[#EDEDEC] dark:hover:border-[#3E3E3A]"
-                    >
-                        Log in
-                    </Link>
-                    <Link
-                        :href="register()"
-                        class="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
-                    >
-                        Register
-                    </Link>
-                </template>
-            </nav>
+    <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <!-- Header -->
+        <header class="bg-white dark:bg-gray-800 shadow">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-6">
+                    <div class="flex items-center">
+                        <div class="flex items-center space-x-2">
+                            <img src="/zap_icon.png" alt="ZapTask" class="w-8 h-8 dark:bg-white dark:rounded-md dark:p-1">
+                            <span class="text-xl font-bold text-gray-900 dark:text-white">ZapTask</span>
+                        </div>
+                    </div>
+                    <nav class="hidden md:flex items-center space-x-8">
+                        <a href="#features" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                            Features
+                        </a>
+                        <a href="#pricing" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                            Pricing
+                        </a>
+                        <a href="/demo" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                            Demo
+                        </a>
+                        <a href="/contact" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                            Contact
+                        </a>
+                    </nav>
+                    <div class="flex items-center space-x-4">
+                        <Link
+                            v-if="$page.props.auth.user"
+                            :href="dashboard()"
+                            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                        >
+                            Dashboard
+                        </Link>
+                        <template v-else>
+                            <Link
+                                :href="login()"
+                                class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                            >
+                                Sign In
+                            </Link>
+                            <Link
+                                :href="register()"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                            >
+                                Get Started
+                            </Link>
+                        </template>
+                    </div>
+                </div>
+            </div>
         </header>
+
+        <!-- Main Content -->
+        <div class="flex min-h-screen flex-col items-center bg-[#FDFDFC] text-[#1b1b18] lg:justify-center lg:pt-8 dark:bg-[#0a0a0a] pt-6">
         <div class="flex w-full items-center justify-center opacity-100 transition-opacity duration-750 lg:grow starting:opacity-0">
             <main class="flex w-full max-w-[335px] flex-col-reverse overflow-hidden rounded-lg lg:max-w-4xl lg:flex-row">
                 <div
@@ -356,9 +378,6 @@ import { Head, Link } from '@inertiajs/vue3';
                         <p class="text-gray-300 text-sm mb-4 max-w-md">
                             The ultimate task management platform designed for teams that want to get things done efficiently. Organize projects, track progress, and collaborate seamlessly.
                         </p>
-                        <div class="text-gray-400 text-sm">
-                            © 2025 ZapTask.co.uk. All rights reserved.
-                        </div>
                     </div>
                     
                     <!-- Quick Links -->
@@ -424,5 +443,6 @@ import { Head, Link } from '@inertiajs/vue3';
                 </div>
             </div>
         </footer>
+        </div>
     </div>
 </template>
