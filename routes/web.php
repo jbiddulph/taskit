@@ -23,45 +23,23 @@ Route::get('/terms', function () {
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
-// Test route for welcome email preview
-Route::get('/test-welcome-email', function () {
-    // Test with company
-    $welcomeWithCompany = new \App\Mail\WelcomeMail(
-        'John Smith',
-        'john@example.com',
-        'Acme Corporation',
-        'ACME123'
-    );
-    
-    // Test without company (individual)
-    $welcomeIndividual = new \App\Mail\WelcomeMail(
-        'Jane Doe',
-        'jane@example.com'
-    );
-    
-    return response()->json([
-        'with_company' => 'Available at /test-welcome-email/company',
-        'individual' => 'Available at /test-welcome-email/individual'
-    ]);
+// Test route to send welcome email (temporary)
+Route::get('/test-welcome-send', function () {
+    try {
+        // Test sending actual welcome email
+        \Mail::to('john.mbiddulph@gmail.com')->send(new \App\Mail\WelcomeMail(
+            'Test User',
+            'john.mbiddulph@gmail.com',
+            'Test Company',
+            'TEST123'
+        ));
+        
+        return response()->json(['status' => 'Welcome email sent successfully to john.mbiddulph@gmail.com']);
+    } catch (\Exception $e) {
+        return response()->json(['status' => 'Failed to send welcome email', 'error' => $e->getMessage()], 500);
+    }
 });
 
-Route::get('/test-welcome-email/company', function () {
-    return view('emails.welcome', [
-        'name' => 'John Smith',
-        'email' => 'john@example.com',
-        'company' => 'Acme Corporation',
-        'company_code' => 'ACME123'
-    ]);
-});
-
-Route::get('/test-welcome-email/individual', function () {
-    return view('emails.welcome', [
-        'name' => 'Jane Doe',
-        'email' => 'jane@example.com',
-        'company' => null,
-        'company_code' => null
-    ]);
-});
 
 
 
