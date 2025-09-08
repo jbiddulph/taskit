@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { dashboard, login, register } from '@/routes';
 import { Head, Link } from '@inertiajs/vue3';
+import { onMounted } from 'vue';
 
 // Smooth scroll function
 const scrollToSection = (sectionId: string) => {
@@ -12,6 +13,20 @@ const scrollToSection = (sectionId: string) => {
         });
     }
 };
+
+// Handle URL anchors on page load
+onMounted(() => {
+    // Check if there's a hash in the URL
+    const hash = window.location.hash;
+    if (hash) {
+        // Remove the # and scroll to the section
+        const sectionId = hash.substring(1);
+        // Add a small delay to ensure the page is fully loaded
+        setTimeout(() => {
+            scrollToSection(sectionId);
+        }, 100);
+    }
+});
 </script>
 
 <template>

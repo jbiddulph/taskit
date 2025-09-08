@@ -163,14 +163,9 @@
 import { dashboard, login, register } from '@/routes';
 import { Head, Link } from '@inertiajs/vue3';
 
-// Smooth scroll function
+// Navigate to homepage section function
 const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-        element.scrollIntoView({ 
-            behavior: 'smooth',
-            block: 'start'
-        });
-    }
+    // Navigate to homepage with anchor
+    window.location.href = `/#${sectionId}`;
 };
 </script>
