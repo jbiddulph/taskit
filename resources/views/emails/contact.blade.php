@@ -58,8 +58,7 @@
 </head>
 <body>
     <div class="header">
-        <img src="https://www.zaptask.co.uk/zap_icon_white.svg" alt="ZapTask" class="logo">
-        <h1 style="display: inline-block; margin: 0; vertical-align: middle;">ZapTask Contact Form Submission</h1>
+        <h1>ZapTask Contact Form Submission</h1>
     </div>
     
     <div class="content">
