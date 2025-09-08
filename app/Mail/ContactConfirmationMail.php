@@ -14,13 +14,17 @@ class ContactConfirmationMail extends Mailable
     use Queueable, SerializesModels;
 
     public $name;
+    public $email;
+    public $subject;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($name)
+    public function __construct($name, $email = null, $subject = null)
     {
         $this->name = $name;
+        $this->email = $email;
+        $this->subject = $subject;
     }
 
     /**
@@ -40,7 +44,11 @@ class ContactConfirmationMail extends Mailable
     {
         return new Content(
             view: 'emails.contact-confirmation',
-            with: ['name' => $this->name]
+            with: [
+                'name' => $this->name,
+                'email' => $this->email,
+                'subject' => $this->subject
+            ]
         );
     }
 

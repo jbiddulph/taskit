@@ -59,29 +59,29 @@
         
         <div class="field">
             <span class="label">Name:</span>
-            <div class="value">{{ $name }}</div>
+            <div class="value">{{ $data['name'] }}</div>
         </div>
         
         <div class="field">
             <span class="label">Email:</span>
-            <div class="value">{{ $email }}</div>
+            <div class="value">{{ $data['email'] }}</div>
         </div>
         
         <div class="field">
             <span class="label">Subject:</span>
-            <div class="value">{{ $subject }}</div>
+            <div class="value">{{ $data['subject'] }}</div>
         </div>
         
         <div class="field">
             <span class="label">Message:</span>
-            <div class="message-box">{{ $message }}</div>
+            <div class="message-box">{{ $data['message'] }}</div>
         </div>
         
         <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
         
         <p style="font-size: 14px; color: #6b7280;">
             <strong>Submitted:</strong> {{ now()->format('F j, Y \a\t g:i A T') }}<br>
-            <strong>Reply to:</strong> {{ $email }}
+            <strong>Reply to:</strong> {{ $data['email'] }}
         </p>
     </div>
 </body>

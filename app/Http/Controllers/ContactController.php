@@ -39,7 +39,7 @@ class ContactController extends Controller
         $validated = $validator->validated();
 
         try {
-            // Log the contact form submission for now until email is configured
+            // Log the contact form submission
             \Log::info('Contact form submission received', [
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -48,21 +48,15 @@ class ContactController extends Controller
                 'timestamp' => now()->toISOString()
             ]);
 
-            // Try to send email if mail driver is configured
-            if (config('mail.default') !== 'log') {
-                // Send email to support
-                Mail::send('emails.contact', $validated, function ($message) use ($validated) {
-                    $message->to('john.mbiddulph@gmail.com')
-                            ->subject('ZapTask Contact Form: ' . $validated['subject'])
-                            ->replyTo($validated['email'], $validated['name']);
-                });
+            // Send email to support using Mailable classes
+            Mail::to('john.mbiddulph@gmail.com')->send(new \App\Mail\ContactFormMail($validated));
 
-                // Send confirmation email to user
-                Mail::send('emails.contact-confirmation', $validated, function ($message) use ($validated) {
-                    $message->to($validated['email'], $validated['name'])
-                            ->subject('Thank you for contacting ZapTask');
-                });
-            }
+            // Send confirmation email to user
+            Mail::to($validated['email'])->send(new \App\Mail\ContactConfirmationMail(
+                $validated['name'],
+                $validated['email'],
+                $validated['subject']
+            ));
 
             return response()->json([
                 'message' => 'Thank you for your message! We\'ll get back to you soon.'
@@ -74,10 +68,11 @@ class ContactController extends Controller
                 'form_data' => $validated
             ]);
             
-            // Still return success to user even if email fails, as we logged the data
+            // Return error to help debug
             return response()->json([
-                'message' => 'Thank you for your message! We\'ll get back to you soon.'
-            ]);
+                'message' => 'There was an error sending your message. Please try again.',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }
