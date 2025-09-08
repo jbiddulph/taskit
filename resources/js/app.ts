@@ -33,7 +33,7 @@ declare global {
 }
 
 // Track page views on Inertia navigation
-router.on('navigate', (event) => {
+router.on('navigate', () => {
     if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('config', window.gtag, {
             page_title: document.title,

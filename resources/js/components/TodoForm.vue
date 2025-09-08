@@ -156,15 +156,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import TipTapEditor from '@/components/TipTapEditor.vue';
 import TypeSelector from '@/components/TypeSelector.vue';
 import { usePage } from '@inertiajs/vue3';
 import Icon from '@/components/Icon.vue';
 import TodoComments from '@/components/TodoComments.vue';
-import { todoApi, type Project } from '@/services/todoApi';
+import { type Project } from '@/services/todoApi';
 import type { Todo } from '@/services/todoApi';
-import { uploadImageToTaskitBucket } from '@/services/supabaseClient';
+// import { uploadImageToTaskitBucket } from '@/services/supabaseClient';
 import { useAnalytics } from '../composables/useAnalytics';
 
 interface Props {

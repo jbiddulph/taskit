@@ -585,7 +585,7 @@ const isUpdatingProject = ref(false); // Flag to prevent circular events
 
 // Computed properties
 const filteredTodos = computed(() => {
-  let filtered = todos.value.filter(todo => {
+  const filtered = todos.value.filter(todo => {
     const matchesSearch = !searchQuery.value || 
       todo.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       todo.description?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||

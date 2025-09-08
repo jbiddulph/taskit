@@ -3,9 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { todoApi, type Project } from '@/services/todoApi';
 import Icon from '@/components/Icon.vue';
-import { usePage } from '@inertiajs/vue3';
-
-const page = usePage();
+// import { usePage } from '@inertiajs/vue3';
 const projects = ref<Project[]>([]);
 const currentProject = ref<Project | null>(null);
 const loading = ref(false);

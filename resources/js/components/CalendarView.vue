@@ -60,8 +60,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+// import { usePage } from '@inertiajs/vue3';
 import type { Todo } from '@/services/todoApi';
 
 interface Props {
@@ -70,20 +70,19 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const emit = defineEmits<{
+defineEmits<{
   editTodo: [todo: Todo];
 }>();
 
-const page = usePage();
-const currentUser = (page.props as any)?.auth?.user || null;
-const currentUserName = currentUser?.name || '';
+// const page = usePage();
+// const currentUser = (page.props as any)?.auth?.user || null;
 
 const current = ref(new Date());
 
 const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
-const endOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
+// const endOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
 const startOfWeek = (d: Date) => {
   const dd = new Date(d);
   const day = dd.getDay(); // 0=Sun,1=Mon,...
@@ -117,7 +116,6 @@ const itemsByDate = computed<Record<string, Todo[]>>(() => {
 
 const calendarCells = computed(() => {
   const start = startOfMonth(current.value);
-  const end = endOfMonth(current.value);
   const gridStart = startOfWeek(start);
   const cells: Array<{ key: string; date: Date; iso: string; inMonth: boolean }> = [];
   let d = new Date(gridStart);

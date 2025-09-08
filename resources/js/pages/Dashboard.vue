@@ -25,7 +25,7 @@ interface Props {
     } | null;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     {

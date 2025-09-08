@@ -28,7 +28,7 @@ interface Props {
     company?: Company;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 const page = usePage();
 
 // Export form
@@ -100,7 +100,7 @@ const exportData = async () => {
             // Reset form
             exportForm.reset();
         } else {
-            const errorText = await response.text();
+            await response.text();
             throw new Error(`Export failed: ${response.status} ${response.statusText}`);
         }
     } catch (error) {

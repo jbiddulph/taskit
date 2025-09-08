@@ -77,7 +77,7 @@ watch(pruneCompletedTasks, (newValue) => {
 const updateSettings = () => {
     form.patch(dashboardSettingsUpdate().url, {
         preserveScroll: true,
-        onSuccess: (page) => {
+        onSuccess: () => {
             // The response data will trigger the watch which will update the form
             // No need to manually update here since watch handles it
         }

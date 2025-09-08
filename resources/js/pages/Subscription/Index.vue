@@ -94,14 +94,14 @@ const formatPrice = (price: number): string => {
     return `£${(price / 100).toFixed(0)}`;
 };
 
-const getPlanColor = (planType: string): string => {
-    switch (planType) {
-        case 'FREE': return 'gray';
-        case 'MIDI': return 'blue';
-        case 'MAXI': return 'yellow'; // Using yellow for gold effect
-        default: return 'gray';
-    }
-};
+// const getPlanColor = (planType: string): string => {
+//     switch (planType) {
+//         case 'FREE': return 'gray';
+//         case 'MIDI': return 'blue';
+//         case 'MAXI': return 'yellow'; // Using yellow for gold effect
+//         default: return 'gray';
+//     }
+// };
 
 const getPlanClasses = (planType: string): string => {
     const isCurrentPlan = planType === currentPlan.value;

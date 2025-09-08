@@ -7,13 +7,13 @@ declare global {
     }
 }
 
-interface AnalyticsEvent {
-    action: string;
-    category?: string;
-    label?: string;
-    value?: number;
-    custom_parameters?: Record<string, any>;
-}
+// interface AnalyticsEvent {
+//     action: string;
+//     category?: string;
+//     label?: string;
+//     value?: number;
+//     custom_parameters?: Record<string, any>;
+// }
 
 export function useAnalytics() {
     const isInitialized = ref(false);
