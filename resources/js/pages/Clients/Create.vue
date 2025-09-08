@@ -2,6 +2,7 @@
 import { Head, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
+import { store, index } from '@/routes/clients';
 
 const form = useForm({
   name: '',
@@ -19,7 +20,7 @@ const form = useForm({
 });
 
 const submit = () => {
-  form.post(route('clients.store'), {
+  form.post(store.url(), {
     onSuccess: () => {
       // Redirect will be handled by the controller
     }
@@ -242,7 +243,7 @@ const submit = () => {
                 
                 <button
                   type="button"
-                  @click="$inertia.visit(route('clients.index'))"
+                  @click="$inertia.visit(index.url())"
                   class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
                 >
                   Cancel

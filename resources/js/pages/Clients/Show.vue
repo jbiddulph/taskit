@@ -2,6 +2,7 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
+import { index, edit, destroy } from '@/routes/clients';
 
 interface Client {
   id: number;
@@ -49,7 +50,7 @@ const deleteForm = useForm({});
 
 const deleteClient = () => {
   if (confirm('Are you sure you want to delete this client? This will remove the client association from all projects but will not delete the projects themselves.')) {
-    deleteForm.delete(route('clients.destroy', client.id));
+    deleteForm.delete(destroy.url(client.id));
   }
 };
 </script>
@@ -64,7 +65,7 @@ const deleteClient = () => {
         <div class="mb-6">
           <div class="flex items-center gap-4 mb-4">
             <Link
-              :href="route('clients.index')"
+              :href="index.url()"
               class="flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
             >
               <Icon name="ArrowLeft" class="w-4 h-4" />
@@ -82,7 +83,7 @@ const deleteClient = () => {
             
             <div class="flex gap-3">
               <Link
-                :href="route('clients.edit', client.id)"
+                :href="edit.url(client.id)"
                 class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
               >
                 <Icon name="Edit" class="w-4 h-4" />

@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
+import { create, show } from '@/routes/clients';
 
 interface Client {
   id: number;
@@ -46,7 +47,7 @@ defineProps<Props>();
                 </p>
               </div>
               <Link
-                :href="route('clients.create')"
+                :href="create.url()"
                 class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
               >
                 <Icon name="Plus" class="w-4 h-4" />
@@ -64,7 +65,7 @@ defineProps<Props>();
                 <div class="flex justify-between items-start mb-4">
                   <h3 class="text-lg font-semibold">{{ client.name }}</h3>
                   <Link
-                    :href="route('clients.show', client.id)"
+                    :href="show.url(client.id)"
                     class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                   >
                     <Icon name="ExternalLink" class="w-4 h-4" />
@@ -140,7 +141,7 @@ defineProps<Props>();
                 Start by adding your first client to organize your projects better.
               </p>
               <Link
-                :href="route('clients.create')"
+                :href="create.url()"
                 class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
               >
                 <Icon name="Plus" class="w-4 h-4" />

@@ -2,6 +2,7 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
+import { update, show } from '@/routes/clients';
 
 interface Client {
   id: number;
@@ -41,7 +42,7 @@ const form = useForm({
 });
 
 const submit = () => {
-  form.patch(route('clients.update', client.id), {
+  form.patch(update.url(client.id), {
     onSuccess: () => {
       // Redirect will be handled by the controller
     }
@@ -61,7 +62,7 @@ const submit = () => {
             <div class="mb-6">
               <div class="flex items-center gap-4 mb-4">
                 <Link
-                  :href="route('clients.show', client.id)"
+                  :href="show.url(client.id)"
                   class="flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
                 >
                   <Icon name="ArrowLeft" class="w-4 h-4" />
@@ -274,7 +275,7 @@ const submit = () => {
                 
                 <button
                   type="button"
-                  @click="$inertia.visit(route('clients.show', client.id))"
+                  @click="$inertia.visit(show.url(client.id))"
                   class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
                 >
                   Cancel
