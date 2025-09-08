@@ -1,6 +1,17 @@
 <script setup lang="ts">
+import { dashboard, login, register } from '@/routes';
 import { Head, Link } from '@inertiajs/vue3';
-import { login, register } from '@/routes';
+
+// Smooth scroll function
+const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+        element.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }
+};
 
 defineOptions({
     layout: false,
@@ -13,8 +24,8 @@ defineOptions({
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
     </Head>
     <div class="flex min-h-screen flex-col bg-[#FDFDFC] text-[#1b1b18] dark:bg-[#0a0a0a] dark:text-[#EDEDEC]">
-        <!-- Header -->
-        <header class="bg-white dark:bg-gray-800 shadow">
+        <!-- Fixed Header -->
+        <header class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 shadow">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between items-center py-4">
                     <div class="flex items-center">
@@ -24,9 +35,12 @@ defineOptions({
                         </Link>
                     </div>
                     <nav class="hidden md:flex items-center space-x-8">
-                        <Link href="/" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
-                            Home
-                        </Link>
+                        <button @click="scrollToSection('features')" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer">
+                            Features
+                        </button>
+                        <button @click="scrollToSection('pricing')" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer">
+                            Pricing
+                        </button>
                         <a href="/demo" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                             Demo
                         </a>
@@ -35,25 +49,34 @@ defineOptions({
                         </a>
                     </nav>
                     <div class="flex items-center space-x-4">
-                        <Link 
-                            :href="login()"
-                            class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-                        >
-                            Sign In
-                        </Link>
-                        <Link 
-                            :href="register()"
+                        <Link
+                            v-if="$page.props.auth.user"
+                            :href="dashboard()"
                             class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
                         >
-                            Get Started
+                            Dashboard
                         </Link>
+                        <template v-else>
+                            <Link
+                                :href="login()"
+                                class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                            >
+                                Sign In
+                            </Link>
+                            <Link
+                                :href="register()"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                            >
+                                Get Started
+                            </Link>
+                        </template>
                     </div>
                 </div>
             </div>
         </header>
 
-        <!-- Main Content -->
-        <main class="flex-1">
+        <!-- Main Content with padding for fixed header -->
+        <main class="flex-1 pt-16">
             <!-- Hero Section -->
             <section class="w-full bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/30 py-16">
                 <div class="max-w-4xl mx-auto px-6 text-center">
