@@ -56,52 +56,36 @@ defineOptions({
                         Experience ZapTask with our pre-configured demo account. Explore all features and see how easy project management can be.
                     </p>
                     
-                    <!-- Demo Login Form -->
+                    <!-- Demo Login Credentials -->
                     <div class="bg-white dark:bg-[#161615] rounded-lg p-8 max-w-md mx-auto border border-blue-300 dark:border-blue-700 mb-8">
-                        <div class="text-lg font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-6 text-center">Demo Login</div>
-                        
                         <Form 
                             :action="AuthenticatedSessionController.store().url"
-                            class="space-y-4"
                             v-slot="{ errors, processing }"
                         >
-                            <div class="grid gap-2">
-                                <Label for="demo-email" class="text-sm">Email address</Label>
-                                <Input
-                                    id="demo-email"
-                                    type="email"
-                                    name="email"
-                                    value="demo@zaptask.co.uk"
-                                    required
-                                    autocomplete="email"
-                                    class="text-sm"
-                                    readonly
-                                />
+                            <div class="space-y-4">
+                                <div class="text-lg font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-4">Demo Login Credentials</div>
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between bg-gray-50 dark:bg-[#1a1a19] px-4 py-3 rounded">
+                                        <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Email:</span>
+                                        <span class="text-sm font-mono text-[#1b1b18] dark:text-[#EDEDEC] select-all font-medium">demo@zaptask.co.uk</span>
+                                        <input type="hidden" name="email" value="demo@zaptask.co.uk" />
+                                    </div>
+                                    <div class="flex items-center justify-between bg-gray-50 dark:bg-[#1a1a19] px-4 py-3 rounded">
+                                        <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Password:</span>
+                                        <span class="text-sm font-mono text-[#1b1b18] dark:text-[#EDEDEC] select-all font-medium">zaptask123</span>
+                                        <input type="hidden" name="password" value="zaptask123" />
+                                    </div>
+                                </div>
                                 <InputError :message="errors.email" />
-                            </div>
-
-                            <div class="grid gap-2">
-                                <Label for="demo-password" class="text-sm">Password</Label>
-                                <Input
-                                    id="demo-password"
-                                    type="password"
-                                    name="password"
-                                    value="zaptask123"
-                                    required
-                                    autocomplete="current-password"
-                                    class="text-sm"
-                                    readonly
-                                />
                                 <InputError :message="errors.password" />
                             </div>
-
-                            <Button 
-                                type="submit" 
-                                class="w-full mt-6 bg-blue-500 hover:bg-blue-600 text-white" 
+                            <Button
+                                type="submit"
+                                class="mt-6 w-full rounded-lg bg-blue-500 px-6 py-3 text-sm font-medium text-white hover:bg-blue-600 transition-colors duration-200"
                                 :disabled="processing"
                             >
                                 <LoaderCircle v-if="processing" class="h-4 w-4 animate-spin mr-2" />
-                                Login to Demo Account
+                                {{ processing ? 'Logging in...' : 'Try Demo Now' }}
                             </Button>
                         </Form>
                     </div>
