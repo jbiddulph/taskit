@@ -8,7 +8,7 @@ import { Head, Link } from '@inertiajs/vue3';
         <link rel="preconnect" href="https://rsms.me/" />
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
     </Head>
-    <div class="flex min-h-screen flex-col items-center bg-[#FDFDFC] p-6 text-[#1b1b18] lg:justify-center lg:p-8 dark:bg-[#0a0a0a]">
+    <div class="flex min-h-screen flex-col items-center bg-[#FDFDFC] text-[#1b1b18] lg:justify-center lg:pt-8 dark:bg-[#0a0a0a] pt-6">
         <header class="mb-6 w-full max-w-[335px] text-sm not-has-[nav]:hidden lg:max-w-4xl">
             <nav class="flex items-center justify-end gap-4">
                 <Link
@@ -137,7 +137,7 @@ import { Head, Link } from '@inertiajs/vue3';
         </div>
         
         <!-- Pricing Section -->
-        <section class="w-full bg-gray-50 dark:bg-[#0f0f0e] py-16 lg:py-24">
+        <section class="w-full bg-blue-200 dark:bg-[#0f0f0e] py-8 lg:py-12 mt-12">
             <div class="max-w-6xl mx-auto px-6">
                 <div class="text-center mb-12">
                     <h2 class="text-3xl lg:text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">
@@ -437,7 +437,5 @@ import { Head, Link } from '@inertiajs/vue3';
                 </div>
             </div>
         </footer>
-        
-        <div class="hidden h-14.5 lg:block"></div>
     </div>
 </template>
