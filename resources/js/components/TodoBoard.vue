@@ -339,6 +339,25 @@
             
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Client (Optional)
+              </label>
+              <select
+                v-model="newProject.client_id"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option :value="null">No Client</option>
+                <option 
+                  v-for="client in clients" 
+                  :key="client.id" 
+                  :value="client.id"
+                >
+                  {{ client.name }}
+                </option>
+              </select>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Color
               </label>
               <div class="flex items-center gap-3">
@@ -397,6 +416,25 @@
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 placeholder="Enter project name"
               />
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Client (Optional)
+              </label>
+              <select
+                v-model="editingProjectClientId"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option :value="null">No Client</option>
+                <option 
+                  v-for="client in clients" 
+                  :key="client.id" 
+                  :value="client.id"
+                >
+                  {{ client.name }}
+                </option>
+              </select>
             </div>
             
             <div class="flex gap-3 pt-4">
@@ -494,6 +532,7 @@ const currentProject = ref<Project | null>(null);
 const selectedProjectId = ref<string>('');
 const editingTodo = ref<Todo | null>(null);
 const editingProjectName = ref('');
+const editingProjectClientId = ref<number | null>(null);
 const editingProjectDescription = ref(false);
 const editingProjectDescriptionText = ref('');
 const projectDescriptionInput = ref<HTMLInputElement | null>(null);
@@ -579,8 +618,11 @@ const newProject = ref({
   name: '',
   description: '',
   key: '',
-  color: '#3B82F6'
+  color: '#3B82F6',
+  client_id: null as number | null
 });
+
+const clients = ref<any[]>([]);
 const isUpdatingProject = ref(false); // Flag to prevent circular events
 
 // Computed properties
@@ -920,6 +962,7 @@ const handleShowForm = () => {
 const startEditProject = () => {
   if (!currentProject.value) return;
   editingProjectName.value = currentProject.value.name;
+  editingProjectClientId.value = currentProject.value.client_id || null;
   showEditProject.value = true;
 };
 
@@ -928,7 +971,8 @@ const saveEditProject = async () => {
   
   try {
     const updatedProject = await todoApi.updateProject(currentProject.value.id, {
-      name: editingProjectName.value.trim()
+      name: editingProjectName.value.trim(),
+      client_id: editingProjectClientId.value
     });
     
     // Update current project
@@ -946,6 +990,7 @@ const saveEditProject = async () => {
     // Close modal
     showEditProject.value = false;
     editingProjectName.value = '';
+    editingProjectClientId.value = null;
     
     // Dispatch event to refresh sidebar projects
     window.dispatchEvent(new CustomEvent('todoChanged'));
@@ -1062,8 +1107,28 @@ const resetNewProject = () => {
     name: '',
     description: '',
     key: '',
-    color: '#3B82F6'
+    color: '#3B82F6',
+    client_id: null
   };
+};
+
+const loadClients = async () => {
+  try {
+    const response = await fetch('/clients', {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      clients.value = data.clients || [];
+    }
+  } catch (error) {
+    console.error('Failed to load clients:', error);
+    clients.value = [];
+  }
 };
 
 const createProject = async () => {
@@ -1072,7 +1137,8 @@ const createProject = async () => {
       name: newProject.value.name,
       description: newProject.value.description || undefined,
       key: newProject.value.key || undefined,
-      color: newProject.value.color
+      color: newProject.value.color,
+      client_id: newProject.value.client_id || undefined
     };
     
     const newProjectCreated = await todoApi.createProject(projectData);
@@ -1318,6 +1384,9 @@ watch(showCreateProject, (newValue) => {
 onMounted(async () => {
   // Load projects first (so dropdown has options)
   await loadProjects();
+  
+  // Load clients for project creation
+  await loadClients();
   
   // Then load current project from localStorage
   await loadCurrentProject();

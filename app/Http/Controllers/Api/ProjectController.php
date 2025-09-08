@@ -62,6 +62,7 @@ class ProjectController extends Controller
             'description' => 'nullable|string',
             'key' => 'nullable|string|max:10|unique:taskit_projects,key',
             'color' => 'nullable|string|regex:/^#[0-9A-F]{6}$/i',
+            'client_id' => 'nullable|integer|exists:taskit_clients,id',
         ]);
 
         if ($validator->fails()) {
@@ -94,6 +95,17 @@ class ProjectController extends Controller
             }
         }
         
+        // Validate client ownership if client_id is provided
+        if ($request->client_id && $user->company_id) {
+            $client = \App\Models\Client::find($request->client_id);
+            if (!$client || $client->company_id !== $user->company_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid client selected.'
+                ], 403);
+            }
+        }
+        
         $project = Project::create([
             'name' => $request->name,
             'description' => $request->description,
@@ -101,6 +113,7 @@ class ProjectController extends Controller
             'color' => $request->color ?? '#3B82F6',
             'owner_id' => $user->id,
             'viewing_order' => Project::getNextViewingOrder($user->id),
+            'client_id' => $request->client_id,
         ]);
 
         return response()->json([
@@ -154,6 +167,7 @@ class ProjectController extends Controller
             'key' => 'sometimes|required|string|max:10|unique:taskit_projects,key,' . $project->id,
             'color' => 'nullable|string|regex:/^#[0-9A-F]{6}$/i',
             'is_active' => 'sometimes|boolean',
+            'client_id' => 'nullable|integer|exists:taskit_clients,id',
         ]);
 
         if ($validator->fails()) {
@@ -163,7 +177,18 @@ class ProjectController extends Controller
             ], 422);
         }
 
-        $project->update($request->only(['name', 'description', 'key', 'color', 'is_active']));
+        // Validate client ownership if client_id is provided
+        if ($request->has('client_id') && $request->client_id && $user->company_id) {
+            $client = \App\Models\Client::find($request->client_id);
+            if (!$client || $client->company_id !== $user->company_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid client selected.'
+                ], 403);
+            }
+        }
+
+        $project->update($request->only(['name', 'description', 'key', 'color', 'is_active', 'client_id']));
 
         return response()->json([
             'success' => true,
