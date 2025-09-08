@@ -519,7 +519,7 @@ defineOptions({
         <footer class="w-full bg-[#1b1b18] dark:bg-[#0a0a09] py-8 border-t border-gray-700">
             <div class="max-w-6xl mx-auto px-6 text-center">
                 <div class="flex items-center justify-center gap-2 mb-4">
-                    <AppLogoIcon class="w-6 h-6" />
+                    <img src="/zap_icon_white.svg" alt="ZapTask Logo" class="w-6 h-6" />
                     <span class="text-lg font-bold text-white">ZapTask</span>
                 </div>
                 <div class="text-gray-400 text-sm">
