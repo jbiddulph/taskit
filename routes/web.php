@@ -23,22 +23,6 @@ Route::get('/terms', function () {
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
-// Test route to send welcome email (temporary)
-Route::get('/test-welcome-send', function () {
-    try {
-        // Test sending actual welcome email
-        \Mail::to('john.mbiddulph@gmail.com')->send(new \App\Mail\WelcomeMail(
-            'Test User',
-            'john.mbiddulph@gmail.com',
-            'Test Company',
-            'TEST123'
-        ));
-        
-        return response()->json(['status' => 'Welcome email sent successfully to john.mbiddulph@gmail.com']);
-    } catch (\Exception $e) {
-        return response()->json(['status' => 'Failed to send welcome email', 'error' => $e->getMessage()], 500);
-    }
-});
 
 
 
