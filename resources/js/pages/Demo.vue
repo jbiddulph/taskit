@@ -264,7 +264,7 @@ defineOptions({
                             </div>
                         </div>
 
-                        <!-- Step 6: Team Collaboration -->
+                        <!-- Step 6: Adding Team Members -->
                         <div class="bg-white dark:bg-[#161615] rounded-lg p-8 border border-[#e3e3e0] dark:border-[#3E3E3A]">
                             <div class="flex items-start gap-4">
                                 <div class="flex h-10 w-10 items-center justify-center rounded-full bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400 font-bold text-lg flex-shrink-0">
@@ -272,26 +272,86 @@ defineOptions({
                                 </div>
                                 <div class="flex-1">
                                     <h3 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">
-                                        👥 Team Collaboration
+                                        👥 Adding Team Members to Your Company
                                     </h3>
                                     <p class="text-[#706f6c] dark:text-[#A1A09A] mb-4">
-                                        Work together seamlessly with your team members.
+                                        Invite employees to join your company workspace using your unique company code.
                                     </p>
+                                    <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4 border border-blue-200 dark:border-blue-800">
+                                        <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">📋 How It Works:</h4>
+                                        <ol class="space-y-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                                            <li class="flex items-start gap-2">
+                                                <span class="text-blue-500 font-bold mt-0.5">1.</span>
+                                                <span><strong>Company Creation:</strong> When you first sign up, you create a company name</span>
+                                            </li>
+                                            <li class="flex items-start gap-2">
+                                                <span class="text-blue-500 font-bold mt-0.5">2.</span>
+                                                <span><strong>Unique Code Generated:</strong> ZapTask automatically generates a unique 8-character company code</span>
+                                            </li>
+                                            <li class="flex items-start gap-2">
+                                                <span class="text-blue-500 font-bold mt-0.5">3.</span>
+                                                <span><strong>Find Your Code:</strong> Look in the top-right corner of your Dashboard after logging in</span>
+                                            </li>
+                                            <li class="flex items-start gap-2">
+                                                <span class="text-blue-500 font-bold mt-0.5">4.</span>
+                                                <span><strong>Copy & Share:</strong> Click on the company code to copy it automatically</span>
+                                            </li>
+                                            <li class="flex items-start gap-2">
+                                                <span class="text-blue-500 font-bold mt-0.5">5.</span>
+                                                <span><strong>Employee Sign-up:</strong> Send the code to employees so they can enter it during registration</span>
+                                            </li>
+                                        </ol>
+                                    </div>
                                     <ul class="space-y-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">
                                         <li class="flex items-center gap-2">
                                             <span class="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
+                                            <strong>Location:</strong> Company code appears next to your plan type (e.g., "Plan: FREE • ABC12XY9")
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
+                                            <strong>One-click copy:</strong> Click the code to copy it to your clipboard instantly
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
+                                            <strong>Instant access:</strong> New employees join your company immediately upon registration
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
+                                            <strong>Plan limits:</strong> Remember your subscription limits (FREE: 5 members, MIDI: 10 members, MAXI: unlimited)
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 7: Team Collaboration -->
+                        <div class="bg-white dark:bg-[#161615] rounded-lg p-8 border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                            <div class="flex items-start gap-4">
+                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-100 dark:bg-cyan-900 text-cyan-600 dark:text-cyan-400 font-bold text-lg flex-shrink-0">
+                                    7
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">
+                                        🤝 Team Collaboration Features
+                                    </h3>
+                                    <p class="text-[#706f6c] dark:text-[#A1A09A] mb-4">
+                                        Once your team is set up, collaborate seamlessly with powerful features.
+                                    </p>
+                                    <ul class="space-y-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-cyan-500 rounded-full"></span>
                                             <strong>Assign to teammates:</strong> Select team members when creating or editing tasks
                                         </li>
                                         <li class="flex items-center gap-2">
-                                            <span class="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
+                                            <span class="w-1.5 h-1.5 bg-cyan-500 rounded-full"></span>
                                             <strong>Real-time updates:</strong> See changes instantly as team members work
                                         </li>
                                         <li class="flex items-center gap-2">
-                                            <span class="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
+                                            <span class="w-1.5 h-1.5 bg-cyan-500 rounded-full"></span>
                                             <strong>Notifications:</strong> Get notified when assigned new tasks or receive comments
                                         </li>
                                         <li class="flex items-center gap-2">
-                                            <span class="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
+                                            <span class="w-1.5 h-1.5 bg-cyan-500 rounded-full"></span>
                                             <strong>User avatars:</strong> See who's assigned to each task with user initials
                                         </li>
                                     </ul>
@@ -299,11 +359,11 @@ defineOptions({
                             </div>
                         </div>
 
-                        <!-- Step 7: Company Settings -->
+                        <!-- Step 8: Company Settings -->
                         <div class="bg-white dark:bg-[#161615] rounded-lg p-8 border border-[#e3e3e0] dark:border-[#3E3E3A]">
                             <div class="flex items-start gap-4">
                                 <div class="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-400 font-bold text-lg flex-shrink-0">
-                                    7
+                                    8
                                 </div>
                                 <div class="flex-1">
                                     <h3 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">
@@ -334,11 +394,11 @@ defineOptions({
                             </div>
                         </div>
 
-                        <!-- Step 8: Subscription Management -->
+                        <!-- Step 9: Subscription Management -->
                         <div class="bg-white dark:bg-[#161615] rounded-lg p-8 border border-[#e3e3e0] dark:border-[#3E3E3A]">
                             <div class="flex items-start gap-4">
                                 <div class="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400 font-bold text-lg flex-shrink-0">
-                                    8
+                                    9
                                 </div>
                                 <div class="flex-1">
                                     <h3 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">
@@ -391,7 +451,7 @@ defineOptions({
                             </div>
                         </div>
 
-                        <!-- Step 9: Tips & Tricks -->
+                        <!-- Step 10: Tips & Tricks -->
                         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/30 rounded-lg p-8 border border-blue-200 dark:border-blue-800">
                             <div class="flex items-start gap-4">
                                 <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white font-bold text-lg flex-shrink-0">
