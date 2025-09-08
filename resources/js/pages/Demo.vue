@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { login, register } from '@/routes';
-import AppLogoIcon from '@/components/AppLogoIcon.vue';
 
 defineOptions({
     layout: false,
@@ -15,26 +14,41 @@ defineOptions({
     </Head>
     <div class="flex min-h-screen flex-col bg-[#FDFDFC] text-[#1b1b18] dark:bg-[#0a0a0a] dark:text-[#EDEDEC]">
         <!-- Header -->
-        <header class="w-full border-b border-[#e3e3e0] dark:border-[#3E3E3A] bg-white dark:bg-[#161615]">
-            <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-                <Link href="/" class="flex items-center gap-2">
-                    <AppLogoIcon class="w-8 h-8" />
-                    <span class="text-xl font-bold">ZapTask</span>
-                </Link>
-                <nav class="flex items-center gap-4">
-                    <Link 
-                        :href="login()" 
-                        class="text-sm text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC] transition-colors"
-                    >
-                        Login
-                    </Link>
-                    <Link 
-                        :href="register()" 
-                        class="text-sm bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-                    >
-                        Sign Up
-                    </Link>
-                </nav>
+        <header class="bg-white dark:bg-gray-800 shadow">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center">
+                        <Link href="/" class="flex items-center space-x-2">
+                            <img src="/zap_icon.png" alt="ZapTask" class="w-8 h-8 dark:bg-white dark:rounded-md dark:p-1">
+                            <span class="text-xl font-bold text-gray-900 dark:text-white">ZapTask</span>
+                        </Link>
+                    </div>
+                    <nav class="hidden md:flex items-center space-x-8">
+                        <Link href="/" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                            Home
+                        </Link>
+                        <a href="/demo" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                            Demo
+                        </a>
+                        <a href="/contact" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                            Contact
+                        </a>
+                    </nav>
+                    <div class="flex items-center space-x-4">
+                        <Link 
+                            :href="login()"
+                            class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                        >
+                            Sign In
+                        </Link>
+                        <Link 
+                            :href="register()"
+                            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                        >
+                            Get Started
+                        </Link>
+                    </div>
+                </div>
             </div>
         </header>
 

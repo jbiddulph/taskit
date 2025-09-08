@@ -5,15 +5,26 @@
         <!-- Header -->
         <header class="bg-white dark:bg-gray-800 shadow">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center py-6">
+                <div class="flex justify-between items-center py-4">
                     <div class="flex items-center">
                         <Link href="/" class="flex items-center space-x-2">
                             <img src="/zap_icon.png" alt="ZapTask" class="w-8 h-8 dark:bg-white dark:rounded-md dark:p-1">
                             <span class="text-xl font-bold text-gray-900 dark:text-white">ZapTask</span>
                         </Link>
                     </div>
+                    <nav class="hidden md:flex items-center space-x-8">
+                        <Link href="/" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                            Home
+                        </Link>
+                        <a href="/demo" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                            Demo
+                        </a>
+                        <a href="/contact" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                            Contact
+                        </a>
+                    </nav>
                     <div class="flex items-center space-x-4">
-                        <Link href="/login" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                        <Link href="/login" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                             Sign In
                         </Link>
                         <Link href="/register" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
