@@ -30,7 +30,12 @@ class ContactFormMail extends Mailable
     {
         return new Envelope(
             subject: 'ZapTask Contact Form: ' . $this->data['subject'],
-            replyTo: [$this->data['email'] => $this->data['name']]
+            replyTo: [
+                new \Illuminate\Mail\Mailables\Address(
+                    $this->data['email'],
+                    $this->data['name']
+                )
+            ]
         );
     }
 
