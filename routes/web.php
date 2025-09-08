@@ -23,6 +23,29 @@ Route::get('/terms', function () {
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
+// Debug route for testing email
+Route::get('/test-email', function () {
+    try {
+        error_log('Starting email test...');
+        
+        \Illuminate\Support\Facades\Mail::raw('This is a test email from ZapTask', function ($message) {
+            $message->to('john.mbiddulph@gmail.com')
+                    ->subject('Test Email from ZapTask - ' . now());
+        });
+        
+        error_log('Email sent successfully!');
+        return response()->json(['status' => 'Email sent successfully!']);
+        
+    } catch (Exception $e) {
+        error_log('Email failed: ' . $e->getMessage());
+        return response()->json([
+            'status' => 'Email failed',
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
+    }
+});
+
 Route::get('dashboard', function () {
     $user = Auth::user();
     $company = $user->company;
