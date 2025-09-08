@@ -13,11 +13,18 @@
             padding: 20px;
         }
         .header {
-            background-color: #10b981;
+            background-color: #000000;
             color: white;
             padding: 20px;
             text-align: center;
             border-radius: 8px 8px 0 0;
+        }
+        .logo {
+            width: 32px;
+            height: 32px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 10px;
         }
         .content {
             background-color: #f9fafb;
@@ -43,7 +50,8 @@
 </head>
 <body>
     <div class="header">
-        <h1>✅ Thank You for Contacting Us!</h1>
+        <img src="https://www.zaptask.co.uk/zap_icon_white.svg" alt="ZapTask" class="logo">
+        <h1 style="display: inline-block; margin: 0; vertical-align: middle;">Thank You for Contacting Us!</h1>
     </div>
     
     <div class="content">
