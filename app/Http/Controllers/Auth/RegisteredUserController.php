@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\WelcomeMail;
 use App\Models\Company;
 use App\Models\User;
 use App\Services\StripeService;
@@ -11,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -102,6 +104,37 @@ class RegisteredUserController extends Controller
         ]);
 
         event(new Registered($user));
+
+        // Send welcome email
+        try {
+            $companyName = null;
+            $companyCode = null;
+            
+            if ($companyId) {
+                $company = Company::find($companyId);
+                $companyName = $company ? $company->name : null;
+                $companyCode = $company ? $company->code : null;
+            }
+            
+            Mail::to($user->email)->send(new WelcomeMail(
+                $user->name,
+                $user->email,
+                $companyName,
+                $companyCode
+            ));
+            
+            \Log::info('Welcome email sent successfully', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'company_id' => $companyId
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send welcome email', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $e->getMessage()
+            ]);
+        }
 
         Auth::login($user);
 
