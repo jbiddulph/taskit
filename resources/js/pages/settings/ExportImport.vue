@@ -34,7 +34,7 @@ const page = usePage();
 // Export form
 const exportForm = useForm({
     data_type: '',
-    format: '',
+    format: 'json', // JSON is the only supported format
 });
 
 // Import form
@@ -134,22 +134,22 @@ const errors = computed(() => page.props.errors as Record<string, string> || {})
 const successMessage = computed(() => page.props.flash?.success as string || '');
 
 const dataTypeOptions = [
-    { value: 'all', label: 'All Data', icon: Database, description: 'Export everything: projects, todos, comments, and users' },
-    { value: 'projects_todos', label: 'Projects + To-Dos', icon: FolderOpen, description: 'Export projects with their todos (perfect for restore)' },
+    { value: 'all', label: 'All Data', icon: Database, description: 'Export everything: company, projects, todos, and comments' },
+    { value: 'company', label: 'Company Only', icon: Database, description: 'Export only company information' },
     { value: 'projects', label: 'Projects Only', icon: FolderOpen, description: 'Export only project information' },
-    { value: 'todos', label: 'To-Dos Only', icon: Package, description: 'Export only task information' },
+    { value: 'todos', label: 'Todos Only', icon: Package, description: 'Export only todo/task information' },
     { value: 'comments', label: 'Comments Only', icon: MessageSquare, description: 'Export only comment information' },
 ];
 
 const formatOptions = [
-    { value: 'json', label: 'JSON Format', icon: FileJson, description: 'Structured data format, best for re-importing' },
-    { value: 'csv', label: 'CSV Format', icon: FileSpreadsheet, description: 'Spreadsheet format, best for analysis' },
+    { value: 'json', label: 'JSON Format', icon: FileJson, description: 'Structured data format, perfect for backup and restore' },
 ];
 
 const importTypeOptions = [
-    { value: 'projects_todos', label: 'Projects + To-Dos', icon: FolderOpen, description: 'Import projects with their todos (restore functionality)' },
+    { value: 'all', label: 'All Data', icon: Database, description: 'Import everything: company, projects, todos, and comments' },
+    { value: 'company', label: 'Company Only', icon: Database, description: 'Import company data only' },
     { value: 'projects', label: 'Projects Only', icon: FolderOpen, description: 'Import project data only' },
-    { value: 'todos', label: 'To-Dos Only', icon: Package, description: 'Import task data only' },
+    { value: 'todos', label: 'Todos Only', icon: Package, description: 'Import todo/task data only' },
     { value: 'comments', label: 'Comments Only', icon: MessageSquare, description: 'Import comment data only' },
 ];
 </script>
@@ -231,7 +231,7 @@ const importTypeOptions = [
                             Export Data
                         </CardTitle>
                         <CardDescription>
-                            Download your company data in JSON or CSV format for backup or analysis.
+                            Download your company data in JSON format for backup and easy restoration.
                         </CardDescription>
                     </CardHeader>
                     <CardContent class="space-y-6">
@@ -257,30 +257,19 @@ const importTypeOptions = [
                                 <p v-if="errors.data_type" class="text-sm text-red-600">{{ errors.data_type }}</p>
                             </div>
 
-                            <!-- Format Selection -->
+                            <!-- Format Information (JSON Only) -->
                             <div class="space-y-2">
-                                <Label for="format">Export format</Label>
-                                <select
-                                    id="format"
-                                    name="format"
-                                    v-model="exportForm.format"
-                                    class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    <option value="">Select format...</option>
-                                    <option 
-                                        v-for="option in formatOptions" 
-                                        :key="option.value" 
-                                        :value="option.value"
-                                    >
-                                        {{ option.label }} - {{ option.description }}
-                                    </option>
-                                </select>
-                                <p v-if="errors.format" class="text-sm text-red-600">{{ errors.format }}</p>
+                                <Label>Export format</Label>
+                                <div class="flex h-9 w-full rounded-md border border-input bg-gray-50 px-3 py-1 text-sm items-center">
+                                    <FileJson class="h-4 w-4 mr-2 text-blue-600" />
+                                    <span>JSON Format - Structured data format, perfect for backup and restore</span>
+                                </div>
+                                <p class="text-xs text-muted-foreground">JSON is the only supported format for reliable data backup and restoration.</p>
                             </div>
 
                             <Button 
                                 type="submit" 
-                                :disabled="exportForm.processing || !exportForm.data_type || !exportForm.format"
+                                :disabled="exportForm.processing || !exportForm.data_type"
                                 class="w-full"
                             >
                                 <Download class="mr-2 h-4 w-4" />
@@ -298,7 +287,7 @@ const importTypeOptions = [
                             Import Data
                         </CardTitle>
                         <CardDescription>
-                            Upload a JSON or CSV file to import data into your company workspace.
+                            Upload a JSON file to restore data into your company workspace.
                         </CardDescription>
                     </CardHeader>
                     <CardContent class="space-y-6">
@@ -312,10 +301,11 @@ const importTypeOptions = [
                                     <h4 class="text-sm font-medium text-yellow-800">Import Guidelines</h4>
                                     <div class="mt-2 text-sm text-yellow-700">
                                         <ul class="list-disc list-inside space-y-1">
-                                            <li>Ensure your file follows the correct format (JSON/CSV)</li>
-                                            <li>Projects will be assigned to you as the owner</li>
-                                            <li>Duplicate data may be created if records already exist</li>
+                                            <li>Only JSON format files are supported for import</li>
+                                            <li>Data will be restored to your current company workspace</li>
+                                            <li>Existing data with matching IDs may be updated</li>
                                             <li>Maximum file size: 10MB</li>
+                                            <li>Perfect for restoring deleted or lost data</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -350,12 +340,12 @@ const importTypeOptions = [
                                 <Input
                                     ref="fileInput"
                                     type="file"
-                                    accept=".json,.csv,.txt"
+                                    accept=".json"
                                     @change="handleFileSelect"
                                     class="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                 />
                                 <p class="text-xs text-muted-foreground">
-                                    Supported formats: JSON, CSV (max 10MB)
+                                    Supported format: JSON only (max 10MB)
                                 </p>
                                 <p v-if="errors.file" class="text-sm text-red-600">{{ errors.file }}</p>
                             </div>
