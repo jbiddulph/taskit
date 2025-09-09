@@ -161,8 +161,7 @@ class CompanyUsersController extends Controller
         ]);
 
         // Create notification for recipient about new message
-        // Note: In a real-world scenario, you'd want to check if the recipient's chat is currently open
-        // For now, we'll always create the notification
+        // The frontend will decide whether to show notifications based on chat state
         Notification::create([
             'user_id' => $recipient->id,
             'type' => 'info',

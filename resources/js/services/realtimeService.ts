@@ -117,26 +117,44 @@ class RealtimeService {
   private handleNewNotification(notification: any) {
     console.log('New notification received:', notification);
     
-    // Notify all notification callbacks
-    this.notificationCallbacks.forEach(callback => {
-      callback({
-        type: 'new_notification',
-        data: notification
-      });
-    });
-
-    // Show browser notification if chat message and chat is closed
-    if (notification.data?.message_id && notification.data?.sender_name) {
-      // Show a toast notification
-      if ((window as any).$notify) {
-        (window as any).$notify({
-          type: 'info',
-          title: notification.title,
-          message: notification.message,
-          duration: 5000
+    // Check if this is a chat message notification and if chat is currently open with sender
+    const isMessageNotification = notification.data?.message_id && notification.data?.sender_id;
+    const isChatOpen = isMessageNotification && this.isChatOpenWithUser(notification.data.sender_id);
+    
+    // Only show notification if chat is not open with the sender
+    if (!isChatOpen) {
+      // Notify all notification callbacks
+      this.notificationCallbacks.forEach(callback => {
+        callback({
+          type: 'new_notification',
+          data: notification
         });
+      });
+
+      // Show browser notification if chat message and chat is closed
+      if (isMessageNotification) {
+        // Show a toast notification
+        if ((window as any).$notify) {
+          (window as any).$notify({
+            type: 'info',
+            title: notification.title,
+            message: notification.message,
+            duration: 5000
+          });
+        }
       }
+    } else {
+      console.log('Chat is open with sender, skipping notification');
     }
+  }
+
+  /**
+   * Check if chat is currently open with a specific user
+   */
+  private isChatOpenWithUser(userId: number): boolean {
+    // Check if there's an active chat state event
+    const chatState = (window as any).currentChatState;
+    return chatState?.isOpen && chatState?.otherUserId === userId;
   }
 
   /**

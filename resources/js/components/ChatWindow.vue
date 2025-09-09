@@ -40,6 +40,13 @@ const openChat = (user: ChatUser) => {
   isVisible.value = true;
   isMinimized.value = false;
   
+  // Set global chat state for notification filtering
+  (window as any).currentChatState = {
+    isOpen: true,
+    isMinimized: false,
+    otherUserId: user.id
+  };
+  
   // Emit chat state change
   window.dispatchEvent(new CustomEvent('chatStateChange', {
     detail: { isOpen: true, isMinimized: false }
@@ -55,6 +62,13 @@ const closeChat = () => {
   otherUser.value = null;
   newMessage.value = '';
   
+  // Clear global chat state
+  (window as any).currentChatState = {
+    isOpen: false,
+    isMinimized: false,
+    otherUserId: null
+  };
+  
   // Emit chat state change
   window.dispatchEvent(new CustomEvent('chatStateChange', {
     detail: { isOpen: false, isMinimized: false }
@@ -63,6 +77,11 @@ const closeChat = () => {
 
 const toggleMinimize = () => {
   isMinimized.value = !isMinimized.value;
+  
+  // Update global chat state
+  if ((window as any).currentChatState) {
+    (window as any).currentChatState.isMinimized = isMinimized.value;
+  }
   
   // Emit chat state change
   window.dispatchEvent(new CustomEvent('chatStateChange', {
