@@ -907,7 +907,7 @@ const handleDrop = async (todo: Todo, newStatus: string) => {
   }
   
   try {
-    const updatedTodo = await todoApi.updateTodoStatus(todo.id, newStatus as 'todo' | 'in-progress' | 'done');
+    const updatedTodo = await todoApi.updateTodoStatus(todo.id, newStatus as 'todo' | 'in-progress' | 'qa-testing' | 'done');
     console.log('API response:', updatedTodo);
     
     // Track todo status change event
@@ -1515,7 +1515,7 @@ const loadTodos = async () => {
       filters.project_id = currentProject.value.id;
     }
     const response = await todoApi.getTodos(filters);
-    todos.value = response.data.todo.concat(response.data['in-progress']).concat(response.data.done);
+    todos.value = response.data.todo.concat(response.data['in-progress']).concat(response.data['qa-testing']).concat(response.data.done);
     
 
   } catch (error) {

@@ -125,7 +125,7 @@ import type { Todo } from '@/services/todoApi';
 
 interface Props {
   title: string;
-  status: 'todo' | 'in-progress' | 'done';
+  status: 'todo' | 'in-progress' | 'qa-testing' | 'done';
   todos: Todo[];
   showAddButton?: boolean;
   currentProjectId?: number | null;
