@@ -1209,7 +1209,13 @@ const updateTodo = (updatedTodo: Todo) => {
   // Update the todo in the local array
   const index = todos.value.findIndex(todo => todo.id === updatedTodo.id);
   if (index !== -1) {
-    todos.value[index] = updatedTodo;
+    // Preserve the project relationship from the existing todo
+    const existingTodo = todos.value[index];
+    const todoWithProject = {
+      ...updatedTodo,
+      project: existingTodo.project || currentProject.value
+    };
+    todos.value[index] = todoWithProject;
     
     // Force reactivity update to ensure UI changes immediately
     todos.value = [...todos.value];
@@ -1222,7 +1228,13 @@ const updateTodo = (updatedTodo: Todo) => {
       if (todos.value[i].subtasks) {
         const subtaskIndex = todos.value[i].subtasks!.findIndex(subtask => subtask.id === updatedTodo.id);
         if (subtaskIndex !== -1) {
-          todos.value[i].subtasks![subtaskIndex] = updatedTodo;
+          // Preserve the project relationship for subtasks too
+          const existingSubtask = todos.value[i].subtasks![subtaskIndex];
+          const subtaskWithProject = {
+            ...updatedTodo,
+            project: existingSubtask.project || currentProject.value
+          };
+          todos.value[i].subtasks![subtaskIndex] = subtaskWithProject;
           
           // Force reactivity update
           todos.value = [...todos.value];
@@ -1546,7 +1558,12 @@ onMounted(async () => {
         const newTodo = event.data;
         if (!currentProject.value || newTodo.project_id === currentProject.value.id) {
           if (!todos.value.find(t => t.id === newTodo.id)) {
-            todos.value.push(newTodo);
+            // Ensure the new todo has the project relationship
+            const todoWithProject = {
+              ...newTodo,
+              project: currentProject.value
+            };
+            todos.value.push(todoWithProject);
             console.log('Added new todo to list:', newTodo.title);
           }
         }
@@ -1557,7 +1574,13 @@ onMounted(async () => {
         const updatedTodo = event.data;
         const updateIndex = todos.value.findIndex(t => t.id === updatedTodo.id);
         if (updateIndex !== -1) {
-          todos.value[updateIndex] = updatedTodo;
+          // Preserve the project relationship from the existing todo
+          const existingTodo = todos.value[updateIndex];
+          const todoWithProject = {
+            ...updatedTodo,
+            project: existingTodo.project || currentProject.value
+          };
+          todos.value[updateIndex] = todoWithProject;
           console.log('Updated todo in list:', updatedTodo.title);
         }
         break;
