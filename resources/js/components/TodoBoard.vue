@@ -520,7 +520,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import Icon from '@/components/Icon.vue';
 import TodoColumn from './TodoColumn.vue';
 import TodoForm from './TodoForm.vue';
@@ -528,6 +528,7 @@ import TodoStats from './TodoStats.vue';
 import TypeFilter from './TypeFilter.vue';
 import CalendarView from './CalendarView.vue';
 import { todoApi, type Project, type Todo } from '@/services/todoApi';
+import { realtimeService } from '@/services/realtimeService';
 import { deleteImagesInHtml } from '@/services/supabaseClient';
 import { useAnalytics } from '../composables/useAnalytics';
 
@@ -637,6 +638,7 @@ const newProject = ref({
 
 const clients = ref<any[]>([]);
 const isUpdatingProject = ref(false); // Flag to prevent circular events
+let unsubscribeFromTodos: (() => void) | null = null;
 
 // Computed properties
 const filteredTodos = computed(() => {
@@ -1534,6 +1536,44 @@ onMounted(async () => {
   // Finally load todos for the current project
   await loadTodos();
   
+  // Subscribe to real-time todo updates
+  unsubscribeFromTodos = realtimeService.onTodo(async (event) => {
+    console.log('Real-time todo event received:', event);
+    
+    switch (event.type) {
+      case 'todo_created':
+        // Add new todo to the list if it belongs to current project
+        const newTodo = event.data;
+        if (!currentProject.value || newTodo.project_id === currentProject.value.id) {
+          if (!todos.value.find(t => t.id === newTodo.id)) {
+            todos.value.push(newTodo);
+            console.log('Added new todo to list:', newTodo.title);
+          }
+        }
+        break;
+        
+      case 'todo_updated':
+        // Update existing todo in the list
+        const updatedTodo = event.data;
+        const updateIndex = todos.value.findIndex(t => t.id === updatedTodo.id);
+        if (updateIndex !== -1) {
+          todos.value[updateIndex] = updatedTodo;
+          console.log('Updated todo in list:', updatedTodo.title);
+        }
+        break;
+        
+      case 'todo_deleted':
+        // Remove todo from the list
+        const deletedTodo = event.data;
+        const deleteIndex = todos.value.findIndex(t => t.id === deletedTodo.id);
+        if (deleteIndex !== -1) {
+          todos.value.splice(deleteIndex, 1);
+          console.log('Removed todo from list:', deletedTodo.title);
+        }
+        break;
+    }
+  });
+  
   // Set up event listeners
   const handleStorageChange = (e: StorageEvent) => {
     if (e.key === 'currentProjectId') {
@@ -1667,5 +1707,11 @@ onMounted(async () => {
   loadSavedViews();
 });
 
+// Cleanup on unmount
+onUnmounted(() => {
+  if (unsubscribeFromTodos) {
+    unsubscribeFromTodos();
+  }
+});
 
 </script>
