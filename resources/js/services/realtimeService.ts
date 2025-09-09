@@ -16,6 +16,8 @@ class RealtimeService {
   private messageCallbacks: Set<(message: any) => void> = new Set();
   private unreadCountCallbacks: Set<(count: number) => void> = new Set();
   private notificationCallbacks: Set<(notification: any) => void> = new Set();
+  private projectCallbacks: Set<(project: any) => void> = new Set();
+  private todoCallbacks: Set<(todo: any) => void> = new Set();
   private currentUserId: number | null = null;
   private currentCompanyId: number | null = null;
 
@@ -27,6 +29,8 @@ class RealtimeService {
     this.currentCompanyId = companyId;
     this.subscribeToCompanyMessages();
     this.subscribeToNotifications();
+    this.subscribeToProjects();
+    this.subscribeToTodos();
   }
 
   /**
@@ -112,6 +116,124 @@ class RealtimeService {
   }
 
   /**
+   * Subscribe to projects for real-time updates
+   */
+  private subscribeToProjects() {
+    if (!this.currentCompanyId) return;
+
+    const channelName = `company_projects_${this.currentCompanyId}`;
+    
+    // Remove existing channel if it exists
+    if (this.channels.has(channelName)) {
+      this.channels.get(channelName)?.unsubscribe();
+      this.channels.delete(channelName);
+    }
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'taskit_projects',
+          filter: `company_id=eq.${this.currentCompanyId}`
+        },
+        (payload) => {
+          this.handleNewProject(payload.new as any);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'taskit_projects',
+          filter: `company_id=eq.${this.currentCompanyId}`
+        },
+        (payload) => {
+          this.handleProjectUpdate(payload.new as any);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'taskit_projects',
+          filter: `company_id=eq.${this.currentCompanyId}`
+        },
+        (payload) => {
+          this.handleProjectDelete(payload.old as any);
+        }
+      )
+      .subscribe((status) => {
+        console.log('Projects real-time subscription status:', status);
+      });
+
+    this.channels.set(channelName, channel);
+  }
+
+  /**
+   * Subscribe to todos for real-time updates
+   */
+  private subscribeToTodos() {
+    if (!this.currentCompanyId) return;
+
+    const channelName = `company_todos_${this.currentCompanyId}`;
+    
+    // Remove existing channel if it exists
+    if (this.channels.has(channelName)) {
+      this.channels.get(channelName)?.unsubscribe();
+      this.channels.delete(channelName);
+    }
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'taskit_todos',
+          filter: `company_id=eq.${this.currentCompanyId}`
+        },
+        (payload) => {
+          this.handleNewTodo(payload.new as any);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'taskit_todos',
+          filter: `company_id=eq.${this.currentCompanyId}`
+        },
+        (payload) => {
+          this.handleTodoUpdate(payload.new as any);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'taskit_todos',
+          filter: `company_id=eq.${this.currentCompanyId}`
+        },
+        (payload) => {
+          this.handleTodoDelete(payload.old as any);
+        }
+      )
+      .subscribe((status) => {
+        console.log('Todos real-time subscription status:', status);
+      });
+
+    this.channels.set(channelName, channel);
+  }
+
+  /**
    * Handle new notification received
    */
   private handleNewNotification(notification: any) {
@@ -155,6 +277,96 @@ class RealtimeService {
     // Check if there's an active chat state event
     const chatState = (window as any).currentChatState;
     return chatState?.isOpen && chatState?.otherUserId === userId;
+  }
+
+  /**
+   * Handle new project created
+   */
+  private handleNewProject(project: any) {
+    console.log('New project created:', project);
+    
+    // Notify all project callbacks
+    this.projectCallbacks.forEach(callback => {
+      callback({
+        type: 'project_created',
+        data: project
+      });
+    });
+  }
+
+  /**
+   * Handle project update
+   */
+  private handleProjectUpdate(project: any) {
+    console.log('Project updated:', project);
+    
+    // Notify all project callbacks
+    this.projectCallbacks.forEach(callback => {
+      callback({
+        type: 'project_updated',
+        data: project
+      });
+    });
+  }
+
+  /**
+   * Handle project delete
+   */
+  private handleProjectDelete(project: any) {
+    console.log('Project deleted:', project);
+    
+    // Notify all project callbacks
+    this.projectCallbacks.forEach(callback => {
+      callback({
+        type: 'project_deleted',
+        data: project
+      });
+    });
+  }
+
+  /**
+   * Handle new todo created
+   */
+  private handleNewTodo(todo: any) {
+    console.log('New todo created:', todo);
+    
+    // Notify all todo callbacks
+    this.todoCallbacks.forEach(callback => {
+      callback({
+        type: 'todo_created',
+        data: todo
+      });
+    });
+  }
+
+  /**
+   * Handle todo update
+   */
+  private handleTodoUpdate(todo: any) {
+    console.log('Todo updated:', todo);
+    
+    // Notify all todo callbacks
+    this.todoCallbacks.forEach(callback => {
+      callback({
+        type: 'todo_updated',
+        data: todo
+      });
+    });
+  }
+
+  /**
+   * Handle todo delete
+   */
+  private handleTodoDelete(todo: any) {
+    console.log('Todo deleted:', todo);
+    
+    // Notify all todo callbacks
+    this.todoCallbacks.forEach(callback => {
+      callback({
+        type: 'todo_deleted',
+        data: todo
+      });
+    });
   }
 
   /**
@@ -275,6 +487,30 @@ class RealtimeService {
   }
 
   /**
+   * Subscribe to project events
+   */
+  onProject(callback: (project: any) => void) {
+    this.projectCallbacks.add(callback);
+    
+    // Return unsubscribe function
+    return () => {
+      this.projectCallbacks.delete(callback);
+    };
+  }
+
+  /**
+   * Subscribe to todo events
+   */
+  onTodo(callback: (todo: any) => void) {
+    this.todoCallbacks.add(callback);
+    
+    // Return unsubscribe function
+    return () => {
+      this.todoCallbacks.delete(callback);
+    };
+  }
+
+  /**
    * Disconnect all subscriptions
    */
   disconnect() {
@@ -285,6 +521,8 @@ class RealtimeService {
     this.messageCallbacks.clear();
     this.unreadCountCallbacks.clear();
     this.notificationCallbacks.clear();
+    this.projectCallbacks.clear();
+    this.todoCallbacks.clear();
     this.currentUserId = null;
     this.currentCompanyId = null;
   }
