@@ -27,6 +27,7 @@ class Todo extends Model
         'due_date',
         'story_points',
         'status',
+        'order',
     ];
 
     protected $casts = [

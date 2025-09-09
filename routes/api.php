@@ -34,6 +34,7 @@ Route::delete('projects/{project}/with-todos', [ProjectController::class, 'destr
     Route::get('projects-with-stats', [ProjectController::class, 'withStats']);
     
     // Todo routes
+    Route::patch('todos/update-order', [TodoController::class, 'updateOrder']);
     Route::apiResource('todos', TodoController::class);
     Route::patch('todos/{todo}/status', [TodoController::class, 'updateStatus']);
     Route::post('todos/{todo}/mark-assignment-seen', [TodoController::class, 'markAssignmentSeen']);

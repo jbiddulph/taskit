@@ -35,7 +35,8 @@ export interface Todo {
     assignee?: string;
     due_date?: string;
     story_points?: number;
-    status: 'todo' | 'in-progress' | 'done';
+    status: 'todo' | 'in-progress' | 'qa-testing' | 'done';
+    order?: number;
     created_at: string;
     updated_at: string;
     comments?: TodoComment[];
@@ -286,6 +287,14 @@ class TodoApiService {
             method: 'PATCH',
             url: '/projects/update-order',
             data: { project_orders: projectOrders },
+        });
+    }
+
+    async updateTodoOrder(todoOrders: { id: number; order: number }[]): Promise<void> {
+        await this.request({
+            method: 'PATCH',
+            url: '/todos/update-order',
+            data: { todo_orders: todoOrders },
         });
     }
 

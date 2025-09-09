@@ -285,6 +285,39 @@ class TodoController extends Controller
     }
 
     /**
+     * Update todo order within a status column
+     */
+    public function updateOrder(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        
+        $request->validate([
+            'todo_orders' => 'required|array',
+            'todo_orders.*.id' => 'required|integer|exists:taskit_todos,id',
+            'todo_orders.*.order' => 'required|integer|min:1',
+        ]);
+
+        foreach ($request->todo_orders as $todoOrder) {
+            $todo = Todo::find($todoOrder['id']);
+            
+            // Check if user can access this todo
+            if (!$todo->canAccess($user)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized to reorder this todo'
+                ], 403);
+            }
+            
+            $todo->update(['order' => $todoOrder['order']]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Todo order updated successfully'
+        ]);
+    }
+
+    /**
      * Mark assignment notifications for a todo as seen by the current user
      */
     public function markAssignmentSeen(Todo $todo): JsonResponse

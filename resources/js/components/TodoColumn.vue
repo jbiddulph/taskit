@@ -65,26 +65,50 @@
         tag="div"
         class="space-y-3"
       >
-        <div
-          v-for="todo in todos"
-          :key="todo.id"
-          :draggable="canDragTodo(todo)"
-          @dragstart="handleDragStart($event, todo)"
-          @dragend="handleDragEnd"
-          class="transform transition-transform duration-200"
-          :class="{
-            'hover:scale-[1.02]': canDragTodo(todo),
-            'opacity-60 cursor-not-allowed': !canDragTodo(todo)
-          }"
-        >
-          <TodoCard
-            :todo="todo"
-            @edit="$emit('edit', $event)"
-            @delete="$emit('delete', $event)"
-            @update="$emit('update', $event)"
-            @add-subtask="$emit('add-subtask', $event)"
+        <template v-for="(todo, index) in todos" :key="todo.id">
+          <!-- Drop Zone Before Todo -->
+          <div
+            v-if="dropIndicatorIndex === index && dropPosition === 'before'"
+            class="h-2 border-2 border-dashed border-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded mx-2 transition-all duration-200"
           />
-        </div>
+          
+          <!-- Todo Card Container -->
+          <div
+            :draggable="canDragTodo(todo)"
+            @dragstart="handleDragStart($event, todo)"
+            @dragend="handleDragEnd"
+            @dragover="handleTodoDragOver($event, index)"
+            @dragenter="handleTodoDragEnter($event, index)"
+            @dragleave="handleTodoDragLeave"
+            @drop="handleTodoDrop($event, index)"
+            class="transform transition-transform duration-200 relative"
+            :class="{
+              'hover:scale-[1.02]': canDragTodo(todo),
+              'opacity-60 cursor-not-allowed': !canDragTodo(todo),
+              'opacity-50': draggedTodo?.id === todo.id
+            }"
+          >
+            <TodoCard
+              :todo="todo"
+              @edit="$emit('edit', $event)"
+              @delete="$emit('delete', $event)"
+              @update="$emit('update', $event)"
+              @add-subtask="$emit('add-subtask', $event)"
+            />
+          </div>
+          
+          <!-- Drop Zone After Todo -->
+          <div
+            v-if="dropIndicatorIndex === index && dropPosition === 'after'"
+            class="h-2 border-2 border-dashed border-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded mx-2 transition-all duration-200"
+          />
+        </template>
+        
+        <!-- Drop Zone After Last Todo -->
+        <div
+          v-if="dropIndicatorIndex === todos.length"
+          class="h-2 border-2 border-dashed border-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded mx-2 transition-all duration-200"
+        />
       </TransitionGroup>
     </div>
   </div>
@@ -116,12 +140,15 @@ const emit = defineEmits<{
   update: [todo: Todo];
   menu: [];
   drop: [todo: Todo, newStatus: string];
+  reorder: [draggedTodo: Todo, targetTodo: Todo, position: 'before' | 'after'];
   'add-subtask': [todo: Todo];
 }>();
 
 const dropZone = ref<HTMLElement>();
 const isDragOver = ref(false);
 const draggedTodo = ref<Todo | null>(null);
+const dropIndicatorIndex = ref<number | null>(null);
+const dropPosition = ref<'before' | 'after'>('before');
 
 // Check if a todo can be dragged (belongs to current project)
 const canDragTodo = (todo: Todo): boolean => {
@@ -152,6 +179,7 @@ const handleDragEnd = () => {
   console.log('Drag end in column:', props.status, 'draggedTodo:', draggedTodo.value?.title);
   // Always reset drag state when drag ends
   isDragOver.value = false;
+  dropIndicatorIndex.value = null;
   
   // Only clear draggedTodo if this is the source column
   if (draggedTodo.value && draggedTodo.value.status === props.status) {
@@ -212,10 +240,70 @@ const handleDrop = (event: DragEvent) => {
   }
 };
 
+// Todo-level drag handlers for reordering within column
+const handleTodoDragOver = (event: DragEvent, index: number) => {
+  if (!draggedTodo.value || draggedTodo.value.status !== props.status) {
+    return; // Only allow reordering within same column
+  }
+  
+  event.preventDefault();
+  event.stopPropagation();
+  
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  const y = event.clientY - rect.top;
+  const height = rect.height;
+  
+  // Determine if we're in the top or bottom half
+  if (y < height / 2) {
+    dropIndicatorIndex.value = index;
+    dropPosition.value = 'before';
+  } else {
+    dropIndicatorIndex.value = index;
+    dropPosition.value = 'after';
+  }
+};
+
+const handleTodoDragEnter = (event: DragEvent, index: number) => {
+  if (!draggedTodo.value || draggedTodo.value.status !== props.status) {
+    return;
+  }
+  event.preventDefault();
+  event.stopPropagation();
+};
+
+const handleTodoDragLeave = (event: DragEvent) => {
+  // Use a timeout to prevent flickering when moving between elements
+  setTimeout(() => {
+    const relatedTarget = event.relatedTarget as HTMLElement;
+    if (!dropZone.value?.contains(relatedTarget)) {
+      dropIndicatorIndex.value = null;
+    }
+  }, 10);
+};
+
+const handleTodoDrop = (event: DragEvent, index: number) => {
+  if (!draggedTodo.value || draggedTodo.value.status !== props.status) {
+    return;
+  }
+  
+  event.preventDefault();
+  event.stopPropagation();
+  
+  const targetTodo = props.todos[index];
+  
+  if (draggedTodo.value.id !== targetTodo.id) {
+    console.log('Reordering todo:', draggedTodo.value.title, dropPosition.value, targetTodo.title);
+    emit('reorder', draggedTodo.value, targetTodo, dropPosition.value);
+  }
+  
+  dropIndicatorIndex.value = null;
+};
+
 // Global drag end handler to reset all drag states
 const handleGlobalDragEnd = () => {
   isDragOver.value = false;
   draggedTodo.value = null;
+  dropIndicatorIndex.value = null;
 };
 
 onMounted(() => {

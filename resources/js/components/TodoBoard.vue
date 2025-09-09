@@ -237,6 +237,7 @@
         @delete="deleteTodo"
         @update="updateTodo"
         @drop="handleDrop"
+        @reorder="handleReorder"
         @menu="() => {}"
         @add-subtask="handleAddSubtask"
       />
@@ -250,6 +251,7 @@
         @delete="deleteTodo"
         @update="updateTodo"
         @drop="handleDrop"
+        @reorder="handleReorder"
         @menu="() => {}"
         @add-subtask="handleAddSubtask"
       />
@@ -263,6 +265,7 @@
         @delete="deleteTodo"
         @update="updateTodo"
         @drop="handleDrop"
+        @reorder="handleReorder"
         @menu="() => {}"
         @add-subtask="handleAddSubtask"
       />
@@ -276,6 +279,7 @@
         @delete="deleteTodo"
         @update="updateTodo"
         @drop="handleDrop"
+        @reorder="handleReorder"
         @menu="() => {}"
         @add-subtask="handleAddSubtask"
       />
@@ -650,10 +654,10 @@ const filteredTodos = computed(() => {
   });
 
   return {
-    todo: filtered.filter(t => t.status === 'todo'),
-    inProgress: filtered.filter(t => t.status === 'in-progress'),
-    qaTesting: filtered.filter(t => t.status === 'qa-testing'),
-    done: filtered.filter(t => t.status === 'done')
+    todo: filtered.filter(t => t.status === 'todo').sort((a, b) => (a.order || 0) - (b.order || 0)),
+    inProgress: filtered.filter(t => t.status === 'in-progress').sort((a, b) => (a.order || 0) - (b.order || 0)),
+    qaTesting: filtered.filter(t => t.status === 'qa-testing').sort((a, b) => (a.order || 0) - (b.order || 0)),
+    done: filtered.filter(t => t.status === 'done').sort((a, b) => (a.order || 0) - (b.order || 0))
   };
 });
 
@@ -944,6 +948,133 @@ const handleDrop = async (todo: Todo, newStatus: string) => {
         type: 'error',
         title: 'Update Failed',
         message: 'Failed to update todo status. Please try again.'
+      });
+    }
+  }
+};
+
+const handleReorder = async (draggedTodo: Todo, targetTodo: Todo, position: 'before' | 'after') => {
+  console.log('TodoBoard received reorder event:', draggedTodo.title, position, targetTodo.title);
+  
+  // Validate that both todos belong to the current project
+  if (!currentProject.value) {
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: 'Project Required',
+        message: 'Please select a project before reordering todos.'
+      });
+    }
+    return;
+  }
+  
+  if (draggedTodo.project_id !== currentProject.value.id || targetTodo.project_id !== currentProject.value.id) {
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: 'Invalid Reorder',
+        message: 'Cannot reorder todos from different projects.'
+      });
+    }
+    return;
+  }
+  
+  try {
+    // Get the todos for the same status and project
+    const statusTodos = todos.value
+      .filter(t => t.status === draggedTodo.status && t.project_id === currentProject.value.id)
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+    
+    // Find current positions
+    const draggedIndex = statusTodos.findIndex(t => String(t.id) === String(draggedTodo.id));
+    const targetIndex = statusTodos.findIndex(t => String(t.id) === String(targetTodo.id));
+    
+    if (draggedIndex === -1 || targetIndex === -1) {
+      console.error('Could not find todos in status list');
+      return;
+    }
+    
+    // Calculate new order
+    let newOrder: number;
+    if (position === 'before') {
+      if (targetIndex === 0) {
+        // Insert at the beginning
+        newOrder = Math.max(1, (statusTodos[0].order || 1) - 1);
+      } else {
+        // Insert between target-1 and target
+        const prevOrder = statusTodos[targetIndex - 1].order || targetIndex;
+        const targetOrder = statusTodos[targetIndex].order || targetIndex + 1;
+        newOrder = Math.floor((prevOrder + targetOrder) / 2);
+        if (newOrder === prevOrder) {
+          // If we can't fit between, reassign all orders
+          newOrder = targetIndex;
+        }
+      }
+    } else {
+      // position === 'after'
+      if (targetIndex === statusTodos.length - 1) {
+        // Insert at the end
+        newOrder = (statusTodos[statusTodos.length - 1].order || statusTodos.length) + 1;
+      } else {
+        // Insert between target and target+1
+        const targetOrder = statusTodos[targetIndex].order || targetIndex + 1;
+        const nextOrder = statusTodos[targetIndex + 1].order || targetIndex + 2;
+        newOrder = Math.floor((targetOrder + nextOrder) / 2);
+        if (newOrder === targetOrder) {
+          // If we can't fit between, reassign all orders
+          newOrder = targetIndex + 2;
+        }
+      }
+    }
+    
+    // If we need to reassign orders (when we can't fit between existing orders)
+    if (newOrder <= 0 || statusTodos.some(t => t.order === newOrder && String(t.id) !== String(draggedTodo.id))) {
+      // Reassign all orders to make space
+      const reorderedTodos = [...statusTodos];
+      const [removed] = reorderedTodos.splice(draggedIndex, 1);
+      const insertIndex = position === 'before' ? targetIndex : targetIndex + 1;
+      reorderedTodos.splice(insertIndex > draggedIndex ? insertIndex - 1 : insertIndex, 0, removed);
+      
+      const todoOrders = reorderedTodos.map((todo, index) => ({
+        id: todo.id,
+        order: index + 1
+      }));
+      
+      await todoApi.updateTodoOrder(todoOrders);
+      
+      // Update local state
+      todoOrders.forEach(({ id, order }) => {
+        const index = todos.value.findIndex(t => String(t.id) === String(id));
+        if (index !== -1) {
+          todos.value[index].order = order;
+        }
+      });
+    } else {
+      // Simple case: just update the dragged todo's order
+      await todoApi.updateTodoOrder([{ id: draggedTodo.id, order: newOrder }]);
+      
+      // Update local state
+      const index = todos.value.findIndex(t => String(t.id) === String(draggedTodo.id));
+      if (index !== -1) {
+        todos.value[index].order = newOrder;
+      }
+    }
+    
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'success',
+        title: 'Todo Reordered',
+        message: `"${draggedTodo.title}" has been reordered successfully.`
+      });
+    }
+    
+  } catch (error) {
+    console.error('Failed to reorder todo:', error);
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: 'Reorder Failed',
+        message: 'Failed to reorder todo. Please try again.'
       });
     }
   }
