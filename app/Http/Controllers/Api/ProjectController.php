@@ -114,6 +114,7 @@ class ProjectController extends Controller
             'owner_id' => $user->id,
             'viewing_order' => Project::getNextViewingOrder($user->id),
             'client_id' => $request->client_id,
+            'company_id' => $user->company_id,
         ]);
 
         return response()->json([

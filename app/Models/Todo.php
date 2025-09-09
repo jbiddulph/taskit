@@ -28,6 +28,7 @@ class Todo extends Model
         'story_points',
         'status',
         'order',
+        'company_id',
     ];
 
     protected $casts = [

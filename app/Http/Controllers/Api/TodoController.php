@@ -158,6 +158,7 @@ class TodoController extends Controller
             'tags' => $request->tags,
             'assignee' => $request->assignee,
             'due_date' => $request->due_date,
+            'company_id' => Auth::user()->company_id,
             'story_points' => $request->story_points,
             'status' => $request->status,
         ]);
@@ -450,6 +451,7 @@ class TodoController extends Controller
             'tags' => [],
             'assignee' => $request->assignee ?? $todo->assignee, // Inherit parent assignee if not specified
             'due_date' => $request->due_date,
+            'company_id' => Auth::user()->company_id,
             'story_points' => $request->story_points,
             'status' => 'todo', // Subtasks always start as 'todo'
         ]);

@@ -22,6 +22,7 @@ class Project extends Model
         'owner_id',
         'viewing_order',
         'client_id',
+        'company_id',
     ];
 
     protected $casts = [
