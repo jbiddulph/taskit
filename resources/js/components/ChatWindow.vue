@@ -39,6 +39,12 @@ const openChat = (user: ChatUser) => {
   otherUser.value = user;
   isVisible.value = true;
   isMinimized.value = false;
+  
+  // Emit chat state change
+  window.dispatchEvent(new CustomEvent('chatStateChange', {
+    detail: { isOpen: true, isMinimized: false }
+  }));
+  
   loadMessages();
 };
 
@@ -48,10 +54,20 @@ const closeChat = () => {
   messages.value = [];
   otherUser.value = null;
   newMessage.value = '';
+  
+  // Emit chat state change
+  window.dispatchEvent(new CustomEvent('chatStateChange', {
+    detail: { isOpen: false, isMinimized: false }
+  }));
 };
 
 const toggleMinimize = () => {
   isMinimized.value = !isMinimized.value;
+  
+  // Emit chat state change
+  window.dispatchEvent(new CustomEvent('chatStateChange', {
+    detail: { isOpen: isVisible.value, isMinimized: isMinimized.value }
+  }));
 };
 
 const loadMessages = async () => {

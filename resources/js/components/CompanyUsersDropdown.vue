@@ -14,6 +14,18 @@ interface CompanyUser {
 const showDropdown = ref(false);
 const companyUsers = ref<CompanyUser[]>([]);
 const loading = ref(false);
+const isChatOpen = ref(false);
+
+// Helper function to get initials from full name
+const getInitials = (name: string): string => {
+  const names = name.trim().split(' ');
+  if (names.length === 1) {
+    // If only one name, return first two characters
+    return names[0].substring(0, 2).toUpperCase();
+  }
+  // Return first letter of first name and first letter of last name
+  return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+};
 
 const loadCompanyUsers = async () => {
   loading.value = true;
@@ -78,14 +90,26 @@ const cleanup = () => {
   }
 };
 
+// Listen for chat window state changes
+const handleChatStateChange = (event: Event) => {
+  const customEvent = event as CustomEvent;
+  isChatOpen.value = customEvent.detail.isOpen;
+};
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
   
   // Subscribe to unread count changes
   unsubscribeUnreadCount = realtimeService.onUnreadCountChange(handleUnreadCountUpdate);
+  
+  // Listen for chat window state changes
+  window.addEventListener('chatStateChange', handleChatStateChange as EventListener);
 });
 
-onUnmounted(cleanup);
+onUnmounted(() => {
+  cleanup();
+  window.removeEventListener('chatStateChange', handleChatStateChange as EventListener);
+});
 </script>
 
 <template>
@@ -128,49 +152,55 @@ onUnmounted(cleanup);
         </div>
 
         <!-- Company Users List -->
-        <div v-else class="py-2">
+        <div v-else class="py-1">
           <div
-            v-for="user in companyUsers"
+            v-for="(user, index) in companyUsers"
             :key="user.id"
-            class="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            class="group"
           >
-            <div class="flex-1">
-              <div class="flex items-center gap-2">
-                <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                    <span class="text-sm font-medium text-blue-600 dark:text-blue-400">
-                      {{ user.name.charAt(0).toUpperCase() }}
-                    </span>
+            <!-- User Row -->
+            <div class="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <div class="flex-1">
+                <div class="flex items-center gap-3">
+                  <div class="flex-shrink-0">
+                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                      <span class="text-sm font-medium text-blue-600 dark:text-blue-400">
+                        {{ getInitials(user.name) }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                      {{ user.name }}
+                    </p>
+                    <p class="text-xs text-gray-400">
+                      Joined {{ user.joined_at }}
+                    </p>
+                  </div>
+                  <!-- Unread Messages Badge - Only show when chat is closed -->
+                  <div
+                    v-if="user.unread_messages > 0 && !isChatOpen"
+                    class="flex-shrink-0 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center"
+                  >
+                    {{ user.unread_messages }}
                   </div>
                 </div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                    {{ user.name }}
-                  </p>
-                  <p class="text-xs text-gray-500 truncate">
-                    {{ user.email }}
-                  </p>
-                  <p class="text-xs text-gray-400">
-                    Joined {{ user.joined_at }}
-                  </p>
-                </div>
-                <!-- Unread Messages Badge -->
-                <div
-                  v-if="user.unread_messages > 0"
-                  class="flex-shrink-0 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center"
-                >
-                  {{ user.unread_messages }}
-                </div>
               </div>
+              
+              <button
+                @click="openChat(user)"
+                class="ml-3 flex-shrink-0 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors"
+              >
+                <Icon name="MessageCircle" class="w-3 h-3 mr-1" />
+                Message
+              </button>
             </div>
             
-            <button
-              @click="openChat(user)"
-              class="ml-3 flex-shrink-0 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors"
-            >
-              <Icon name="MessageCircle" class="w-3 h-3 mr-1" />
-              Message
-            </button>
+            <!-- Separator Line - Don't show after last item -->
+            <div 
+              v-if="index < companyUsers.length - 1" 
+              class="mx-4 border-b border-gray-200 dark:border-gray-600"
+            ></div>
           </div>
         </div>
       </div>
