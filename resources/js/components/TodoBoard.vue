@@ -854,7 +854,9 @@ const deleteTodo = async (id: string) => {
     if (toDelete?.description) {
       deleteImagesInHtml(toDelete.description).catch(() => {});
     }
-    todos.value = todos.value.filter(t => t.id !== id);
+    
+    // Don't remove todo locally - let real-time event handle it for consistency
+    // todos.value = todos.value.filter(t => t.id !== id);
     
     // Dispatch event to refresh sidebar project stats
     window.dispatchEvent(new CustomEvent('todoChanged'));
@@ -1522,11 +1524,12 @@ const loadTodos = async () => {
 };
 
 // Watch for project changes and reload todos
-watch(currentProject, async (newProject) => {
-  if (newProject) {
+watch(currentProject, async (newProject, oldProject) => {
+  // Only reload todos if the project actually changed (not just set for the first time)
+  if (newProject && oldProject && newProject.id !== oldProject.id) {
     selectedProjectId.value = newProject.id.toString();
+    await loadTodos();
   }
-  await loadTodos();
 });
 
 // Watch for project creation modal and reset form when opened
