@@ -132,6 +132,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import Icon from '@/components/Icon.vue'
 import { todoApi, type Project } from '@/services/todoApi'
+import { realtimeService } from '@/services/realtimeService'
 
 interface Props {
   modelValue?: Project | null
@@ -149,6 +150,7 @@ const currentProject = ref<Project | null>(props.modelValue || null)
 const showProjectDropdown = ref(false)
 const showCreateProject = ref(false)
 const isCreating = ref(false)
+let unsubscribeFromProjects: (() => void) | null = null
 
 const newProject = ref({
   name: '',
@@ -160,6 +162,54 @@ const newProject = ref({
 // Load projects on mount
 onMounted(async () => {
   await loadProjects()
+  
+  // Subscribe to real-time project updates
+  unsubscribeFromProjects = realtimeService.onProject(async (event) => {
+    console.log('ProjectSelector: Real-time project event received:', event);
+    
+    switch (event.type) {
+      case 'project_created':
+        // Add new project to the list
+        const newProject = event.data;
+        if (!projects.value.find(p => p.id === newProject.id)) {
+          projects.value.push(newProject);
+          console.log('ProjectSelector: Added new project to list:', newProject.name);
+        }
+        break;
+        
+      case 'project_updated':
+        // Update existing project in the list
+        const updatedProject = event.data;
+        const updateIndex = projects.value.findIndex(p => p.id === updatedProject.id);
+        if (updateIndex !== -1) {
+          projects.value[updateIndex] = updatedProject;
+          console.log('ProjectSelector: Updated project in list:', updatedProject.name);
+          
+          // Update current project if it's the one being updated
+          if (currentProject.value?.id === updatedProject.id) {
+            currentProject.value = updatedProject;
+            emit('update:modelValue', updatedProject);
+          }
+        }
+        break;
+        
+      case 'project_deleted':
+        // Remove project from the list
+        const deletedProject = event.data;
+        const deleteIndex = projects.value.findIndex(p => p.id === deletedProject.id);
+        if (deleteIndex !== -1) {
+          projects.value.splice(deleteIndex, 1);
+          console.log('ProjectSelector: Removed project from list:', deletedProject.name);
+          
+          // Clear current project if it's the one being deleted
+          if (currentProject.value?.id === deletedProject.id) {
+            currentProject.value = null;
+            emit('update:modelValue', null);
+          }
+        }
+        break;
+    }
+  });
 })
 
 // Watch for external changes
@@ -235,6 +285,11 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  
+  // Cleanup real-time subscription
+  if (unsubscribeFromProjects) {
+    unsubscribeFromProjects()
+  }
 })
 
 // Expose methods to parent component
