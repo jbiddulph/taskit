@@ -197,11 +197,21 @@ class RealtimeService {
         },
         (payload) => {
           console.log('🗑️ Project DELETE event received:', payload);
+          console.log('🗑️ Project DELETE payload.old:', payload.old);
           this.handleProjectDelete(payload.old as any);
         }
       )
       .subscribe((status) => {
         console.log('🔥 Projects real-time subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Projects real-time subscription successful');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Projects real-time subscription error');
+        } else if (status === 'TIMED_OUT') {
+          console.error('⏰ Projects real-time subscription timed out');
+        } else if (status === 'CLOSED') {
+          console.warn('🔒 Projects real-time subscription closed');
+        }
       });
 
     this.channels.set(channelName, channel);
@@ -264,11 +274,21 @@ class RealtimeService {
         },
         (payload) => {
           console.log('🗑️ Todo DELETE event received:', payload);
+          console.log('🗑️ Todo DELETE payload.old:', payload.old);
           this.handleTodoDelete(payload.old as any);
         }
       )
       .subscribe((status) => {
         console.log('🔥 Todos real-time subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Todos real-time subscription successful');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Todos real-time subscription error');
+        } else if (status === 'TIMED_OUT') {
+          console.error('⏰ Todos real-time subscription timed out');
+        } else if (status === 'CLOSED') {
+          console.warn('🔒 Todos real-time subscription closed');
+        }
       });
 
     this.channels.set(channelName, channel);
@@ -356,10 +376,12 @@ class RealtimeService {
    * Handle project delete
    */
   private handleProjectDelete(project: any) {
-    console.log('Project deleted:', project);
+    console.log('🗑️ Project deleted:', project);
+    console.log('🗑️ Project callbacks count:', this.projectCallbacks.size);
     
     // Notify all project callbacks
     this.projectCallbacks.forEach(callback => {
+      console.log('🗑️ Notifying project callback of deletion');
       callback({
         type: 'project_deleted',
         data: project
@@ -403,10 +425,12 @@ class RealtimeService {
    * Handle todo delete
    */
   private handleTodoDelete(todo: any) {
-    console.log('Todo deleted:', todo);
+    console.log('🗑️ Todo deleted:', todo);
+    console.log('🗑️ Todo callbacks count:', this.todoCallbacks.size);
     
     // Notify all todo callbacks
     this.todoCallbacks.forEach(callback => {
+      console.log('🗑️ Notifying todo callback of deletion');
       callback({
         type: 'todo_deleted',
         data: todo
