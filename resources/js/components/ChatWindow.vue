@@ -30,6 +30,36 @@ const isVisible = ref(false);
 const isMinimized = ref(false);
 const loading = ref(false);
 const sending = ref(false);
+
+// Get fresh CSRF token
+const getCSRFToken = async (): Promise<string> => {
+  // First try to get from meta tag
+  const metaToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  if (metaToken) {
+    return metaToken;
+  }
+  
+  // If not available, try to refresh it
+  try {
+    const response = await fetch('/sanctum/csrf-cookie', {
+      method: 'GET',
+      credentials: 'same-origin'
+    });
+    
+    if (response.ok) {
+      // Try again to get the token from meta tag
+      const refreshedToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      if (refreshedToken) {
+        return refreshedToken;
+      }
+    }
+  } catch (error) {
+    console.error('Failed to refresh CSRF token:', error);
+  }
+  
+  // Fallback to any available token
+  return document.querySelector('input[name="_token"]')?.getAttribute('value') || '';
+};
 const newMessage = ref('');
 const messages = ref<Message[]>([]);
 const otherUser = ref<ChatUser | null>(null);
@@ -108,6 +138,18 @@ const loadMessages = async () => {
       // Scroll to bottom after loading messages
       await nextTick();
       scrollToBottom();
+    } else {
+      console.error('Failed to load messages:', response.status, response.statusText);
+      if (response.status === 403) {
+        if ((window as any).$notify) {
+          (window as any).$notify({
+            type: 'error',
+            title: 'Access Denied',
+            message: 'You cannot access messages with this user.',
+            duration: 3000
+          });
+        }
+      }
     }
   } catch (error) {
     console.error('Failed to load messages:', error);
@@ -124,13 +166,15 @@ const sendMessage = async () => {
   newMessage.value = '';
   
   try {
+    // Get fresh CSRF token
+    const csrfToken = await getCSRFToken();
     const response = await fetch('/api/company-messages', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+        'X-CSRF-TOKEN': csrfToken
       },
       body: JSON.stringify({
         recipient_id: otherUser.value.id,
@@ -149,7 +193,39 @@ const sendMessage = async () => {
     } else {
       // Restore message on error
       newMessage.value = messageText;
-      console.error('Failed to send message');
+      
+      // Handle specific error cases
+      if (response.status === 419) {
+        console.error('CSRF token mismatch - please refresh the page');
+        if ((window as any).$notify) {
+          (window as any).$notify({
+            type: 'error',
+            title: 'Authentication Error',
+            message: 'Session expired. Please refresh the page and try again.',
+            duration: 5000
+          });
+        }
+      } else if (response.status === 403) {
+        console.error('Unauthorized - user not in same company');
+        if ((window as any).$notify) {
+          (window as any).$notify({
+            type: 'error',
+            title: 'Permission Error',
+            message: 'You do not have permission to send messages to this user.',
+            duration: 5000
+          });
+        }
+      } else {
+        console.error('Failed to send message:', response.status, response.statusText);
+        if ((window as any).$notify) {
+          (window as any).$notify({
+            type: 'error',
+            title: 'Message Failed',
+            message: 'Failed to send message. Please try again.',
+            duration: 3000
+          });
+        }
+      }
     }
   } catch (error) {
     // Restore message on error
