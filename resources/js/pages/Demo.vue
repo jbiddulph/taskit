@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { dashboard, login, register } from '@/routes';
 import { Head, Link } from '@inertiajs/vue3';
+import PublicNavigation from '@/components/PublicNavigation.vue';
 
 // Navigate to homepage section function
 const scrollToSection = (sectionId: string) => {
@@ -43,29 +44,7 @@ defineOptions({
                             Contact
                         </a>
                     </nav>
-                    <div class="flex items-center space-x-4">
-                        <Link
-                            v-if="$page.props.auth.user"
-                            :href="dashboard()"
-                            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                        >
-                            Dashboard
-                        </Link>
-                        <template v-else>
-                            <Link
-                                :href="login()"
-                                class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-                            >
-                                Sign In
-                            </Link>
-                            <Link
-                                :href="register()"
-                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                            >
-                                Get Started
-                            </Link>
-                        </template>
-                    </div>
+                    <PublicNavigation />
                 </div>
             </div>
         </header>
