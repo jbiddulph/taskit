@@ -28,8 +28,12 @@ const page = usePage();
 const currentUser = (page.props.auth as any)?.user;
 
 onMounted(() => {
+  console.log('🔥 AppSidebarLayout mounted. User:', currentUser?.id, 'Company:', props.company?.id);
   if (currentUser?.id && props.company?.id) {
+    console.log('🔥 Initializing realtimeService from AppSidebarLayout');
     realtimeService.init(currentUser.id, props.company.id);
+  } else {
+    console.log('🚨 Missing user ID or company ID for realtime service');
   }
 });
 
