@@ -143,14 +143,32 @@ const handleRealtimeNotification = (event: any) => {
   if (event.type === 'new_notification') {
     const notification = event.data;
     
-    // Add to the beginning of notifications list if dropdown is open
-    if (showNotifications.value) {
-      notifications.value.unshift(notification);
-    }
+    // Check if this is a chat message notification and if chat is currently open with sender
+    const isMessageNotification = notification.data?.message_id && notification.data?.sender_id;
+    const isChatOpen = isMessageNotification && isChatOpenWithUser(notification.data.sender_id);
     
-    // Update unread count
-    loadUnreadCount();
+    // Only process notification if chat is not open with the sender
+    if (!isChatOpen) {
+      // Add to the beginning of notifications list if dropdown is open
+      if (showNotifications.value) {
+        notifications.value.unshift(notification);
+      }
+      
+      // Update unread count
+      loadUnreadCount();
+    } else {
+      console.log('Chat is open with sender, skipping notification badge update');
+    }
   }
+};
+
+/**
+ * Check if chat is currently open with a specific user
+ */
+const isChatOpenWithUser = (userId: number): boolean => {
+  // Check if there's an active chat state
+  const chatState = (window as any).currentChatState;
+  return chatState?.isOpen && chatState?.otherUserId === userId;
 };
 
 const loadNotifications = async () => {

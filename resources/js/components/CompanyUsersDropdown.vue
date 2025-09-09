@@ -76,8 +76,10 @@ const handleClickOutside = (event: Event) => {
 let unsubscribeUnreadCount: (() => void) | null = null;
 
 const handleUnreadCountUpdate = (count: number) => {
-  // Reload users to get updated unread counts
+  // Only reload users if we don't have an active chat or if the notification is from a different user
+  // We need to be more intelligent about when to reload
   if (showDropdown.value) {
+    // Always reload for now, but we could make this smarter by tracking which user the notification was from
     loadCompanyUsers();
   }
 };

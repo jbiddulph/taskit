@@ -171,9 +171,9 @@ class RealtimeService {
         });
       });
 
-      // Update unread count if message is for current user
+      // Update unread count if message is for current user and chat is not open with sender
       if (message.recipient_id === this.currentUserId) {
-        this.updateUnreadCount();
+        this.updateUnreadCountConditional(message.sender_id);
       }
     }
   }
@@ -189,8 +189,11 @@ class RealtimeService {
       });
     });
 
-    // Update unread count if relevant
-    if (message.recipient_id === this.currentUserId || message.sender_id === this.currentUserId) {
+    // Update unread count if relevant and chat is not open
+    if (message.recipient_id === this.currentUserId) {
+      this.updateUnreadCountConditional(message.sender_id);
+    } else if (message.sender_id === this.currentUserId) {
+      // Always update if we sent the message (for read status changes)
       this.updateUnreadCount();
     }
   }
@@ -218,6 +221,21 @@ class RealtimeService {
     } catch (error) {
       console.error('Failed to fetch unread count:', error);
     }
+  }
+
+  /**
+   * Update unread count only if chat is not open with the message sender
+   */
+  private updateUnreadCountConditional(senderId?: number) {
+    if (senderId) {
+      const isChatOpen = this.isChatOpenWithUser(senderId);
+      if (isChatOpen) {
+        console.log('Chat is open with sender, skipping unread count update');
+        return;
+      }
+    }
+    
+    this.updateUnreadCount();
   }
 
   /**
