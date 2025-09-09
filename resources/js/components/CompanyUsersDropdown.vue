@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import Icon from '@/components/Icon.vue';
+import { realtimeService } from '@/services/realtimeService';
 
 interface CompanyUser {
   id: number;
@@ -59,17 +60,31 @@ const handleClickOutside = (event: Event) => {
   }
 };
 
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
-});
+// Real-time unread count updates
+let unsubscribeUnreadCount: (() => void) | null = null;
+
+const handleUnreadCountUpdate = (count: number) => {
+  // Reload users to get updated unread counts
+  if (showDropdown.value) {
+    loadCompanyUsers();
+  }
+};
 
 // Cleanup
 const cleanup = () => {
   document.removeEventListener('click', handleClickOutside);
+  if (unsubscribeUnreadCount) {
+    unsubscribeUnreadCount();
+  }
 };
 
-// Add cleanup on unmount
-import { onUnmounted } from 'vue';
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+  
+  // Subscribe to unread count changes
+  unsubscribeUnreadCount = realtimeService.onUnreadCountChange(handleUnreadCountUpdate);
+});
+
 onUnmounted(cleanup);
 </script>
 

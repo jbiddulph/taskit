@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import Icon from '@/components/Icon.vue';
+import { realtimeService } from '@/services/realtimeService';
 
 interface Message {
   id: number;
@@ -149,12 +150,76 @@ watch(messages, () => {
   });
 });
 
+// Real-time message handling
+let unsubscribeMessages: (() => void) | null = null;
+
+const handleRealtimeMessage = (event: any) => {
+  if (event.type === 'new_message' && otherUser.value) {
+    const message = event.data;
+    
+    // Check if message is part of current conversation
+    if ((message.sender_id === otherUser.value.id && message.recipient_id === currentUserId.value) ||
+        (message.sender_id === currentUserId.value && message.recipient_id === otherUser.value.id)) {
+      
+      // Format message to match our interface
+      const formattedMessage: Message = {
+        id: message.id,
+        message: message.message,
+        sender_id: message.sender_id,
+        sender_name: message.sender_id === currentUserId.value ? 'You' : otherUser.value.name,
+        recipient_id: message.recipient_id,
+        recipient_name: message.recipient_id === currentUserId.value ? 'You' : otherUser.value.name,
+        is_read: message.is_read,
+        created_at: new Date(message.created_at).toLocaleString(),
+        created_at_human: 'Just now',
+      };
+      
+      // Add to messages if not already present
+      if (!messages.value.find(m => m.id === formattedMessage.id)) {
+        messages.value.push(formattedMessage);
+        
+        // Show notification if chat is minimized and message is from other user
+        if (isMinimized.value && message.sender_id === otherUser.value.id) {
+          // Flash the chat header or show some indicator
+          flashChatNotification();
+        }
+        
+        // Auto-scroll to bottom
+        nextTick(() => {
+          scrollToBottom();
+        });
+      }
+    }
+  }
+};
+
+const flashChatNotification = () => {
+  // Add a visual indicator for new messages when minimized
+  // This could be a pulsing effect or color change
+  if ((window as any).$notify) {
+    (window as any).$notify({
+      type: 'info',
+      title: 'New Message',
+      message: `${otherUser.value?.name} sent you a message`,
+      duration: 3000
+    });
+  }
+};
+
 onMounted(() => {
   window.addEventListener('openChat', handleChatOpen as EventListener);
+  
+  // Subscribe to real-time messages
+  unsubscribeMessages = realtimeService.onMessage(handleRealtimeMessage);
 });
 
 onUnmounted(() => {
   window.removeEventListener('openChat', handleChatOpen as EventListener);
+  
+  // Unsubscribe from real-time messages
+  if (unsubscribeMessages) {
+    unsubscribeMessages();
+  }
 });
 
 // Helper to get current user ID (you might need to pass this as a prop)

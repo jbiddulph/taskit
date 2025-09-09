@@ -4,6 +4,9 @@ import AppShell from '@/components/AppShell.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import ChatWindow from '@/components/ChatWindow.vue';
+import { realtimeService } from '@/services/realtimeService';
+import { usePage } from '@inertiajs/vue3';
+import { onMounted, onUnmounted } from 'vue';
 import type { BreadcrumbItemType } from '@/types';
 
 interface Props {
@@ -15,9 +18,23 @@ interface Props {
     } | null;
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
     breadcrumbs: () => [],
     company: null,
+});
+
+// Initialize real-time service
+const page = usePage();
+const currentUser = (page.props.auth as any)?.user;
+
+onMounted(() => {
+  if (currentUser?.id && props.company?.id) {
+    realtimeService.init(currentUser.id, props.company.id);
+  }
+});
+
+onUnmounted(() => {
+  realtimeService.disconnect();
 });
 </script>
 
