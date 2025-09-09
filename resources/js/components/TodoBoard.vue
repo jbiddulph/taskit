@@ -782,21 +782,23 @@ const saveTodo = async (todo: Todo) => {
           project_id: currentProject.value.id
         });
         
-        // Find parent todo and add subtask to it
-        const parentIndex = todos.value.findIndex(t => t.id === todo.parent_task_id);
-        if (parentIndex !== -1) {
-          if (!todos.value[parentIndex].subtasks) {
-            todos.value[parentIndex].subtasks = [];
-          }
-          todos.value[parentIndex].subtasks!.push(newTodo);
-        }
+        // Don't add subtask locally - let real-time event handle it for consistency
+        // const parentIndex = todos.value.findIndex(t => t.id === todo.parent_task_id);
+        // if (parentIndex !== -1) {
+        //   if (!todos.value[parentIndex].subtasks) {
+        //     todos.value[parentIndex].subtasks = [];
+        //   }
+        //   todos.value[parentIndex].subtasks!.push(newTodo);
+        // }
       } else {
         // Create regular todo
         newTodo = await todoApi.createTodo({
           ...todo,
           project_id: currentProject.value.id
         });
-        todos.value.push(newTodo);
+        
+        // Don't add todo locally - let real-time event handle it for consistency
+        // todos.value.push(newTodo);
       }
       
       if ((window as any).$notify) {
