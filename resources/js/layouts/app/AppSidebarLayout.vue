@@ -3,6 +3,7 @@ import AppContent from '@/components/AppContent.vue';
 import AppShell from '@/components/AppShell.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
+import ChatWindow from '@/components/ChatWindow.vue';
 import type { BreadcrumbItemType } from '@/types';
 
 interface Props {
@@ -27,5 +28,6 @@ withDefaults(defineProps<Props>(), {
             <AppSidebarHeader :breadcrumbs="breadcrumbs" :company="company" />
             <slot />
         </AppContent>
+        <ChatWindow />
     </AppShell>
 </template>

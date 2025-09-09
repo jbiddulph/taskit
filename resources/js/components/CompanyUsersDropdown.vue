@@ -1,0 +1,164 @@
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import Icon from '@/components/Icon.vue';
+
+interface CompanyUser {
+  id: number;
+  name: string;
+  email: string;
+  joined_at: string;
+  unread_messages: number;
+}
+
+const showDropdown = ref(false);
+const companyUsers = ref<CompanyUser[]>([]);
+const loading = ref(false);
+
+const loadCompanyUsers = async () => {
+  loading.value = true;
+  try {
+    const response = await fetch('/api/company-users', {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      companyUsers.value = data.data || [];
+    }
+  } catch (error) {
+    console.error('Failed to load company users:', error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const openChat = (user: CompanyUser) => {
+  // Emit event to open chat
+  window.dispatchEvent(new CustomEvent('openChat', { 
+    detail: { user } 
+  }));
+  showDropdown.value = false;
+};
+
+const toggleDropdown = () => {
+  showDropdown.value = !showDropdown.value;
+  if (showDropdown.value) {
+    loadCompanyUsers();
+  }
+};
+
+// Close dropdown when clicking outside
+const handleClickOutside = (event: Event) => {
+  const target = event.target as HTMLElement;
+  const dropdown = document.getElementById('company-users-dropdown');
+  if (dropdown && !dropdown.contains(target)) {
+    showDropdown.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+// Cleanup
+const cleanup = () => {
+  document.removeEventListener('click', handleClickOutside);
+};
+
+// Add cleanup on unmount
+import { onUnmounted } from 'vue';
+onUnmounted(cleanup);
+</script>
+
+<template>
+  <div class="relative" id="company-users-dropdown">
+    <button
+      @click="toggleDropdown"
+      class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+      title="Company Users"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+      </svg>
+      <span class="hidden sm:inline">Team</span>
+      <Icon 
+        :name="showDropdown ? 'ChevronUp' : 'ChevronDown'" 
+        class="w-3 h-3" 
+      />
+    </button>
+
+    <!-- Dropdown Menu -->
+    <div
+      v-if="showDropdown"
+      class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-50"
+    >
+      <div class="p-3 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">Company Team</h3>
+      </div>
+
+      <div class="max-h-80 overflow-y-auto">
+        <!-- Loading State -->
+        <div v-if="loading" class="p-4 text-center">
+          <Icon name="Loader2" class="w-5 h-5 animate-spin mx-auto text-gray-400" />
+          <p class="text-sm text-gray-500 mt-2">Loading team members...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="companyUsers.length === 0" class="p-4 text-center">
+          <Icon name="Users" class="w-8 h-8 mx-auto text-gray-400 mb-2" />
+          <p class="text-sm text-gray-500">No other team members</p>
+        </div>
+
+        <!-- Company Users List -->
+        <div v-else class="py-2">
+          <div
+            v-for="user in companyUsers"
+            :key="user.id"
+            class="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <div class="flex-shrink-0">
+                  <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                    <span class="text-sm font-medium text-blue-600 dark:text-blue-400">
+                      {{ user.name.charAt(0).toUpperCase() }}
+                    </span>
+                  </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {{ user.name }}
+                  </p>
+                  <p class="text-xs text-gray-500 truncate">
+                    {{ user.email }}
+                  </p>
+                  <p class="text-xs text-gray-400">
+                    Joined {{ user.joined_at }}
+                  </p>
+                </div>
+                <!-- Unread Messages Badge -->
+                <div
+                  v-if="user.unread_messages > 0"
+                  class="flex-shrink-0 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center"
+                >
+                  {{ user.unread_messages }}
+                </div>
+              </div>
+            </div>
+            
+            <button
+              @click="openChat(user)"
+              class="ml-3 flex-shrink-0 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors"
+            >
+              <Icon name="MessageCircle" class="w-3 h-3 mr-1" />
+              Message
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

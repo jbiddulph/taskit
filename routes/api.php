@@ -54,6 +54,12 @@ Route::delete('projects/{project}/with-todos', [ProjectController::class, 'destr
     // Client routes
     Route::get('clients', [App\Http\Controllers\Api\ClientController::class, 'index']);
     
+    // Company users and messaging routes
+    Route::get('company-users', [App\Http\Controllers\Api\CompanyUsersController::class, 'index']);
+    Route::get('company-users/{user}/messages', [App\Http\Controllers\Api\CompanyUsersController::class, 'getMessages']);
+    Route::post('company-messages', [App\Http\Controllers\Api\CompanyUsersController::class, 'sendMessage']);
+    Route::get('company-messages/unread-count', [App\Http\Controllers\Api\CompanyUsersController::class, 'getUnreadCount']);
+    
     // Notification routes
     Route::get('notifications', [NotificationController::class, 'index']);
     Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
