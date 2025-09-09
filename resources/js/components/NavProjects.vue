@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { todoApi, type Project } from '@/services/todoApi';
+import { realtimeService } from '@/services/realtimeService';
 import Icon from '@/components/Icon.vue';
 // import { usePage } from '@inertiajs/vue3';
 const projects = ref<Project[]>([]);
@@ -10,6 +11,7 @@ const currentProject = ref<Project | null>(null);
 const loading = ref(false);
 const isUpdatingProject = ref(false); // Flag to prevent circular events
 const collapsedClients = ref<Set<string>>(new Set()); // Track collapsed client sections
+let unsubscribeFromProjects: (() => void) | null = null;
 
 // Check if we're on the subscription page
 const isOnSubscriptionPage = computed(() => {
@@ -19,6 +21,42 @@ const isOnSubscriptionPage = computed(() => {
 // Load projects on mount
 onMounted(async () => {
   await loadProjects();
+  
+  // Subscribe to real-time project updates
+  unsubscribeFromProjects = realtimeService.onProject(async (event) => {
+    console.log('Real-time project event received:', event);
+    
+    switch (event.type) {
+      case 'project_created':
+        // Add new project to the list
+        const newProject = event.data;
+        if (!projects.value.find(p => p.id === newProject.id)) {
+          projects.value.push(newProject);
+          console.log('Added new project to list:', newProject.name);
+        }
+        break;
+        
+      case 'project_updated':
+        // Update existing project in the list
+        const updatedProject = event.data;
+        const updateIndex = projects.value.findIndex(p => p.id === updatedProject.id);
+        if (updateIndex !== -1) {
+          projects.value[updateIndex] = updatedProject;
+          console.log('Updated project in list:', updatedProject.name);
+        }
+        break;
+        
+      case 'project_deleted':
+        // Remove project from the list
+        const deletedProject = event.data;
+        const deleteIndex = projects.value.findIndex(p => p.id === deletedProject.id);
+        if (deleteIndex !== -1) {
+          projects.value.splice(deleteIndex, 1);
+          console.log('Removed project from list:', deletedProject.name);
+        }
+        break;
+    }
+  });
   
   // Listen for project creation events to refresh the list
   window.addEventListener('projectCreated', async () => {
@@ -51,6 +89,13 @@ onMounted(async () => {
     console.log('Subscription downgrade detected, reloading projects:', e.detail);
     await loadProjects();
   });
+});
+
+// Cleanup on unmount
+onUnmounted(() => {
+  if (unsubscribeFromProjects) {
+    unsubscribeFromProjects();
+  }
 });
 
 const loadProjects = async () => {
