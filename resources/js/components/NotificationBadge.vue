@@ -128,12 +128,30 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import Icon from '@/components/Icon.vue';
 import { notificationApi, type Notification } from '@/services/notificationApi';
+import { realtimeService } from '@/services/realtimeService';
 
 const showNotifications = ref(false);
 const notifications = ref<Notification[]>([]);
 const unreadCount = ref(0);
 const loading = ref(false);
 const currentPage = ref(1);
+
+// Real-time notification handling
+let unsubscribeNotifications: (() => void) | null = null;
+
+const handleRealtimeNotification = (event: any) => {
+  if (event.type === 'new_notification') {
+    const notification = event.data;
+    
+    // Add to the beginning of notifications list if dropdown is open
+    if (showNotifications.value) {
+      notifications.value.unshift(notification);
+    }
+    
+    // Update unread count
+    loadUnreadCount();
+  }
+};
 
 const loadNotifications = async () => {
   try {
@@ -256,12 +274,20 @@ onMounted(() => {
   loadUnreadCount();
   document.addEventListener('click', handleClickOutside);
   
+  // Subscribe to real-time notifications
+  unsubscribeNotifications = realtimeService.onNotification(handleRealtimeNotification);
+  
   // Refresh unread count every 30 seconds
   const interval = setInterval(loadUnreadCount, 30000);
   
   onUnmounted(() => {
     clearInterval(interval);
     document.removeEventListener('click', handleClickOutside);
+    
+    // Unsubscribe from real-time notifications
+    if (unsubscribeNotifications) {
+      unsubscribeNotifications();
+    }
   });
 });
 </script>

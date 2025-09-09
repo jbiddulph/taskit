@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\CompanyMessage;
+use App\Models\Notification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -157,6 +158,22 @@ class CompanyUsersController extends Controller
             'recipient_id' => $recipient->id,
             'company_id' => $currentUser->company_id,
             'message' => $request->message,
+        ]);
+
+        // Create notification for recipient about new message
+        // Note: In a real-world scenario, you'd want to check if the recipient's chat is currently open
+        // For now, we'll always create the notification
+        Notification::create([
+            'user_id' => $recipient->id,
+            'type' => 'info',
+            'title' => 'New Message',
+            'message' => "You have a new message from {$currentUser->name}",
+            'data' => [
+                'message_id' => $message->id,
+                'sender_id' => $currentUser->id,
+                'sender_name' => $currentUser->name,
+                'chat_preview' => substr($request->message, 0, 50) . (strlen($request->message) > 50 ? '...' : ''),
+            ],
         ]);
 
         return response()->json([

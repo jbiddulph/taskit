@@ -15,6 +15,7 @@ class RealtimeService {
   private channels: Map<string, RealtimeChannel> = new Map();
   private messageCallbacks: Set<(message: any) => void> = new Set();
   private unreadCountCallbacks: Set<(count: number) => void> = new Set();
+  private notificationCallbacks: Set<(notification: any) => void> = new Set();
   private currentUserId: number | null = null;
   private currentCompanyId: number | null = null;
 
@@ -25,6 +26,7 @@ class RealtimeService {
     this.currentUserId = userId;
     this.currentCompanyId = companyId;
     this.subscribeToCompanyMessages();
+    this.subscribeToNotifications();
   }
 
   /**
@@ -72,6 +74,69 @@ class RealtimeService {
       });
 
     this.channels.set(channelName, channel);
+  }
+
+  /**
+   * Subscribe to notifications for real-time updates
+   */
+  private subscribeToNotifications() {
+    if (!this.currentUserId) return;
+
+    const channelName = `user_notifications_${this.currentUserId}`;
+    
+    // Remove existing channel if it exists
+    if (this.channels.has(channelName)) {
+      this.channels.get(channelName)?.unsubscribe();
+      this.channels.delete(channelName);
+    }
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'taskit_notifications',
+          filter: `user_id=eq.${this.currentUserId}`
+        },
+        (payload) => {
+          this.handleNewNotification(payload.new as any);
+        }
+      )
+      .subscribe((status) => {
+        console.log('Notification real-time subscription status:', status);
+      });
+
+    this.channels.set(channelName, channel);
+  }
+
+  /**
+   * Handle new notification received
+   */
+  private handleNewNotification(notification: any) {
+    console.log('New notification received:', notification);
+    
+    // Notify all notification callbacks
+    this.notificationCallbacks.forEach(callback => {
+      callback({
+        type: 'new_notification',
+        data: notification
+      });
+    });
+
+    // Show browser notification if chat message and chat is closed
+    if (notification.data?.message_id && notification.data?.sender_name) {
+      // Show a toast notification
+      if ((window as any).$notify) {
+        (window as any).$notify({
+          type: 'info',
+          title: notification.title,
+          message: notification.message,
+          duration: 5000
+        });
+      }
+    }
   }
 
   /**
@@ -162,6 +227,18 @@ class RealtimeService {
   }
 
   /**
+   * Subscribe to notification events
+   */
+  onNotification(callback: (notification: any) => void) {
+    this.notificationCallbacks.add(callback);
+    
+    // Return unsubscribe function
+    return () => {
+      this.notificationCallbacks.delete(callback);
+    };
+  }
+
+  /**
    * Disconnect all subscriptions
    */
   disconnect() {
@@ -171,6 +248,7 @@ class RealtimeService {
     this.channels.clear();
     this.messageCallbacks.clear();
     this.unreadCountCallbacks.clear();
+    this.notificationCallbacks.clear();
     this.currentUserId = null;
     this.currentCompanyId = null;
   }
