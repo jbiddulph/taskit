@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\CompanyController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -47,9 +48,12 @@ Route::get('dashboard', function () {
     ]);
 })->middleware(['auth', 'verified', 'subscription.access'])->name('dashboard');
 
-// Client management routes
+// Client and Company management routes
 Route::middleware(['auth', 'verified', 'subscription.access'])->group(function () {
     Route::resource('clients', ClientController::class);
+    Route::get('companies/{company}', [CompanyController::class, 'show'])->name('companies.show');
+    Route::get('companies/{company}/edit', [CompanyController::class, 'edit'])->name('companies.edit');
+    Route::put('companies/{company}', [CompanyController::class, 'update'])->name('companies.update');
 });
 
 require __DIR__.'/settings.php';
