@@ -66,7 +66,7 @@ onMounted(() => {
         </header>
 
         <!-- Main Content with padding for fixed header -->
-        <div class="flex min-h-screen flex-col items-center bg-[#FDFDFC] text-[#1b1b18] lg:justify-center lg:pt-8 dark:bg-[#0a0a0a] pt-24">
+        <div class="flex min-h-screen flex-col items-center bg-[#FDFDFC] text-[#1b1b18] lg:justify-center lg:pt-8 lg:mt-20 dark:bg-[#0a0a0a] pt-24">
         <div class="flex w-full items-center justify-center opacity-100 transition-opacity duration-750 lg:grow starting:opacity-0">
             <main class="flex w-full max-w-[335px] flex-col-reverse overflow-hidden rounded-lg lg:max-w-4xl lg:flex-row">
                 <div
