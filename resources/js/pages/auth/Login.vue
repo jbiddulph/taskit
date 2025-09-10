@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
-import { register } from '@/routes';
+import { dashboard, register } from '@/routes';
 import { request } from '@/routes/password';
 import { Form, Head } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
@@ -48,6 +48,7 @@ defineProps<{
         <Form
             v-bind="AuthenticatedSessionController.store.form()"
             :reset-on-success="['password']"
+            @success="$inertia.visit(dashboard())"
             v-slot="{ errors, processing }"
             class="flex flex-col gap-6"
         >

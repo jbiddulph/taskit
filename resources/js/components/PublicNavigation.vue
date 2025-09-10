@@ -7,7 +7,9 @@ const page = usePage();
 const user = computed(() => (page.props.auth as any)?.user);
 
 const logout = () => {
-  router.post('/logout');
+  router.post('/logout', {
+    onSuccess: () => router.visit('/'),
+  });
 };
 </script>
 
