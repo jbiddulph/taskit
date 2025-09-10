@@ -91,7 +91,7 @@ const cancelEditName = () => {
     <AppSidebarLayout :company="company">
         <div class="space-y-6 p-6">
             <!-- Header -->
-            <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
                 <div v-if="!editingName" class="flex items-center gap-2">
                     <Heading>{{ company.name }}</Heading>
                     <button
