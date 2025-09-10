@@ -325,7 +325,7 @@ onMounted(() => {
                     
                     <Link
                         :href="register({ query: { plan: 'MAXI' } })"
-                        class="w-full inline-block text-center rounded-lg border border-[#19140035] px-6 py-3 text-sm font-medium text-[#1b1b18] hover:border-[#1915014a] hover:bg-gray-50 dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b] dark:hover:bg-[#1a1a19] transition-colors duration-200"
+                        class="w-full inline-block text-center rounded-lg bg-yellow-500 px-6 py-3 text-sm font-medium text-white hover:bg-yellow-600 transition-colors duration-200"
                     >
                         Start MAXI Plan
                     </Link>
