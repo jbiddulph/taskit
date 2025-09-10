@@ -494,8 +494,9 @@ const isClientCollapsed = (clientName: string) => {
                 ></div>
                 <span class="flex-1 truncate">{{ project.name }}</span>
                 <span class="text-xs text-gray-500 flex-shrink-0">{{ project.total_todos || 0 }}</span>
-                <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                <div class="reveal-on-hover-focus">
                   <button
+                    @touchstart.stop
                     @click="deleteProject(project, $event)"
                     class="text-gray-400 hover:text-red-500 transition-colors"
                     :tooltip="`Delete ${project.name}`"
@@ -560,8 +561,9 @@ const isClientCollapsed = (clientName: string) => {
                   ></div>
                   <span class="flex-1 truncate">{{ project.name }}</span>
                   <span class="text-xs text-gray-500 flex-shrink-0">{{ project.total_todos || 0 }}</span>
-                  <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div class="reveal-on-hover-focus">
                     <button
+                      @touchstart.stop
                       @click="deleteProject(project, $event)"
                       class="text-gray-400 hover:text-red-500 transition-colors"
                       :tooltip="`Delete ${project.name}`"
@@ -612,8 +614,9 @@ const isClientCollapsed = (clientName: string) => {
               ></div>
               <span class="flex-1 truncate">{{ project.name }}</span>
               <span class="text-xs text-gray-500 flex-shrink-0">{{ project.total_todos || 0 }}</span>
-              <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+              <div class="reveal-on-hover-focus">
                 <button
+                  @touchstart.stop
                   @click="deleteProject(project, $event)"
                   class="text-gray-400 hover:text-red-500 transition-colors"
                   :tooltip="`Delete ${project.name}`"
@@ -667,5 +670,21 @@ const isClientCollapsed = (clientName: string) => {
   background-color: rgba(59, 130, 246, 0.1);
   border-radius: 8px;
   transition: background-color 0.2s ease;
+}
+
+/* Reveal delete icon on hover only on devices that support hover, and on focus for accessibility/touch */
+.reveal-on-hover-focus {
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .group .reveal-on-hover-focus {
+    opacity: 0;
+  }
+  .group:hover .reveal-on-hover-focus,
+  .group:focus-within .reveal-on-hover-focus {
+    opacity: 1;
+  }
 }
 </style>

@@ -35,11 +35,9 @@
             }
         </style>
 
-        <title inertia>{{ config('app.name', 'ZapTask') }}</title>
+        <title inertia>ZapTask</title>
 
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <link rel="icon" href="/zap_icon.png" sizes="32x32" type="image/png">
-        <link rel="icon" href="/zap_icon.png" sizes="192x192" type="image/png">
+        <link rel="icon" href="/favicon.ico" type="image/x-icon">
         <link rel="apple-touch-icon" href="/zap_icon.png">
 
         <link rel="preconnect" href="https://fonts.bunny.net">
