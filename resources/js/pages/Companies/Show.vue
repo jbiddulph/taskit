@@ -3,7 +3,8 @@ import AppSidebarLayout from '@/layouts/app/AppSidebarLayout.vue';
 import Heading from '@/components/Heading.vue';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import Icon from '@/components/Icon.vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
+import { ref, nextTick } from 'vue';
 
 interface Props {
     company: {
@@ -42,6 +43,11 @@ interface Props {
 
 const props = defineProps<Props>();
 
+// Inline editing state
+const editingName = ref(false);
+const editingNameText = ref('');
+const nameInput = ref<HTMLInputElement>();
+
 const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
 };
@@ -54,6 +60,31 @@ const getSubscriptionTypeBadge = (type: string) => {
     };
     return badges[type as keyof typeof badges] || badges.FREE;
 };
+
+const startEditName = async () => {
+    editingName.value = true;
+    editingNameText.value = props.company.name;
+    await nextTick();
+    nameInput.value?.focus();
+    nameInput.value?.select();
+};
+
+const saveName = () => {
+    if (editingNameText.value.trim() && editingNameText.value !== props.company.name) {
+        router.put(`/companies/${props.company.id}`, {
+            name: editingNameText.value.trim()
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    }
+    editingName.value = false;
+};
+
+const cancelEditName = () => {
+    editingName.value = false;
+    editingNameText.value = '';
+};
 </script>
 
 <template>
@@ -61,14 +92,41 @@ const getSubscriptionTypeBadge = (type: string) => {
         <div class="space-y-6 p-6">
             <!-- Header -->
             <div class="flex items-center justify-between">
-                <Heading>{{ company.name }}</Heading>
-                <Link 
-                    :href="`/companies/${company.id}/edit`"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                >
-                    <Icon name="Edit" class="w-4 h-4" />
-                    Edit Company
-                </Link>
+                <div v-if="!editingName" class="flex items-center gap-2">
+                    <Heading>{{ company.name }}</Heading>
+                    <button
+                        @click="startEditName"
+                        class="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                        title="Edit company name"
+                    >
+                        <Icon name="Edit3" class="w-5 h-5" />
+                    </button>
+                </div>
+                <div v-else class="flex items-center gap-2">
+                    <input
+                        v-model="editingNameText"
+                        @keydown.enter="saveName"
+                        @keydown.escape="cancelEditName"
+                        @blur="saveName"
+                        class="text-3xl font-bold text-gray-900 dark:text-gray-100 bg-transparent border-b-2 border-blue-500 focus:outline-none focus:border-blue-600"
+                        placeholder="Enter company name"
+                        ref="nameInput"
+                    />
+                    <button
+                        @click="saveName"
+                        class="p-1 text-green-500 hover:text-green-600 transition-colors"
+                        title="Save"
+                    >
+                        <Icon name="Check" class="w-5 h-5" />
+                    </button>
+                    <button
+                        @click="cancelEditName"
+                        class="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        title="Cancel"
+                    >
+                        <Icon name="X" class="w-5 h-5" />
+                    </button>
+                </div>
             </div>
 
             <!-- Company Information -->
@@ -125,7 +183,8 @@ const getSubscriptionTypeBadge = (type: string) => {
                             <label class="text-sm font-medium text-gray-500">Members</label>
                             <p class="text-lg">
                                 {{ company.current_member_count }} / 
-                                <span v-if="company.member_limit === 2147483647">Unlimited</span>
+                                <span v-if="company.subscription_type === 'MAXI'">Unlimited</span>
+                                <span v-else-if="company.subscription_type === 'MIDI'">10</span>
                                 <span v-else>{{ company.member_limit }}</span>
                             </p>
                         </div>
@@ -133,7 +192,8 @@ const getSubscriptionTypeBadge = (type: string) => {
                             <label class="text-sm font-medium text-gray-500">Projects</label>
                             <p class="text-lg">
                                 {{ company.current_project_count }} / 
-                                <span v-if="company.project_limit === 2147483647">Unlimited</span>
+                                <span v-if="company.subscription_type === 'MAXI'">Unlimited</span>
+                                <span v-else-if="company.subscription_type === 'MIDI'">20</span>
                                 <span v-else>{{ company.project_limit }}</span>
                             </p>
                         </div>
