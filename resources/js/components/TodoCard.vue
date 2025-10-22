@@ -3,7 +3,7 @@
     :class="[
       'group relative rounded-lg border p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer',
       isOverdueAndNotDone 
-        ? 'bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-700' 
+        ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-700' 
         : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700',
       isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
     ]"
@@ -148,6 +148,7 @@
               ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600' 
               : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
           ]"
+          :style="projectColor && copyFeedback !== 'copied' ? { borderColor: projectColor, borderWidth: '1px', borderStyle: 'solid' } : {}"
           :title="copyFeedback === 'copied' ? 'Copied!' : `Click to copy Todo ID: ${todoUniqueId}`"
         >
           <span v-if="copyFeedback === 'copied'" class="flex items-center gap-1">
@@ -254,6 +255,7 @@ interface Props {
   todo: Todo;
   isSelectMode?: boolean;
   isSelected?: boolean;
+  projectColor?: string | null;
 }
 
 const props = defineProps<Props>();

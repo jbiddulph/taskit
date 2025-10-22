@@ -16,12 +16,9 @@
         >
           <Icon name="Plus" class="w-4 h-4" />
         </button>
-        <button
-          @click="$emit('menu')"
-          class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-        >
-          <Icon name="MoreHorizontal" class="w-4 h-4" />
-        </button>
+        <div v-if="subtaskCount > 0" class="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">
+          Sub tasks ({{ subtaskCount }})
+        </div>
       </div>
     </div>
 
@@ -94,6 +91,7 @@
               :todo="todo"
               :is-select-mode="isSelectMode"
               :is-selected="selectedItems?.has(todo.id) || false"
+              :project-color="currentProjectColor"
               @edit="$emit('edit', $event)"
               @delete="$emit('delete', $event)"
               @update="$emit('update', $event)"
@@ -120,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import Icon from '@/components/Icon.vue';
 import TodoCard from './TodoCard.vue';
 
@@ -132,6 +130,7 @@ interface Props {
   todos: Todo[];
   showAddButton?: boolean;
   currentProjectId?: number | null;
+  currentProjectColor?: string | null;
   isSelectMode?: boolean;
   selectedItems?: Set<number>;
 }
@@ -140,6 +139,11 @@ const props = withDefaults(defineProps<Props>(), {
   showAddButton: false,
   isSelectMode: false,
   selectedItems: () => new Set(),
+});
+
+// Count subtasks in this column
+const subtaskCount = computed(() => {
+  return props.todos.filter(todo => todo.parent_task_id !== null).length;
 });
 
 const emit = defineEmits<{
