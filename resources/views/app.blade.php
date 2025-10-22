@@ -39,6 +39,13 @@
 
         <link rel="icon" href="/favicon.ico" type="image/x-icon">
         <link rel="apple-touch-icon" href="/zap_icon.png">
+        
+        <!-- PWA Support -->
+        <link rel="manifest" href="/manifest.json">
+        <meta name="apple-mobile-web-app-title" content="ZapTask">
+        <link rel="apple-touch-icon" sizes="152x152" href="/zap_icon.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="/zap_icon.png">
+        <link rel="apple-touch-icon" sizes="167x167" href="/zap_icon.png">
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
@@ -79,6 +86,19 @@
                 },
                 pixelRatio: window.devicePixelRatio
             });
+            
+            // Register Service Worker for PWA
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('/sw.js')
+                        .then(function(registration) {
+                            console.log('ServiceWorker registration successful');
+                        })
+                        .catch(function(err) {
+                            console.log('ServiceWorker registration failed: ', err);
+                        });
+                });
+            }
         </script>
         @inertia
         <div id="notification-container"></div>
