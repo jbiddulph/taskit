@@ -317,14 +317,14 @@ const bulkDelete = async () => {
 .bulk-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
   flex: 1;
 }
 
 .action-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: 0.75rem;
   align-items: center;
 }
 
@@ -342,23 +342,23 @@ const bulkDelete = async () => {
 .action-group {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
 }
 
 .action-label {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: #374151;
   white-space: nowrap;
 }
 
 .action-select {
-  padding: 0.375rem 0.75rem;
+  padding: 0.25rem 0.5rem;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.875rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
   background: white;
-  min-width: 120px;
+  min-width: 100px;
 }
 
 .action-select:focus {
@@ -374,12 +374,12 @@ const bulkDelete = async () => {
 }
 
 .action-input {
-  padding: 0.375rem 0.75rem;
+  padding: 0.25rem 0.5rem;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.875rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
   background: white;
-  min-width: 120px;
+  min-width: 100px;
 }
 
 .action-input:focus {

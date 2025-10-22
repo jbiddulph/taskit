@@ -173,7 +173,7 @@
             ]"
           >
             <Icon name="CheckSquare" class="w-4 h-4" />
-            {{ isSelectMode ? 'Exit Select' : 'Select' }}
+            {{ isSelectMode ? 'Exit Select' : 'Select for Bulk Update' }}
           </button>
         </div>
         
