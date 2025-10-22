@@ -30,11 +30,16 @@ const currentUser = (page.props.auth as any)?.user;
 
 onMounted(() => {
   console.log('🔥 AppSidebarLayout mounted. User:', currentUser?.id, 'Company:', props.company?.id);
+  console.log('🔥 Supabase URL:', window.VITE_SUPABASE_URL);
+  console.log('🔥 Supabase Key exists:', !!window.VITE_SUPABASE_ANON_KEY);
+  
   if (currentUser?.id && props.company?.id) {
     console.log('🔥 Initializing realtimeService from AppSidebarLayout');
     realtimeService.init(currentUser.id, props.company.id);
   } else {
     console.log('🚨 Missing user ID or company ID for realtime service');
+    console.log('🚨 User ID:', currentUser?.id);
+    console.log('🚨 Company ID:', props.company?.id);
   }
 });
 

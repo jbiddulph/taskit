@@ -1,6 +1,10 @@
 import { supabase } from '@/services/supabaseClient';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
+// Get Supabase configuration for debugging
+const supabaseUrl = (globalThis as any)?.VITE_SUPABASE_URL || (import.meta as any)?.env?.VITE_SUPABASE_URL;
+const supabaseAnonKey = (globalThis as any)?.VITE_SUPABASE_ANON_KEY || (import.meta as any)?.env?.VITE_SUPABASE_ANON_KEY;
+
 interface Message {
   id: number;
   sender_id: number;
@@ -26,6 +30,8 @@ class RealtimeService {
    */
   init(userId: number, companyId: number) {
     console.log('🔥 Initializing realtimeService with userId:', userId, 'companyId:', companyId);
+    console.log('🔥 Supabase URL:', supabaseUrl);
+    console.log('🔥 Supabase Key exists:', !!supabaseAnonKey);
     this.currentUserId = userId;
     this.currentCompanyId = companyId;
     
