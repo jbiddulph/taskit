@@ -80,8 +80,9 @@
             </div>
         </div>
         
-        <div class="flex items-center gap-3">
-          <!-- Project Select Dropdown -->
+        <!-- Mobile Layout: Stacked rows -->
+        <div class="flex flex-col gap-3 md:flex-row md:items-center md:gap-3">
+          <!-- Project Select Dropdown - Full width on mobile -->
           <div class="relative flex items-center gap-2">
             <!-- Project Color Indicator -->
             <div 
@@ -95,7 +96,7 @@
             <select
               v-model="selectedProjectId"
               @change="onProjectChange"
-              class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 min-w-[200px] cursor-pointer"
+              class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 w-full md:min-w-[200px] cursor-pointer"
               :style="currentProject ? { borderLeftColor: currentProject.color, borderLeftWidth: '4px' } : {}"
             >
               <option 
@@ -108,30 +109,37 @@
             </select>
           </div>
           
-          <button
-            @click="handleShowForm"
-            :disabled="!currentProject"
-            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Icon name="Plus" class="w-4 h-4" />
-            Add Todo
-          </button>
+          <!-- Action Buttons Row - Full width on mobile -->
+          <div class="flex items-center gap-3">
+            <!-- Add Todo Button - Full width on mobile, auto width on desktop -->
+            <button
+              @click="handleShowForm"
+              :disabled="!currentProject"
+              class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Icon name="Plus" class="w-4 h-4" />
+              <span class="hidden sm:inline">Add Todo</span>
+              <span class="sm:hidden">Add</span>
+            </button>
 
-          <button
-            @click="showCalendar = !showCalendar"
-            :title="showCalendar ? 'Hide Calendar' : 'Show Calendar'"
-            class="inline-flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600"
-          >
-            <Icon name="Calendar" class="w-4 h-4" />
-          </button>
+            <!-- Calendar Button -->
+            <button
+              @click="showCalendar = !showCalendar"
+              :title="showCalendar ? 'Hide Calendar' : 'Show Calendar'"
+              class="inline-flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600"
+            >
+              <Icon name="Calendar" class="w-4 h-4" />
+            </button>
 
-          <button
-            @click="showFilters = !showFilters"
-            :title="showFilters ? 'Hide Filters' : 'Show Filters'"
-            class="inline-flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600"
-          >
-            <Icon name="SlidersHorizontal" class="w-4 h-4" />
-          </button>
+            <!-- Filters Button -->
+            <button
+              @click="showFilters = !showFilters"
+              :title="showFilters ? 'Hide Filters' : 'Show Filters'"
+              class="inline-flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600"
+            >
+              <Icon name="SlidersHorizontal" class="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
