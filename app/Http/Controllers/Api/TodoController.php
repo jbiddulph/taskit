@@ -47,7 +47,7 @@ class TodoController extends Controller
 
         // Temporarily disable caching to debug the issue
         // $todos = CacheService::cacheUserTodos($user->id, $filters, function () use ($user, $request) {
-        $todos = function () use ($user, $request) {
+        $todos = (function () use ($user, $request) {
             if ($user->company_id) {
                 // Show all todos from the same company
                 $query = Todo::forCompany($user->company_id)
@@ -97,7 +97,7 @@ class TodoController extends Controller
             }
 
             return $query->get();
-        });
+        })();
 
         // Determine which todos are newly assigned to the current user (and not created by them)
         // Use Postgres JSON extraction to safely pluck todo IDs from notification data
