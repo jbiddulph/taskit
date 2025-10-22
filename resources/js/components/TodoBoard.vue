@@ -1803,10 +1803,17 @@ const loadTodos = async () => {
     
     // Check specific todos
     const allTodos = response.data.todo.concat(response.data['in-progress']).concat(response.data['qa-testing']).concat(response.data.done);
-    const todo58 = allTodos.find(t => t.id === 58);
-    const todo1 = allTodos.find(t => t.id === 1);
-    console.log('🔍 Todo 58:', todo58 ? {id: todo58.id, priority: todo58.priority} : 'Not found');
-    console.log('🔍 Todo 1:', todo1 ? {id: todo1.id, priority: todo1.priority} : 'Not found');
+    const subtasks = allTodos.filter(t => t.parent_task_id !== null);
+    const parentTasks = allTodos.filter(t => t.parent_task_id === null);
+    console.log('🔍 Total todos:', allTodos.length);
+    console.log('🔍 Parent tasks:', parentTasks.length);
+    console.log('🔍 Subtasks:', subtasks.length);
+    console.log('🔍 Subtasks by status:', {
+      todo: subtasks.filter(t => t.status === 'todo').length,
+      'in-progress': subtasks.filter(t => t.status === 'in-progress').length,
+      'qa-testing': subtasks.filter(t => t.status === 'qa-testing').length,
+      done: subtasks.filter(t => t.status === 'done').length
+    });
     
     todos.value = allTodos;
     

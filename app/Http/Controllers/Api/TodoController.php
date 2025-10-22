@@ -116,17 +116,30 @@ class TodoController extends Controller
             $todo->setAttribute('is_new_assigned', $isNew);
         });
 
+        // Collect all subtasks from parent tasks
+        $allSubtasks = collect();
+        $todos->each(function ($todo) use ($allSubtasks) {
+            if ($todo->subtasks) {
+                $allSubtasks = $allSubtasks->merge($todo->subtasks);
+            }
+        });
+
+        // Combine parent tasks and subtasks
+        $allTodos = $todos->merge($allSubtasks);
+
         // Group by status for Kanban board
         $grouped = [
-            'todo' => $todos->where('status', 'todo')->values(),
-            'in-progress' => $todos->where('status', 'in-progress')->values(),
-            'qa-testing' => $todos->where('status', 'qa-testing')->values(),
-            'done' => $todos->where('status', 'done')->values(),
+            'todo' => $allTodos->where('status', 'todo')->values(),
+            'in-progress' => $allTodos->where('status', 'in-progress')->values(),
+            'qa-testing' => $allTodos->where('status', 'qa-testing')->values(),
+            'done' => $allTodos->where('status', 'done')->values(),
         ];
 
         // Debug logging to see what data is being returned
         \Log::info('API returning todos', [
-            'todo_count' => $todos->count(),
+            'parent_todo_count' => $todos->count(),
+            'subtask_count' => $allSubtasks->count(),
+            'total_todo_count' => $allTodos->count(),
             'todo_priorities' => $todos->take(5)->map(function($todo) {
                 return ['id' => $todo->id, 'priority' => $todo->priority];
             })->toArray()
