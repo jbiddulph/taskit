@@ -656,17 +656,17 @@ const {
   isSelected
 } = useBulkOperations();
 
-// Watch for project changes and emit to parent
-watch(currentProject, (newProject) => {
-  emit('project-changed', newProject);
-}, { immediate: true });
-
 // Wrapper function to handle todo object
 const toggleSelection = (todo: Todo) => {
   toggleSelectionById(todo.id);
 };
 
 const currentProject = ref<Project | null>(null);
+
+// Watch for project changes and emit to parent
+watch(currentProject, (newProject) => {
+  emit('project-changed', newProject);
+}, { immediate: true });
 const selectedProjectId = ref<string>('');
 const editingTodo = ref<Todo | null>(null);
 const editingProjectName = ref('');

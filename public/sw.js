@@ -117,7 +117,9 @@ self.addEventListener('fetch', (event) => {
                   const headers = new Headers(responseToCache.headers);
                   headers.set('sw-cache-timestamp', expirationTime.toString());
                   
-                  const modifiedResponse = new Response(responseToCache.body, {
+                  // Clone the response before modifying to avoid body consumption issues
+                  const responseClone = responseToCache.clone();
+                  const modifiedResponse = new Response(responseClone.body, {
                     status: responseToCache.status,
                     statusText: responseToCache.statusText,
                     headers: headers
