@@ -8,99 +8,103 @@
     </div>
 
     <div class="bulk-actions">
-      <!-- Status Change -->
-      <div class="action-group">
-        <label class="action-label">Status:</label>
-        <select 
-          v-model="selectedStatus" 
-          @change="bulkChangeStatus"
-          class="action-select"
-          :disabled="isProcessing"
-        >
-          <option value="">Select status...</option>
-          <option value="todo">To Do</option>
-          <option value="in-progress">In Progress</option>
-          <option value="qa-testing">Q&A/Testing</option>
-          <option value="done">Done</option>
-        </select>
+      <!-- Row 1: Status and Priority -->
+      <div class="action-row">
+        <div class="action-group">
+          <label class="action-label">Status:</label>
+          <select 
+            v-model="selectedStatus" 
+            @change="bulkChangeStatus"
+            class="action-select"
+            :disabled="isProcessing"
+          >
+            <option value="">Please Select</option>
+            <option value="todo">To Do</option>
+            <option value="in-progress">In Progress</option>
+            <option value="qa-testing">Q&A/Testing</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+
+        <div class="action-group">
+          <label class="action-label">Priority:</label>
+          <select 
+            v-model="selectedPriority" 
+            @change="bulkChangePriority"
+            class="action-select"
+            :disabled="isProcessing"
+          >
+            <option value="">Please Select</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Critical">Critical</option>
+          </select>
+        </div>
       </div>
 
-      <!-- Priority Change -->
-      <div class="action-group">
-        <label class="action-label">Priority:</label>
-        <select 
-          v-model="selectedPriority" 
-          @change="bulkChangePriority"
-          class="action-select"
-          :disabled="isProcessing"
-        >
-          <option value="">Select priority...</option>
-          <option value="Low">Low</option>
-          <option value="Medium">Medium</option>
-          <option value="High">High</option>
-          <option value="Critical">Critical</option>
-        </select>
+      <!-- Row 2: Assignee and Type -->
+      <div class="action-row">
+        <div class="action-group">
+          <label class="action-label">Assignee:</label>
+          <select 
+            v-model="selectedAssignee" 
+            @change="bulkChangeAssignee"
+            class="action-select"
+            :disabled="isProcessing"
+          >
+            <option value="">Please Select</option>
+            <option v-for="assignee in availableAssignees" :key="assignee" :value="assignee">
+              {{ assignee }}
+            </option>
+            <option value="unassigned">Unassigned</option>
+          </select>
+        </div>
+
+        <div class="action-group">
+          <label class="action-label">Type:</label>
+          <select 
+            v-model="selectedType" 
+            @change="bulkChangeType"
+            class="action-select"
+            :disabled="isProcessing"
+          >
+            <option value="">Please Select</option>
+            <option value="Bug">Bug</option>
+            <option value="Feature">Feature</option>
+            <option value="Task">Task</option>
+            <option value="Story">Story</option>
+            <option value="Epic">Epic</option>
+          </select>
+        </div>
       </div>
 
-      <!-- Assignee Change -->
-      <div class="action-group">
-        <label class="action-label">Assignee:</label>
-        <select 
-          v-model="selectedAssignee" 
-          @change="bulkChangeAssignee"
-          class="action-select"
-          :disabled="isProcessing"
-        >
-          <option value="">Select assignee...</option>
-          <option v-for="assignee in availableAssignees" :key="assignee" :value="assignee">
-            {{ assignee }}
-          </option>
-          <option value="unassigned">Unassigned</option>
-        </select>
-      </div>
+      <!-- Row 3: Due Date and Tags -->
+      <div class="action-row">
+        <div class="action-group">
+          <label class="action-label">Due Date:</label>
+          <input
+            v-model="selectedDueDate"
+            @change="bulkChangeDueDate"
+            type="date"
+            placeholder="Please Select"
+            class="action-input"
+            :disabled="isProcessing"
+          />
+        </div>
 
-      <!-- Type Change -->
-      <div class="action-group">
-        <label class="action-label">Type:</label>
-        <select 
-          v-model="selectedType" 
-          @change="bulkChangeType"
-          class="action-select"
-          :disabled="isProcessing"
-        >
-          <option value="">Select type...</option>
-          <option value="Bug">Bug</option>
-          <option value="Feature">Feature</option>
-          <option value="Task">Task</option>
-          <option value="Story">Story</option>
-          <option value="Epic">Epic</option>
-        </select>
-      </div>
-
-      <!-- Due Date Change -->
-      <div class="action-group">
-        <label class="action-label">Due Date:</label>
-        <input
-          v-model="selectedDueDate"
-          @change="bulkChangeDueDate"
-          type="date"
-          class="action-input"
-          :disabled="isProcessing"
-        />
-      </div>
-
-      <!-- Tags Change -->
-      <div class="action-group">
-        <label class="action-label">Tags:</label>
-        <input
-          v-model="selectedTags"
-          @keyup.enter="bulkChangeTags"
-          @blur="bulkChangeTags"
-          type="text"
-          placeholder="Enter tags (comma separated)"
-          class="action-input"
-          :disabled="isProcessing"
-        />
+        <div class="action-group">
+          <label class="action-label">Tags:</label>
+          <input
+            v-model="selectedTags"
+            @keyup.enter="bulkChangeTags"
+            @blur="bulkChangeTags"
+            type="text"
+            placeholder="Type here, comma separated"
+            class="action-input"
+            :disabled="isProcessing"
+          />
+        </div>
       </div>
 
       <!-- Delete Action -->
@@ -277,12 +281,19 @@ const bulkDelete = async () => {
   z-index: 50;
   background: white;
   border-top: 2px solid #3b82f6;
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
   box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
   animation: slideUp 0.3s ease-out;
+}
+
+@media (min-width: 768px) {
+  .bulk-operations-bar {
+    align-items: center;
+    padding: 1rem;
+  }
 }
 
 @keyframes slideUp {
@@ -305,9 +316,27 @@ const bulkDelete = async () => {
 
 .bulk-actions {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.75rem;
   flex: 1;
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .bulk-actions {
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  .action-row {
+    display: contents;
+  }
 }
 
 .action-group {

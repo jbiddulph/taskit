@@ -135,7 +135,12 @@
             <button
               @click="showFilters = !showFilters"
               :title="showFilters ? 'Hide Filters' : 'Show Filters'"
-              class="inline-flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600"
+              :class="[
+                'inline-flex items-center justify-center w-10 h-10 rounded-lg border transition-colors',
+                showFilters 
+                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-600' 
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
+              ]"
             >
               <Icon name="SlidersHorizontal" class="w-4 h-4" />
             </button>
@@ -144,7 +149,8 @@
       </div>
 
       <!-- Search and Filters -->
-      <div v-if="showFilters" class="mt-4 flex flex-col lg:flex-row gap-4">
+      <div v-if="showFilters" class="mt-4 space-y-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <!-- Search Bar -->
         <div class="flex-1 relative">
           <Icon name="Search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
@@ -155,7 +161,8 @@
           />
         </div>
         
-          <!-- Select Mode Toggle -->
+        <!-- Select Mode Toggle -->
+        <div class="flex justify-center">
           <button
             @click="toggleSelectMode"
             :class="[
@@ -168,48 +175,65 @@
             <Icon name="CheckSquare" class="w-4 h-4" />
             {{ isSelectMode ? 'Exit Select' : 'Select' }}
           </button>
-          
+        </div>
         
-        <div class="flex gap-2">
-          <select
-            v-model="priorityFilter"
-            class="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-          >
-            <option value="">All Priorities</option>
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-            <option value="Critical">Critical</option>
-          </select>
+        <!-- Filter Dropdowns - Mobile: Stacked, Desktop: Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <!-- Priority Filter -->
+          <div>
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
+            <select
+              v-model="priorityFilter"
+              class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="">All Priorities</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
           
-          <TypeFilter v-model="typeFilter" />
+          <!-- Type Filter -->
+          <div>
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+            <TypeFilter v-model="typeFilter" />
+          </div>
           
-          <select
-            v-model="assigneeFilter"
-            class="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-          >
-            <option value="">All Assignees</option>
-            <option v-for="assignee in uniqueAssignees" :key="assignee" :value="assignee">
-              {{ assignee }}
-            </option>
-          </select>
+          <!-- Assignee Filter -->
+          <div>
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Assignee</label>
+            <select
+              v-model="assigneeFilter"
+              class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="">All Assignees</option>
+              <option v-for="assignee in uniqueAssignees" :key="assignee" :value="assignee">
+                {{ assignee }}
+              </option>
+            </select>
+          </div>
+        </div>
 
+        <!-- Save View and Saved Views - Mobile: Stacked, Desktop: Row -->
+        <div class="flex flex-col sm:flex-row gap-3">
           <!-- Save View Button -->
           <button
             type="button"
             @click="showSaveViewModal = true"
-            class="px-2 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600"
+            class="flex-1 sm:flex-none px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
             title="Save current filters as a view"
           >
+            <Icon name="Save" class="w-4 h-4 inline mr-2" />
             Save View
           </button>
 
           <!-- Saved Views Dropdown - Only show if there are saved views -->
-          <div v-if="savedViews.length > 0" class="flex items-center gap-2">
+          <div v-if="savedViews.length > 0" class="flex flex-col sm:flex-row gap-2">
             <select
               v-model="selectedSavedViewName"
               @change="onApplySavedView"
-              class="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="">Saved Views</option>
               <option v-for="view in savedViews" :key="view.name" :value="view.name">{{ view.name }}</option>
@@ -219,9 +243,10 @@
               v-if="selectedSavedViewName"
               type="button"
               @click="deleteSavedView"
-              class="px-2 py-1.5 text-sm bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg border border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/50"
+              class="px-3 py-2 text-sm bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg border border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/50"
               title="Delete selected view"
             >
+              <Icon name="Trash2" class="w-4 h-4 inline mr-1" />
               Delete
             </button>
           </div>
