@@ -33,12 +33,8 @@ Route::delete('projects/{project}/with-todos', [ProjectController::class, 'destr
     Route::get('projects/{project}/stats', [ProjectController::class, 'stats']);
     Route::get('projects-with-stats', [ProjectController::class, 'withStats']);
     
-    // Todo routes
+    // Todo routes - Bulk operations MUST come before resource routes
     Route::patch('todos/update-order', [TodoController::class, 'updateOrder']);
-    Route::apiResource('todos', TodoController::class);
-    Route::patch('todos/{todo}/status', [TodoController::class, 'updateStatus']);
-    Route::post('todos/{todo}/mark-assignment-seen', [TodoController::class, 'markAssignmentSeen']);
-    Route::post('todos/{todo}/subtasks', [TodoController::class, 'createSubtask']);
     Route::get('todos/assignees', [TodoController::class, 'assignees']);
     
     // Bulk operations
@@ -49,6 +45,12 @@ Route::delete('projects/{project}/with-todos', [ProjectController::class, 'destr
     Route::patch('todos/bulk/due-date', [TodoController::class, 'bulkUpdateDueDate']);
     Route::patch('todos/bulk/tags', [TodoController::class, 'bulkUpdateTags']);
     Route::delete('todos/bulk', [TodoController::class, 'bulkDelete']);
+    
+    // Resource routes (these must come after specific routes)
+    Route::apiResource('todos', TodoController::class);
+    Route::patch('todos/{todo}/status', [TodoController::class, 'updateStatus']);
+    Route::post('todos/{todo}/mark-assignment-seen', [TodoController::class, 'markAssignmentSeen']);
+    Route::post('todos/{todo}/subtasks', [TodoController::class, 'createSubtask']);
     
     // Todo comments
     Route::apiResource('todos.comments', TodoCommentController::class);
