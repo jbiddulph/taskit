@@ -9,6 +9,7 @@ interface Props {
         name: string;
         code: string;
     } | null;
+    projectColor?: string | null;
 }
 
 withDefaults(defineProps<Props>(), {
@@ -18,7 +19,7 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbs" :company="company">
+    <AppLayout :breadcrumbs="breadcrumbs" :company="company" :project-color="projectColor">
         <slot />
     </AppLayout>
 </template>

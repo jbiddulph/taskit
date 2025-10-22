@@ -2,7 +2,6 @@
   <div 
     class="h-full flex flex-col"
     :class="{ 'pb-24': isSelectMode && hasSelection }"
-    :style="currentProject ? { borderColor: currentProject.color, borderWidth: '1px', borderStyle: 'solid' } : {}"
   >
     <!-- Header with Search and Filters -->
     <div 
@@ -628,6 +627,11 @@ import { useAnalytics } from '../composables/useAnalytics';
 import { useKeyboardShortcuts } from '../composables/useKeyboardShortcuts';
 import { useBulkOperations } from '../composables/useBulkOperations';
 
+// Define emits
+const emit = defineEmits<{
+  'project-changed': [project: any];
+}>();
+
 const todos = ref<Todo[]>([]);
 const projects = ref<Project[]>([]);
 const showForm = ref(false);
@@ -651,6 +655,11 @@ const {
   toggleSelection: toggleSelectionById,
   isSelected
 } = useBulkOperations();
+
+// Watch for project changes and emit to parent
+watch(currentProject, (newProject) => {
+  emit('project-changed', newProject);
+}, { immediate: true });
 
 // Wrapper function to handle todo object
 const toggleSelection = (todo: Todo) => {

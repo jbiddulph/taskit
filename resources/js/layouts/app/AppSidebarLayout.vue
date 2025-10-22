@@ -16,6 +16,7 @@ interface Props {
         name: string;
         code: string;
     } | null;
+    projectColor?: string | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -45,7 +46,7 @@ onUnmounted(() => {
 <template>
     <AppShell variant="sidebar">
         <AppSidebar />
-        <AppContent variant="sidebar" class="overflow-x-hidden">
+        <AppContent variant="sidebar" class="overflow-x-hidden" :project-color="projectColor">
             <AppSidebarHeader :breadcrumbs="breadcrumbs" :company="company" />
             <slot />
         </AppContent>
