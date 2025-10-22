@@ -92,10 +92,13 @@
           >
             <TodoCard
               :todo="todo"
+              :is-select-mode="isSelectMode"
+              :is-selected="selectedItems?.has(todo.id) || false"
               @edit="$emit('edit', $event)"
               @delete="$emit('delete', $event)"
               @update="$emit('update', $event)"
               @add-subtask="$emit('add-subtask', $event)"
+              @toggle-selection="$emit('toggle-selection', $event)"
             />
           </div>
           
@@ -129,10 +132,14 @@ interface Props {
   todos: Todo[];
   showAddButton?: boolean;
   currentProjectId?: number | null;
+  isSelectMode?: boolean;
+  selectedItems?: Set<number>;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showAddButton: false,
+  isSelectMode: false,
+  selectedItems: () => new Set(),
 });
 
 const emit = defineEmits<{
@@ -144,6 +151,7 @@ const emit = defineEmits<{
   drop: [todo: Todo, newStatus: string];
   reorder: [draggedTodo: Todo, targetTodo: Todo, position: 'before' | 'after'];
   'add-subtask': [todo: Todo];
+  'toggle-selection': [todo: Todo];
 }>();
 
 const dropZone = ref<HTMLElement>();

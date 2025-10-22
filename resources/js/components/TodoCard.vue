@@ -4,12 +4,23 @@
       'group relative rounded-lg border p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer',
       isOverdueAndNotDone 
         ? 'bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-700' 
-        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700',
+      isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
     ]"
     @click="handleClick"
   >
+    <!-- Selection checkbox (only in select mode) -->
+    <div v-if="isSelectMode" class="absolute top-2 left-2 z-10">
+      <input
+        type="checkbox"
+        :checked="isSelected"
+        @change="$emit('toggle-selection', todo)"
+        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+      />
+    </div>
+
     <!-- Priority indicator -->
-    <div class="flex items-start justify-between mb-2">
+    <div class="flex items-start justify-between mb-2" :class="{ 'ml-6': isSelectMode }">
       <div class="flex items-center gap-2">
         <span
           :class="[
@@ -240,6 +251,8 @@ import type { Todo } from '@/services/todoApi';
 
 interface Props {
   todo: Todo;
+  isSelectMode?: boolean;
+  isSelected?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -248,6 +261,7 @@ const emit = defineEmits<{
   delete: [id: string];
   update: [todo: Todo];
   'add-subtask': [todo: Todo];
+  'toggle-selection': [todo: Todo];
 }>();
 
 // Title editing state
@@ -279,7 +293,11 @@ let isDragging = false;
 
 const handleClick = () => {
   if (!isDragging) {
-    emit('edit', props.todo);
+    if (props.isSelectMode) {
+      emit('toggle-selection', props.todo);
+    } else {
+      emit('edit', props.todo);
+    }
   }
   isDragging = false;
 };

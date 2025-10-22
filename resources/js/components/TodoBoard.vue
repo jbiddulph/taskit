@@ -144,6 +144,20 @@
           />
         </div>
         
+        <!-- Select Mode Toggle -->
+        <button
+          @click="toggleSelectMode"
+          :class="[
+            'flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors',
+            isSelectMode 
+              ? 'bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-300' 
+              : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700'
+          ]"
+        >
+          <Icon name="CheckSquare" class="w-4 h-4" />
+          {{ isSelectMode ? 'Exit Select' : 'Select' }}
+        </button>
+        
         <div class="flex gap-2">
           <select
             v-model="priorityFilter"
@@ -224,6 +238,18 @@
     </div>
     <TodoStats v-else :todos="todos" />
 
+    <!-- Bulk Operations Bar -->
+    <BulkOperationsBar
+      v-if="isSelectMode && hasSelection"
+      :available-assignees="uniqueAssignees"
+      @bulk-status-change="handleBulkStatusChange"
+      @bulk-priority-change="handleBulkPriorityChange"
+      @bulk-assignee-change="handleBulkAssigneeChange"
+      @bulk-delete="handleBulkDelete"
+      @clear-selection="clearSelection"
+      @toggle-select-mode="toggleSelectMode"
+    />
+
     <!-- Kanban Board -->
     <div class="flex-1 flex gap-6 overflow-x-auto pb-4">
       <TodoColumn
@@ -232,6 +258,8 @@
         :todos="filteredTodos.todo"
         :show-add-button="true"
         :current-project-id="currentProject?.id || null"
+        :is-select-mode="isSelectMode"
+        :selected-items="selectedItems"
         @add="handleShowForm"
         @edit="editTodo"
         @delete="deleteTodo"
@@ -240,6 +268,7 @@
         @reorder="handleReorder"
         @menu="() => {}"
         @add-subtask="handleAddSubtask"
+        @toggle-selection="toggleSelection"
       />
       
       <TodoColumn
@@ -247,6 +276,8 @@
         status="in-progress"
         :todos="filteredTodos.inProgress"
         :current-project-id="currentProject?.id || null"
+        :is-select-mode="isSelectMode"
+        :selected-items="selectedItems"
         @edit="editTodo"
         @delete="deleteTodo"
         @update="updateTodo"
@@ -254,6 +285,7 @@
         @reorder="handleReorder"
         @menu="() => {}"
         @add-subtask="handleAddSubtask"
+        @toggle-selection="toggleSelection"
       />
       
       <TodoColumn
@@ -261,6 +293,8 @@
         status="qa-testing"
         :todos="filteredTodos.qaTesting"
         :current-project-id="currentProject?.id || null"
+        :is-select-mode="isSelectMode"
+        :selected-items="selectedItems"
         @edit="editTodo"
         @delete="deleteTodo"
         @update="updateTodo"
@@ -268,6 +302,7 @@
         @reorder="handleReorder"
         @menu="() => {}"
         @add-subtask="handleAddSubtask"
+        @toggle-selection="toggleSelection"
       />
       
       <TodoColumn
@@ -275,6 +310,8 @@
         status="done"
         :todos="filteredTodos.done"
         :current-project-id="currentProject?.id || null"
+        :is-select-mode="isSelectMode"
+        :selected-items="selectedItems"
         @edit="editTodo"
         @delete="deleteTodo"
         @update="updateTodo"
@@ -282,6 +319,7 @@
         @reorder="handleReorder"
         @menu="() => {}"
         @add-subtask="handleAddSubtask"
+        @toggle-selection="toggleSelection"
       />
     </div>
 
@@ -516,6 +554,14 @@
         </div>
       </div>
     </div>
+
+    <!-- Keyboard Shortcuts Help Modal -->
+    <KeyboardShortcutsHelp
+      v-if="showKeyboardHelp"
+      :show-help="showKeyboardHelp"
+      :shortcuts-by-category="getShortcutsByCategory()"
+      @close="showKeyboardHelp = false"
+    />
   </div>
 </template>
 
@@ -527,10 +573,14 @@ import TodoForm from './TodoForm.vue';
 import TodoStats from './TodoStats.vue';
 import TypeFilter from './TypeFilter.vue';
 import CalendarView from './CalendarView.vue';
+import BulkOperationsBar from './BulkOperationsBar.vue';
+import KeyboardShortcutsHelp from './KeyboardShortcutsHelp.vue';
 import { todoApi, type Project, type Todo } from '@/services/todoApi';
 import { realtimeService } from '@/services/realtimeService';
 import { deleteImagesInHtml } from '@/services/supabaseClient';
 import { useAnalytics } from '../composables/useAnalytics';
+import { useKeyboardShortcuts } from '../composables/useKeyboardShortcuts';
+import { useBulkOperations } from '../composables/useBulkOperations';
 
 const todos = ref<Todo[]>([]);
 const projects = ref<Project[]>([]);
@@ -540,7 +590,21 @@ const showEditProject = ref(false);
 const showCalendar = ref(false);
 const showFilters = ref(false);
 const showSaveViewModal = ref(false);
+const showKeyboardHelp = ref(false);
 const { trackTodoEvent, trackProjectEvent } = useAnalytics();
+
+// Initialize keyboard shortcuts and bulk operations
+const { registerShortcut, getShortcutsByCategory } = useKeyboardShortcuts();
+const { 
+  isSelectMode, 
+  selectedItems, 
+  selectedCount, 
+  hasSelection,
+  toggleSelectMode,
+  clearSelection,
+  toggleSelection,
+  isSelected
+} = useBulkOperations();
 
 const currentProject = ref<Project | null>(null);
 const selectedProjectId = ref<string>('');
@@ -1471,6 +1535,127 @@ const onProjectChange = async () => {
   }
 };
 
+// Register keyboard shortcuts
+const registerKeyboardShortcuts = () => {
+  // New todo shortcut
+  registerShortcut({
+    key: 'n',
+    ctrlKey: true,
+    action: () => {
+      handleShowForm();
+    },
+    description: 'Create new todo',
+    category: 'Actions'
+  });
+
+  // Search shortcut
+  registerShortcut({
+    key: 'f',
+    ctrlKey: true,
+    action: () => {
+      const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
+      if (searchInput) {
+        searchInput.focus();
+      }
+    },
+    description: 'Focus search',
+    category: 'Navigation'
+  });
+
+  // Save shortcut
+  registerShortcut({
+    key: 's',
+    ctrlKey: true,
+    action: () => {
+      // This would save any pending changes
+      console.log('Save shortcut triggered');
+    },
+    description: 'Save changes',
+    category: 'Actions'
+  });
+
+  // Help shortcut
+  registerShortcut({
+    key: '?',
+    action: () => {
+      showKeyboardHelp.value = !showKeyboardHelp.value;
+    },
+    description: 'Show keyboard shortcuts',
+    category: 'Help'
+  });
+
+  // Toggle select mode
+  registerShortcut({
+    key: 'a',
+    ctrlKey: true,
+    action: () => {
+      toggleSelectMode();
+    },
+    description: 'Toggle select mode',
+    category: 'Bulk Operations'
+  });
+
+  // Escape to exit select mode
+  registerShortcut({
+    key: 'Escape',
+    action: () => {
+      if (isSelectMode.value) {
+        toggleSelectMode();
+      }
+    },
+    description: 'Exit select mode',
+    category: 'Bulk Operations'
+  });
+};
+
+// Bulk operations methods
+const handleBulkStatusChange = async (status: string) => {
+  const selectedIds = Array.from(selectedItems.value);
+  try {
+    await todoApi.bulkUpdateStatus(selectedIds, status);
+    await loadTodos();
+    clearSelection();
+  } catch (error) {
+    console.error('Failed to update status:', error);
+  }
+};
+
+const handleBulkPriorityChange = async (priority: string) => {
+  const selectedIds = Array.from(selectedItems.value);
+  try {
+    await todoApi.bulkUpdatePriority(selectedIds, priority);
+    await loadTodos();
+    clearSelection();
+  } catch (error) {
+    console.error('Failed to update priority:', error);
+  }
+};
+
+const handleBulkAssigneeChange = async (assignee: string | null) => {
+  const selectedIds = Array.from(selectedItems.value);
+  try {
+    await todoApi.bulkUpdateAssignee(selectedIds, assignee);
+    await loadTodos();
+    clearSelection();
+  } catch (error) {
+    console.error('Failed to update assignee:', error);
+  }
+};
+
+const handleBulkDelete = async () => {
+  const selectedIds = Array.from(selectedItems.value);
+  const confirmed = confirm(`Are you sure you want to delete ${selectedIds.length} todo(s)?`);
+  if (confirmed) {
+    try {
+      await todoApi.bulkDelete(selectedIds);
+      await loadTodos();
+      clearSelection();
+    } catch (error) {
+      console.error('Failed to delete todos:', error);
+    }
+  }
+};
+
 // Load current project from localStorage
 const loadCurrentProject = async () => {
   try {
@@ -1541,6 +1726,9 @@ watch(showCreateProject, (newValue) => {
 
 // Single onMounted hook to handle all initialization
 onMounted(async () => {
+  // Register keyboard shortcuts
+  registerKeyboardShortcuts();
+  
   // Load projects first (so dropdown has options)
   await loadProjects();
   
