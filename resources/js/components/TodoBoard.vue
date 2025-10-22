@@ -1537,10 +1537,11 @@ const onProjectChange = async () => {
 
 // Register keyboard shortcuts
 const registerKeyboardShortcuts = () => {
-  // New todo shortcut
+  // New todo shortcut (using Cmd+Shift+N to avoid browser conflict)
   registerShortcut({
     key: 'n',
     ctrlKey: true,
+    shiftKey: true,
     action: () => {
       handleShowForm();
     },
@@ -1548,10 +1549,11 @@ const registerKeyboardShortcuts = () => {
     category: 'Actions'
   });
 
-  // Search shortcut
+  // Search shortcut (using Cmd+Shift+F to avoid browser conflict)
   registerShortcut({
     key: 'f',
     ctrlKey: true,
+    shiftKey: true,
     action: () => {
       const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
       if (searchInput) {
@@ -1562,10 +1564,11 @@ const registerKeyboardShortcuts = () => {
     category: 'Navigation'
   });
 
-  // Save shortcut
+  // Save shortcut (using Cmd+Shift+S to avoid browser conflict)
   registerShortcut({
     key: 's',
     ctrlKey: true,
+    shiftKey: true,
     action: () => {
       // This would save any pending changes
       console.log('Save shortcut triggered');
@@ -1584,10 +1587,11 @@ const registerKeyboardShortcuts = () => {
     category: 'Help'
   });
 
-  // Toggle select mode
+  // Toggle select mode (using Cmd+Shift+A to avoid browser conflict)
   registerShortcut({
     key: 'a',
     ctrlKey: true,
+    shiftKey: true,
     action: () => {
       toggleSelectMode();
     },
