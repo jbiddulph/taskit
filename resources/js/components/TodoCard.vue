@@ -7,6 +7,7 @@
         : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700',
       isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
     ]"
+    :style="projectColor ? { borderColor: projectColor, borderWidth: '1px', borderStyle: 'solid' } : {}"
     @click="handleClick"
   >
     <!-- Selection checkbox (only in select mode) -->

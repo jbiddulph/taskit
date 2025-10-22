@@ -143,7 +143,10 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Count subtasks in this column
 const subtaskCount = computed(() => {
-  return props.todos.filter(todo => todo.parent_task_id !== null).length;
+  const subtasks = props.todos.filter(todo => todo.parent_task_id !== null);
+  console.log(`Column: ${props.title}, Total todos: ${props.todos.length}, Subtasks: ${subtasks.length}`);
+  console.log('Todos with parent_task_id:', props.todos.map(t => ({ id: t.id, title: t.title, parent_task_id: t.parent_task_id })));
+  return subtasks.length;
 });
 
 const emit = defineEmits<{

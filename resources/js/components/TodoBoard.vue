@@ -2,6 +2,7 @@
   <div 
     class="h-full flex flex-col"
     :class="{ 'pb-24': isSelectMode && hasSelection }"
+    :style="currentProject ? { borderColor: currentProject.color, borderWidth: '1px', borderStyle: 'solid' } : {}"
   >
     <!-- Header with Search and Filters -->
     <div 
