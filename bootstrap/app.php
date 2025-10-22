@@ -34,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register middleware aliases
         $middleware->alias([
             'subscription.access' => CheckSubscriptionAccess::class,
+            'api.rate.limit' => \App\Http\Middleware\ApiRateLimit::class,
         ]);
 
     })

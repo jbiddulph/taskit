@@ -7,6 +7,7 @@ use App\Models\Todo;
 use App\Models\Notification;
 use App\Services\TodoWebSocketService;
 use App\Services\AssignmentNotificationService;
+use App\Services\CacheService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -30,55 +31,72 @@ class TodoController extends Controller
     {
         $user = Auth::user();
         
-        if ($user->company_id) {
-            // Show all todos from the same company
-            $query = Todo::forCompany($user->company_id)
-                ->with(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask'])
-                ->whereNull('parent_task_id') // Only load parent tasks, subtasks will be loaded via the 'subtasks' relationship
-                ->orderBy('created_at', 'desc');
-        } else {
-            // Fallback to user's own todos if no company
-            $query = Todo::forUser($user)
-                ->with(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask'])
-                ->whereNull('parent_task_id') // Only load parent tasks, subtasks will be loaded via the 'subtasks' relationship
-                ->orderBy('created_at', 'desc');
-        }
+        // Build cache key based on filters
+        $filters = [
+            'user_id' => $user->id,
+            'company_id' => $user->company_id,
+            'project_id' => $request->get('project_id'),
+            'status' => $request->get('status'),
+            'priority' => $request->get('priority'),
+            'type' => $request->get('type'),
+            'assignee' => $request->get('assignee'),
+            'search' => $request->get('search'),
+            'page' => $request->get('page', 1),
+            'per_page' => $request->get('per_page', 20)
+        ];
 
-        // Filter by project if specified
-        if ($request->filled('project_id')) {
-            $query->forProject($request->project_id);
-        }
+        // Use caching for frequently accessed data
+        $todos = CacheService::cacheUserTodos($user->id, $filters, function () use ($user, $request) {
+            if ($user->company_id) {
+                // Show all todos from the same company
+                $query = Todo::forCompany($user->company_id)
+                    ->with(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask'])
+                    ->whereNull('parent_task_id') // Only load parent tasks, subtasks will be loaded via the 'subtasks' relationship
+                    ->orderBy('created_at', 'desc');
+            } else {
+                // Fallback to user's own todos if no company
+                $query = Todo::forUser($user)
+                    ->with(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask'])
+                    ->whereNull('parent_task_id') // Only load parent tasks, subtasks will be loaded via the 'subtasks' relationship
+                    ->orderBy('created_at', 'desc');
+            }
 
-        // Apply filters
-        if ($request->filled('search')) {
-            $query->search($request->search);
-        }
+            // Filter by project if specified
+            if ($request->filled('project_id')) {
+                $query->forProject($request->project_id);
+            }
 
-        if ($request->filled('priority')) {
-            $query->byPriority($request->priority);
-        }
+            // Apply filters
+            if ($request->filled('search')) {
+                $query->search($request->search);
+            }
 
-        if ($request->filled('type')) {
-            $query->byType($request->type);
-        }
+            if ($request->filled('priority')) {
+                $query->byPriority($request->priority);
+            }
 
-        if ($request->filled('assignee')) {
-            $query->byAssignee($request->assignee);
-        }
+            if ($request->filled('type')) {
+                $query->byType($request->type);
+            }
 
-        if ($request->filled('status')) {
-            $query->byStatus($request->status);
-        }
+            if ($request->filled('assignee')) {
+                $query->byAssignee($request->assignee);
+            }
 
-        if ($request->boolean('overdue')) {
-            $query->overdue();
-        }
+            if ($request->filled('status')) {
+                $query->byStatus($request->status);
+            }
 
-        if ($request->boolean('due_today')) {
-            $query->dueToday();
-        }
+            if ($request->boolean('overdue')) {
+                $query->overdue();
+            }
 
-        $todos = $query->get();
+            if ($request->boolean('due_today')) {
+                $query->dueToday();
+            }
+
+            return $query->get();
+        });
 
         // Determine which todos are newly assigned to the current user (and not created by them)
         // Use Postgres JSON extraction to safely pluck todo IDs from notification data
@@ -164,6 +182,12 @@ class TodoController extends Controller
         ]);
 
         $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
+
+        // Invalidate caches
+        CacheService::invalidateUserCaches(Auth::id());
+        if ($todo->project_id) {
+            CacheService::invalidateProjectCaches($todo->project_id);
+        }
 
         // Send real-time notification
         $this->webSocketService->todoCreated($todo);
