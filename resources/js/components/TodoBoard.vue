@@ -142,7 +142,7 @@
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
               ]"
             >
-              <Icon name="SlidersHorizontal" class="w-4 h-4" />
+              <Icon name="Settings" class="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -161,27 +161,12 @@
           />
         </div>
         
-        <!-- Select Mode Toggle -->
-        <div class="flex justify-center">
-          <button
-            @click="toggleSelectMode"
-            :class="[
-              'flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors',
-              isSelectMode 
-                ? 'bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-300' 
-                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700'
-            ]"
-          >
-            <Icon name="CheckSquare" class="w-4 h-4" />
-            {{ isSelectMode ? 'Exit Select' : 'Select for Bulk Update' }}
-          </button>
-        </div>
         
         <!-- Filter Dropdowns - Mobile: Stacked, Desktop: Row -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <!-- Priority Filter -->
           <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Priority Filter</label>
             <select
               v-model="priorityFilter"
               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -196,13 +181,13 @@
           
           <!-- Type Filter -->
           <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Type Filter</label>
             <TypeFilter v-model="typeFilter" />
           </div>
           
           <!-- Assignee Filter -->
           <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Assignee</label>
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Assignee Filter</label>
             <select
               v-model="assigneeFilter"
               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -226,6 +211,20 @@
           >
             <Icon name="Save" class="w-4 h-4 inline mr-2" />
             Save View
+          </button>
+
+          <!-- Select for Bulk Update Button -->
+          <button
+            @click="toggleSelectMode"
+            :class="[
+              'flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors',
+              isSelectMode 
+                ? 'bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-300' 
+                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700'
+            ]"
+          >
+            <Icon name="CheckSquare" class="w-4 h-4" />
+            {{ isSelectMode ? 'Exit Select' : 'Select for Bulk Update' }}
           </button>
 
           <!-- Saved Views Dropdown - Only show if there are saved views -->
