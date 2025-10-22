@@ -147,19 +147,20 @@
           />
         </div>
         
-        <!-- Select Mode Toggle -->
-        <button
-          @click="toggleSelectMode"
-          :class="[
-            'flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors',
-            isSelectMode 
-              ? 'bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-300' 
-              : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700'
-          ]"
-        >
-          <Icon name="CheckSquare" class="w-4 h-4" />
-          {{ isSelectMode ? 'Exit Select' : 'Select' }}
-        </button>
+          <!-- Select Mode Toggle -->
+          <button
+            @click="toggleSelectMode"
+            :class="[
+              'flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors',
+              isSelectMode 
+                ? 'bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-300' 
+                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700'
+            ]"
+          >
+            <Icon name="CheckSquare" class="w-4 h-4" />
+            {{ isSelectMode ? 'Exit Select' : 'Select' }}
+          </button>
+          
         
         <div class="flex gap-2">
           <select
@@ -243,7 +244,7 @@
 
     <!-- Bulk Operations Bar -->
     <BulkOperationsBar
-      v-if="isSelectMode && hasSelection"
+      v-if="isSelectMode"
       :available-assignees="uniqueAssignees"
       @bulk-status-change="handleBulkStatusChange"
       @bulk-priority-change="handleBulkPriorityChange"
@@ -255,6 +256,7 @@
       @clear-selection="clearSelection"
       @toggle-select-mode="toggleSelectMode"
     />
+    
 
     <!-- Kanban Board -->
     <div class="flex-1 flex gap-6 overflow-x-auto pb-4">
@@ -608,9 +610,14 @@ const {
   hasSelection,
   toggleSelectMode,
   clearSelection,
-  toggleSelection,
+  toggleSelection: toggleSelectionById,
   isSelected
 } = useBulkOperations();
+
+// Wrapper function to handle todo object
+const toggleSelection = (todo: Todo) => {
+  toggleSelectionById(todo.id);
+};
 
 const currentProject = ref<Project | null>(null);
 const selectedProjectId = ref<string>('');
@@ -1698,6 +1705,7 @@ const handleBulkDelete = async () => {
     }
   }
 };
+
 
 // Load current project from localStorage
 const loadCurrentProject = async () => {

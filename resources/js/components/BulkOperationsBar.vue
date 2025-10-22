@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isSelectMode && hasSelection" class="bulk-operations-bar">
+  <div class="bulk-operations-bar">
     <div class="bulk-info">
       <Icon name="CheckSquare" class="w-5 h-5 text-blue-600" />
       <span class="text-sm font-medium text-gray-900">
@@ -164,6 +164,7 @@ const {
   toggleSelectMode,
   getSelectedIds
 } = useBulkOperations();
+
 
 const selectedStatus = ref('');
 const selectedPriority = ref('');

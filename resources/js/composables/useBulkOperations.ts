@@ -10,10 +10,12 @@ export interface BulkOperation {
   requiresConfirmation?: boolean;
 }
 
+// Global state - shared across all components
+const selectedItems = ref<Set<number>>(new Set());
+const isSelectMode = ref(false);
+const isProcessing = ref(false);
+
 export function useBulkOperations() {
-  const selectedItems = ref<Set<number>>(new Set());
-  const isSelectMode = ref(false);
-  const isProcessing = ref(false);
 
   const selectedCount = computed(() => selectedItems.value.size);
   const hasSelection = computed(() => selectedItems.value.size > 0);
