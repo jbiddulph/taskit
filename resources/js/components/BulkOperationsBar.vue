@@ -59,6 +59,50 @@
         </select>
       </div>
 
+      <!-- Type Change -->
+      <div class="action-group">
+        <label class="action-label">Type:</label>
+        <select 
+          v-model="selectedType" 
+          @change="bulkChangeType"
+          class="action-select"
+          :disabled="isProcessing"
+        >
+          <option value="">Select type...</option>
+          <option value="Bug">Bug</option>
+          <option value="Feature">Feature</option>
+          <option value="Task">Task</option>
+          <option value="Story">Story</option>
+          <option value="Epic">Epic</option>
+        </select>
+      </div>
+
+      <!-- Due Date Change -->
+      <div class="action-group">
+        <label class="action-label">Due Date:</label>
+        <input
+          v-model="selectedDueDate"
+          @change="bulkChangeDueDate"
+          type="date"
+          class="action-input"
+          :disabled="isProcessing"
+        />
+      </div>
+
+      <!-- Tags Change -->
+      <div class="action-group">
+        <label class="action-label">Tags:</label>
+        <input
+          v-model="selectedTags"
+          @keyup.enter="bulkChangeTags"
+          @blur="bulkChangeTags"
+          type="text"
+          placeholder="Enter tags (comma separated)"
+          class="action-input"
+          :disabled="isProcessing"
+        />
+      </div>
+
       <!-- Delete Action -->
       <button
         @click="bulkDelete"
@@ -124,6 +168,9 @@ const {
 const selectedStatus = ref('');
 const selectedPriority = ref('');
 const selectedAssignee = ref('');
+const selectedType = ref('');
+const selectedDueDate = ref('');
+const selectedTags = ref('');
 
 const bulkChangeStatus = async () => {
   if (!selectedStatus.value) return;
@@ -163,6 +210,46 @@ const bulkChangeAssignee = async () => {
   }
 };
 
+const bulkChangeType = async () => {
+  if (!selectedType.value) return;
+  
+  try {
+    const selectedIds = getSelectedIds();
+    await todoApi.bulkUpdateType(selectedIds, selectedType.value);
+    selectedType.value = '';
+    emit('refresh');
+  } catch (error) {
+    console.error('Failed to update type:', error);
+  }
+};
+
+const bulkChangeDueDate = async () => {
+  if (!selectedDueDate.value) return;
+  
+  try {
+    const selectedIds = getSelectedIds();
+    await todoApi.bulkUpdateDueDate(selectedIds, selectedDueDate.value);
+    selectedDueDate.value = '';
+    emit('refresh');
+  } catch (error) {
+    console.error('Failed to update due date:', error);
+  }
+};
+
+const bulkChangeTags = async () => {
+  if (!selectedTags.value.trim()) return;
+  
+  try {
+    const selectedIds = getSelectedIds();
+    const tags = selectedTags.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+    await todoApi.bulkUpdateTags(selectedIds, tags);
+    selectedTags.value = '';
+    emit('refresh');
+  } catch (error) {
+    console.error('Failed to update tags:', error);
+  }
+};
+
 const bulkDelete = async () => {
   const confirmed = confirm(
     `Are you sure you want to delete ${selectedCount.value} item${selectedCount.value > 1 ? 's' : ''}? This action cannot be undone.`
@@ -182,16 +269,30 @@ const bulkDelete = async () => {
 
 <style scoped>
 .bulk-operations-bar {
-  position: sticky;
-  top: 0;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   z-index: 50;
   background: white;
-  border-bottom: 2px solid #3b82f6;
+  border-top: 2px solid #3b82f6;
   padding: 1rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .bulk-info {
@@ -237,6 +338,27 @@ const bulkDelete = async () => {
 }
 
 .action-select:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.action-input {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: white;
+  min-width: 120px;
+}
+
+.action-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.action-input:disabled {
   background: #f3f4f6;
   color: #9ca3af;
   cursor: not-allowed;

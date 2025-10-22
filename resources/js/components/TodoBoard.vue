@@ -1,5 +1,8 @@
 <template>
-  <div class="h-full flex flex-col">
+  <div 
+    class="h-full flex flex-col"
+    :class="{ 'pb-24': isSelectMode && hasSelection }"
+  >
     <!-- Header with Search and Filters -->
     <div 
       class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 relative"
@@ -245,6 +248,9 @@
       @bulk-status-change="handleBulkStatusChange"
       @bulk-priority-change="handleBulkPriorityChange"
       @bulk-assignee-change="handleBulkAssigneeChange"
+      @bulk-type-change="handleBulkTypeChange"
+      @bulk-due-date-change="handleBulkDueDateChange"
+      @bulk-tags-change="handleBulkTagsChange"
       @bulk-delete="handleBulkDelete"
       @clear-selection="clearSelection"
       @toggle-select-mode="toggleSelectMode"
@@ -1643,6 +1649,39 @@ const handleBulkAssigneeChange = async (assignee: string | null) => {
     clearSelection();
   } catch (error) {
     console.error('Failed to update assignee:', error);
+  }
+};
+
+const handleBulkTypeChange = async (type: string) => {
+  const selectedIds = Array.from(selectedItems.value);
+  try {
+    await todoApi.bulkUpdateType(selectedIds, type);
+    await loadTodos();
+    clearSelection();
+  } catch (error) {
+    console.error('Failed to update type:', error);
+  }
+};
+
+const handleBulkDueDateChange = async (dueDate: string) => {
+  const selectedIds = Array.from(selectedItems.value);
+  try {
+    await todoApi.bulkUpdateDueDate(selectedIds, dueDate);
+    await loadTodos();
+    clearSelection();
+  } catch (error) {
+    console.error('Failed to update due date:', error);
+  }
+};
+
+const handleBulkTagsChange = async (tags: string[]) => {
+  const selectedIds = Array.from(selectedItems.value);
+  try {
+    await todoApi.bulkUpdateTags(selectedIds, tags);
+    await loadTodos();
+    clearSelection();
+  } catch (error) {
+    console.error('Failed to update tags:', error);
   }
 };
 
