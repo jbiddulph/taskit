@@ -50,6 +50,8 @@ class RealtimeService {
    */
   private testSupabaseConnection() {
     console.log('🧪 Testing Supabase real-time connection...');
+    console.log('🧪 Supabase URL:', supabaseUrl);
+    console.log('🧪 Supabase Key exists:', !!supabaseAnonKey);
     
     const testChannel = supabase
       .channel('connection-test')
@@ -60,6 +62,10 @@ class RealtimeService {
           testChannel.unsubscribe();
         } else if (status === 'CHANNEL_ERROR') {
           console.error('❌ Supabase real-time connection failed!');
+        } else if (status === 'TIMED_OUT') {
+          console.error('⏰ Supabase real-time connection timed out!');
+        } else if (status === 'CLOSED') {
+          console.warn('🔒 Supabase real-time connection closed!');
         }
       });
   }
@@ -234,6 +240,8 @@ class RealtimeService {
 
     const channelName = `company_todos_${this.currentCompanyId}`;
     console.log('🔥 Subscribing to todos channel:', channelName);
+    console.log('🔥 Supabase client status:', supabase);
+    console.log('🔥 Current company ID:', this.currentCompanyId);
     
     // Remove existing channel if it exists
     if (this.channels.has(channelName)) {
@@ -254,6 +262,7 @@ class RealtimeService {
         },
         (payload) => {
           console.log('🆕 Todo INSERT event received:', payload);
+          console.log('🆕 Todo INSERT payload.new:', payload.new);
           this.handleNewTodo(payload.new as any);
         }
       )
@@ -267,6 +276,7 @@ class RealtimeService {
         },
         (payload) => {
           console.log('📝 Todo UPDATE event received:', payload);
+          console.log('📝 Todo UPDATE payload.new:', payload.new);
           this.handleTodoUpdate(payload.new as any);
         }
       )
