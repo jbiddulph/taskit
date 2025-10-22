@@ -494,4 +494,353 @@ class TodoController extends Controller
             'data' => $subtask
         ], 201);
     }
+
+    /**
+     * Bulk update status for multiple todos
+     */
+    public function bulkUpdateStatus(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'todo_ids' => 'required|array|min:1',
+            'todo_ids.*' => 'integer|exists:todos,id',
+            'status' => 'required|string|in:todo,in-progress,qa-testing,done'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = Auth::user();
+        $todoIds = $request->input('todo_ids');
+        $status = $request->input('status');
+
+        // Verify all todos belong to user's company
+        $todos = Todo::whereIn('id', $todoIds)
+            ->where('company_id', $user->company_id)
+            ->get();
+
+        if ($todos->count() !== count($todoIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Some todos not found or not accessible'
+            ], 403);
+        }
+
+        // Update all todos
+        Todo::whereIn('id', $todoIds)->update(['status' => $status]);
+
+        // Invalidate caches
+        CacheService::invalidateUserCaches($user->id);
+        foreach ($todos as $todo) {
+            CacheService::invalidateProjectCaches($todo->project_id);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status updated successfully for ' . count($todoIds) . ' todos'
+        ]);
+    }
+
+    /**
+     * Bulk update priority for multiple todos
+     */
+    public function bulkUpdatePriority(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'todo_ids' => 'required|array|min:1',
+            'todo_ids.*' => 'integer|exists:todos,id',
+            'priority' => 'required|string|in:Low,Medium,High,Critical'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = Auth::user();
+        $todoIds = $request->input('todo_ids');
+        $priority = $request->input('priority');
+
+        // Verify all todos belong to user's company
+        $todos = Todo::whereIn('id', $todoIds)
+            ->where('company_id', $user->company_id)
+            ->get();
+
+        if ($todos->count() !== count($todoIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Some todos not found or not accessible'
+            ], 403);
+        }
+
+        // Update all todos
+        Todo::whereIn('id', $todoIds)->update(['priority' => $priority]);
+
+        // Invalidate caches
+        CacheService::invalidateUserCaches($user->id);
+        foreach ($todos as $todo) {
+            CacheService::invalidateProjectCaches($todo->project_id);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Priority updated successfully for ' . count($todoIds) . ' todos'
+        ]);
+    }
+
+    /**
+     * Bulk update assignee for multiple todos
+     */
+    public function bulkUpdateAssignee(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'todo_ids' => 'required|array|min:1',
+            'todo_ids.*' => 'integer|exists:todos,id',
+            'assignee' => 'nullable|string|max:255'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = Auth::user();
+        $todoIds = $request->input('todo_ids');
+        $assignee = $request->input('assignee');
+
+        // Verify all todos belong to user's company
+        $todos = Todo::whereIn('id', $todoIds)
+            ->where('company_id', $user->company_id)
+            ->get();
+
+        if ($todos->count() !== count($todoIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Some todos not found or not accessible'
+            ], 403);
+        }
+
+        // Update all todos
+        Todo::whereIn('id', $todoIds)->update(['assignee' => $assignee]);
+
+        // Invalidate caches
+        CacheService::invalidateUserCaches($user->id);
+        foreach ($todos as $todo) {
+            CacheService::invalidateProjectCaches($todo->project_id);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Assignee updated successfully for ' . count($todoIds) . ' todos'
+        ]);
+    }
+
+    /**
+     * Bulk update type for multiple todos
+     */
+    public function bulkUpdateType(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'todo_ids' => 'required|array|min:1',
+            'todo_ids.*' => 'integer|exists:todos,id',
+            'type' => 'required|string|in:Bug,Feature,Task,Story,Epic'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = Auth::user();
+        $todoIds = $request->input('todo_ids');
+        $type = $request->input('type');
+
+        // Verify all todos belong to user's company
+        $todos = Todo::whereIn('id', $todoIds)
+            ->where('company_id', $user->company_id)
+            ->get();
+
+        if ($todos->count() !== count($todoIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Some todos not found or not accessible'
+            ], 403);
+        }
+
+        // Update all todos
+        Todo::whereIn('id', $todoIds)->update(['type' => $type]);
+
+        // Invalidate caches
+        CacheService::invalidateUserCaches($user->id);
+        foreach ($todos as $todo) {
+            CacheService::invalidateProjectCaches($todo->project_id);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Type updated successfully for ' . count($todoIds) . ' todos'
+        ]);
+    }
+
+    /**
+     * Bulk update due date for multiple todos
+     */
+    public function bulkUpdateDueDate(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'todo_ids' => 'required|array|min:1',
+            'todo_ids.*' => 'integer|exists:todos,id',
+            'due_date' => 'required|date'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = Auth::user();
+        $todoIds = $request->input('todo_ids');
+        $dueDate = $request->input('due_date');
+
+        // Verify all todos belong to user's company
+        $todos = Todo::whereIn('id', $todoIds)
+            ->where('company_id', $user->company_id)
+            ->get();
+
+        if ($todos->count() !== count($todoIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Some todos not found or not accessible'
+            ], 403);
+        }
+
+        // Update all todos
+        Todo::whereIn('id', $todoIds)->update(['due_date' => $dueDate]);
+
+        // Invalidate caches
+        CacheService::invalidateUserCaches($user->id);
+        foreach ($todos as $todo) {
+            CacheService::invalidateProjectCaches($todo->project_id);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Due date updated successfully for ' . count($todoIds) . ' todos'
+        ]);
+    }
+
+    /**
+     * Bulk update tags for multiple todos
+     */
+    public function bulkUpdateTags(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'todo_ids' => 'required|array|min:1',
+            'todo_ids.*' => 'integer|exists:todos,id',
+            'tags' => 'required|array',
+            'tags.*' => 'string|max:255'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = Auth::user();
+        $todoIds = $request->input('todo_ids');
+        $tags = $request->input('tags');
+
+        // Verify all todos belong to user's company
+        $todos = Todo::whereIn('id', $todoIds)
+            ->where('company_id', $user->company_id)
+            ->get();
+
+        if ($todos->count() !== count($todoIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Some todos not found or not accessible'
+            ], 403);
+        }
+
+        // Update all todos
+        Todo::whereIn('id', $todoIds)->update(['tags' => json_encode($tags)]);
+
+        // Invalidate caches
+        CacheService::invalidateUserCaches($user->id);
+        foreach ($todos as $todo) {
+            CacheService::invalidateProjectCaches($todo->project_id);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tags updated successfully for ' . count($todoIds) . ' todos'
+        ]);
+    }
+
+    /**
+     * Bulk delete multiple todos
+     */
+    public function bulkDelete(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'todo_ids' => 'required|array|min:1',
+            'todo_ids.*' => 'integer|exists:todos,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = Auth::user();
+        $todoIds = $request->input('todo_ids');
+
+        // Verify all todos belong to user's company
+        $todos = Todo::whereIn('id', $todoIds)
+            ->where('company_id', $user->company_id)
+            ->get();
+
+        if ($todos->count() !== count($todoIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Some todos not found or not accessible'
+            ], 403);
+        }
+
+        // Delete all todos
+        Todo::whereIn('id', $todoIds)->delete();
+
+        // Invalidate caches
+        CacheService::invalidateUserCaches($user->id);
+        foreach ($todos as $todo) {
+            CacheService::invalidateProjectCaches($todo->project_id);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Successfully deleted ' . count($todoIds) . ' todos'
+        ]);
+    }
 }

@@ -372,6 +372,63 @@ class TodoApiService {
     getAttachmentPreviewUrl(todoId: number, attachmentId: number): string {
         return `/api/todos/${todoId}/attachments/${attachmentId}/preview`;
     }
+
+    // Bulk operations
+    async bulkUpdateStatus(todoIds: number[], status: string): Promise<void> {
+        await this.request({
+            method: 'PATCH',
+            url: '/todos/bulk/status',
+            data: { todo_ids: todoIds, status },
+        });
+    }
+
+    async bulkUpdatePriority(todoIds: number[], priority: string): Promise<void> {
+        await this.request({
+            method: 'PATCH',
+            url: '/todos/bulk/priority',
+            data: { todo_ids: todoIds, priority },
+        });
+    }
+
+    async bulkUpdateAssignee(todoIds: number[], assignee: string | null): Promise<void> {
+        await this.request({
+            method: 'PATCH',
+            url: '/todos/bulk/assignee',
+            data: { todo_ids: todoIds, assignee },
+        });
+    }
+
+    async bulkUpdateType(todoIds: number[], type: string): Promise<void> {
+        await this.request({
+            method: 'PATCH',
+            url: '/todos/bulk/type',
+            data: { todo_ids: todoIds, type },
+        });
+    }
+
+    async bulkUpdateDueDate(todoIds: number[], dueDate: string): Promise<void> {
+        await this.request({
+            method: 'PATCH',
+            url: '/todos/bulk/due-date',
+            data: { todo_ids: todoIds, due_date: dueDate },
+        });
+    }
+
+    async bulkUpdateTags(todoIds: number[], tags: string[]): Promise<void> {
+        await this.request({
+            method: 'PATCH',
+            url: '/todos/bulk/tags',
+            data: { todo_ids: todoIds, tags },
+        });
+    }
+
+    async bulkDelete(todoIds: number[]): Promise<void> {
+        await this.request({
+            method: 'DELETE',
+            url: '/todos/bulk',
+            data: { todo_ids: todoIds },
+        });
+    }
 }
 
 export const todoApi = new TodoApiService();

@@ -41,6 +41,15 @@ Route::delete('projects/{project}/with-todos', [ProjectController::class, 'destr
     Route::post('todos/{todo}/subtasks', [TodoController::class, 'createSubtask']);
     Route::get('todos/assignees', [TodoController::class, 'assignees']);
     
+    // Bulk operations
+    Route::patch('todos/bulk/status', [TodoController::class, 'bulkUpdateStatus']);
+    Route::patch('todos/bulk/priority', [TodoController::class, 'bulkUpdatePriority']);
+    Route::patch('todos/bulk/assignee', [TodoController::class, 'bulkUpdateAssignee']);
+    Route::patch('todos/bulk/type', [TodoController::class, 'bulkUpdateType']);
+    Route::patch('todos/bulk/due-date', [TodoController::class, 'bulkUpdateDueDate']);
+    Route::patch('todos/bulk/tags', [TodoController::class, 'bulkUpdateTags']);
+    Route::delete('todos/bulk', [TodoController::class, 'bulkDelete']);
+    
     // Todo comments
     Route::apiResource('todos.comments', TodoCommentController::class);
     
