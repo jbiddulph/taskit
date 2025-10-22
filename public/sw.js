@@ -110,16 +110,13 @@ self.addEventListener('fetch', (event) => {
               // Cache API responses in dynamic cache with TTL
               caches.open(DYNAMIC_CACHE)
                 .then((cache) => {
-                  cache.put(request, responseToCache);
-                  
                   // Set expiration timestamp
                   const expirationTime = Date.now() + (5 * 60 * 1000); // 5 minutes
                   const headers = new Headers(responseToCache.headers);
                   headers.set('sw-cache-timestamp', expirationTime.toString());
                   
-                  // Clone the response before modifying to avoid body consumption issues
-                  const responseClone = responseToCache.clone();
-                  const modifiedResponse = new Response(responseClone.body, {
+                  // Create a new response with the timestamp header
+                  const modifiedResponse = new Response(responseToCache.body, {
                     status: responseToCache.status,
                     statusText: responseToCache.statusText,
                     headers: headers

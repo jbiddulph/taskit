@@ -625,6 +625,28 @@ class RealtimeService {
       this.init(this.currentUserId, this.currentCompanyId);
     }
   }
+
+  /**
+   * Test realtime functionality manually
+   */
+  testRealtime() {
+    console.log('🧪 Testing realtime functionality...');
+    console.log('🧪 Current user ID:', this.currentUserId);
+    console.log('🧪 Current company ID:', this.currentCompanyId);
+    console.log('🧪 Active channels:', Array.from(this.channels.keys()));
+    console.log('🧪 Todo callbacks registered:', this.todoCallbacks.size);
+    
+    // Test if we can create a test channel
+    const testChannel = supabase
+      .channel('manual-test')
+      .subscribe((status) => {
+        console.log('🧪 Manual test channel status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Manual test channel connected successfully!');
+          testChannel.unsubscribe();
+        }
+      });
+  }
 }
 
 // Export singleton instance

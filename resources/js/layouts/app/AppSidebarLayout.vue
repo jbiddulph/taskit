@@ -36,6 +36,12 @@ onMounted(() => {
   if (currentUser?.id && props.company?.id) {
     console.log('🔥 Initializing realtimeService from AppSidebarLayout');
     realtimeService.init(currentUser.id, props.company.id);
+    
+    // Add test function to window for debugging
+    (window as any).testRealtime = () => {
+      realtimeService.testRealtime();
+    };
+    console.log('🧪 Test function available: window.testRealtime()');
   } else {
     console.log('🚨 Missing user ID or company ID for realtime service');
     console.log('🚨 User ID:', currentUser?.id);
