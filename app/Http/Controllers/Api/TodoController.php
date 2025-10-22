@@ -502,7 +502,7 @@ class TodoController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'todo_ids' => 'required|array|min:1',
-            'todo_ids.*' => 'integer|exists:todos,id',
+            'todo_ids.*' => 'integer|exists:taskit_todos,id',
             'status' => 'required|string|in:todo,in-progress,qa-testing,done'
         ]);
 
@@ -552,7 +552,7 @@ class TodoController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'todo_ids' => 'required|array|min:1',
-            'todo_ids.*' => 'integer|exists:todos,id',
+            'todo_ids.*' => 'integer|exists:taskit_todos,id',
             'priority' => 'required|string|in:Low,Medium,High,Critical'
         ]);
 
@@ -602,7 +602,7 @@ class TodoController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'todo_ids' => 'required|array|min:1',
-            'todo_ids.*' => 'integer|exists:todos,id',
+            'todo_ids.*' => 'integer|exists:taskit_todos,id',
             'assignee' => 'nullable|string|max:255'
         ]);
 
@@ -652,7 +652,7 @@ class TodoController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'todo_ids' => 'required|array|min:1',
-            'todo_ids.*' => 'integer|exists:todos,id',
+            'todo_ids.*' => 'integer|exists:taskit_todos,id',
             'type' => 'required|string|in:Bug,Feature,Task,Story,Epic'
         ]);
 
@@ -702,7 +702,7 @@ class TodoController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'todo_ids' => 'required|array|min:1',
-            'todo_ids.*' => 'integer|exists:todos,id',
+            'todo_ids.*' => 'integer|exists:taskit_todos,id',
             'due_date' => 'required|date'
         ]);
 
@@ -752,7 +752,7 @@ class TodoController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'todo_ids' => 'required|array|min:1',
-            'todo_ids.*' => 'integer|exists:todos,id',
+            'todo_ids.*' => 'integer|exists:taskit_todos,id',
             'tags' => 'required|array',
             'tags.*' => 'string|max:255'
         ]);
@@ -803,7 +803,7 @@ class TodoController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'todo_ids' => 'required|array|min:1',
-            'todo_ids.*' => 'integer|exists:todos,id'
+            'todo_ids.*' => 'integer|exists:taskit_todos,id'
         ]);
 
         if ($validator->fails()) {
