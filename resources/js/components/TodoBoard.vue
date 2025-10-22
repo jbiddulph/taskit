@@ -255,6 +255,7 @@
       @bulk-delete="handleBulkDelete"
       @clear-selection="clearSelection"
       @toggle-select-mode="toggleSelectMode"
+      @refresh="loadTodos"
     />
     
 
@@ -1745,13 +1746,23 @@ const loadCurrentProject = async () => {
 
 // Load todos from API
 const loadTodos = async () => {
+  console.log('🔄 loadTodos called');
   try {
     const filters: any = {};
     if (currentProject.value) {
       filters.project_id = currentProject.value.id;
     }
     const response = await todoApi.getTodos(filters);
-    todos.value = response.data.todo.concat(response.data['in-progress']).concat(response.data['qa-testing']).concat(response.data.done);
+    console.log('📊 API Response:', response.data);
+    
+    // Check specific todos
+    const allTodos = response.data.todo.concat(response.data['in-progress']).concat(response.data['qa-testing']).concat(response.data.done);
+    const todo58 = allTodos.find(t => t.id === 58);
+    const todo1 = allTodos.find(t => t.id === 1);
+    console.log('🔍 Todo 58:', todo58 ? {id: todo58.id, priority: todo58.priority} : 'Not found');
+    console.log('🔍 Todo 1:', todo1 ? {id: todo1.id, priority: todo1.priority} : 'Not found');
+    
+    todos.value = allTodos;
     
 
   } catch (error) {

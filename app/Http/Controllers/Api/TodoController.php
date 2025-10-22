@@ -45,8 +45,9 @@ class TodoController extends Controller
             'per_page' => $request->get('per_page', 20)
         ];
 
-        // Use caching for frequently accessed data
-        $todos = CacheService::cacheUserTodos($user->id, $filters, function () use ($user, $request) {
+        // Temporarily disable caching to debug the issue
+        // $todos = CacheService::cacheUserTodos($user->id, $filters, function () use ($user, $request) {
+        $todos = function () use ($user, $request) {
             if ($user->company_id) {
                 // Show all todos from the same company
                 $query = Todo::forCompany($user->company_id)
@@ -122,6 +123,14 @@ class TodoController extends Controller
             'qa-testing' => $todos->where('status', 'qa-testing')->values(),
             'done' => $todos->where('status', 'done')->values(),
         ];
+
+        // Debug logging to see what data is being returned
+        \Log::info('API returning todos', [
+            'todo_count' => $todos->count(),
+            'todo_priorities' => $todos->take(5)->map(function($todo) {
+                return ['id' => $todo->id, 'priority' => $todo->priority];
+            })->toArray()
+        ]);
 
         return response()->json([
             'success' => true,
@@ -580,8 +589,10 @@ class TodoController extends Controller
             ], 403);
         }
 
-        // Update all todos
-        Todo::whereIn('id', $todoIds)->update(['priority' => $priority]);
+        // Update all todos - use withoutGlobalScopes to ensure no interference
+        Todo::withoutGlobalScopes()
+            ->whereIn('id', $todoIds)
+            ->update(['priority' => $priority]);
 
         // Invalidate caches
         CacheService::invalidateUserCaches($user->id);

@@ -102,16 +102,9 @@ class CacheService
      */
     public static function invalidateUserCaches(int $userId)
     {
-        $patterns = [
-            self::CACHE_PREFIX . self::USER_TODOS_KEY . $userId . '*',
-            self::CACHE_PREFIX . self::USER_PROJECTS_KEY . $userId,
-            self::CACHE_PREFIX . self::USER_NOTIFICATIONS_KEY . $userId . '*',
-            self::CACHE_PREFIX . self::USER_UNREAD_COUNT_KEY . $userId,
-        ];
-
-        foreach ($patterns as $pattern) {
-            self::deleteByPattern($pattern);
-        }
+        // For database cache driver, we need to flush all caches since pattern matching isn't supported
+        // This is less efficient but ensures cache consistency
+        Cache::flush();
 
         Log::info('Invalidated user caches', ['user_id' => $userId]);
     }
@@ -121,14 +114,9 @@ class CacheService
      */
     public static function invalidateProjectCaches(int $projectId)
     {
-        $patterns = [
-            self::CACHE_PREFIX . self::PROJECT_TODOS_KEY . $projectId,
-            self::CACHE_PREFIX . self::PROJECT_STATS_KEY . $projectId,
-        ];
-
-        foreach ($patterns as $pattern) {
-            self::deleteByPattern($pattern);
-        }
+        // For database cache driver, we need to flush all caches since pattern matching isn't supported
+        // This is less efficient but ensures cache consistency
+        Cache::flush();
 
         Log::info('Invalidated project caches', ['project_id' => $projectId]);
     }
