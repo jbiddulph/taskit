@@ -9,12 +9,20 @@ class IonosService
 {
     private string $publicPrefix;
     private string $secret;
-    private string $baseUrl = 'https://api.ionos.com/dns/v1';
+    private string $baseUrl = 'https://api.hosting.ionos.com/dns/v1';
 
     public function __construct()
     {
         $this->publicPrefix = config('services.ionos.public_prefix');
         $this->secret = config('services.ionos.secret');
+    }
+
+    /**
+     * Get the combined API key for Basic Auth
+     */
+    private function getApiKey(): string
+    {
+        return base64_encode($this->publicPrefix . '.' . $this->secret);
     }
 
     /**
@@ -68,15 +76,21 @@ class IonosService
     public function subdomainExists(string $subdomain, string $domain = 'zaptask.co.uk'): bool
     {
         try {
+            $zoneId = $this->getZoneId($domain);
+            if (!$zoneId) {
+                return false;
+            }
+
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->secret,
+                'Authorization' => 'Basic ' . $this->getApiKey(),
                 'Content-Type' => 'application/json'
-            ])->get("{$this->baseUrl}/zones/{$domain}/records");
+            ])->get("{$this->baseUrl}/zones/{$zoneId}/records");
 
             if ($response->successful()) {
-                $records = $response->json();
+                $data = $response->json();
+                $records = $data['items'] ?? [];
                 foreach ($records as $record) {
-                    if ($record['name'] === $subdomain && $record['type'] === 'A') {
+                    if ($record['properties']['name'] === $subdomain && $record['properties']['type'] === 'A') {
                         return true;
                     }
                 }
@@ -93,19 +107,61 @@ class IonosService
     }
 
     /**
+     * Get zone ID for domain
+     */
+    private function getZoneId(string $domain): ?string
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Basic ' . $this->getApiKey(),
+                'Content-Type' => 'application/json'
+            ])->get("{$this->baseUrl}/zones");
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $zones = $data['items'] ?? [];
+                foreach ($zones as $zone) {
+                    if ($zone['properties']['name'] === $domain) {
+                        return $zone['id'];
+                    }
+                }
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Error getting zone ID', [
+                'domain' => $domain,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
+    }
+
+    /**
      * Create DNS A record for subdomain
      */
     private function createDnsRecord(string $subdomain, string $domain): array
     {
         try {
+            // First get the zone ID
+            $zoneId = $this->getZoneId($domain);
+            if (!$zoneId) {
+                return [
+                    'success' => false,
+                    'message' => 'Zone not found for domain: ' . $domain
+                ];
+            }
+
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->secret,
+                'Authorization' => 'Basic ' . $this->getApiKey(),
                 'Content-Type' => 'application/json'
-            ])->post("{$this->baseUrl}/zones/{$domain}/records", [
-                'name' => $subdomain,
-                'type' => 'A',
-                'content' => $this->getMainDomainIp(), // Point to main domain IP
-                'ttl' => 300
+            ])->post("{$this->baseUrl}/zones/{$zoneId}/records", [
+                'properties' => [
+                    'name' => $subdomain,
+                    'type' => 'A',
+                    'content' => $this->getMainDomainIp(), // Point to main domain IP
+                    'ttl' => 3600
+                ]
             ]);
 
             if ($response->successful()) {
@@ -161,9 +217,9 @@ class IonosService
      */
     private function getMainDomainIp(): string
     {
-        // You can either hardcode this or fetch it dynamically
-        // For now, we'll use a placeholder - you should replace with actual IP
-        return '1.2.3.4'; // Replace with your actual server IP
+        // Get the IP address of zaptask.co.uk
+        $ip = gethostbyname('zaptask.co.uk');
+        return $ip !== 'zaptask.co.uk' ? $ip : '1.2.3.4'; // Fallback if DNS lookup fails
     }
 
     /**
@@ -182,10 +238,18 @@ class IonosService
                 ];
             }
 
+            $zoneId = $this->getZoneId($domain);
+            if (!$zoneId) {
+                return [
+                    'success' => false,
+                    'message' => 'Zone not found for domain: ' . $domain
+                ];
+            }
+
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->secret,
+                'Authorization' => 'Basic ' . $this->getApiKey(),
                 'Content-Type' => 'application/json'
-            ])->delete("{$this->baseUrl}/zones/{$domain}/records/{$recordId}");
+            ])->delete("{$this->baseUrl}/zones/{$zoneId}/records/{$recordId}");
 
             if ($response->successful()) {
                 return [
@@ -218,15 +282,21 @@ class IonosService
     private function getRecordId(string $subdomain, string $domain): ?string
     {
         try {
+            $zoneId = $this->getZoneId($domain);
+            if (!$zoneId) {
+                return null;
+            }
+
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->secret,
+                'Authorization' => 'Basic ' . $this->getApiKey(),
                 'Content-Type' => 'application/json'
-            ])->get("{$this->baseUrl}/zones/{$domain}/records");
+            ])->get("{$this->baseUrl}/zones/{$zoneId}/records");
 
             if ($response->successful()) {
-                $records = $response->json();
+                $data = $response->json();
+                $records = $data['items'] ?? [];
                 foreach ($records as $record) {
-                    if ($record['name'] === $subdomain && $record['type'] === 'A') {
+                    if ($record['properties']['name'] === $subdomain && $record['properties']['type'] === 'A') {
                         return $record['id'];
                     }
                 }
