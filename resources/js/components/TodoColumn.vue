@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col h-full min-w-80">
     <!-- Column Header -->
-    <div class="flex items-center justify-between mb-2 px-2 py-1">
+    <div class="sticky top-0 z-10 bg-white dark:bg-gray-800 flex items-center justify-between mb-2 px-2 py-1 border-b border-gray-200 dark:border-gray-700">
       <div class="flex items-center gap-2">
         <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-sm">{{ title }}</h3>
         <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-600 text-xs font-medium text-gray-700 dark:text-gray-300">

@@ -41,13 +41,14 @@
         </span>
       </div>
       <div class="flex items-center gap-1">
-        <button
+        <!-- Time Tracking button - Hidden for now -->
+        <!-- <button
           @click.stop="showTimeTracker = !showTimeTracker"
           class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-500 transition-opacity"
           title="Time Tracking"
         >
           <Icon name="Clock" class="w-4 h-4" />
-        </button>
+        </button> -->
         <button
           @click.stop="$emit('delete', todo.id)"
           class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
@@ -220,10 +221,10 @@
     </div>
   </div>
 
-  <!-- Time Tracker -->
-  <div v-if="showTimeTracker" class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+  <!-- Time Tracker - Hidden for now -->
+  <!-- <div v-if="showTimeTracker" class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
     <TimeTracker :todo-id="todo.id" :user-id="currentUser?.id || 1" />
-  </div>
+  </div> -->
 
   <!-- Subtasks with Collapse Animation -->
   <Transition name="subtasks">

@@ -7,7 +7,8 @@
             {{ isEditing ? 'Edit Todo' : 'Add New Todo' }}
           </h2>
           <div class="flex items-center gap-2">
-            <button
+            <!-- Templates button - Hidden for now -->
+            <!-- <button
               v-if="!isEditing"
               @click="showTemplateSelector = true"
               type="button"
@@ -15,7 +16,7 @@
             >
               <Icon name="FileText" class="w-4 h-4 inline mr-2" />
               Templates
-            </button>
+            </button> -->
             <button
               @click="$emit('close')"
               class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -48,15 +49,15 @@
             <TipTapEditor v-model="form.description" />
           </div>
 
-          <!-- Project (Read-only) -->
-          <div v-if="currentProject">
+          <!-- Project (Read-only) - Hidden for now -->
+          <!-- <div v-if="currentProject">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Project
             </label>
             <div class="px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-gray-100">
               {{ currentProject.key }} - {{ currentProject.name }}
             </div>
-          </div>
+          </div> -->
 
           <!-- Priority and Type -->
           <div class="grid grid-cols-2 gap-4">
