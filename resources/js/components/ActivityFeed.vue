@@ -13,12 +13,6 @@
             {{ formatActivityType(type) }}
           </option>
         </select>
-        <button
-          @click="refreshActivities"
-          class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-        >
-          <Icon name="RefreshCw" class="w-4 h-4" />
-        </button>
       </div>
     </div>
 
@@ -53,9 +47,6 @@
           
           <div class="text-xs text-gray-500 dark:text-gray-400">
             {{ formatDate(activity.created_at) }}
-            <span v-if="activity.target_name" class="ml-2">
-              • {{ activity.target_name }}
-            </span>
           </div>
 
           <!-- Activity Metadata -->
@@ -228,10 +219,6 @@ const loadMoreActivities = async () => {
   }
 };
 
-const refreshActivities = async () => {
-  currentPage.value = 1;
-  await loadActivities();
-};
 
 
 const formatActivityType = (type: string): string => {
