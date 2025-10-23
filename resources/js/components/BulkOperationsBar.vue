@@ -115,7 +115,6 @@
         class="control-button delete-button"
         :disabled="isProcessing"
       >
-        <Icon name="Trash2" class="w-4 h-4" />
         Delete
       </button>
       <button
@@ -413,17 +412,17 @@ const bulkDelete = async () => {
 }
 
 .delete-button {
-  background: #ef4444;
-  color: white;
-  border: none;
+  background: #ef4444 !important;
+  color: white !important;
+  border: none !important;
 }
 
 .delete-button:hover:not(:disabled) {
-  background: #dc2626;
+  background: #dc2626 !important;
 }
 
 .delete-button:disabled {
-  background: #fca5a5;
+  background: #fca5a5 !important;
   cursor: not-allowed;
 }
 
