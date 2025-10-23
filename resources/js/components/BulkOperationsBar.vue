@@ -107,18 +107,17 @@
         </div>
       </div>
 
-      <!-- Delete Action -->
+    </div>
+
+    <div class="bulk-controls">
       <button
         @click="bulkDelete"
-        class="action-button delete-button"
+        class="control-button delete-button"
         :disabled="isProcessing"
       >
         <Icon name="Trash2" class="w-4 h-4" />
         Delete
       </button>
-    </div>
-
-    <div class="bulk-controls">
       <button
         @click="clearSelection"
         class="control-button"
@@ -157,6 +156,7 @@ const props = defineProps<Props>();
 
 const emit = defineEmits<{
   refresh: [];
+  'toggle-select-mode': [];
 }>();
 
 const {
@@ -165,9 +165,15 @@ const {
   isSelectMode,
   isProcessing,
   clearSelection,
-  toggleSelectMode,
+  toggleSelectMode: composableToggleSelectMode,
   getSelectedIds
 } = useBulkOperations();
+
+// Local function that toggles select mode and emits event
+const toggleSelectMode = () => {
+  composableToggleSelectMode();
+  emit('toggle-select-mode');
+};
 
 
 const selectedStatus = ref('');
@@ -422,9 +428,10 @@ const bulkDelete = async () => {
 }
 
 .bulk-controls {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 0.5rem;
+  align-items: center;
 }
 
 .control-button {
