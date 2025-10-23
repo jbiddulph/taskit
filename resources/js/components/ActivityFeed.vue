@@ -275,7 +275,11 @@ const getActivityColor = (type: string): string => {
 // Real-time subscription
 let unsubscribeActivity: (() => void) | null = null;
 
+// Add a periodic check for new activities as a fallback
+let activityCheckInterval: NodeJS.Timeout | null = null;
+
 onMounted(async () => {
+  console.log('ActivityFeed: Component mounted');
   await loadActivityTypes();
   
   // Subscribe to real-time activity events (always, not just when visible)
@@ -323,11 +327,22 @@ onMounted(async () => {
   if (props.visible) {
     await loadActivities();
   }
+  
+  // Start periodic activity check as fallback
+  activityCheckInterval = setInterval(async () => {
+    if (props.visible) {
+      console.log('ActivityFeed: Periodic check for new activities...');
+      await loadActivities();
+    }
+  }, 10000); // Check every 10 seconds
 });
 
 onUnmounted(() => {
   if (unsubscribeActivity) {
     unsubscribeActivity();
+  }
+  if (activityCheckInterval) {
+    clearInterval(activityCheckInterval);
   }
 });
 
@@ -336,6 +351,11 @@ watch(() => props.visible, async (newVisible) => {
   if (newVisible && activities.value.length === 0) {
     await loadActivities();
   }
+});
+
+// Watch for real-time updates - fallback mechanism
+watch(() => activities.value.length, (newLength, oldLength) => {
+  console.log('ActivityFeed: Activities count changed from', oldLength, 'to', newLength);
 });
 </script>
 

@@ -41,7 +41,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const currentProjectColor = ref<string | null>(null);
 
 // Activity Feed toggle state
-const showActivityFeed = ref(true);
+const showActivityFeed = ref(false);
 
 const handleProjectChange = (project: any) => {
     currentProjectColor.value = project?.color || null;
