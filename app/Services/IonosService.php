@@ -43,6 +43,20 @@ class IonosService
                 ];
             }
 
+            // Try to get zone ID, if not found, try to create zone
+            $zoneId = $this->getZoneId($domain);
+            if (!$zoneId) {
+                Log::info('Zone not found, attempting to create zone', ['domain' => $domain]);
+                $zoneResult = $this->createZone($domain);
+                if (!$zoneResult['success']) {
+                    return [
+                        'success' => false,
+                        'message' => 'Zone not found and could not be created: ' . $zoneResult['message']
+                    ];
+                }
+                $zoneId = $zoneResult['zone_id'];
+            }
+
             // Create the subdomain record
             $response = $this->createDnsRecord($subdomain, $domain);
 
@@ -107,6 +121,54 @@ class IonosService
     }
 
     /**
+     * Create a DNS zone for the domain
+     */
+    private function createZone(string $domain): array
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Basic ' . $this->getApiKey(),
+                'Content-Type' => 'application/json'
+            ])->post("{$this->baseUrl}/zones", [
+                'properties' => [
+                    'name' => $domain,
+                    'type' => 'NATIVE'
+                ]
+            ]);
+
+            Log::info('Ionos create zone API response', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return [
+                    'success' => true,
+                    'zone_id' => $data['id'],
+                    'message' => 'Zone created successfully'
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => 'Failed to create zone: ' . $response->body()
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Error creating zone', [
+                'domain' => $domain,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Zone creation failed: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
      * Get zone ID for domain
      */
     private function getZoneId(string $domain): ?string
@@ -117,14 +179,34 @@ class IonosService
                 'Content-Type' => 'application/json'
             ])->get("{$this->baseUrl}/zones");
 
+            Log::info('Ionos zones API response', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+
             if ($response->successful()) {
                 $data = $response->json();
                 $zones = $data['items'] ?? [];
+                
+                Log::info('Available zones', [
+                    'zones' => $zones,
+                    'looking_for' => $domain
+                ]);
+                
                 foreach ($zones as $zone) {
                     if ($zone['properties']['name'] === $domain) {
+                        Log::info('Found zone', [
+                            'zone_id' => $zone['id'],
+                            'zone_name' => $zone['properties']['name']
+                        ]);
                         return $zone['id'];
                     }
                 }
+            } else {
+                Log::error('Ionos zones API failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
             }
 
             return null;
