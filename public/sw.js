@@ -23,27 +23,22 @@ const API_CACHE_PATTERNS = [
 
 // Install event - cache static files
 self.addEventListener('install', (event) => {
-  console.log('Service Worker installing...');
   
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then((cache) => {
-        console.log('Caching static files...');
         return cache.addAll(STATIC_FILES);
       })
       .then(() => {
-        console.log('Static files cached successfully');
         return self.skipWaiting();
       })
       .catch((error) => {
-        console.error('Failed to cache static files:', error);
       })
   );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating...');
   
   event.waitUntil(
     caches.keys()
@@ -51,14 +46,12 @@ self.addEventListener('activate', (event) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
             if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
-              console.log('Deleting old cache:', cacheName);
               return caches.delete(cacheName);
             }
           })
         );
       })
       .then(() => {
-        console.log('Service Worker activated');
         return self.clients.claim();
       })
   );
@@ -84,7 +77,6 @@ self.addEventListener('fetch', (event) => {
       .then((cachedResponse) => {
         // Return cached version if available
         if (cachedResponse) {
-          console.log('Serving from cache:', request.url);
           return cachedResponse;
         }
 
@@ -108,7 +100,6 @@ self.addEventListener('fetch', (event) => {
                 });
             } else if (isApiRequest(request)) {
               // Temporarily disable API caching to fix realtime issues
-              console.log('🚫 Skipping API caching for realtime compatibility');
               // Cache API responses in dynamic cache with TTL
               // caches.open(DYNAMIC_CACHE)
               //   .then((cache) => {
@@ -134,7 +125,6 @@ self.addEventListener('fetch', (event) => {
             return response;
           })
           .catch((error) => {
-            console.error('Fetch failed:', error);
             
             // Return offline page for navigation requests
             if (request.mode === 'navigate') {
@@ -152,7 +142,6 @@ self.addEventListener('fetch', (event) => {
 
 // Background sync for offline actions
 self.addEventListener('sync', (event) => {
-  console.log('Background sync triggered:', event.tag);
   
   if (event.tag === 'background-sync') {
     event.waitUntil(doBackgroundSync());
@@ -161,7 +150,6 @@ self.addEventListener('sync', (event) => {
 
 // Push notifications
 self.addEventListener('push', (event) => {
-  console.log('Push notification received');
   
   const options = {
     body: event.data ? event.data.text() : 'New notification from ZapTask',
@@ -193,7 +181,6 @@ self.addEventListener('push', (event) => {
 
 // Notification click handler
 self.addEventListener('notificationclick', (event) => {
-  console.log('Notification clicked:', event.action);
   
   event.notification.close();
 
@@ -234,13 +221,10 @@ async function doBackgroundSync() {
         await syncAction(action);
         await removePendingAction(action.id);
       } catch (error) {
-        console.error('Failed to sync action:', action, error);
       }
     }
     
-    console.log('Background sync completed');
   } catch (error) {
-    console.error('Background sync failed:', error);
   }
 }
 
@@ -267,7 +251,6 @@ async function syncAction(action) {
 
 async function removePendingAction(actionId) {
   // Remove action from IndexedDB after successful sync
-  console.log('Removing pending action:', actionId);
 }
 
 // Cache management
@@ -281,7 +264,6 @@ async function cleanExpiredCache() {
     
     if (timestamp && Date.now() > parseInt(timestamp)) {
       await cache.delete(request);
-      console.log('Removed expired cache entry:', request.url);
     }
   }
 }
