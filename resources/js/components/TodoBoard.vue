@@ -1,7 +1,7 @@
 <template>
   <div 
     class="h-full flex flex-col"
-    :class="{ 'pb-24': isSelectMode && hasSelection }"
+    :class="{ 'pb-24': props.isSelectMode && hasSelection }"
   >
     <!-- Header with Search and Filters -->
     <div 
@@ -133,7 +133,7 @@
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
               ]"
             >
-              <Icon name="Settings" class="w-4 h-4" />
+              <Icon name="Filter" class="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -204,19 +204,6 @@
             Save View
           </button>
 
-          <!-- Select for Bulk Update Button -->
-          <button
-            @click="toggleSelectMode"
-            :class="[
-              'flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors',
-              isSelectMode 
-                ? 'bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-300' 
-                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700'
-            ]"
-          >
-            <Icon name="CheckSquare" class="w-4 h-4" />
-            {{ isSelectMode ? 'Exit Select' : 'Select for Bulk Update' }}
-          </button>
 
           <!-- Saved Views Dropdown - Only show if there are saved views -->
           <div v-if="savedViews.length > 0" class="flex flex-col sm:flex-row gap-2">
@@ -267,7 +254,7 @@
 
     <!-- Bulk Operations Bar -->
     <BulkOperationsBar
-      v-if="isSelectMode"
+      v-if="props.isSelectMode"
       :available-assignees="uniqueAssignees"
       @bulk-status-change="handleBulkStatusChange"
       @bulk-priority-change="handleBulkPriorityChange"
@@ -291,7 +278,7 @@
         :show-add-button="true"
         :current-project-id="currentProject?.id || null"
         :current-project-color="currentProject?.color || null"
-        :is-select-mode="isSelectMode"
+        :is-select-mode="props.isSelectMode"
         :selected-items="selectedItems"
         @add="handleShowForm"
         @edit="editTodo"
@@ -310,7 +297,7 @@
         :todos="filteredTodos.inProgress"
         :current-project-id="currentProject?.id || null"
         :current-project-color="currentProject?.color || null"
-        :is-select-mode="isSelectMode"
+        :is-select-mode="props.isSelectMode"
         :selected-items="selectedItems"
         @edit="editTodo"
         @delete="deleteTodo"
@@ -328,7 +315,7 @@
         :todos="filteredTodos.qaTesting"
         :current-project-id="currentProject?.id || null"
         :current-project-color="currentProject?.color || null"
-        :is-select-mode="isSelectMode"
+        :is-select-mode="props.isSelectMode"
         :selected-items="selectedItems"
         @edit="editTodo"
         @delete="deleteTodo"
@@ -346,7 +333,7 @@
         :todos="filteredTodos.done"
         :current-project-id="currentProject?.id || null"
         :current-project-color="currentProject?.color || null"
-        :is-select-mode="isSelectMode"
+        :is-select-mode="props.isSelectMode"
         :selected-items="selectedItems"
         @edit="editTodo"
         @delete="deleteTodo"
@@ -622,6 +609,7 @@ import { useBulkOperations } from '../composables/useBulkOperations';
 const props = defineProps<{
   showActivityFeed?: boolean;
   showCalendar?: boolean;
+  isSelectMode?: boolean;
 }>();
 
 // Define emits
@@ -629,6 +617,7 @@ const emit = defineEmits<{
   'project-changed': [project: any];
   'toggle-activity-feed': [];
   'toggle-calendar': [];
+  'toggle-select-mode': [];
 }>();
 
 const todos = ref<Todo[]>([]);
@@ -645,15 +634,18 @@ const { trackTodoEvent, trackProjectEvent } = useAnalytics();
 // Initialize keyboard shortcuts and bulk operations
 const { registerShortcut, getShortcutsByCategory } = useKeyboardShortcuts();
 const { 
-  isSelectMode, 
   selectedItems, 
   selectedCount, 
   hasSelection,
-  toggleSelectMode,
   clearSelection,
   toggleSelection: toggleSelectionById,
   isSelected
 } = useBulkOperations();
+
+// Local toggle function that emits to parent
+const toggleSelectMode = () => {
+  emit('toggle-select-mode');
+};
 
 // Wrapper function to handle todo object
 const toggleSelection = (todo: Todo) => {
@@ -1662,7 +1654,7 @@ const registerKeyboardShortcuts = () => {
   registerShortcut({
     key: 'Escape',
     action: () => {
-      if (isSelectMode.value) {
+      if (props.isSelectMode) {
         toggleSelectMode();
       }
     },

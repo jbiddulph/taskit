@@ -29,9 +29,12 @@ class ActivityController extends Controller
             ]);
         }
 
-        // If user has company_id, filter by company, otherwise show all activities for the user
+        // If user has company_id, filter by company OR null company_id, otherwise show all activities for the user
         if ($user->company_id) {
-            $query = Activity::forCompany($user->company_id);
+            $query = Activity::where(function($q) use ($user) {
+                $q->where('company_id', $user->company_id)
+                  ->orWhereNull('company_id');
+            });
         } else {
             $query = Activity::where('actor_id', $user->id);
         }

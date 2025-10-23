@@ -71,7 +71,11 @@ onUnmounted(() => {
     <AppShell variant="sidebar">
         <AppSidebar />
         <AppContent variant="sidebar" class="overflow-x-hidden" :project-color="projectColor">
-            <AppSidebarHeader :breadcrumbs="breadcrumbs" :company="company" />
+            <AppSidebarHeader :breadcrumbs="breadcrumbs" :company="company">
+                <template #dashboardActions>
+                    <slot name="dashboardActions" />
+                </template>
+            </AppSidebarHeader>
             <slot />
         </AppContent>
         <ChatWindow />
