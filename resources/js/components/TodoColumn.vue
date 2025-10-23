@@ -1,7 +1,7 @@
 <template>
-  <div class="flex flex-col h-full min-w-80">
+  <div class="flex flex-col h-full min-w-80 max-h-screen">
     <!-- Column Header -->
-    <div class="sticky top-0 z-10 bg-white dark:bg-gray-800 flex items-center justify-between mb-2 px-2 py-1 border-b border-gray-200 dark:border-gray-700">
+    <div class="sticky top-0 z-20 bg-white dark:bg-gray-800 flex items-center justify-between mb-2 px-2 py-1 border-b border-gray-200 dark:border-gray-700 shadow-sm">
       <div class="flex items-center gap-2">
         <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-sm">{{ title }}</h3>
         <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-600 text-xs font-medium text-gray-700 dark:text-gray-300">
@@ -25,7 +25,7 @@
     <!-- Column Content -->
     <div
       ref="dropZone"
-      class="flex-1 p-1 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 min-h-[400px] transition-colors relative"
+      class="flex-1 p-1 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 min-h-[400px] max-h-[calc(100vh-200px)] overflow-y-auto transition-colors relative"
       :class="{
         'border-blue-300 bg-blue-50 dark:bg-blue-900/20': isDragOver,
         'border-gray-200 dark:border-gray-700': !isDragOver
