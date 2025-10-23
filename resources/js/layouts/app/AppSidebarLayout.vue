@@ -29,12 +29,7 @@ const page = usePage();
 const currentUser = (page.props.auth as any)?.user;
 
 onMounted(() => {
-  console.log('🔥 AppSidebarLayout mounted. User:', currentUser?.id, 'Company:', props.company?.id);
-  console.log('🔥 Supabase URL:', window.VITE_SUPABASE_URL);
-  console.log('🔥 Supabase Key exists:', !!window.VITE_SUPABASE_ANON_KEY);
-  
   if (currentUser?.id && props.company?.id) {
-    console.log('🔥 Initializing realtimeService from AppSidebarLayout');
     realtimeService.init(currentUser.id, props.company.id);
     
     // Add test functions to window for debugging
@@ -44,17 +39,6 @@ onMounted(() => {
     (window as any).testDatabaseRealtime = () => {
       realtimeService.testDatabaseRealtime();
     };
-    console.log('🧪 Test functions available: window.testRealtime() and window.testDatabaseRealtime()');
-    
-    // Test realtime immediately after initialization
-    setTimeout(() => {
-      console.log('🧪 Testing realtime after 2 seconds...');
-      realtimeService.testRealtime();
-    }, 2000);
-  } else {
-    console.log('🚨 Missing user ID or company ID for realtime service');
-    console.log('🚨 User ID:', currentUser?.id);
-    console.log('🚨 Company ID:', props.company?.id);
   }
 });
 

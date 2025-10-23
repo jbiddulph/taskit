@@ -907,7 +907,6 @@ const saveTodo = async (todo: Todo) => {
         });
         
         // Add subtask locally as fallback since realtime isn't working
-        console.log('🔥 Adding subtask to local state as fallback');
         const parentIndex = todos.value.findIndex(t => t.id === todo.parent_task_id);
         if (parentIndex !== -1) {
           if (!todos.value[parentIndex].subtasks) {
@@ -925,7 +924,6 @@ const saveTodo = async (todo: Todo) => {
         });
         
         // Add todo locally as fallback since realtime isn't working
-        console.log('🔥 Adding todo to local state as fallback');
         todos.value.push(newTodo);
         // Force reactivity update
         todos.value = [...todos.value];
@@ -947,7 +945,6 @@ const saveTodo = async (todo: Todo) => {
     // Dispatch event to refresh sidebar project stats
     window.dispatchEvent(new CustomEvent('todoChanged'));
   } catch (error) {
-    console.error('Failed to save todo:', error);
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -986,7 +983,6 @@ const deleteTodo = async (id: string) => {
     }
     
     // Remove todo locally as fallback since realtime isn't working
-    console.log('🔥 Removing todo from local state as fallback');
     todos.value = todos.value.filter(t => t.id !== id);
     // Force reactivity update
     todos.value = [...todos.value];
@@ -1002,7 +998,6 @@ const deleteTodo = async (id: string) => {
       });
     }
   } catch (error) {
-    console.error('Failed to delete todo:', error);
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -1014,7 +1009,6 @@ const deleteTodo = async (id: string) => {
 };
 
 const handleDrop = async (todo: Todo, newStatus: string) => {
-  console.log('TodoBoard received drop event:', todo.title, '->', newStatus);
   
   // Validate that the todo belongs to the current project
   if (!currentProject.value) {
@@ -1041,7 +1035,6 @@ const handleDrop = async (todo: Todo, newStatus: string) => {
   
   try {
     const updatedTodo = await todoApi.updateTodoStatus(todo.id, newStatus as 'todo' | 'in-progress' | 'qa-testing' | 'done');
-    console.log('API response:', updatedTodo);
     
     // Track todo status change event
     trackTodoEvent('status_changed', {
@@ -1056,11 +1049,9 @@ const handleDrop = async (todo: Todo, newStatus: string) => {
     
     // Find the todo by ID, ensuring type consistency
     const index = todos.value.findIndex(t => String(t.id) === String(todo.id));
-    console.log('Looking for todo with ID:', todo.id, 'Found at index:', index);
     
     if (index !== -1) {
       todos.value[index] = updatedTodo;
-      console.log('Todo updated in local state:', updatedTodo);
       
       // Force reactivity update
       todos.value = [...todos.value];
@@ -1076,12 +1067,10 @@ const handleDrop = async (todo: Todo, newStatus: string) => {
         });
       }
     } else {
-      console.error('Todo not found in local state for ID:', todo.id);
       // Reload todos from API as fallback
       await loadTodos();
     }
   } catch (error) {
-    console.error('Failed to update todo status:', error);
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -1093,7 +1082,6 @@ const handleDrop = async (todo: Todo, newStatus: string) => {
 };
 
 const handleReorder = async (draggedTodo: Todo, targetTodo: Todo, position: 'before' | 'after') => {
-  console.log('TodoBoard received reorder event:', draggedTodo.title, position, targetTodo.title);
   
   // Validate that both todos belong to the current project
   if (!currentProject.value) {
@@ -1129,7 +1117,6 @@ const handleReorder = async (draggedTodo: Todo, targetTodo: Todo, position: 'bef
     const targetIndex = statusTodos.findIndex(t => String(t.id) === String(targetTodo.id));
     
     if (draggedIndex === -1 || targetIndex === -1) {
-      console.error('Could not find todos in status list');
       return;
     }
     
@@ -1208,7 +1195,6 @@ const handleReorder = async (draggedTodo: Todo, targetTodo: Todo, position: 'bef
     }
     
   } catch (error) {
-    console.error('Failed to reorder todo:', error);
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -1274,9 +1260,7 @@ const saveEditProject = async () => {
     // Dispatch event to refresh sidebar projects
     window.dispatchEvent(new CustomEvent('todoChanged'));
     
-    console.log('Project updated successfully:', updatedProject.name);
   } catch (error) {
-    console.error('Failed to update project:', error);
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -1322,9 +1306,7 @@ const saveProjectDescription = async () => {
     // Dispatch event to refresh sidebar projects
     window.dispatchEvent(new CustomEvent('todoChanged'));
     
-    console.log('Project description updated successfully');
   } catch (error) {
-    console.error('Failed to update project description:', error);
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -1417,7 +1399,6 @@ const loadClients = async () => {
       clients.value = data.data || [];
     }
   } catch (error) {
-    console.error('Failed to load clients:', error);
     clients.value = [];
   }
 };
@@ -1472,9 +1453,7 @@ const createProject = async () => {
       });
     }
     
-    console.log('Project created successfully:', newProjectCreated.name);
   } catch (error) {
-    console.error('Failed to create project:', error);
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -1488,39 +1467,29 @@ const createProject = async () => {
 // Load projects from API
 const loadProjects = async () => {
   try {
-    console.log('Loading projects...');
     
     // Try to load projects with stats first
     try {
       const response = await todoApi.getProjectsWithStats();
-      console.log('Projects with stats response:', response);
       
       // Check if response has the expected structure
       if (response && Array.isArray(response)) {
         projects.value = response;
-        console.log('Projects loaded with stats:', projects.value.length, 'projects');
       } else if (response && response.data && Array.isArray(response.data)) {
         projects.value = response.data;
-        console.log('Projects loaded with stats:', projects.value.length, 'projects');
       } else {
-        console.error('Unexpected response structure from getProjectsWithStats:', response);
         throw new Error('Invalid response structure');
       }
     } catch (statsError) {
-      console.log('Failed to load projects with stats, trying regular getProjects:', statsError);
       
       // Fallback to regular getProjects
       const response = await todoApi.getProjects();
-      console.log('Regular projects response:', response);
       
       if (response && Array.isArray(response)) {
         projects.value = response;
-        console.log('Projects loaded with regular method:', projects.value.length, 'projects');
       } else if (response && response.data && Array.isArray(response.data)) {
         projects.value = response.data;
-        console.log('Projects loaded with regular method:', projects.value.length, 'projects');
       } else {
-        console.error('Unexpected response structure from getProjects:', response);
         projects.value = [];
       }
     }
@@ -1528,7 +1497,6 @@ const loadProjects = async () => {
     // Set selected project ID if current project exists
     if (currentProject.value) {
       selectedProjectId.value = currentProject.value.id.toString();
-      console.log('Set selected project ID to:', selectedProjectId.value);
     } else if (projects.value.length > 0 && !localStorage.getItem('currentProjectId')) {
       // If no current project is set and projects are available, auto-select the first one
       const firstProject = projects.value[0];
@@ -1536,10 +1504,8 @@ const loadProjects = async () => {
       selectedProjectId.value = firstProject.id.toString();
       localStorage.setItem('currentProjectId', firstProject.id.toString());
       
-      console.log('Auto-selected first project during load:', firstProject.name);
     }
   } catch (error) {
-    console.error('Failed to load projects completely:', error);
     projects.value = [];
   }
 };
@@ -1548,10 +1514,8 @@ const loadProjects = async () => {
 
 // Handle project selection change (keeping for backward compatibility)
 const onProjectChange = async () => {
-  console.log('Project selection changed to:', selectedProjectId.value);
   
   if (!selectedProjectId.value) {
-    console.log('No project selected, clearing current project');
     currentProject.value = null;
     localStorage.removeItem('currentProjectId');
     todos.value = [];
@@ -1560,7 +1524,6 @@ const onProjectChange = async () => {
   
   // Prevent circular events
   if (isUpdatingProject.value) {
-    console.log('Skipping project change - already updating');
     return;
   }
   
@@ -1568,9 +1531,7 @@ const onProjectChange = async () => {
     isUpdatingProject.value = true;
     
     const projectId = parseInt(selectedProjectId.value);
-    console.log('Loading project with ID:', projectId);
     const project = await todoApi.getProject(projectId);
-    console.log('Project loaded:', project);
     
     currentProject.value = project;
     localStorage.setItem('currentProjectId', projectId.toString());
@@ -1591,7 +1552,6 @@ const onProjectChange = async () => {
       });
     }
   } catch (error) {
-    console.error('Failed to load project:', error);
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -1640,7 +1600,6 @@ const registerKeyboardShortcuts = () => {
     shiftKey: true,
     action: () => {
       // This would save any pending changes
-      console.log('Save shortcut triggered');
     },
     description: 'Save changes',
     category: 'Actions'
@@ -1689,7 +1648,6 @@ const handleBulkStatusChange = async (status: string) => {
     await loadTodos();
     clearSelection();
   } catch (error) {
-    console.error('Failed to update status:', error);
   }
 };
 
@@ -1700,7 +1658,6 @@ const handleBulkPriorityChange = async (priority: string) => {
     await loadTodos();
     clearSelection();
   } catch (error) {
-    console.error('Failed to update priority:', error);
   }
 };
 
@@ -1711,7 +1668,6 @@ const handleBulkAssigneeChange = async (assignee: string | null) => {
     await loadTodos();
     clearSelection();
   } catch (error) {
-    console.error('Failed to update assignee:', error);
   }
 };
 
@@ -1722,7 +1678,6 @@ const handleBulkTypeChange = async (type: string) => {
     await loadTodos();
     clearSelection();
   } catch (error) {
-    console.error('Failed to update type:', error);
   }
 };
 
@@ -1733,7 +1688,6 @@ const handleBulkDueDateChange = async (dueDate: string) => {
     await loadTodos();
     clearSelection();
   } catch (error) {
-    console.error('Failed to update due date:', error);
   }
 };
 
@@ -1744,7 +1698,6 @@ const handleBulkTagsChange = async (tags: string[]) => {
     await loadTodos();
     clearSelection();
   } catch (error) {
-    console.error('Failed to update tags:', error);
   }
 };
 
@@ -1757,7 +1710,6 @@ const handleBulkDelete = async () => {
       await loadTodos();
       clearSelection();
     } catch (error) {
-      console.error('Failed to delete todos:', error);
     }
   }
 };
@@ -1781,10 +1733,8 @@ const loadCurrentProject = async () => {
       selectedProjectId.value = firstProject.id.toString();
       localStorage.setItem('currentProjectId', firstProject.id.toString());
       
-      console.log('Auto-selected first project:', firstProject.name);
     }
   } catch (error) {
-    console.error('Failed to load current project:', error);
     localStorage.removeItem('currentProjectId');
     
     // If there was an error but projects are available, try to select the first one
@@ -1794,41 +1744,28 @@ const loadCurrentProject = async () => {
       selectedProjectId.value = firstProject.id.toString();
       localStorage.setItem('currentProjectId', firstProject.id.toString());
       
-      console.log('Auto-selected first project after error:', firstProject.name);
     }
   }
 };
 
 // Load todos from API
 const loadTodos = async () => {
-  console.log('🔄 loadTodos called');
   try {
     const filters: any = {};
     if (currentProject.value) {
       filters.project_id = currentProject.value.id;
     }
     const response = await todoApi.getTodos(filters);
-    console.log('📊 API Response:', response.data);
     
     // Check specific todos
     const allTodos = response.data.todo.concat(response.data['in-progress']).concat(response.data['qa-testing']).concat(response.data.done);
     const subtasks = allTodos.filter(t => t.parent_task_id !== null);
     const parentTasks = allTodos.filter(t => t.parent_task_id === null);
-    console.log('🔍 Total todos:', allTodos.length);
-    console.log('🔍 Parent tasks:', parentTasks.length);
-    console.log('🔍 Subtasks:', subtasks.length);
-    console.log('🔍 Subtasks by status:', {
-      todo: subtasks.filter(t => t.status === 'todo').length,
-      'in-progress': subtasks.filter(t => t.status === 'in-progress').length,
-      'qa-testing': subtasks.filter(t => t.status === 'qa-testing').length,
-      done: subtasks.filter(t => t.status === 'done').length
-    });
     
     todos.value = allTodos;
     
 
   } catch (error) {
-    console.error('Failed to load todos:', error);
   }
 };
 
@@ -1866,14 +1803,8 @@ onMounted(async () => {
   await loadTodos();
   
   // Subscribe to real-time todo updates
-  console.log('🔥🔥🔥 Setting up realtime todo subscription...');
-  console.log('🔥🔥🔥 Current project:', currentProject.value);
-  console.log('🔥🔥🔥 Realtime service status:', realtimeService);
   
   unsubscribeFromTodos = realtimeService.onTodo(async (event) => {
-    console.log('🔥🔥🔥 Real-time todo event received:', event);
-    console.log('🔥🔥🔥 Event type:', event.type);
-    console.log('🔥🔥🔥 Event data:', event.data);
     
     switch (event.type) {
       case 'todo_created':
@@ -1887,7 +1818,6 @@ onMounted(async () => {
               project: currentProject.value
             };
             todos.value.push(todoWithProject);
-            console.log('Added new todo to list:', newTodo.title);
           }
         }
         break;
@@ -1904,7 +1834,6 @@ onMounted(async () => {
             project: existingTodo.project || currentProject.value
           };
           todos.value[updateIndex] = todoWithProject;
-          console.log('Updated todo in list:', updatedTodo.title);
         }
         break;
         
@@ -1914,7 +1843,6 @@ onMounted(async () => {
         const deleteIndex = todos.value.findIndex(t => t.id === deletedTodo.id);
         if (deleteIndex !== -1) {
           todos.value.splice(deleteIndex, 1);
-          console.log('Removed todo from list:', deletedTodo.title);
         }
         break;
     }
@@ -1936,13 +1864,11 @@ onMounted(async () => {
       try {
         if (e.detail?.projectId) {
           // Project was selected
-          console.log('Project selected event received:', e.detail.projectId);
           localStorage.setItem('currentProjectId', e.detail.projectId.toString());
           await loadCurrentProject();
           await loadTodos();
         } else {
           // Project was cleared (null projectId)
-          console.log('Project cleared event received');
           currentProject.value = null;
           selectedProjectId.value = '';
           localStorage.removeItem('currentProjectId');
@@ -1962,14 +1888,12 @@ onMounted(async () => {
   
   // Listen for project changes (like deletion) to refresh project list
   window.addEventListener('todoChanged', async () => {
-    console.log('TodoChanged event received, refreshing projects');
     await loadProjects();
     
     // Check if current project still exists
     if (currentProject.value) {
       const projectStillExists = projects.value.find(p => p.id === currentProject.value!.id);
       if (!projectStillExists) {
-        console.log('Current project no longer exists, clearing selection');
         currentProject.value = null;
         selectedProjectId.value = '';
         localStorage.removeItem('currentProjectId');
@@ -1982,7 +1906,6 @@ onMounted(async () => {
           selectedProjectId.value = firstProject.id.toString();
           localStorage.setItem('currentProjectId', firstProject.id.toString());
           await loadTodos();
-          console.log('Auto-selected first available project:', firstProject.name);
         }
       }
     }
@@ -1990,31 +1913,24 @@ onMounted(async () => {
   
   // Listen for project list changes (more specific event for project deletions)
   window.addEventListener('projectListChanged', async () => {
-    console.log('ProjectListChanged event received, refreshing projects and checking current selection');
     await loadProjects();
     
     // Force reload current project from localStorage to sync with NavProjects
     const storedProjectId = localStorage.getItem('currentProjectId');
-    console.log('Stored project ID after project list change:', storedProjectId);
-    console.log('Available projects:', projects.value.map(p => ({ id: p.id, name: p.name })));
     
     if (storedProjectId) {
       const projectExists = projects.value.find(p => p.id === parseInt(storedProjectId));
       if (projectExists) {
-        console.log('Found stored project in list:', projectExists.name);
         currentProject.value = projectExists;
         selectedProjectId.value = storedProjectId;
         await loadTodos();
-        console.log('Successfully synced with stored project:', projectExists.name);
       } else {
-        console.log('Stored project no longer exists in project list, clearing');
         currentProject.value = null;
         selectedProjectId.value = '';
         localStorage.removeItem('currentProjectId');
         todos.value = [];
       }
     } else {
-      console.log('No stored project ID found, clearing current selection');
       currentProject.value = null;
       selectedProjectId.value = '';
       todos.value = [];
@@ -2023,14 +1939,12 @@ onMounted(async () => {
   
   // Listen for subscription downgrades to reload projects and check current project access
   window.addEventListener('subscription-downgrade', async (e: any) => {
-    console.log('Subscription downgrade detected in TodoBoard, reloading projects:', e.detail);
     await loadProjects();
     
     // Check if current project is still accessible after downgrade
     if (currentProject.value) {
       const projectStillAccessible = projects.value.find(p => p.id === currentProject.value!.id);
       if (!projectStillAccessible) {
-        console.log('Current project is no longer accessible after downgrade, clearing selection');
         currentProject.value = null;
         selectedProjectId.value = '';
         localStorage.removeItem('currentProjectId');
@@ -2043,7 +1957,6 @@ onMounted(async () => {
           selectedProjectId.value = firstProject.id.toString();
           localStorage.setItem('currentProjectId', firstProject.id.toString());
           await loadTodos();
-          console.log('Auto-selected first accessible project after downgrade:', firstProject.name);
         }
       }
     }

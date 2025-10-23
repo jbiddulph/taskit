@@ -29,9 +29,6 @@ class RealtimeService {
    * Initialize real-time service with user context
    */
   init(userId: number, companyId: number) {
-    console.log('🔥 Initializing realtimeService with userId:', userId, 'companyId:', companyId);
-    console.log('🔥 Supabase URL:', supabaseUrl);
-    console.log('🔥 Supabase Key exists:', !!supabaseAnonKey);
     this.currentUserId = userId;
     this.currentCompanyId = companyId;
     
@@ -42,30 +39,17 @@ class RealtimeService {
     this.subscribeToNotifications();
     this.subscribeToProjects();
     this.subscribeToTodos();
-    console.log('🔥 RealtimeService initialization complete');
   }
   
   /**
    * Test Supabase real-time connection
    */
   private testSupabaseConnection() {
-    console.log('🧪 Testing Supabase real-time connection...');
-    console.log('🧪 Supabase URL:', supabaseUrl);
-    console.log('🧪 Supabase Key exists:', !!supabaseAnonKey);
-    
     const testChannel = supabase
       .channel('connection-test')
       .subscribe((status) => {
-        console.log('🧪 Supabase connection test status:', status);
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Supabase real-time connection is working!');
           testChannel.unsubscribe();
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Supabase real-time connection failed!');
-        } else if (status === 'TIMED_OUT') {
-          console.error('⏰ Supabase real-time connection timed out!');
-        } else if (status === 'CLOSED') {
-          console.warn('🔒 Supabase real-time connection closed!');
         }
       });
   }
@@ -234,18 +218,13 @@ class RealtimeService {
    */
   private subscribeToTodos() {
     if (!this.currentCompanyId) {
-      console.log('🚨 Cannot subscribe to todos - no company ID');
       return;
     }
 
     const channelName = `company_todos_${this.currentCompanyId}`;
-    console.log('🔥 Subscribing to todos channel:', channelName);
-    console.log('🔥 Supabase client status:', supabase);
-    console.log('🔥 Current company ID:', this.currentCompanyId);
     
     // Remove existing channel if it exists
     if (this.channels.has(channelName)) {
-      console.log('🔄 Removing existing todos channel');
       this.channels.get(channelName)?.unsubscribe();
       this.channels.delete(channelName);
     }
@@ -261,8 +240,6 @@ class RealtimeService {
           filter: `company_id=eq.${this.currentCompanyId}`
         },
         (payload) => {
-          console.log('🆕 Todo INSERT event received:', payload);
-          console.log('🆕 Todo INSERT payload.new:', payload.new);
           this.handleNewTodo(payload.new as any);
         }
       )
@@ -275,8 +252,6 @@ class RealtimeService {
           filter: `company_id=eq.${this.currentCompanyId}`
         },
         (payload) => {
-          console.log('📝 Todo UPDATE event received:', payload);
-          console.log('📝 Todo UPDATE payload.new:', payload.new);
           this.handleTodoUpdate(payload.new as any);
         }
       )
@@ -289,22 +264,11 @@ class RealtimeService {
           filter: `company_id=eq.${this.currentCompanyId}`
         },
         (payload) => {
-          console.log('🗑️ Todo DELETE event received:', payload);
-          console.log('🗑️ Todo DELETE payload.old:', payload.old);
           this.handleTodoDelete(payload.old as any);
         }
       )
       .subscribe((status) => {
-        console.log('🔥 Todos real-time subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Todos real-time subscription successful');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Todos real-time subscription error');
-        } else if (status === 'TIMED_OUT') {
-          console.error('⏰ Todos real-time subscription timed out');
-        } else if (status === 'CLOSED') {
-          console.warn('🔒 Todos real-time subscription closed');
-        }
+        // Subscription status handled silently
       });
 
     this.channels.set(channelName, channel);
@@ -409,12 +373,8 @@ class RealtimeService {
    * Handle new todo created
    */
   private handleNewTodo(todo: any) {
-    console.log('🚀 New todo created:', todo);
-    console.log('🚀 Todo callbacks count:', this.todoCallbacks.size);
-    
     // Notify all todo callbacks
-    this.todoCallbacks.forEach((callback, index) => {
-      console.log('🚀 Calling todo callback', index + 1);
+    this.todoCallbacks.forEach((callback) => {
       callback({
         type: 'todo_created',
         data: todo
@@ -426,8 +386,6 @@ class RealtimeService {
    * Handle todo update
    */
   private handleTodoUpdate(todo: any) {
-    console.log('Todo updated:', todo);
-    
     // Notify all todo callbacks
     this.todoCallbacks.forEach(callback => {
       callback({
@@ -441,12 +399,8 @@ class RealtimeService {
    * Handle todo delete
    */
   private handleTodoDelete(todo: any) {
-    console.log('🗑️ Todo deleted:', todo);
-    console.log('🗑️ Todo callbacks count:', this.todoCallbacks.size);
-    
     // Notify all todo callbacks
     this.todoCallbacks.forEach(callback => {
-      console.log('🗑️ Notifying todo callback of deletion');
       callback({
         type: 'todo_deleted',
         data: todo
