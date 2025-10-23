@@ -277,11 +277,9 @@ let unsubscribeActivity: (() => void) | null = null;
 
 onMounted(async () => {
   await loadActivityTypes();
-  if (props.visible) {
-    await loadActivities();
-  }
   
-  // Subscribe to real-time activity events
+  // Subscribe to real-time activity events (always, not just when visible)
+  console.log('ActivityFeed: Subscribing to real-time events...');
   unsubscribeActivity = realtimeService.onActivity((event) => {
     console.log('ActivityFeed: Real-time event received:', event);
     if (event.type === 'activity_created') {
@@ -320,6 +318,11 @@ onMounted(async () => {
       activities.value = activities.value.filter(activity => activity.id !== event.data.id);
     }
   });
+  
+  // Load activities if visible
+  if (props.visible) {
+    await loadActivities();
+  }
 });
 
 onUnmounted(() => {
