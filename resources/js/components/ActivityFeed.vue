@@ -283,6 +283,7 @@ onMounted(async () => {
   
   // Subscribe to real-time activity events
   unsubscribeActivity = realtimeService.onActivity((event) => {
+    console.log('ActivityFeed: Real-time event received:', event);
     if (event.type === 'activity_created') {
       // Check if the new activity matches the current filter
       const shouldInclude = !selectedFilter.value || event.data.type === selectedFilter.value;

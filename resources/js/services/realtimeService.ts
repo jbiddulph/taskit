@@ -475,6 +475,8 @@ class RealtimeService {
    * Handle new activity created
    */
   private handleNewActivity(activity: any) {
+    console.log('RealtimeService: New activity received:', activity);
+    console.log('RealtimeService: Activity callbacks count:', this.activityCallbacks.size);
     // Notify all activity callbacks
     this.activityCallbacks.forEach(callback => {
       callback({
@@ -659,10 +661,12 @@ class RealtimeService {
    * Subscribe to activity events
    */
   onActivity(callback: (activity: any) => void) {
+    console.log('RealtimeService: Adding activity callback. Total callbacks:', this.activityCallbacks.size + 1);
     this.activityCallbacks.add(callback);
     
     // Return unsubscribe function
     return () => {
+      console.log('RealtimeService: Removing activity callback');
       this.activityCallbacks.delete(callback);
     };
   }
