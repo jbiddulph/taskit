@@ -906,14 +906,17 @@ const saveTodo = async (todo: Todo) => {
           project_id: currentProject.value.id
         });
         
-        // Don't add subtask locally - let real-time event handle it for consistency
-        // const parentIndex = todos.value.findIndex(t => t.id === todo.parent_task_id);
-        // if (parentIndex !== -1) {
-        //   if (!todos.value[parentIndex].subtasks) {
-        //     todos.value[parentIndex].subtasks = [];
-        //   }
-        //   todos.value[parentIndex].subtasks!.push(newTodo);
-        // }
+        // Add subtask locally as fallback since realtime isn't working
+        console.log('🔥 Adding subtask to local state as fallback');
+        const parentIndex = todos.value.findIndex(t => t.id === todo.parent_task_id);
+        if (parentIndex !== -1) {
+          if (!todos.value[parentIndex].subtasks) {
+            todos.value[parentIndex].subtasks = [];
+          }
+          todos.value[parentIndex].subtasks!.push(newTodo);
+          // Force reactivity update
+          todos.value = [...todos.value];
+        }
       } else {
         // Create regular todo
         newTodo = await todoApi.createTodo({
@@ -921,8 +924,11 @@ const saveTodo = async (todo: Todo) => {
           project_id: currentProject.value.id
         });
         
-        // Don't add todo locally - let real-time event handle it for consistency
-        // todos.value.push(newTodo);
+        // Add todo locally as fallback since realtime isn't working
+        console.log('🔥 Adding todo to local state as fallback');
+        todos.value.push(newTodo);
+        // Force reactivity update
+        todos.value = [...todos.value];
       }
       
       if ((window as any).$notify) {
@@ -979,8 +985,11 @@ const deleteTodo = async (id: string) => {
       deleteImagesInHtml(toDelete.description).catch(() => {});
     }
     
-    // Don't remove todo locally - let real-time event handle it for consistency
-    // todos.value = todos.value.filter(t => t.id !== id);
+    // Remove todo locally as fallback since realtime isn't working
+    console.log('🔥 Removing todo from local state as fallback');
+    todos.value = todos.value.filter(t => t.id !== id);
+    // Force reactivity update
+    todos.value = [...todos.value];
     
     // Dispatch event to refresh sidebar project stats
     window.dispatchEvent(new CustomEvent('todoChanged'));
