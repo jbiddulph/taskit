@@ -39,4 +39,9 @@ return [
         'tracking_id' => env('GOOGLE_ANALYTICS_TRACKING_ID'),
     ],
 
+    'ionos' => [
+        'public_prefix' => env('IONOS_PUBLIC_PREFIX'),
+        'secret' => env('IONOS_SECRET'),
+    ],
+
 ];

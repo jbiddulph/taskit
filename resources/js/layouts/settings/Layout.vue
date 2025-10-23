@@ -2,7 +2,7 @@
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { appearance, companyLogo } from '@/routes';
+import { appearance } from '@/routes';
 import { settings as dashboardSettings } from '@/routes/dashboard';
 import { edit as editPassword } from '@/routes/password';
 import { edit } from '@/routes/profile';

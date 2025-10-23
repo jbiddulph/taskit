@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\CompanyController;
 use App\Http\Controllers\Settings\DashboardController;
 use App\Http\Controllers\Settings\ExportImportController;
 use App\Http\Controllers\Settings\PasswordController;
@@ -33,15 +34,20 @@ Route::middleware(['auth', 'subscription.access'])->group(function () {
     Route::post('settings/export', [ExportImportController::class, 'export'])->name('export.settings');
     Route::post('settings/import', [ExportImportController::class, 'import'])->name('import.settings');
 
-    Route::get('settings/company-logo', function () {
+    // Company settings (replaces company-logo)
+    Route::get('settings/company', function () {
         $user = Auth::user();
         $user->load('company'); // Ensure company is loaded
         
-        return Inertia::render('settings/CompanyLogo', [
+        return Inertia::render('settings/Company', [
             'user' => $user,
             'company' => $user->company,
         ]);
-    })->name('company-logo');
+    })->name('company');
+
+    // Company subdomain routes
+    Route::post('settings/company/subdomain', [CompanyController::class, 'createSubdomain'])->name('company.subdomain.create');
+    Route::delete('settings/company/subdomain', [CompanyController::class, 'deleteSubdomain'])->name('company.subdomain.delete');
 
     // Company logo routes (only for paid plans)
     Route::post('settings/company-logo/upload', [App\Http\Controllers\CompanyLogoController::class, 'upload'])->name('company-logo.upload');
