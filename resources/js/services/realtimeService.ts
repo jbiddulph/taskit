@@ -708,6 +708,7 @@ class RealtimeService {
     console.log('🧪 Current company ID:', this.currentCompanyId);
     console.log('🧪 Active channels:', Array.from(this.channels.keys()));
     console.log('🧪 Todo callbacks registered:', this.todoCallbacks.size);
+    console.log('🧪 Activity callbacks registered:', this.activityCallbacks.size);
     
     // Test if we can create a test channel
     const testChannel = supabase

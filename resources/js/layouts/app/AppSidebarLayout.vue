@@ -39,6 +39,26 @@ onMounted(() => {
     (window as any).testDatabaseRealtime = () => {
       realtimeService.testDatabaseRealtime();
     };
+    (window as any).testActivityRealtime = () => {
+      console.log('Testing activity real-time...');
+      console.log('Current company ID:', props.company?.id);
+      console.log('Current user ID:', currentUser?.id);
+      console.log('Activity callbacks:', realtimeService.activityCallbacks?.size || 0);
+    };
+    (window as any).testActivitySubscription = () => {
+      console.log('Testing activity subscription...');
+      const testCallback = (event: any) => {
+        console.log('Test activity callback received:', event);
+      };
+      const unsubscribe = realtimeService.onActivity(testCallback);
+      console.log('Test callback registered');
+      
+      // Clean up after 10 seconds
+      setTimeout(() => {
+        unsubscribe();
+        console.log('Test callback unregistered');
+      }, 10000);
+    };
   }
 });
 
