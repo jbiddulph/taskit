@@ -10,6 +10,7 @@ class IonosService
     private string $publicPrefix;
     private string $secret;
     private string $baseUrl = 'https://api.ionos.com/dns/v1';
+    private string $domainsUrl = 'https://api.ionos.com/domains/v1';
 
     public function __construct()
     {
@@ -64,8 +65,8 @@ class IonosService
                 $zoneId = $zoneResult['zone_id'];
             }
 
-            // Create the subdomain record
-            $response = $this->createDnsRecord($subdomain, $domain);
+            // Try to create subdomain using Domains API first
+            $response = $this->createSubdomainRecord($subdomain, $domain);
 
             if ($response['success']) {
                 return [
@@ -76,7 +77,25 @@ class IonosService
                 ];
             }
 
-            return $response;
+            // If Domains API fails, try DNS API as fallback
+            Log::info('Domains API failed, trying DNS API fallback', [
+                'subdomain' => $subdomain,
+                'domain' => $domain,
+                'error' => $response['message']
+            ]);
+
+            $dnsResponse = $this->createDnsRecord($subdomain, $domain);
+
+            if ($dnsResponse['success']) {
+                return [
+                    'success' => true,
+                    'message' => 'Subdomain created successfully via DNS API',
+                    'subdomain' => $subdomain,
+                    'url' => "https://{$subdomain}.{$domain}"
+                ];
+            }
+
+            return $dnsResponse;
 
         } catch (\Exception $e) {
             Log::error('Ionos subdomain creation failed', [
@@ -128,11 +147,60 @@ class IonosService
     }
 
     /**
-     * Create a DNS zone for the domain
+     * Check if domain exists in Ionos account
+     */
+    private function domainExists(string $domain): bool
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->getBearerToken(),
+                'Content-Type' => 'application/json'
+            ])->get("{$this->domainsUrl}/domains");
+
+            Log::info('Ionos domains API response', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $domains = $data['items'] ?? [];
+                foreach ($domains as $domainItem) {
+                    if ($domainItem['properties']['name'] === $domain) {
+                        Log::info('Domain found', [
+                            'domain' => $domain,
+                            'domain_id' => $domainItem['id']
+                        ]);
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            Log::error('Error checking domain existence', [
+                'domain' => $domain,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Create a DNS zone for the domain using Domains API
      */
     private function createZone(string $domain): array
     {
         try {
+            // First check if domain exists
+            if (!$this->domainExists($domain)) {
+                return [
+                    'success' => false,
+                    'message' => 'Domain ' . $domain . ' is not registered in your Ionos account. Please register the domain first.'
+                ];
+            }
+
+            // Try to create zone using DNS API
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->getBearerToken(),
                 'Content-Type' => 'application/json'
@@ -227,7 +295,64 @@ class IonosService
     }
 
     /**
-     * Create DNS A record for subdomain
+     * Create subdomain using Domains API
+     */
+    private function createSubdomainRecord(string $subdomain, string $domain): array
+    {
+        try {
+            // First check if domain exists
+            if (!$this->domainExists($domain)) {
+                return [
+                    'success' => false,
+                    'message' => 'Domain ' . $domain . ' is not registered in your Ionos account.'
+                ];
+            }
+
+            // Try to create subdomain using Domains API
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->getBearerToken(),
+                'Content-Type' => 'application/json'
+            ])->post("{$this->domainsUrl}/domains/{$domain}/subdomains", [
+                'properties' => [
+                    'name' => $subdomain,
+                    'type' => 'A',
+                    'content' => $this->getMainDomainIp()
+                ]
+            ]);
+
+            Log::info('Ionos create subdomain API response', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'data' => $response->json()
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => 'Failed to create subdomain: ' . $response->body()
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Error creating subdomain', [
+                'subdomain' => $subdomain,
+                'domain' => $domain,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Subdomain creation failed: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Create DNS A record for subdomain (fallback method)
      */
     private function createDnsRecord(string $subdomain, string $domain): array
     {
