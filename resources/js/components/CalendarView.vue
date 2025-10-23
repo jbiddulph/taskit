@@ -17,7 +17,23 @@
       <div v-for="cell in calendarCells" :key="cell.key" class="min-h-28 rounded-lg border border-gray-200 dark:border-gray-700 p-2 bg-gray-50 dark:bg-gray-900/40">
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs font-semibold" :class="{ 'text-gray-900 dark:text-gray-100': cell.inMonth, 'text-gray-400': !cell.inMonth }">{{ cell.date.getDate() }}</span>
-          <span v-if="isToday(cell.date)" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-600 text-white">Today</span>
+          <div class="flex items-center gap-1">
+            <!-- Add button for future days only - always positioned on the right -->
+            <button
+              v-if="isFutureOnly(cell.date)"
+              @click="$emit('addTodo', cell.date)"
+              class="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors flex items-center justify-center gap-0.5"
+              title="Add todo for this date"
+            >
+              <Icon name="Plus" class="w-2.5 h-2.5" />
+              Add
+            </button>
+          </div>
+        </div>
+        
+        <!-- Today badge - positioned in center below the date -->
+        <div v-if="isToday(cell.date)" class="flex justify-center mb-1">
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-600 text-white">Today</span>
         </div>
         <div class="space-y-1 overflow-y-auto max-h-20 relative">
           <div 
@@ -52,6 +68,7 @@
               <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
             </div>
           </div>
+          
           <div v-if="!itemsByDate[cell.iso] || itemsByDate[cell.iso].length === 0" class="text-[11px] text-gray-400">No todos</div>
         </div>
       </div>
@@ -61,6 +78,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import Icon from '@/components/Icon.vue';
 // import { usePage } from '@inertiajs/vue3';
 import type { Todo } from '@/services/todoApi';
 
@@ -72,6 +90,7 @@ const props = defineProps<Props>();
 
 defineEmits<{
   editTodo: [todo: Todo];
+  addTodo: [date: Date];
 }>();
 
 // const page = usePage();
@@ -96,7 +115,12 @@ const addDays = (d: Date, days: number) => {
   dd.setDate(dd.getDate() + days);
   return dd;
 };
-const toISODate = (d: Date) => d.toISOString().slice(0, 10);
+const toISODate = (d: Date) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const monthYearLabel = computed(() =>
   current.value.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
@@ -145,6 +169,13 @@ const isToday = (date: Date) => {
     date.getMonth() === now.getMonth() &&
     date.getDate() === now.getDate()
   );
+};
+
+const isFutureOnly = (date: Date) => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const cellDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return cellDate > today;
 };
 </script>
 

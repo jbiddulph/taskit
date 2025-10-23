@@ -270,7 +270,7 @@
 
     <!-- Statistics / Calendar -->
     <div v-if="showCalendar" class="mb-4">
-      <CalendarView :todos="todos" @edit-todo="handleEditTodoFromCalendar" />
+      <CalendarView :todos="todos" @edit-todo="handleEditTodoFromCalendar" @add-todo="handleAddTodoFromCalendar" />
     </div>
     <TodoStats v-else :todos="todos" />
 
@@ -292,7 +292,7 @@
     
 
     <!-- Kanban Board -->
-    <div class="flex-1 flex gap-6 overflow-x-auto pb-4">
+    <div class="flex-1 flex gap-3 overflow-x-auto pb-2">
       <TodoColumn
         title="To Do"
         status="todo"
@@ -824,6 +824,38 @@ const editTodo = async (todo: Todo) => {
 
 const handleEditTodoFromCalendar = (todo: Todo) => {
   editingTodo.value = { ...todo };
+  showForm.value = true;
+};
+
+const handleAddTodoFromCalendar = (date: Date) => {
+  // Format date as YYYY-MM-DD for the form, avoiding timezone issues
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const formattedDate = `${year}-${month}-${day}`;
+  
+  // Set up form for creating a new todo with preselected date
+  editingTodo.value = {
+    id: 0,
+    user_id: 0,
+    project_id: currentProject.value?.id || 0,
+    company_id: 0,
+    title: '',
+    description: '',
+    status: 'todo',
+    priority: 'Medium',
+    type: 'Task',
+    assignee: '',
+    due_date: formattedDate,
+    tags: [],
+    parent_task_id: null,
+    created_at: '',
+    updated_at: '',
+    project: currentProject.value || null,
+    comments: [],
+    attachments: [],
+    subtasks: []
+  };
   showForm.value = true;
 };
 

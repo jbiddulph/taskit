@@ -1,23 +1,23 @@
 <template>
   <div class="flex flex-col h-full min-w-80">
     <!-- Column Header -->
-    <div class="flex items-center justify-between mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+    <div class="flex items-center justify-between mb-2 px-2 py-1">
       <div class="flex items-center gap-2">
-        <h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ title }}</h3>
-        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 text-xs font-medium text-gray-700 dark:text-gray-300">
+        <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-sm">{{ title }}</h3>
+        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-600 text-xs font-medium text-gray-700 dark:text-gray-300">
           {{ todos.length }}
         </span>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1">
         <button
           v-if="showAddButton"
           @click="$emit('add')"
           class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
         >
-          <Icon name="Plus" class="w-4 h-4" />
+          <Icon name="Plus" class="w-3 h-3" />
         </button>
-        <div v-if="subtaskCount > 0" class="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">
-          Sub tasks ({{ subtaskCount }})
+        <div v-if="subtaskCount > 0" class="text-xs text-gray-500 dark:text-gray-400 px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">
+          ({{ subtaskCount }})
         </div>
       </div>
     </div>
@@ -25,7 +25,7 @@
     <!-- Column Content -->
     <div
       ref="dropZone"
-      class="flex-1 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 min-h-[400px] transition-colors relative"
+      class="flex-1 p-1 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 min-h-[400px] transition-colors relative"
       :class="{
         'border-blue-300 bg-blue-50 dark:bg-blue-900/20': isDragOver,
         'border-gray-200 dark:border-gray-700': !isDragOver
@@ -60,7 +60,7 @@
         v-else
         name="todo-list"
         tag="div"
-        class="space-y-3"
+        class="space-y-2"
       >
         <template v-for="(todo, index) in todos" :key="todo.id">
           <!-- Drop Zone Before Todo -->

@@ -1,61 +1,61 @@
 <template>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
     <!-- Total Todos -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-2">
       <div class="flex items-center">
         <div class="flex-shrink-0">
-          <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-            <Icon name="List" class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <div class="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+            <Icon name="List" class="w-4 h-4 text-blue-600 dark:text-blue-400" />
           </div>
         </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Todos</p>
-          <p class="text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ stats.total }}</p>
+        <div class="ml-2">
+          <p class="text-xs font-medium text-gray-600 dark:text-gray-400">Total Todos</p>
+          <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ stats.total }}</p>
         </div>
       </div>
     </div>
 
     <!-- In Progress -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-2">
       <div class="flex items-center">
         <div class="flex-shrink-0">
-          <div class="w-8 h-8 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
-            <Icon name="Clock" class="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+          <div class="w-6 h-6 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
+            <Icon name="Clock" class="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
           </div>
         </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600 dark:text-gray-400">In Progress</p>
-          <p class="text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ stats.inProgress }}</p>
+        <div class="ml-2">
+          <p class="text-xs font-medium text-gray-600 dark:text-gray-400">In Progress</p>
+          <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ stats.inProgress }}</p>
         </div>
       </div>
     </div>
 
     <!-- Completed -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-2">
       <div class="flex items-center">
         <div class="flex-shrink-0">
-          <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-            <Icon name="CheckCircle" class="w-5 h-5 text-green-600 dark:text-green-400" />
+          <div class="w-6 h-6 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+            <Icon name="CheckCircle" class="w-4 h-4 text-green-600 dark:text-green-400" />
           </div>
         </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Completed</p>
-          <p class="text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ stats.done }}</p>
+        <div class="ml-2">
+          <p class="text-xs font-medium text-gray-600 dark:text-gray-400">Completed</p>
+          <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ stats.done }}</p>
         </div>
       </div>
     </div>
 
     <!-- Overdue -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-2">
       <div class="flex items-center">
         <div class="flex-shrink-0">
-          <div class="w-8 h-8 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
-            <Icon name="AlertTriangle" class="w-5 h-5 text-red-600 dark:text-red-400" />
+          <div class="w-6 h-6 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
+            <Icon name="AlertTriangle" class="w-4 h-4 text-red-600 dark:text-red-400" />
           </div>
         </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Overdue</p>
-          <p class="text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ stats.overdue }}</p>
+        <div class="ml-2">
+          <p class="text-xs font-medium text-gray-600 dark:text-gray-400">Overdue</p>
+          <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ stats.overdue }}</p>
         </div>
       </div>
     </div>
