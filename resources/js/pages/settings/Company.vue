@@ -54,6 +54,8 @@ const creatingSubdomain = ref(false);
 const selectedFile = ref<File | null>(null);
 const uploadError = ref<string>('');
 const subdomainError = ref<string>('');
+const checkingPermissions = ref(false);
+const apiPermissions = ref(null);
 
 const handleFileSelect = (event: Event) => {
     const target = event.target as HTMLInputElement;
@@ -128,6 +130,22 @@ const createSubdomain = () => {
             subdomainError.value = errors.subdomain || 'Failed to create subdomain';
         }
     });
+};
+
+const checkApiPermissions = async () => {
+    checkingPermissions.value = true;
+    apiPermissions.value = null;
+    
+    try {
+        const response = await fetch('/settings/company/api-permissions');
+        const data = await response.json();
+        apiPermissions.value = data;
+    } catch (error) {
+        console.error('Error checking API permissions:', error);
+        apiPermissions.value = { error: 'Failed to check API permissions' };
+    } finally {
+        checkingPermissions.value = false;
+    }
 };
 
 // Get error messages
@@ -228,8 +246,55 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
                     <CardDescription>
                         Create a custom subdomain for your company. This will allow guests to access your company's dashboard directly.
                     </CardDescription>
+                    <div class="mt-4">
+                        <Button 
+                            @click="checkApiPermissions" 
+                            :disabled="checkingPermissions"
+                            variant="outline"
+                            size="sm"
+                        >
+                            {{ checkingPermissions ? 'Checking...' : 'Check API Permissions' }}
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent class="space-y-4">
+                    <!-- API Permissions Check Results -->
+                    <div v-if="apiPermissions" class="p-4 border rounded-lg" :class="{
+                        'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800': !apiPermissions.error,
+                        'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800': apiPermissions.error
+                    }">
+                        <div class="flex items-center gap-2 mb-2" :class="{
+                            'text-green-700 dark:text-green-300': !apiPermissions.error,
+                            'text-red-700 dark:text-red-300': apiPermissions.error
+                        }">
+                            <Info class="w-5 h-5" />
+                            <span class="font-medium">API Permissions Status</span>
+                        </div>
+                        <div v-if="apiPermissions.error" class="text-sm text-red-600 dark:text-red-400">
+                            {{ apiPermissions.error }}
+                        </div>
+                        <div v-else class="space-y-2 text-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium">DNS API:</span>
+                                <span :class="apiPermissions.dns_api?.accessible ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                                    {{ apiPermissions.dns_api?.accessible ? '✓ Accessible' : '✗ Not Accessible' }}
+                                </span>
+                                <span v-if="!apiPermissions.dns_api?.accessible" class="text-xs text-gray-500">
+                                    ({{ apiPermissions.dns_api?.message }})
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium">Domains API:</span>
+                                <span :class="apiPermissions.domains_api?.accessible ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                                    {{ apiPermissions.domains_api?.accessible ? '✓ Accessible' : '✗ Not Accessible' }}
+                                </span>
+                                <span v-if="!apiPermissions.domains_api?.accessible" class="text-xs text-gray-500">
+                                    ({{ apiPermissions.domains_api?.message }})
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Current Subdomain Status -->
                     <div v-if="hasSubdomain" class="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                         <div class="flex items-center gap-2 text-green-700 dark:text-green-300 mb-2">

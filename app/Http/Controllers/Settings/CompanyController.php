@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Services\IonosService;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -112,6 +113,22 @@ class CompanyController extends Controller
             ]);
 
             return back()->withErrors(['subdomain' => 'Failed to delete subdomain. Please try again.']);
+        }
+    }
+
+    /**
+     * Check API permissions for Ionos services
+     */
+    public function checkApiPermissions(): JsonResponse
+    {
+        try {
+            $permissions = $this->ionosService->checkApiPermissions();
+            return response()->json($permissions);
+        } catch (\Exception $e) {
+            Log::error('API permissions check failed', [
+                'error' => $e->getMessage()
+            ]);
+            return response()->json(['error' => 'Failed to check API permissions: ' . $e->getMessage()], 500);
         }
     }
 }

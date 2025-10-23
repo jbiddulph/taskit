@@ -45,9 +45,10 @@ Route::middleware(['auth', 'subscription.access'])->group(function () {
         ]);
     })->name('company');
 
-    // Company subdomain routes
-    Route::post('settings/company/subdomain', [CompanyController::class, 'createSubdomain'])->name('company.subdomain.create');
-    Route::delete('settings/company/subdomain', [CompanyController::class, 'deleteSubdomain'])->name('company.subdomain.delete');
+// Company subdomain routes
+Route::post('settings/company/subdomain', [CompanyController::class, 'createSubdomain'])->name('company.subdomain.create');
+Route::delete('settings/company/subdomain', [CompanyController::class, 'deleteSubdomain'])->name('company.subdomain.delete');
+Route::get('settings/company/api-permissions', [CompanyController::class, 'checkApiPermissions'])->name('company.api-permissions');
 
     // Company logo routes (only for paid plans)
     Route::post('settings/company-logo/upload', [App\Http\Controllers\CompanyLogoController::class, 'upload'])->name('company-logo.upload');

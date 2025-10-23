@@ -147,6 +147,55 @@ class IonosService
     }
 
     /**
+     * Check API key permissions
+     */
+    public function checkApiPermissions(): array
+    {
+        try {
+            // Test DNS API access
+            $dnsResponse = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->getBearerToken(),
+                'Content-Type' => 'application/json'
+            ])->get("{$this->baseUrl}/zones");
+
+            // Test Domains API access
+            $domainsResponse = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->getBearerToken(),
+                'Content-Type' => 'application/json'
+            ])->get("{$this->domainsUrl}/domains");
+
+            Log::info('API permissions check', [
+                'dns_status' => $dnsResponse->status(),
+                'dns_body' => $dnsResponse->body(),
+                'domains_status' => $domainsResponse->status(),
+                'domains_body' => $domainsResponse->body()
+            ]);
+
+            return [
+                'dns_api' => [
+                    'accessible' => $dnsResponse->successful(),
+                    'status' => $dnsResponse->status(),
+                    'message' => $dnsResponse->successful() ? 'DNS API accessible' : $dnsResponse->body()
+                ],
+                'domains_api' => [
+                    'accessible' => $domainsResponse->successful(),
+                    'status' => $domainsResponse->status(),
+                    'message' => $domainsResponse->successful() ? 'Domains API accessible' : $domainsResponse->body()
+                ]
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Error checking API permissions', [
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'error' => 'Failed to check API permissions: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
      * Check if domain exists in Ionos account
      */
     private function domainExists(string $domain): bool
