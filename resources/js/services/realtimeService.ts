@@ -647,6 +647,42 @@ class RealtimeService {
         }
       });
   }
+
+  /**
+   * Test database realtime subscription
+   */
+  testDatabaseRealtime() {
+    console.log('🧪 Testing database realtime subscription...');
+    
+    if (!this.currentCompanyId) {
+      console.log('🚨 No company ID available for testing');
+      return;
+    }
+
+    const testChannel = supabase
+      .channel('database-test')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'taskit_todos',
+          filter: `company_id=eq.${this.currentCompanyId}`
+        },
+        (payload) => {
+          console.log('🧪 Database realtime test - INSERT event:', payload);
+        }
+      )
+      .subscribe((status) => {
+        console.log('🧪 Database realtime test status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Database realtime subscription successful!');
+          // Keep the subscription for testing
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Database realtime subscription failed!');
+        }
+      });
+  }
 }
 
 // Export singleton instance

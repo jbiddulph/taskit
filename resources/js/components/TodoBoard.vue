@@ -1857,8 +1857,14 @@ onMounted(async () => {
   await loadTodos();
   
   // Subscribe to real-time todo updates
+  console.log('🔥🔥🔥 Setting up realtime todo subscription...');
+  console.log('🔥🔥🔥 Current project:', currentProject.value);
+  console.log('🔥🔥🔥 Realtime service status:', realtimeService);
+  
   unsubscribeFromTodos = realtimeService.onTodo(async (event) => {
-    console.log('Real-time todo event received:', event);
+    console.log('🔥🔥🔥 Real-time todo event received:', event);
+    console.log('🔥🔥🔥 Event type:', event.type);
+    console.log('🔥🔥🔥 Event data:', event.data);
     
     switch (event.type) {
       case 'todo_created':
