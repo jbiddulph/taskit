@@ -9,7 +9,7 @@ class IonosService
 {
     private string $publicPrefix;
     private string $secret;
-    private string $baseUrl = 'https://api.hosting.ionos.com/dns/v1';
+    private string $baseUrl = 'https://api.ionos.com/dns/v1';
 
     public function __construct()
     {
@@ -18,11 +18,11 @@ class IonosService
     }
 
     /**
-     * Get the combined API key for Basic Auth
+     * Get the Bearer token for authentication
      */
-    private function getApiKey(): string
+    private function getBearerToken(): string
     {
-        return base64_encode($this->publicPrefix . ':' . $this->secret);
+        return $this->publicPrefix . '.' . $this->secret;
     }
 
     /**
@@ -103,7 +103,7 @@ class IonosService
             }
 
             $response = Http::withHeaders([
-                'X-API-Key' => $this->publicPrefix . '.' . $this->secret,
+                'Authorization' => 'Bearer ' . $this->getBearerToken(),
                 'Content-Type' => 'application/json'
             ])->get("{$this->baseUrl}/zones/{$zoneId}/records");
 
@@ -134,7 +134,7 @@ class IonosService
     {
         try {
             $response = Http::withHeaders([
-                'X-API-Key' => $this->publicPrefix . '.' . $this->secret,
+                'Authorization' => 'Bearer ' . $this->getBearerToken(),
                 'Content-Type' => 'application/json'
             ])->post("{$this->baseUrl}/zones", [
                 'properties' => [
@@ -182,7 +182,7 @@ class IonosService
     {
         try {
             $response = Http::withHeaders([
-                'X-API-Key' => $this->publicPrefix . '.' . $this->secret,
+                'Authorization' => 'Bearer ' . $this->getBearerToken(),
                 'Content-Type' => 'application/json'
             ])->get("{$this->baseUrl}/zones");
 
@@ -242,7 +242,7 @@ class IonosService
             }
 
             $response = Http::withHeaders([
-                'X-API-Key' => $this->publicPrefix . '.' . $this->secret,
+                'Authorization' => 'Bearer ' . $this->getBearerToken(),
                 'Content-Type' => 'application/json'
             ])->post("{$this->baseUrl}/zones/{$zoneId}/records", [
                 'properties' => [
@@ -364,7 +364,7 @@ class IonosService
             }
 
             $response = Http::withHeaders([
-                'X-API-Key' => $this->publicPrefix . '.' . $this->secret,
+                'Authorization' => 'Bearer ' . $this->getBearerToken(),
                 'Content-Type' => 'application/json'
             ])->delete("{$this->baseUrl}/zones/{$zoneId}/records/{$recordId}");
 
@@ -405,7 +405,7 @@ class IonosService
             }
 
             $response = Http::withHeaders([
-                'X-API-Key' => $this->publicPrefix . '.' . $this->secret,
+                'Authorization' => 'Bearer ' . $this->getBearerToken(),
                 'Content-Type' => 'application/json'
             ])->get("{$this->baseUrl}/zones/{$zoneId}/records");
 
