@@ -22,6 +22,7 @@ class RealtimeService {
   private notificationCallbacks: Set<(notification: any) => void> = new Set();
   private projectCallbacks: Set<(project: any) => void> = new Set();
   private todoCallbacks: Set<(todo: any) => void> = new Set();
+  private activityCallbacks: Set<(activity: any) => void> = new Set();
   private currentUserId: number | null = null;
   private currentCompanyId: number | null = null;
 
@@ -39,6 +40,7 @@ class RealtimeService {
     this.subscribeToNotifications();
     this.subscribeToProjects();
     this.subscribeToTodos();
+    this.subscribeToActivities();
   }
   
   /**
@@ -275,6 +277,67 @@ class RealtimeService {
   }
 
   /**
+   * Subscribe to activities for real-time updates
+   */
+  private subscribeToActivities() {
+    if (!this.currentCompanyId) {
+      return;
+    }
+
+    const channelName = `company_activities_${this.currentCompanyId}`;
+    
+    // Remove existing channel if it exists
+    if (this.channels.has(channelName)) {
+      this.channels.get(channelName)?.unsubscribe();
+      this.channels.delete(channelName);
+    }
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'taskit_activities',
+          filter: `company_id=eq.${this.currentCompanyId}`
+        },
+        (payload) => {
+          this.handleNewActivity(payload.new as any);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'taskit_activities',
+          filter: `company_id=eq.${this.currentCompanyId}`
+        },
+        (payload) => {
+          this.handleActivityUpdate(payload.new as any);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'taskit_activities',
+          filter: `company_id=eq.${this.currentCompanyId}`
+        },
+        (payload) => {
+          this.handleActivityDelete(payload.old as any);
+        }
+      )
+      .subscribe((status) => {
+        // Subscription status handled silently
+      });
+
+    this.channels.set(channelName, channel);
+  }
+
+  /**
    * Handle new notification received
    */
   private handleNewNotification(notification: any) {
@@ -404,6 +467,45 @@ class RealtimeService {
       callback({
         type: 'todo_deleted',
         data: todo
+      });
+    });
+  }
+
+  /**
+   * Handle new activity created
+   */
+  private handleNewActivity(activity: any) {
+    // Notify all activity callbacks
+    this.activityCallbacks.forEach(callback => {
+      callback({
+        type: 'activity_created',
+        data: activity
+      });
+    });
+  }
+
+  /**
+   * Handle activity update
+   */
+  private handleActivityUpdate(activity: any) {
+    // Notify all activity callbacks
+    this.activityCallbacks.forEach(callback => {
+      callback({
+        type: 'activity_updated',
+        data: activity
+      });
+    });
+  }
+
+  /**
+   * Handle activity delete
+   */
+  private handleActivityDelete(activity: any) {
+    // Notify all activity callbacks
+    this.activityCallbacks.forEach(callback => {
+      callback({
+        type: 'activity_deleted',
+        data: activity
       });
     });
   }
@@ -554,6 +656,18 @@ class RealtimeService {
   }
 
   /**
+   * Subscribe to activity events
+   */
+  onActivity(callback: (activity: any) => void) {
+    this.activityCallbacks.add(callback);
+    
+    // Return unsubscribe function
+    return () => {
+      this.activityCallbacks.delete(callback);
+    };
+  }
+
+  /**
    * Disconnect all subscriptions
    */
   disconnect() {
@@ -566,6 +680,7 @@ class RealtimeService {
     this.notificationCallbacks.clear();
     this.projectCallbacks.clear();
     this.todoCallbacks.clear();
+    this.activityCallbacks.clear();
     this.currentUserId = null;
     this.currentCompanyId = null;
   }

@@ -6,11 +6,10 @@
       <div class="flex items-center gap-2">
         <select
           v-model="selectedFilter"
-          @change="applyFilters"
           class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
         >
           <option value="">All Activities</option>
-          <option v-for="type in activityTypes" :key="type" :value="type">
+          <option v-for="type in Object.keys(activityTypes)" :key="type" :value="type">
             {{ formatActivityType(type) }}
           </option>
         </select>
@@ -24,22 +23,22 @@
     </div>
 
     <!-- Activities List -->
-    <div class="space-y-3 max-h-96 overflow-y-auto">
+    <div class="space-y-2 max-h-96 overflow-y-auto">
       <div
         v-for="activity in filteredActivities"
         :key="activity.id"
-        class="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        class="flex items-start gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
       >
         <!-- Activity Icon -->
         <div class="flex-shrink-0">
           <div :class="[
-            'w-8 h-8 rounded-full flex items-center justify-center',
+            'w-4 h-4 rounded-full flex items-center justify-center',
             getActivityColor(activity.type).replace('text-', 'bg-').replace('-600', '-100 dark:bg-') + ' dark:bg-'
           ]">
             <Icon 
               :name="getActivityIcon(activity.type)" 
               :class="[
-                'w-4 h-4',
+                'w-2 h-2',
                 getActivityColor(activity.type)
               ]"
             />
@@ -48,8 +47,7 @@
 
         <!-- Activity Content -->
         <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 mb-1">
-            <span class="font-medium text-gray-900 dark:text-gray-100">{{ activity.actor_name }}</span>
+          <div class="mb-1">
             <span class="text-sm text-gray-600 dark:text-gray-400">{{ activity.description }}</span>
           </div>
           
@@ -104,8 +102,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
 import Icon from '@/components/Icon.vue';
+import { realtimeService } from '@/services/realtimeService';
 
 interface ActivityItem {
   id: number;
@@ -175,9 +174,6 @@ const loadActivities = async () => {
       params.append('user_id', props.userId.toString());
     }
 
-    if (selectedFilter.value) {
-      params.append('type', selectedFilter.value);
-    }
 
     const response = await fetch(`/api/activities?${params}`, {
       headers: {
@@ -237,10 +233,6 @@ const refreshActivities = async () => {
   await loadActivities();
 };
 
-const applyFilters = async () => {
-  currentPage.value = 1;
-  await loadActivities();
-};
 
 const formatActivityType = (type: string): string => {
   return activityTypes.value[type] || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -293,10 +285,58 @@ const getActivityColor = (type: string): string => {
   return colors[type] || 'text-gray-600';
 };
 
+// Real-time subscription
+let unsubscribeActivity: (() => void) | null = null;
+
 onMounted(async () => {
   await loadActivityTypes();
   if (props.visible) {
     await loadActivities();
+  }
+  
+  // Subscribe to real-time activity events
+  unsubscribeActivity = realtimeService.onActivity((event) => {
+    if (event.type === 'activity_created') {
+      // Check if the new activity matches the current filter
+      const shouldInclude = !selectedFilter.value || event.data.type === selectedFilter.value;
+      
+      if (shouldInclude) {
+        // Add new activity to the beginning of the list
+        activities.value.unshift(event.data);
+        
+        // If we have too many activities, remove the last one to maintain pagination
+        if (activities.value.length > itemsPerPage) {
+          activities.value = activities.value.slice(0, itemsPerPage);
+        }
+      }
+    } else if (event.type === 'activity_updated') {
+      // Check if the updated activity should be visible with current filter
+      const shouldInclude = !selectedFilter.value || event.data.type === selectedFilter.value;
+      const index = activities.value.findIndex(activity => activity.id === event.data.id);
+      
+      if (shouldInclude && index !== -1) {
+        // Update existing activity
+        activities.value[index] = event.data;
+      } else if (shouldInclude && index === -1) {
+        // Activity now matches filter, add it
+        activities.value.unshift(event.data);
+        if (activities.value.length > itemsPerPage) {
+          activities.value = activities.value.slice(0, itemsPerPage);
+        }
+      } else if (!shouldInclude && index !== -1) {
+        // Activity no longer matches filter, remove it
+        activities.value.splice(index, 1);
+      }
+    } else if (event.type === 'activity_deleted') {
+      // Remove deleted activity
+      activities.value = activities.value.filter(activity => activity.id !== event.data.id);
+    }
+  });
+});
+
+onUnmounted(() => {
+  if (unsubscribeActivity) {
+    unsubscribeActivity();
   }
 });
 
