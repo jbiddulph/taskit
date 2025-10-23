@@ -49,6 +49,13 @@ class IonosService
                 Log::info('Zone not found, attempting to create zone', ['domain' => $domain]);
                 $zoneResult = $this->createZone($domain);
                 if (!$zoneResult['success']) {
+                    // If zone creation fails due to permissions, provide helpful message
+                    if (strpos($zoneResult['message'], 'UNAUTHORIZED') !== false) {
+                        return [
+                            'success' => false,
+                            'message' => 'DNS zone management requires additional permissions. Please contact your Ionos administrator to enable DNS zone creation for your API key, or manually create a DNS zone for ' . $domain . ' in your Ionos control panel.'
+                        ];
+                    }
                     return [
                         'success' => false,
                         'message' => 'Zone not found and could not be created: ' . $zoneResult['message']
@@ -302,6 +309,34 @@ class IonosService
         // Get the IP address of zaptask.co.uk
         $ip = gethostbyname('zaptask.co.uk');
         return $ip !== 'zaptask.co.uk' ? $ip : '1.2.3.4'; // Fallback if DNS lookup fails
+    }
+
+    /**
+     * Get manual setup instructions for DNS zone
+     */
+    public function getManualSetupInstructions(string $domain = 'zaptask.co.uk'): array
+    {
+        $ip = $this->getMainDomainIp();
+        
+        return [
+            'success' => false,
+            'message' => 'Manual DNS setup required',
+            'instructions' => [
+                'title' => 'Manual DNS Zone Setup Required',
+                'steps' => [
+                    '1. Log into your Ionos control panel',
+                    '2. Navigate to DNS management for ' . $domain,
+                    '3. Create a DNS zone for ' . $domain . ' if it doesn\'t exist',
+                    '4. Add the following A record:',
+                    '   - Name: {subdomain}',
+                    '   - Type: A',
+                    '   - Value: ' . $ip,
+                    '   - TTL: 3600',
+                    '5. Once the zone is set up, try creating the subdomain again'
+                ],
+                'note' => 'Your API key needs DNS zone management permissions. Contact your Ionos administrator to enable these permissions.'
+            ]
+        ];
     }
 
     /**

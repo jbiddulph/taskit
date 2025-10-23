@@ -195,6 +195,29 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
                 </Card>
             </div>
 
+            <!-- Manual Setup Instructions -->
+            <div v-if="errors.instructions" class="mb-6">
+                <Card class="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
+                    <CardHeader>
+                        <CardTitle class="text-blue-700 dark:text-blue-300">
+                            {{ errors.instructions.title }}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div class="space-y-3">
+                            <div class="text-sm text-blue-700 dark:text-blue-300">
+                                <p class="font-medium mb-2">{{ errors.instructions.note }}</p>
+                                <ol class="list-decimal list-inside space-y-1">
+                                    <li v-for="step in errors.instructions.steps" :key="step">
+                                        {{ step }}
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
             <!-- Subdomain Section -->
             <Card v-if="hasAccess">
                 <CardHeader>

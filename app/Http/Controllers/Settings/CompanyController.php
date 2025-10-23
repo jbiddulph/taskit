@@ -51,6 +51,15 @@ class CompanyController extends Controller
 
                 return back()->with('success', 'Subdomain created successfully! Your company can now be accessed at: ' . $result['url']);
             } else {
+                // Check if it's a permission issue and provide helpful instructions
+                if (strpos($result['message'], 'DNS zone management requires additional permissions') !== false) {
+                    $instructions = $this->ionosService->getManualSetupInstructions();
+                    return back()->withErrors([
+                        'subdomain' => $result['message'],
+                        'instructions' => $instructions['instructions']
+                    ]);
+                }
+                
                 return back()->withErrors(['subdomain' => $result['message']]);
             }
 
