@@ -85,7 +85,12 @@ const toggleSelectMode = () => {
             <button
                 @click="showCalendar = !showCalendar"
                 :title="showCalendar ? 'Hide Calendar' : 'Show Calendar'"
-                class="inline-flex items-center justify-center p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors"
+                :class="[
+                    'inline-flex items-center justify-center p-2 transition-colors',
+                    showCalendar 
+                        ? 'text-blue-600 dark:text-blue-400' 
+                        : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                ]"
             >
                 <Icon name="Calendar" class="w-5 h-5" />
             </button>
