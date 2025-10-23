@@ -45,6 +45,12 @@ onMounted(() => {
       realtimeService.testDatabaseRealtime();
     };
     console.log('🧪 Test functions available: window.testRealtime() and window.testDatabaseRealtime()');
+    
+    // Test realtime immediately after initialization
+    setTimeout(() => {
+      console.log('🧪 Testing realtime after 2 seconds...');
+      realtimeService.testRealtime();
+    }, 2000);
   } else {
     console.log('🚨 Missing user ID or company ID for realtime service');
     console.log('🚨 User ID:', currentUser?.id);

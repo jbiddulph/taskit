@@ -107,23 +107,28 @@ self.addEventListener('fetch', (event) => {
                   cache.put(request, responseToCache);
                 });
             } else if (isApiRequest(request)) {
+              // Temporarily disable API caching to fix realtime issues
+              console.log('🚫 Skipping API caching for realtime compatibility');
               // Cache API responses in dynamic cache with TTL
-              caches.open(DYNAMIC_CACHE)
-                .then((cache) => {
-                  // Set expiration timestamp
-                  const expirationTime = Date.now() + (5 * 60 * 1000); // 5 minutes
-                  const headers = new Headers(responseToCache.headers);
-                  headers.set('sw-cache-timestamp', expirationTime.toString());
-                  
-                  // Create a new response with the timestamp header
-                  const modifiedResponse = new Response(responseToCache.body, {
-                    status: responseToCache.status,
-                    statusText: responseToCache.statusText,
-                    headers: headers
-                  });
-                  
-                  cache.put(request, modifiedResponse);
-                });
+              // caches.open(DYNAMIC_CACHE)
+              //   .then((cache) => {
+              //     // Clone the response before modifying to avoid body consumption issues
+              //     const responseClone = responseToCache.clone();
+              //     
+              //     // Set expiration timestamp
+              //     const expirationTime = Date.now() + (5 * 60 * 1000); // 5 minutes
+              //     const headers = new Headers(responseClone.headers);
+              //     headers.set('sw-cache-timestamp', expirationTime.toString());
+              //     
+              //     // Create a new response with the timestamp header using the cloned body
+              //     const modifiedResponse = new Response(responseClone.body, {
+              //       status: responseClone.status,
+              //       statusText: responseClone.statusText,
+              //       headers: headers
+              //     });
+              //     
+              //     cache.put(request, modifiedResponse);
+              //   });
             }
 
             return response;
