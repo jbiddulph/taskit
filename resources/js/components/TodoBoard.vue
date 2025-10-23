@@ -122,15 +122,6 @@
               <span class="sm:hidden">Add</span>
             </button>
 
-            <!-- Calendar Button -->
-            <button
-              @click="showCalendar = !showCalendar"
-              :title="showCalendar ? 'Hide Calendar' : 'Show Calendar'"
-              class="inline-flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600"
-            >
-              <Icon name="Calendar" class="w-4 h-4" />
-            </button>
-
             <!-- Filters Button -->
             <button
               @click="showFilters = !showFilters"
@@ -143,20 +134,6 @@
               ]"
             >
               <Icon name="Settings" class="w-4 h-4" />
-            </button>
-
-            <!-- Activity Feed Toggle Button -->
-            <button
-              @click="emit('toggle-activity-feed')"
-              :title="props.showActivityFeed ? 'Hide Activity Feed' : 'Show Activity Feed'"
-              :class="[
-                'inline-flex items-center justify-center w-10 h-10 rounded-lg border transition-colors',
-                props.showActivityFeed 
-                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-600' 
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
-              ]"
-            >
-              <Icon name="Activity" class="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -283,7 +260,7 @@
     </div>
 
     <!-- Statistics / Calendar -->
-    <div v-if="showCalendar" class="mb-4">
+    <div v-if="props.showCalendar" class="mb-4">
       <CalendarView :todos="todos" @edit-todo="handleEditTodoFromCalendar" @add-todo="handleAddTodoFromCalendar" />
     </div>
     <TodoStats v-else :todos="todos" />
@@ -644,12 +621,14 @@ import { useBulkOperations } from '../composables/useBulkOperations';
 // Define props
 const props = defineProps<{
   showActivityFeed?: boolean;
+  showCalendar?: boolean;
 }>();
 
 // Define emits
 const emit = defineEmits<{
   'project-changed': [project: any];
   'toggle-activity-feed': [];
+  'toggle-calendar': [];
 }>();
 
 const todos = ref<Todo[]>([]);
@@ -657,7 +636,7 @@ const projects = ref<Project[]>([]);
 const showForm = ref(false);
 const showCreateProject = ref(false);
 const showEditProject = ref(false);
-const showCalendar = ref(false);
+// showCalendar is now a prop
 const showFilters = ref(false);
 const showSaveViewModal = ref(false);
 const showKeyboardHelp = ref(false);

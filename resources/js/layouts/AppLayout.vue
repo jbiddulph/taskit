@@ -20,6 +20,9 @@ withDefaults(defineProps<Props>(), {
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs" :company="company" :project-color="projectColor">
+        <template #dashboardActions>
+            <slot name="dashboardActions" />
+        </template>
         <slot />
     </AppLayout>
 </template>

@@ -43,6 +43,10 @@ const currentProjectColor = ref<string | null>(null);
 // Activity Feed toggle state
 const showActivityFeed = ref(false);
 
+// Calendar and Filters state
+const showCalendar = ref(false);
+const showFilters = ref(false);
+
 const handleProjectChange = (project: any) => {
     currentProjectColor.value = project?.color || null;
 };
@@ -69,6 +73,30 @@ const handleProjectChange = (project: any) => {
     <Head title="Dashboard" />
 
     <AppLayout :breadcrumbs="breadcrumbs" :company="company" :project-color="currentProjectColor">
+        <template #dashboardActions>
+            <!-- Calendar Button -->
+            <button
+                @click="showCalendar = !showCalendar"
+                :title="showCalendar ? 'Hide Calendar' : 'Show Calendar'"
+                class="inline-flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600"
+            >
+                <Icon name="Calendar" class="w-4 h-4" />
+            </button>
+
+            <!-- Activity Feed Toggle Button -->
+            <button
+                @click="showActivityFeed = !showActivityFeed"
+                :title="showActivityFeed ? 'Hide Activity Feed' : 'Show Activity Feed'"
+                :class="[
+                    'inline-flex items-center justify-center w-10 h-10 rounded-lg border transition-colors',
+                    showActivityFeed 
+                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-600' 
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
+                ]"
+            >
+                <Icon name="Activity" class="w-4 h-4" />
+            </button>
+        </template>
         <!-- Limit Warnings -->
         <LimitWarnings v-if="company" :company="company" />
         
@@ -82,7 +110,9 @@ const handleProjectChange = (project: any) => {
                     <TodoBoard 
                         @project-changed="handleProjectChange" 
                         :show-activity-feed="showActivityFeed"
+                        :show-calendar="showCalendar"
                         @toggle-activity-feed="showActivityFeed = !showActivityFeed"
+                        @toggle-calendar="showCalendar = !showCalendar"
                     />
                 </div>
                 

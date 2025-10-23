@@ -37,6 +37,10 @@ withDefaults(
         
         <!-- Company info, Clients Link, Team, and Notification Badge on the right -->
         <div class="flex items-center gap-3">
+            <!-- Dashboard Action Buttons -->
+            <template v-if="$slots.dashboardActions">
+                <slot name="dashboardActions" />
+            </template>
             <!-- Company-related items (only show if user belongs to a company) -->
             <template v-if="company">
                 <CompanyCodeDisplay 
