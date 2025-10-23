@@ -22,7 +22,7 @@ class IonosService
      */
     private function getApiKey(): string
     {
-        return base64_encode($this->publicPrefix . '.' . $this->secret);
+        return base64_encode($this->publicPrefix . ':' . $this->secret);
     }
 
     /**
@@ -96,7 +96,7 @@ class IonosService
             }
 
             $response = Http::withHeaders([
-                'Authorization' => 'Basic ' . $this->getApiKey(),
+                'X-API-Key' => $this->publicPrefix . '.' . $this->secret,
                 'Content-Type' => 'application/json'
             ])->get("{$this->baseUrl}/zones/{$zoneId}/records");
 
@@ -127,7 +127,7 @@ class IonosService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Basic ' . $this->getApiKey(),
+                'X-API-Key' => $this->publicPrefix . '.' . $this->secret,
                 'Content-Type' => 'application/json'
             ])->post("{$this->baseUrl}/zones", [
                 'properties' => [
@@ -175,7 +175,7 @@ class IonosService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Basic ' . $this->getApiKey(),
+                'X-API-Key' => $this->publicPrefix . '.' . $this->secret,
                 'Content-Type' => 'application/json'
             ])->get("{$this->baseUrl}/zones");
 
@@ -235,7 +235,7 @@ class IonosService
             }
 
             $response = Http::withHeaders([
-                'Authorization' => 'Basic ' . $this->getApiKey(),
+                'X-API-Key' => $this->publicPrefix . '.' . $this->secret,
                 'Content-Type' => 'application/json'
             ])->post("{$this->baseUrl}/zones/{$zoneId}/records", [
                 'properties' => [
@@ -329,7 +329,7 @@ class IonosService
             }
 
             $response = Http::withHeaders([
-                'Authorization' => 'Basic ' . $this->getApiKey(),
+                'X-API-Key' => $this->publicPrefix . '.' . $this->secret,
                 'Content-Type' => 'application/json'
             ])->delete("{$this->baseUrl}/zones/{$zoneId}/records/{$recordId}");
 
@@ -370,7 +370,7 @@ class IonosService
             }
 
             $response = Http::withHeaders([
-                'Authorization' => 'Basic ' . $this->getApiKey(),
+                'X-API-Key' => $this->publicPrefix . '.' . $this->secret,
                 'Content-Type' => 'application/json'
             ])->get("{$this->baseUrl}/zones/{$zoneId}/records");
 
