@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Todo;
 use App\Models\Notification;
+use App\Models\Activity;
 use App\Services\TodoWebSocketService;
 use App\Services\AssignmentNotificationService;
 use App\Services\CacheService;
@@ -217,6 +218,9 @@ class TodoController extends Controller
         // Send assignment notification if todo is assigned to someone
         $this->assignmentNotificationService->sendNewTodoAssignmentNotification($todo);
 
+        // Log activity
+        Activity::createTodoActivity($todo, Auth::user(), 'todo_created');
+
         return response()->json([
             'success' => true,
             'message' => 'Todo created successfully',
@@ -296,6 +300,9 @@ class TodoController extends Controller
         // Send assignment notification if assignee has changed
         $this->assignmentNotificationService->sendAssignmentNotification($todo, $oldAssignee);
 
+        // Log activity
+        Activity::createTodoActivity($todo, Auth::user(), 'todo_updated', $changes);
+
         return response()->json([
             'success' => true,
             'message' => 'Todo updated successfully',
@@ -319,6 +326,9 @@ class TodoController extends Controller
 
         $todoTitle = $todo->title;
         $userId = $todo->user_id;
+        
+        // Log activity before deletion
+        Activity::createTodoActivity($todo, Auth::user(), 'todo_deleted');
         
         $todo->delete();
 
@@ -561,6 +571,20 @@ class TodoController extends Controller
             CacheService::invalidateProjectCaches($todo->project_id);
         }
 
+        // Log bulk activity
+        Activity::create([
+            'type' => 'bulk_status_update',
+            'actor_id' => $user->id,
+            'actor_name' => $user->name,
+            'actor_email' => $user->email,
+            'target_id' => null,
+            'target_name' => count($todoIds) . ' todos',
+            'description' => "{$user->name} updated status to {$status} for " . count($todoIds) . ' todos',
+            'metadata' => ['todo_ids' => $todoIds, 'status' => $status],
+            'project_id' => null,
+            'company_id' => $user->company_id,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Status updated successfully for ' . count($todoIds) . ' todos'
@@ -613,6 +637,20 @@ class TodoController extends Controller
             CacheService::invalidateProjectCaches($todo->project_id);
         }
 
+        // Log bulk activity
+        Activity::create([
+            'type' => 'bulk_priority_update',
+            'actor_id' => $user->id,
+            'actor_name' => $user->name,
+            'actor_email' => $user->email,
+            'target_id' => null,
+            'target_name' => count($todoIds) . ' todos',
+            'description' => "{$user->name} updated priority to {$priority} for " . count($todoIds) . ' todos',
+            'metadata' => ['todo_ids' => $todoIds, 'priority' => $priority],
+            'project_id' => null,
+            'company_id' => $user->company_id,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Priority updated successfully for ' . count($todoIds) . ' todos'
@@ -662,6 +700,20 @@ class TodoController extends Controller
         foreach ($todos as $todo) {
             CacheService::invalidateProjectCaches($todo->project_id);
         }
+
+        // Log bulk activity
+        Activity::create([
+            'type' => 'bulk_assignee_update',
+            'actor_id' => $user->id,
+            'actor_name' => $user->name,
+            'actor_email' => $user->email,
+            'target_id' => null,
+            'target_name' => count($todoIds) . ' todos',
+            'description' => "{$user->name} updated assignee to {$assignee} for " . count($todoIds) . ' todos',
+            'metadata' => ['todo_ids' => $todoIds, 'assignee' => $assignee],
+            'project_id' => null,
+            'company_id' => $user->company_id,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -713,6 +765,20 @@ class TodoController extends Controller
             CacheService::invalidateProjectCaches($todo->project_id);
         }
 
+        // Log bulk activity
+        Activity::create([
+            'type' => 'bulk_type_update',
+            'actor_id' => $user->id,
+            'actor_name' => $user->name,
+            'actor_email' => $user->email,
+            'target_id' => null,
+            'target_name' => count($todoIds) . ' todos',
+            'description' => "{$user->name} updated type to {$type} for " . count($todoIds) . ' todos',
+            'metadata' => ['todo_ids' => $todoIds, 'type' => $type],
+            'project_id' => null,
+            'company_id' => $user->company_id,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Type updated successfully for ' . count($todoIds) . ' todos'
@@ -762,6 +828,20 @@ class TodoController extends Controller
         foreach ($todos as $todo) {
             CacheService::invalidateProjectCaches($todo->project_id);
         }
+
+        // Log bulk activity
+        Activity::create([
+            'type' => 'bulk_due_date_update',
+            'actor_id' => $user->id,
+            'actor_name' => $user->name,
+            'actor_email' => $user->email,
+            'target_id' => null,
+            'target_name' => count($todoIds) . ' todos',
+            'description' => "{$user->name} updated due date to {$dueDate} for " . count($todoIds) . ' todos',
+            'metadata' => ['todo_ids' => $todoIds, 'due_date' => $dueDate],
+            'project_id' => null,
+            'company_id' => $user->company_id,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -814,6 +894,20 @@ class TodoController extends Controller
             CacheService::invalidateProjectCaches($todo->project_id);
         }
 
+        // Log bulk activity
+        Activity::create([
+            'type' => 'bulk_tags_update',
+            'actor_id' => $user->id,
+            'actor_name' => $user->name,
+            'actor_email' => $user->email,
+            'target_id' => null,
+            'target_name' => count($todoIds) . ' todos',
+            'description' => "{$user->name} updated tags for " . count($todoIds) . ' todos',
+            'metadata' => ['todo_ids' => $todoIds, 'tags' => $tags],
+            'project_id' => null,
+            'company_id' => $user->company_id,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Tags updated successfully for ' . count($todoIds) . ' todos'
@@ -852,6 +946,20 @@ class TodoController extends Controller
                 'message' => 'Some todos not found or not accessible'
             ], 403);
         }
+
+        // Log bulk activity before deletion
+        Activity::create([
+            'type' => 'bulk_delete',
+            'actor_id' => $user->id,
+            'actor_name' => $user->name,
+            'actor_email' => $user->email,
+            'target_id' => null,
+            'target_name' => count($todoIds) . ' todos',
+            'description' => "{$user->name} deleted " . count($todoIds) . ' todos',
+            'metadata' => ['todo_ids' => $todoIds],
+            'project_id' => null,
+            'company_id' => $user->company_id,
+        ]);
 
         // Delete all todos
         Todo::whereIn('id', $todoIds)->delete();

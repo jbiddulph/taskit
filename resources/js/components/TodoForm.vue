@@ -6,12 +6,23 @@
           <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
             {{ isEditing ? 'Edit Todo' : 'Add New Todo' }}
           </h2>
-          <button
-            @click="$emit('close')"
-            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            <Icon name="X" class="w-6 h-6" />
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              v-if="!isEditing"
+              @click="showTemplateSelector = true"
+              type="button"
+              class="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              <Icon name="FileText" class="w-4 h-4 inline mr-2" />
+              Templates
+            </button>
+            <button
+              @click="$emit('close')"
+              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              <Icon name="X" class="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         <form @submit.prevent="handleSubmit" class="space-y-4">
@@ -152,6 +163,15 @@
         <TodoComments v-if="isEditing && form.id" :todo-id="Number(form.id)" />
       </div>
     </div>
+
+    <!-- Todo Template Selector -->
+    <TodoTemplateSelector
+      v-if="showTemplateSelector"
+      :company-id="currentUser?.company_id || 1"
+      :project-id="currentProject?.id || 1"
+      @template-selected="handleTemplateSelected"
+      @create-template="handleCreateTemplate"
+    />
   </div>
 </template>
 
@@ -159,6 +179,7 @@
 import { ref, watch, onMounted } from 'vue';
 import TipTapEditor from '@/components/TipTapEditor.vue';
 import TypeSelector from '@/components/TypeSelector.vue';
+import TodoTemplateSelector from '@/components/TodoTemplateSelector.vue';
 import { usePage } from '@inertiajs/vue3';
 import Icon from '@/components/Icon.vue';
 import TodoComments from '@/components/TodoComments.vue';
@@ -186,6 +207,9 @@ const page = usePage();
 const currentUser = (page.props as any)?.auth?.user || null;
 const currentUserName = currentUser?.name || '';
 const { trackTodoEvent } = useAnalytics();
+
+// Template selector state
+const showTemplateSelector = ref(false);
 
 
 type SimpleUser = { id: number; name: string; email: string };
@@ -343,6 +367,31 @@ const handleSubmit = async () => {
   } catch (error) {
     console.error('Failed to submit todo:', error);
   }
+};
+
+// Template handlers
+const handleTemplateSelected = (todos: any[]) => {
+  // Close the template selector
+  showTemplateSelector.value = false;
+  
+  // For now, just create the first todo from the template
+  // In a real app, you might want to create multiple todos
+  if (todos.length > 0) {
+    const templateTodo = todos[0];
+    form.title = templateTodo.title;
+    form.description = templateTodo.description;
+    form.priority = templateTodo.priority;
+    form.type = templateTodo.type;
+    form.assignee = templateTodo.assignee;
+    form.tags = templateTodo.tags;
+  }
+};
+
+const handleCreateTemplate = () => {
+  // Close the template selector
+  showTemplateSelector.value = false;
+  // In a real app, this would open a template creation modal
+  console.log('Create new template');
 };
 
 // TipTap editor used; no extra config here

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\TodoCommentController;
 use App\Http\Controllers\Api\TodoAttachmentController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\ActivityController;
 
 /*
 |--------------------------------------------------------------------------
@@ -77,6 +78,12 @@ Route::delete('projects/{project}/with-todos', [ProjectController::class, 'destr
     Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
     Route::patch('notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
     Route::patch('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    
+    // Activity routes
+    Route::get('activities', [ActivityController::class, 'index']);
+    Route::get('activities/recent', [ActivityController::class, 'recent']);
+    Route::get('activities/stats', [ActivityController::class, 'stats']);
+    Route::get('activities/types', [ActivityController::class, 'types']);
     Route::delete('notifications/{notification}', [NotificationController::class, 'destroy']);
     Route::post('notifications', [NotificationController::class, 'store']); // For testing
 });

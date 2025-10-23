@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { AlertCircle, Info } from 'lucide-vue-next';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import GuestManagement from '@/components/GuestManagement.vue';
 
 interface User {
     id: number;
@@ -180,6 +181,22 @@ const successMessage = computed(() => page.props.flash?.success as string || '')
                                 {{ form.processing ? 'Saving...' : 'Save Settings' }}
                             </Button>
                         </div>
+                    </CardContent>
+                </Card>
+
+                <!-- Guest Management -->
+                <Card v-if="company">
+                    <CardHeader>
+                        <CardTitle>Guest Access</CardTitle>
+                        <CardDescription>
+                            Manage external collaborators and their project access.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <GuestManagement 
+                            :company-id="company.id" 
+                            :projects="[]"
+                        />
                     </CardContent>
                 </Card>
             </div>

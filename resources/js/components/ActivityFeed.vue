@@ -91,36 +91,62 @@
     </div>
 
     <!-- Load More Button -->
-    <div v-if="hasMoreActivities" class="mt-4 text-center">
+    <div v-if="hasMore" class="mt-4 text-center">
       <button
         @click="loadMoreActivities"
-        class="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+        :disabled="loading"
+        class="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Load More
+        {{ loading ? 'Loading...' : 'Load More' }}
       </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import Icon from '@/components/Icon.vue';
-import { activityFeedService, type ActivityItem } from '@/services/activityFeedService';
+
+interface ActivityItem {
+  id: number;
+  type: string;
+  actor_id: number;
+  actor_name: string;
+  actor_email?: string;
+  target_id?: number;
+  target_name?: string;
+  description: string;
+  metadata?: any;
+  created_at: string;
+  project_id?: number;
+  company_id: number;
+  actor?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  project?: {
+    id: number;
+    name: string;
+  };
+}
 
 interface Props {
   companyId: number;
   projectId?: number;
   userId?: number;
+  visible?: boolean;
 }
 
 const props = defineProps<Props>();
 
 const selectedFilter = ref('');
 const activities = ref<ActivityItem[]>([]);
+const activityTypes = ref<Record<string, string>>({});
+const loading = ref(false);
 const currentPage = ref(1);
 const itemsPerPage = 20;
-
-const activityTypes = computed(() => activityFeedService.getActivityTypes());
+const hasMore = ref(true);
 
 const filteredActivities = computed(() => {
   let filtered = activities.value;
@@ -129,38 +155,95 @@ const filteredActivities = computed(() => {
     filtered = filtered.filter(activity => activity.type === selectedFilter.value);
   }
 
-  return filtered.slice(0, currentPage.value * itemsPerPage);
+  return filtered;
 });
 
-const hasMoreActivities = computed(() => {
-  return activities.value.length > currentPage.value * itemsPerPage;
-});
+const loadActivities = async () => {
+  try {
+    loading.value = true;
+    
+    const params = new URLSearchParams({
+      page: currentPage.value.toString(),
+      per_page: itemsPerPage.toString()
+    });
 
-const loadActivities = () => {
-  if (props.projectId) {
-    activities.value = activityFeedService.getProjectActivities(props.projectId);
-  } else if (props.userId) {
-    activities.value = activityFeedService.getUserActivities(props.userId);
-  } else {
-    activities.value = activityFeedService.getCompanyActivities(props.companyId);
+    if (props.projectId) {
+      params.append('project_id', props.projectId.toString());
+    }
+
+    if (props.userId) {
+      params.append('user_id', props.userId.toString());
+    }
+
+    if (selectedFilter.value) {
+      params.append('type', selectedFilter.value);
+    }
+
+    const response = await fetch(`/api/activities?${params}`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      credentials: 'same-origin',
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (currentPage.value === 1) {
+        activities.value = data.data;
+      } else {
+        activities.value = [...activities.value, ...data.data];
+      }
+      hasMore.value = data.meta.has_more;
+      console.log('ActivityFeed: Activities loaded:', activities.value.length);
+    } else {
+      console.error('ActivityFeed: API Error:', response.status, response.statusText);
+    }
+  } catch (error) {
+    console.error('Failed to load activities:', error);
+  } finally {
+    loading.value = false;
   }
 };
 
-const loadMoreActivities = () => {
-  currentPage.value++;
+const loadActivityTypes = async () => {
+  try {
+    const response = await fetch('/api/activities/types', {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      credentials: 'same-origin',
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      activityTypes.value = data.data;
+    }
+  } catch (error) {
+    console.error('Failed to load activity types:', error);
+  }
 };
 
-const refreshActivities = () => {
-  loadActivities();
-  currentPage.value = 1;
+const loadMoreActivities = async () => {
+  if (hasMore.value && !loading.value) {
+    currentPage.value++;
+    await loadActivities();
+  }
 };
 
-const applyFilters = () => {
+const refreshActivities = async () => {
   currentPage.value = 1;
+  await loadActivities();
+};
+
+const applyFilters = async () => {
+  currentPage.value = 1;
+  await loadActivities();
 };
 
 const formatActivityType = (type: string): string => {
-  return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  return activityTypes.value[type] || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 };
 
 const formatDate = (dateString: string): string => {
@@ -177,14 +260,51 @@ const formatDate = (dateString: string): string => {
 };
 
 const getActivityIcon = (type: string): string => {
-  return activityFeedService.getActivityIcon(type);
+  const icons: { [key: string]: string } = {
+    'todo_created': 'Plus',
+    'todo_updated': 'Edit',
+    'todo_deleted': 'Trash2',
+    'todo_commented': 'MessageCircle',
+    'todo_assigned': 'UserCheck',
+    'todo_status_changed': 'ArrowRight',
+    'project_created': 'FolderPlus',
+    'project_updated': 'FolderEdit',
+    'project_deleted': 'FolderX',
+    'user_joined': 'UserPlus',
+    'mention': 'AtSign'
+  };
+  return icons[type] || 'Activity';
 };
 
 const getActivityColor = (type: string): string => {
-  return activityFeedService.getActivityColor(type);
+  const colors: { [key: string]: string } = {
+    'todo_created': 'text-green-600',
+    'todo_updated': 'text-blue-600',
+    'todo_deleted': 'text-red-600',
+    'todo_commented': 'text-purple-600',
+    'todo_assigned': 'text-orange-600',
+    'todo_status_changed': 'text-indigo-600',
+    'project_created': 'text-green-600',
+    'project_updated': 'text-blue-600',
+    'project_deleted': 'text-red-600',
+    'user_joined': 'text-green-600',
+    'mention': 'text-pink-600'
+  };
+  return colors[type] || 'text-gray-600';
 };
 
-onMounted(() => {
-  loadActivities();
+onMounted(async () => {
+  await loadActivityTypes();
+  if (props.visible) {
+    await loadActivities();
+  }
+});
+
+// Watch for visibility changes
+watch(() => props.visible, async (newVisible) => {
+  if (newVisible && activities.value.length === 0) {
+    await loadActivities();
+  }
 });
 </script>
+

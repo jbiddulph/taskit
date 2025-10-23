@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Todo;
 use App\Models\TodoComment;
 use App\Models\Notification;
+use App\Models\Activity;
 use App\Services\TodoWebSocketService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -95,6 +96,9 @@ class TodoCommentController extends Controller
                 ]);
             }
         }
+
+        // Log activity
+        Activity::createCommentActivity($todo, $user, $request->content);
 
         return response()->json([
             'success' => true,

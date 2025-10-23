@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Models\Activity;
 use App\Services\TodoWebSocketService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -117,6 +118,9 @@ class ProjectController extends Controller
             'company_id' => $user->company_id,
         ]);
 
+        // Log activity
+        Activity::createProjectActivity($project, $user, 'project_created');
+
         return response()->json([
             'success' => true,
             'message' => 'Project created successfully',
@@ -189,7 +193,11 @@ class ProjectController extends Controller
             }
         }
 
-        $project->update($request->only(['name', 'description', 'key', 'color', 'is_active', 'client_id']));
+        $changes = $request->only(['name', 'description', 'key', 'color', 'is_active', 'client_id']);
+        $project->update($changes);
+
+        // Log activity
+        Activity::createProjectActivity($project, $user, 'project_updated', $changes);
 
         return response()->json([
             'success' => true,
@@ -223,6 +231,9 @@ class ProjectController extends Controller
             ], 422);
         }
 
+        // Log activity before deletion
+        Activity::createProjectActivity($project, $user, 'project_deleted');
+        
         $project->delete();
 
         return response()->json([

@@ -194,6 +194,16 @@ onUnmounted(() => {
 
 <style scoped>
 .mention {
-  @apply bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 px-1 py-0.5 rounded text-sm font-medium;
+  background-color: rgb(219 234 254);
+  color: rgb(30 64 175);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.dark .mention {
+  background-color: rgb(30 58 138 / 0.2);
+  color: rgb(191 219 254);
 }
 </style>

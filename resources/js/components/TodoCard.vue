@@ -40,12 +40,21 @@
           {{ todo.type }}
         </span>
       </div>
-      <button
-        @click.stop="$emit('delete', todo.id)"
-        class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
-      >
-        <Icon name="Trash2" class="w-4 h-4" />
-      </button>
+      <div class="flex items-center gap-1">
+        <button
+          @click.stop="showTimeTracker = !showTimeTracker"
+          class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-500 transition-opacity"
+          title="Time Tracking"
+        >
+          <Icon name="Clock" class="w-4 h-4" />
+        </button>
+        <button
+          @click.stop="$emit('delete', todo.id)"
+          class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
+        >
+          <Icon name="Trash2" class="w-4 h-4" />
+        </button>
+      </div>
     </div>
 
     <!-- Title -->
@@ -211,6 +220,11 @@
     </div>
   </div>
 
+  <!-- Time Tracker -->
+  <div v-if="showTimeTracker" class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+    <TimeTracker :todo-id="todo.id" :user-id="currentUser?.id || 1" />
+  </div>
+
   <!-- Subtasks with Collapse Animation -->
   <Transition name="subtasks">
     <div v-if="todo.subtasks && todo.subtasks.length > 0 && subtasksVisible" class="mt-2 overflow-hidden">
@@ -248,7 +262,9 @@
 <script setup lang="ts">
 import { computed, ref, nextTick } from 'vue';
 import Icon from '@/components/Icon.vue';
+import TimeTracker from '@/components/TimeTracker.vue';
 import { todoApi } from '@/services/todoApi';
+import { usePage } from '@inertiajs/vue3';
 
 import type { Todo } from '@/services/todoApi';
 
@@ -276,8 +292,15 @@ const titleInput = ref<HTMLInputElement | null>(null);
 // Subtask visibility state
 const subtasksVisible = ref(true);
 
+// Time tracker state
+const showTimeTracker = ref(false);
+
 // Copy feedback state
 const copyFeedback = ref('');
+
+// Current user
+const page = usePage();
+const currentUser = (page.props as any)?.auth?.user || null;
 
 const priorityClasses = {
   Low: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-yellow-200',

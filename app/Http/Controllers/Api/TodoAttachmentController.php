@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Todo;
 use App\Models\TodoAttachment;
+use App\Models\Activity;
 use App\Services\TodoWebSocketService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -86,6 +87,20 @@ class TodoAttachmentController extends Controller
 
         // Send real-time notification
         $this->webSocketService->attachmentAdded($attachment);
+
+        // Log activity
+        Activity::create([
+            'type' => 'attachment_uploaded',
+            'actor_id' => $user->id,
+            'actor_name' => $user->name,
+            'actor_email' => $user->email,
+            'target_id' => $todo->id,
+            'target_name' => $todo->title,
+            'description' => "{$user->name} uploaded attachment '{$attachment->filename}' to todo '{$todo->title}'",
+            'metadata' => ['attachment_id' => $attachment->id, 'filename' => $attachment->filename],
+            'project_id' => $todo->project_id,
+            'company_id' => $user->company_id,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -173,6 +188,20 @@ class TodoAttachmentController extends Controller
         $todoId = $attachment->todo_id;
         $userId = $attachment->todo->user_id;
         $filename = $attachment->original_filename;
+        
+        // Log activity before deletion
+        Activity::create([
+            'type' => 'attachment_deleted',
+            'actor_id' => $user->id,
+            'actor_name' => $user->name,
+            'actor_email' => $user->email,
+            'target_id' => $todoId,
+            'target_name' => $todoTitle,
+            'description' => "{$user->name} deleted attachment '{$filename}' from todo '{$todoTitle}'",
+            'metadata' => ['attachment_id' => $attachment->id, 'filename' => $filename],
+            'project_id' => $attachment->todo->project_id,
+            'company_id' => $user->company_id,
+        ]);
         
         // Delete attachment record
         $attachment->delete();

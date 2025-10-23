@@ -3,20 +3,23 @@
     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Comments</h3>
 
     <!-- New comment form -->
-    <form @submit.prevent="handleAdd" class="flex gap-2 mb-4">
-      <input
+    <form @submit.prevent="handleAdd" class="mb-4">
+      <MentionInput
         v-model="newComment"
-        type="text"
-        placeholder="Write a comment..."
-        class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+        :users="availableUsers"
+        placeholder="Write a comment... @mention someone"
+        @mention="handleMentions"
+        class="mb-2"
       />
-      <button
-        type="submit"
-        :disabled="adding || !newComment.trim()"
-        class="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {{ adding ? 'Adding...' : 'Add' }}
-      </button>
+      <div class="flex justify-end">
+        <button
+          type="submit"
+          :disabled="adding || !newComment.trim()"
+          class="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {{ adding ? 'Adding...' : 'Add Comment' }}
+        </button>
+      </div>
     </form>
 
     <!-- Comments list -->
@@ -62,9 +65,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { todoApi, type TodoComment } from '@/services/todoApi';
+import MentionInput from '@/components/MentionInput.vue';
+import { mentionService } from '@/services/mentionService';
+import { useCompanyUsers } from '@/composables/useCompanyUsers';
 
 interface Props {
   todoId: number;
@@ -82,6 +88,22 @@ const comments = ref<TodoComment[]>([]);
 
 const editingId = ref<number | null>(null);
 const editContent = ref('');
+
+// Load company users for mentions
+const { users: availableUsers, loadUsers } = useCompanyUsers();
+
+// Update mention service when users are loaded
+watch(availableUsers, (users) => {
+  if (users.length > 0) {
+    mentionService.setUsers(users);
+  }
+}, { immediate: true });
+
+// Handle mentions in comments
+const handleMentions = (mentions: { userId: number; userName: string }[]) => {
+  console.log('Mentions detected:', mentions);
+  // In a real app, this would trigger notifications
+};
 
 const load = async () => {
   try {
