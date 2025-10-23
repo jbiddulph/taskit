@@ -36,14 +36,14 @@ const sidebarNavItems = computed(() => {
         },
     ];
 
-    // Add Company Logo for paid plans only
+    // Add Company settings for paid plans only
     const user = (page.props.auth as any)?.user;
     const company = user?.company;
     
     if (company && ['MIDI', 'MAXI'].includes(company.subscription_type)) {
         items.push({
-            title: 'Company Logo',
-            href: companyLogo(),
+            title: 'Company',
+            href: '/settings/company',
         });
     }
 
