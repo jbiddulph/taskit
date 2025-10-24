@@ -149,4 +149,42 @@ class SubdomainController extends Controller
         ]);
     }
 
+    /**
+     * Show the public dashboard for guests
+     */
+    public function publicDashboard(Request $request)
+    {
+        $company = $request->attributes->get('company');
+        
+        \Log::info('Public dashboard accessed', [
+            'company' => $company ? $company->name : 'null',
+            'is_public' => $company ? $company->is_public : false
+        ]);
+        
+        if (!$company) {
+            return redirect('https://www.zaptask.co.uk');
+        }
+
+        // Check if company is actually public
+        if (!$company->is_public) {
+            return redirect('https://www.zaptask.co.uk');
+        }
+
+        // Get all projects and todos for this company
+        $projects = $company->projects()->with(['todos' => function($query) {
+            $query->orderBy('created_at', 'desc');
+        }])->get();
+
+        // Get all todos for this company
+        $todos = $company->todos()->with(['user', 'project'])->get();
+
+        return Inertia::render('Subdomain/PublicDashboard', [
+            'company' => $company,
+            'projects' => $projects,
+            'todos' => $todos,
+            'isSubdomain' => true,
+            'isGuest' => true
+        ]);
+    }
+
 }

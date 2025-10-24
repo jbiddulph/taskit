@@ -24,6 +24,7 @@ interface Company {
     logo_url?: string;
     subdomain?: string;
     subdomain_url?: string;
+    is_public?: boolean;
 }
 
 interface Props {
@@ -45,6 +46,11 @@ const removeForm = useForm({});
 // Form for subdomain creation
 const subdomainForm = useForm({
     company_name: props.company?.name || ''
+});
+
+// Form for public dashboard toggle
+const publicForm = useForm({
+    is_public: props.company?.is_public || false
 });
 
 const fileInput = ref<HTMLInputElement>();
@@ -146,6 +152,17 @@ const checkApiPermissions = async () => {
     } finally {
         checkingPermissions.value = false;
     }
+};
+
+const togglePublicDashboard = () => {
+    publicForm.patch('/settings/company/public', {
+        onSuccess: () => {
+            router.reload();
+        },
+        onError: (errors) => {
+            console.error('Failed to update public dashboard setting:', errors);
+        }
+    });
 };
 
 // Get error messages
@@ -473,6 +490,57 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
                         >
                             {{ uploading ? 'Uploading...' : 'Upload Logo' }}
                         </Button>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <!-- Public Dashboard Section -->
+            <Card v-if="hasAccess">
+                <CardHeader>
+                    <CardTitle class="flex items-center gap-2">
+                        <Globe class="w-5 h-5" />
+                        Public Dashboard
+                    </CardTitle>
+                    <CardDescription>
+                        Allow guests to view your company's dashboard without logging in. They can see projects and todos but cannot create, edit, or delete anything.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-1">
+                            <Label class="text-sm font-medium">Enable Public Dashboard</Label>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                When enabled, anyone can view your dashboard at your subdomain without logging in.
+                            </p>
+                        </div>
+                        <Button
+                            @click="togglePublicDashboard"
+                            :disabled="publicForm.processing"
+                            :variant="publicForm.is_public ? 'default' : 'outline'"
+                            size="sm"
+                        >
+                            {{ publicForm.processing ? 'Updating...' : (publicForm.is_public ? 'Enabled' : 'Enable') }}
+                        </Button>
+                    </div>
+                    
+                    <div v-if="publicForm.is_public && company?.subdomain_url" class="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                        <div class="flex items-center gap-2 text-green-700 dark:text-green-300 mb-2">
+                            <CheckCircle class="w-5 h-5" />
+                            <span class="font-medium">Public Dashboard Active</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-green-600 dark:text-green-400">
+                                Your public dashboard: 
+                            </span>
+                            <a 
+                                :href="company.subdomain_url" 
+                                target="_blank"
+                                class="inline-flex items-center gap-1 text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
+                            >
+                                {{ company.subdomain_url }}
+                                <ExternalLink class="w-3 h-3" />
+                            </a>
+                        </div>
                     </div>
                 </CardContent>
             </Card>

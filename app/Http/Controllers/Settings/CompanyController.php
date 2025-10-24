@@ -147,4 +147,43 @@ class CompanyController extends Controller
             return response()->json(['error' => 'Failed to test API key: ' . $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Toggle public dashboard setting
+     */
+    public function togglePublic(Request $request)
+    {
+        $request->validate([
+            'is_public' => 'required|boolean'
+        ]);
+
+        $user = Auth::user();
+        $company = $user->company;
+
+        if (!$company) {
+            return back()->withErrors(['public' => 'No company found for this user.']);
+        }
+
+        try {
+            $company->update([
+                'is_public' => $request->is_public
+            ]);
+
+            $message = $request->is_public 
+                ? 'Public dashboard enabled. Guests can now view your dashboard without logging in.'
+                : 'Public dashboard disabled. Dashboard is now private.';
+
+            return back()->with('success', $message);
+
+        } catch (\Exception $e) {
+            Log::error('Public dashboard toggle failed', [
+                'user_id' => $user->id,
+                'company_id' => $company->id,
+                'is_public' => $request->is_public,
+                'error' => $e->getMessage()
+            ]);
+
+            return back()->withErrors(['public' => 'Failed to update public dashboard setting. Please try again.']);
+        }
+    }
 }

@@ -62,8 +62,14 @@ class SubdomainMiddleware
                         return app(SubdomainController::class)->login($request);
                     }
                 } elseif ($path === 'dashboard') {
-                    // Show dashboard
-                    return app(SubdomainController::class)->dashboard($request);
+                    // Check if company is public
+                    if ($company->is_public) {
+                        // Show public dashboard for guests
+                        return app(SubdomainController::class)->publicDashboard($request);
+                    } else {
+                        // Show private dashboard (requires authentication)
+                        return app(SubdomainController::class)->dashboard($request);
+                    }
                 } else {
                     // For other paths, continue with normal routing
                     return $next($request);

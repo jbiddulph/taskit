@@ -51,6 +51,9 @@ Route::delete('settings/company/subdomain', [CompanyController::class, 'deleteSu
 Route::get('settings/company/api-permissions', [CompanyController::class, 'checkApiPermissions'])->name('company.api-permissions');
 Route::get('settings/company/test-api-key', [CompanyController::class, 'testApiKey'])->name('company.test-api-key');
 
+// Company public dashboard routes
+Route::patch('settings/company/public', [CompanyController::class, 'togglePublic'])->name('company.public.toggle');
+
     // Company logo routes (only for paid plans)
     Route::post('settings/company-logo/upload', [App\Http\Controllers\CompanyLogoController::class, 'upload'])->name('company-logo.upload');
     Route::post('settings/company-logo/update-url', [App\Http\Controllers\CompanyLogoController::class, 'updateUrl'])->name('company-logo.update-url');
