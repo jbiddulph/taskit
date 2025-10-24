@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { dashboard, login, register } from '@/routes';
+// import { dashboard, login, register } from '@/routes';
 import { Head, Link } from '@inertiajs/vue3';
 import { onMounted } from 'vue';
 import PublicNavigation from '@/components/PublicNavigation.vue';
@@ -362,7 +362,7 @@ onMounted(() => {
                         </div>
                     </div>
                     <Link
-                        :href="login()"
+                        href="/login"
                         class="mt-4 w-full inline-block text-center rounded-lg bg-blue-500 px-6 py-3 text-sm font-medium text-white hover:bg-blue-600 transition-colors duration-200"
                     >
                         Try Demo Now
@@ -391,12 +391,12 @@ onMounted(() => {
                         <h4 class="text-white font-semibold mb-4">Quick Links</h4>
                         <ul class="space-y-2 text-sm">
                             <li>
-                                <Link :href="login()" class="text-gray-300 hover:text-white transition-colors">
+                                <Link href="/login" class="text-gray-300 hover:text-white transition-colors">
                                     Login
                                 </Link>
                             </li>
                             <li>
-                                <Link :href="register()" class="text-gray-300 hover:text-white transition-colors">
+                                <Link href="/register" class="text-gray-300 hover:text-white transition-colors">
                                     Sign Up
                                 </Link>
                             </li>

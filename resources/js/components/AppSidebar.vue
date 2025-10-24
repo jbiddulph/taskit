@@ -2,7 +2,7 @@
 import NavProjects from '@/components/NavProjects.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuItem } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+// import { dashboard } from '@/routes';
 import { Link, usePage } from '@inertiajs/vue3';
 import AppLogo from './AppLogo.vue';
 
@@ -16,7 +16,7 @@ const company = (page.props as any).company;
         <SidebarHeader>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <Link :href="dashboard()" class="flex items-center gap-1 p-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+                    <Link href="/dashboard" class="flex items-center gap-1 p-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
                         <AppLogo />
                     </Link>
                 </SidebarMenuItem>

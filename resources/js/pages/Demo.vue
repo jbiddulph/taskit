@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { dashboard, login, register } from '@/routes';
+// import { dashboard, login, register } from '@/routes';
 import { Head, Link } from '@inertiajs/vue3';
 import PublicNavigation from '@/components/PublicNavigation.vue';
 
@@ -77,7 +77,7 @@ defineOptions({
                             </div>
                         </div>
                         <Link
-                            :href="login()"
+                            href="/login"
                             class="mt-6 w-full inline-block text-center rounded-lg bg-blue-500 px-6 py-3 text-sm font-medium text-white hover:bg-blue-600 transition-colors duration-200"
                         >
                             Try Demo Now
@@ -510,13 +510,13 @@ defineOptions({
                     </p>
                     <div class="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link
-                            :href="login()"
+                            href="/login"
                             class="inline-block rounded-lg bg-blue-500 px-8 py-3 text-lg font-medium text-white hover:bg-blue-600 transition-colors duration-200"
                         >
                             Try Demo Account
                         </Link>
                         <Link
-                            :href="register()"
+                            href="/register"
                             class="inline-block rounded-lg border border-white px-8 py-3 text-lg font-medium text-white hover:bg-white hover:text-[#1b1b18] transition-colors duration-200"
                         >
                             Create Free Account

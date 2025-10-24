@@ -3,6 +3,7 @@
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\SubdomainController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -59,3 +60,11 @@ Route::middleware(['auth', 'verified', 'subscription.access'])->group(function (
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
 require __DIR__.'/subscription.php';
+
+// Subdomain routes - these will be handled by SubdomainMiddleware
+Route::middleware(['subdomain'])->group(function () {
+    Route::get('/', [SubdomainController::class, 'company'])->name('subdomain.company');
+    Route::get('/login', [SubdomainController::class, 'login'])->name('subdomain.login');
+    Route::post('/login', [SubdomainController::class, 'authenticate'])->name('subdomain.authenticate');
+    Route::get('/dashboard', [SubdomainController::class, 'dashboard'])->name('subdomain.dashboard');
+});

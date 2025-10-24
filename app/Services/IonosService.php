@@ -27,6 +27,47 @@ class IonosService
     }
 
     /**
+     * Test DNS record creation directly
+     */
+    public function testDnsRecordCreation(): array
+    {
+        try {
+            $zoneId = $this->getZoneId('zaptask.co.uk');
+            if (!$zoneId) {
+                return [
+                    'success' => false,
+                    'message' => 'Zone not found for zaptask.co.uk'
+                ];
+            }
+
+            $response = Http::withHeaders([
+                'X-API-Key' => $this->getApiKey(),
+                'Content-Type' => 'application/json'
+            ])->post("{$this->baseUrl}/zones/{$zoneId}/records", [
+                'properties' => [
+                    'name' => 'test-subdomain',
+                    'type' => 'A',
+                    'content' => '1.2.3.4',
+                    'ttl' => 3600
+                ]
+            ]);
+
+            return [
+                'success' => $response->successful(),
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'zone_id' => $zoneId
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
      * Test API key format and basic connectivity
      */
     public function testApiKey(): array
@@ -343,7 +384,7 @@ class IonosService
 
             if ($response->successful()) {
                 $data = $response->json();
-                $zones = $data['items'] ?? [];
+                $zones = is_array($data) && isset($data[0]) ? $data : ($data['items'] ?? []);
                 
                 Log::info('Available zones', [
                     'zones' => $zones,
@@ -351,10 +392,10 @@ class IonosService
                 ]);
                 
                 foreach ($zones as $zone) {
-                    if ($zone['properties']['name'] === $domain) {
+                    if ($zone['name'] === $domain) {
                         Log::info('Found zone', [
                             'zone_id' => $zone['id'],
-                            'zone_name' => $zone['properties']['name']
+                            'zone_name' => $zone['name']
                         ]);
                         return $zone['id'];
                     }

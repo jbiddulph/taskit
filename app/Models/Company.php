@@ -56,6 +56,16 @@ class Company extends Model
     }
 
     /**
+     * Get todos for this company through users
+     */
+    public function todos()
+    {
+        return \App\Models\Todo::whereHas('user', function ($query) {
+            $query->where('company_id', $this->id);
+        });
+    }
+
+    /**
      * Get projects for this company through users
      */
     public function projects()
