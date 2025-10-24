@@ -60,7 +60,7 @@
           gtag('config', 'G-Z1ZXQ6Z1M9');
         </script>
 
-        @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"], null, ['build'])
+        {!! \App\Helpers\ViteHelper::relativeAssets(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"]) !!}
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
