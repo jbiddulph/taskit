@@ -80,3 +80,14 @@ Route::get('/debug-subdomain', function (Request $request) {
         'company' => $request->attributes->get('company'),
     ]);
 });
+
+// Debug route to test www redirect
+Route::get('/debug-www', function (Request $request) {
+    return response()->json([
+        'host' => $request->getHost(),
+        'url' => $request->url(),
+        'full_url' => $request->fullUrl(),
+        'secure' => $request->secure(),
+        'headers' => $request->headers->all(),
+    ]);
+});
