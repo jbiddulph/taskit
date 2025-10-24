@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use App\Models\Company;
+use App\Http\Controllers\SubdomainController;
 use Illuminate\Support\Facades\View;
 
 class SubdomainMiddleware
@@ -37,11 +38,22 @@ class SubdomainMiddleware
                 // Set a flag to indicate this is a subdomain request
                 $request->attributes->set('isSubdomain', true);
                 
-                // Load subdomain routes
-                require base_path('routes/subdomain.php');
+                // Handle subdomain routing directly
+                $path = $request->path();
                 
-                // Process the subdomain request
-                return $next($request);
+                if ($path === '' || $path === '/') {
+                    // Show company page for root path
+                    return app(SubdomainController::class)->company($request);
+                } elseif ($path === 'login') {
+                    // Show login page
+                    return app(SubdomainController::class)->login($request);
+                } elseif ($path === 'dashboard') {
+                    // Show dashboard
+                    return app(SubdomainController::class)->dashboard($request);
+                } else {
+                    // For other paths, continue with normal routing
+                    return $next($request);
+                }
             } else {
                 // Subdomain not found, redirect to main site with www
                 return redirect('https://www.zaptask.co.uk');
