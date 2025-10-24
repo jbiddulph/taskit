@@ -62,13 +62,16 @@ class SubdomainMiddleware
                         return app(SubdomainController::class)->login($request);
                     }
                 } elseif ($path === 'dashboard') {
+                    // Show private dashboard (requires authentication)
+                    return app(SubdomainController::class)->dashboard($request);
+                } elseif ($path === 'public') {
                     // Check if company is public
                     if ($company->is_public) {
                         // Show public dashboard for guests
                         return app(SubdomainController::class)->publicDashboard($request);
                     } else {
-                        // Show private dashboard (requires authentication)
-                        return app(SubdomainController::class)->dashboard($request);
+                        // Company is not public, redirect to main site
+                        return redirect('https://www.zaptask.co.uk');
                     }
                 } else {
                     // For other paths, continue with normal routing

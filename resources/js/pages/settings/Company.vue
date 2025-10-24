@@ -528,18 +528,33 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
                             <CheckCircle class="w-5 h-5" />
                             <span class="font-medium">Public Dashboard Active</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm text-green-600 dark:text-green-400">
-                                Your public dashboard: 
-                            </span>
-                            <a 
-                                :href="company.subdomain_url" 
-                                target="_blank"
-                                class="inline-flex items-center gap-1 text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
-                            >
-                                {{ company.subdomain_url }}
-                                <ExternalLink class="w-3 h-3" />
-                            </a>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-green-600 dark:text-green-400">
+                                    Company page: 
+                                </span>
+                                <a 
+                                    :href="company.subdomain_url" 
+                                    target="_blank"
+                                    class="inline-flex items-center gap-1 text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
+                                >
+                                    {{ company.subdomain_url }}
+                                    <ExternalLink class="w-3 h-3" />
+                                </a>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-green-600 dark:text-green-400">
+                                    Public dashboard: 
+                                </span>
+                                <a 
+                                    :href="`${company.subdomain_url}/public`" 
+                                    target="_blank"
+                                    class="inline-flex items-center gap-1 text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
+                                >
+                                    {{ company.subdomain_url }}/public
+                                    <ExternalLink class="w-3 h-3" />
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </CardContent>

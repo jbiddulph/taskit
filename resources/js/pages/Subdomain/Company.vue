@@ -13,6 +13,7 @@ interface Company {
     logo_url?: string;
     subdomain?: string;
     subdomain_url?: string;
+    is_public?: boolean;
 }
 
 interface Props {
@@ -78,6 +79,31 @@ const props = defineProps<Props>();
 
                 <!-- Action Cards -->
                 <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                    <!-- Public Dashboard Card (only if company is public) -->
+                    <Card v-if="company.is_public">
+                        <CardHeader>
+                            <CardTitle class="flex items-center gap-2">
+                                <Globe class="w-5 h-5" />
+                                Public Dashboard
+                            </CardTitle>
+                            <CardDescription>
+                                View our projects and tasks without logging in
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button as-child class="w-full">
+                                <a :href="`https://${company.subdomain}.zaptask.co.uk/public`">
+                                    View Public Dashboard
+                                </a>
+                            </Button>
+                            <Button as-child variant="outline" class="w-full">
+                                <a href="https://zaptask.co.uk">
+                                    Visit Main Site
+                                </a>
+                            </Button>
+                        </CardContent>
+                    </Card>
+
                     <!-- Login Card -->
                     <Card>
                         <CardHeader>
