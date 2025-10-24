@@ -50,7 +50,7 @@ class SubdomainMiddleware
                     // Check if user is already authenticated
                     if (Auth::check()) {
                         // User is authenticated, redirect to dashboard
-                        return redirect('/dashboard');
+                        return redirect('https://' . $request->getHost() . '/dashboard');
                     }
                     
                     // Handle both GET and POST requests to /login

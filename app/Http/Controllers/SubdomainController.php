@@ -119,7 +119,7 @@ class SubdomainController extends Controller
                 'session_id' => $request->session()->getId()
             ]);
             
-            return redirect()->intended('/dashboard');
+            return redirect()->intended('https://' . $request->getHost() . '/dashboard');
         }
 
         return back()->withErrors([
