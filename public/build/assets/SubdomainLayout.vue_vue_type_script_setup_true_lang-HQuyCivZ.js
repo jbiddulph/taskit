@@ -1,0 +1,1 @@
+import{d as a,c as t,o as s,F as o,a as r,e as n,b as l,h as c,P as d}from"./app-DqSkj17-.js";const i={class:"min-h-screen bg-gray-50 dark:bg-gray-900"},p=a({__name:"SubdomainLayout",props:{title:{}},setup(u){return(e,_)=>(s(),t(o,null,[r(l(c),{title:e.title},null,8,["title"]),n("div",i,[d(e.$slots,"default")])],64))}});export{p as _};
