@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
             \App\Http\Middleware\TrustHosts::class,
+            \App\Http\Middleware\SetAppUrlMiddleware::class,
         ]);
 
         $middleware->api(append: [
