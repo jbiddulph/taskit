@@ -10,7 +10,7 @@ class IonosService
     private string $publicPrefix;
     private string $secret;
     private string $baseUrl = 'https://api.hosting.ionos.com/dns/v1';
-    private string $domainsUrl = 'https://api.hosting.ionos.com/domains/v1';
+    private string $domainsUrl = 'https://api.hosting.ionos.com/domains';
 
     public function __construct()
     {
@@ -104,31 +104,13 @@ class IonosService
                 $zoneId = $zoneResult['zone_id'];
             }
 
-            // Try to create subdomain using Domains API first
-            $response = $this->createSubdomainRecord($subdomain, $domain);
-
-            if ($response['success']) {
-                return [
-                    'success' => true,
-                    'message' => 'Subdomain created successfully',
-                    'subdomain' => $subdomain,
-                    'url' => "https://{$subdomain}.{$domain}"
-                ];
-            }
-
-            // If Domains API fails, try DNS API as fallback
-            Log::info('Domains API failed, trying DNS API fallback', [
-                'subdomain' => $subdomain,
-                'domain' => $domain,
-                'error' => $response['message']
-            ]);
-
+            // Create subdomain using DNS API directly
             $dnsResponse = $this->createDnsRecord($subdomain, $domain);
 
             if ($dnsResponse['success']) {
                 return [
                     'success' => true,
-                    'message' => 'Subdomain created successfully via DNS API',
+                    'message' => 'Subdomain created successfully',
                     'subdomain' => $subdomain,
                     'url' => "https://{$subdomain}.{$domain}"
                 ];
@@ -257,16 +239,22 @@ class IonosService
             $response = Http::withHeaders([
                 'X-API-Key' => $this->getApiKey(),
                 'Content-Type' => 'application/json'
-            ])->get("{$this->domainsUrl}/domains");
+            ])->get($this->domainsUrl);
 
             Log::info('Ionos domains API response', [
                 'status' => $response->status(),
-                'body' => $response->body()
+                'body' => $response->body(),
+                'url' => $this->domainsUrl
             ]);
 
             if ($response->successful()) {
                 $data = $response->json();
                 $domains = $data['items'] ?? [];
+                Log::info('Available domains', [
+                    'domains' => $domains,
+                    'looking_for' => $domain
+                ]);
+                
                 foreach ($domains as $domainItem) {
                     if ($domainItem['properties']['name'] === $domain) {
                         Log::info('Domain found', [
@@ -289,20 +277,12 @@ class IonosService
     }
 
     /**
-     * Create a DNS zone for the domain using Domains API
+     * Create a DNS zone for the domain using DNS API
      */
     private function createZone(string $domain): array
     {
         try {
-            // First check if domain exists
-            if (!$this->domainExists($domain)) {
-                return [
-                    'success' => false,
-                    'message' => 'Domain ' . $domain . ' is not registered in your Ionos account. Please register the domain first.'
-                ];
-            }
-
-            // Try to create zone using DNS API
+            // Since we know the domain exists (we found it in DNS API), try to create zone
             $response = Http::withHeaders([
                 'X-API-Key' => $this->getApiKey(),
                 'Content-Type' => 'application/json'
@@ -414,7 +394,7 @@ class IonosService
             $response = Http::withHeaders([
                 'X-API-Key' => $this->getApiKey(),
                 'Content-Type' => 'application/json'
-            ])->post("{$this->domainsUrl}/domains/{$domain}/subdomains", [
+            ])->post("{$this->domainsUrl}/{$domain}/subdomains", [
                 'properties' => [
                     'name' => $subdomain,
                     'type' => 'A',
