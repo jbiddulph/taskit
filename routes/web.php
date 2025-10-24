@@ -85,3 +85,20 @@ Route::get('/debug-www', function (Request $request) {
         'headers' => $request->headers->all(),
     ]);
 });
+
+// Debug route to test subdomain and public route
+Route::get('/debug-public', function (Request $request) {
+    $company = \App\Models\Company::where('subdomain', 'moe')->first();
+    return response()->json([
+        'host' => $request->getHost(),
+        'path' => $request->path(),
+        'is_subdomain' => $request->attributes->get('isSubdomain', false),
+        'company' => $company ? [
+            'id' => $company->id,
+            'name' => $company->name,
+            'subdomain' => $company->subdomain,
+            'is_public' => $company->is_public
+        ] : null,
+        'middleware_processed' => $request->attributes->has('company')
+    ]);
+});
