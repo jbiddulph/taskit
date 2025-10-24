@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Company;
 use App\Http\Controllers\SubdomainController;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Auth;
 
 class SubdomainMiddleware
 {
@@ -46,6 +47,11 @@ class SubdomainMiddleware
                     \Log::info('SubdomainMiddleware: Routing to company page', ['path' => $path, 'company' => $company->name]);
                     return app(SubdomainController::class)->company($request);
                 } elseif ($path === 'login') {
+                    // Check if user is already authenticated
+                    if (Auth::check()) {
+                        // User is authenticated, redirect to dashboard
+                        return redirect('/dashboard');
+                    }
                     // Show login page
                     return app(SubdomainController::class)->login($request);
                 } elseif ($path === 'dashboard') {
