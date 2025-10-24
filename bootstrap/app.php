@@ -24,7 +24,6 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
             \App\Http\Middleware\TrustHosts::class,
-            \Fruitcake\Cors\HandleCors::class,
         ]);
 
         $middleware->api(append: [
@@ -32,7 +31,6 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
-            \Fruitcake\Cors\HandleCors::class,
         ]);
 
         // Register middleware aliases
