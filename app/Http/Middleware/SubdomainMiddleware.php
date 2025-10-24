@@ -20,8 +20,8 @@ class SubdomainMiddleware
     {
         $host = $request->getHost();
         
-        // Check if this is a subdomain request
-        if (str_contains($host, '.zaptask.co.uk') && $host !== 'zaptask.co.uk') {
+        // Check if this is a subdomain request (exclude www)
+        if (str_contains($host, '.zaptask.co.uk') && $host !== 'zaptask.co.uk' && $host !== 'www.zaptask.co.uk') {
             $subdomain = str_replace('.zaptask.co.uk', '', $host);
             
             // Find company by subdomain

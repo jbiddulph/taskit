@@ -64,12 +64,13 @@ require __DIR__.'/auth.php';
 require __DIR__.'/subscription.php';
 
 // Subdomain routes - these will be handled by SubdomainMiddleware
+// Only apply to actual subdomains, not the main domain
 Route::middleware([SubdomainMiddleware::class])->group(function () {
     Route::get('/', [SubdomainController::class, 'company'])->name('subdomain.company');
     Route::get('/login', [SubdomainController::class, 'login'])->name('subdomain.login');
     Route::post('/login', [SubdomainController::class, 'authenticate'])->name('subdomain.authenticate');
     Route::get('/dashboard', [SubdomainController::class, 'dashboard'])->name('subdomain.dashboard');
-});
+})->where('host', '^(?!www\.)[a-zA-Z0-9-]+\.zaptask\.co\.uk$');
 
 // Debug route to test subdomain detection
 Route::get('/debug-subdomain', function (Request $request) {
