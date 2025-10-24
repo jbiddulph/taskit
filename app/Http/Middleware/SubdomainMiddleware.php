@@ -40,6 +40,9 @@ class SubdomainMiddleware
                 // Subdomain not found, redirect to main site
                 return redirect('https://zaptask.co.uk');
             }
+        } else {
+            // Not a subdomain request, set flag to false
+            $request->attributes->set('isSubdomain', false);
         }
         
         return $next($request);

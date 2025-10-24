@@ -27,6 +27,40 @@ class IonosService
     }
 
     /**
+     * Get DNS records for a zone
+     */
+    public function getDnsRecords(string $zoneId): array
+    {
+        try {
+            $response = Http::withHeaders([
+                'X-API-Key' => $this->getApiKey(),
+                'Content-Type' => 'application/json'
+            ])->get("{$this->baseUrl}/zones/{$zoneId}/records");
+
+            return [
+                'success' => $response->successful(),
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'records' => $response->successful() ? $response->json() : []
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Get zone ID for a domain (public method)
+     */
+    public function getZoneIdPublic(string $domain): ?string
+    {
+        return $this->getZoneId($domain);
+    }
+
+    /**
      * Test DNS record creation directly
      */
     public function testDnsRecordCreation(): array

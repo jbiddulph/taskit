@@ -4,6 +4,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\SubdomainController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -67,4 +68,13 @@ Route::middleware(['subdomain'])->group(function () {
     Route::get('/login', [SubdomainController::class, 'login'])->name('subdomain.login');
     Route::post('/login', [SubdomainController::class, 'authenticate'])->name('subdomain.authenticate');
     Route::get('/dashboard', [SubdomainController::class, 'dashboard'])->name('subdomain.dashboard');
+});
+
+// Debug route to test subdomain detection
+Route::get('/debug-subdomain', function (Request $request) {
+    return response()->json([
+        'host' => $request->getHost(),
+        'is_subdomain' => $request->attributes->get('isSubdomain', false),
+        'company' => $request->attributes->get('company'),
+    ]);
 });
