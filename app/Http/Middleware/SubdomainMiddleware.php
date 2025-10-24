@@ -36,6 +36,15 @@ class SubdomainMiddleware
                 
                 // Set a flag to indicate this is a subdomain request
                 $request->attributes->set('isSubdomain', true);
+                
+                // For subdomain requests, only allow specific routes
+                $allowedRoutes = ['/', '/login', '/dashboard'];
+                $currentPath = $request->path();
+                
+                // If trying to access a route that's not allowed on subdomain, redirect to main site
+                if (!in_array('/' . $currentPath, $allowedRoutes) && $currentPath !== '') {
+                    return redirect('https://zaptask.co.uk' . $request->getRequestUri());
+                }
             } else {
                 // Subdomain not found, redirect to main site
                 return redirect('https://zaptask.co.uk');

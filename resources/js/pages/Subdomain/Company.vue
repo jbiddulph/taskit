@@ -95,6 +95,11 @@ const props = defineProps<Props>();
                                     Employee Login
                                 </a>
                             </Button>
+                            <Button as-child variant="outline" class="w-full">
+                                <a href="https://zaptask.co.uk">
+                                    Visit Main Site
+                                </a>
+                            </Button>
                         </CardContent>
                     </Card>
 

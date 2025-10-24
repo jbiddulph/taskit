@@ -43,6 +43,11 @@ const logout = () => {
     // Handle logout
     window.location.href = '/logout';
 };
+
+const goToMainSite = () => {
+    // Redirect to main site for full functionality
+    window.location.href = 'https://zaptask.co.uk/dashboard';
+};
 </script>
 
 <template>
@@ -67,10 +72,16 @@ const logout = () => {
                                 </p>
                             </div>
                         </div>
-                        <Button @click="logout" variant="outline" class="flex items-center gap-2">
-                            <LogOut class="w-4 h-4" />
-                            Logout
-                        </Button>
+                        <div class="flex gap-2">
+                            <Button @click="goToMainSite" class="flex items-center gap-2">
+                                <Globe class="w-4 h-4" />
+                                Full Dashboard
+                            </Button>
+                            <Button @click="logout" variant="outline" class="flex items-center gap-2">
+                                <LogOut class="w-4 h-4" />
+                                Logout
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
