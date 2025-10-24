@@ -20,7 +20,7 @@ class SubdomainMiddleware
     {
         $host = $request->getHost();
         
-        // Check if this is a subdomain request (exclude www)
+        // Only process actual subdomains (not www or root domain)
         if (str_contains($host, '.zaptask.co.uk') && $host !== 'zaptask.co.uk' && $host !== 'www.zaptask.co.uk') {
             $subdomain = str_replace('.zaptask.co.uk', '', $host);
             
@@ -36,15 +36,12 @@ class SubdomainMiddleware
                 
                 // Set a flag to indicate this is a subdomain request
                 $request->attributes->set('isSubdomain', true);
-                
-                // For subdomain requests, allow all routes but handle them appropriately
-                // The subdomain routes will be handled by the SubdomainController
             } else {
-                // Subdomain not found, redirect to main site
-                return redirect('https://zaptask.co.uk');
+                // Subdomain not found, redirect to main site with www
+                return redirect('https://www.zaptask.co.uk');
             }
         } else {
-            // Not a subdomain request, set flag to false
+            // Not a subdomain request (www or root domain), set flag to false
             $request->attributes->set('isSubdomain', false);
         }
         
