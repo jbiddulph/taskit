@@ -44,21 +44,19 @@ class SubdomainController extends Controller
             ]);
         }
 
-        // Get users from this company
-        $users = User::where('company_id', $company->id)->get();
-        
-        // Get company todos
-        $todos = $company->todos()->with('user')->get();
-
-        // Get user's projects
-        $projects = $user->projects()->with('owner')->get();
-
+        // Pass the same data as the main dashboard
         return Inertia::render('Subdomain/Dashboard', [
-            'company' => $company,
-            'users' => $users,
-            'todos' => $todos,
-            'projects' => $projects,
-            'isSubdomain' => true
+            'user' => $user,
+            'company' => $company ? [
+                'id' => $company->id,
+                'name' => $company->name,
+                'code' => $company->code,
+                'subscription_type' => $company->subscription_type,
+                'current_member_count' => $company->getCurrentMemberCount(),
+                'member_limit' => $company->getMemberLimit(),
+                'current_project_count' => $company->getCurrentProjectCount(),
+                'project_limit' => $company->getProjectLimit(),
+            ] : null,
         ]);
     }
 
