@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class SubdomainController extends Controller
 {
@@ -91,8 +92,23 @@ class SubdomainController extends Controller
                    ->where('company_id', $company->id)
                    ->first();
 
-        if ($user && Auth::attempt($credentials)) {
+        \Log::info('Subdomain authentication attempt', [
+            'email' => $credentials['email'],
+            'company_id' => $company->id,
+            'user_found' => $user ? $user->id : 'null',
+            'password_check' => $user ? Hash::check($credentials['password'], $user->password) : 'no_user'
+        ]);
+
+        if ($user && Hash::check($credentials['password'], $user->password)) {
+            // Manually log in the user
+            Auth::login($user, $request->boolean('remember'));
             $request->session()->regenerate();
+            
+            \Log::info('Subdomain authentication successful', [
+                'user_id' => $user->id,
+                'company_id' => $company->id
+            ]);
+            
             return redirect()->intended('/dashboard');
         }
 
