@@ -49,7 +49,4 @@ return Application::configure(basePath: dirname(__DIR__))
         if (config('app.force_https', true)) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
-        
-        // Override APP_URL to empty string to force relative URLs
-        config(['app.url' => '']);
     })->create();

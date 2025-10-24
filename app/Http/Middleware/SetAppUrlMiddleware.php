@@ -20,7 +20,14 @@ class SetAppUrlMiddleware
         // Set the app URL to the current request host for multi-domain support
         $host = $request->getHost();
         if ($host && !str_contains($host, 'localhost')) {
-            URL::forceRootUrl('https://' . $host);
+            $scheme = $request->secure() ? 'https' : 'http';
+            $appUrl = $scheme . '://' . $host;
+            
+            // Force the app URL to use the current request's domain
+            URL::forceRootUrl($appUrl);
+            
+            // Also update the config for this request
+            config(['app.url' => $appUrl]);
         }
 
         return $next($request);
