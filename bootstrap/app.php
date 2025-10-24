@@ -51,4 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
         
         // Use relative URLs for assets to support multiple domains
         \Illuminate\Support\Facades\URL::forceRootUrl('');
+        
+        // Override APP_URL for Vite to use relative URLs
+        config(['app.url' => '']);
     })->create();
