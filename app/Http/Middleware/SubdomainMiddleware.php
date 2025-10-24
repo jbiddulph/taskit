@@ -37,6 +37,9 @@ class SubdomainMiddleware
                 // Set a flag to indicate this is a subdomain request
                 $request->attributes->set('isSubdomain', true);
                 
+                // Load subdomain routes
+                require base_path('routes/subdomain.php');
+                
                 // Process the subdomain request
                 return $next($request);
             } else {
