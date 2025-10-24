@@ -19,12 +19,15 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        $middleware->web(prepend: [
+            \App\Http\Middleware\SetAppUrlMiddleware::class,
+        ]);
+
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
             \App\Http\Middleware\TrustHosts::class,
-            \App\Http\Middleware\SetAppUrlMiddleware::class,
         ]);
 
         $middleware->api(append: [
