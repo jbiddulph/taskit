@@ -70,7 +70,7 @@ Route::middleware([SubdomainMiddleware::class])->group(function () {
     Route::get('/login', [SubdomainController::class, 'login'])->name('subdomain.login');
     Route::post('/login', [SubdomainController::class, 'authenticate'])->name('subdomain.authenticate');
     Route::get('/dashboard', [SubdomainController::class, 'dashboard'])->name('subdomain.dashboard');
-});
+})->where('host', '^[a-zA-Z0-9-]+\\.zaptask\\.co\\.uk$');
 
 // Debug route to test subdomain detection
 Route::get('/debug-subdomain', function (Request $request) {

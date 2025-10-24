@@ -44,8 +44,9 @@ class SubdomainMiddleware
                 return redirect('https://www.zaptask.co.uk');
             }
         } else {
-            // Not a subdomain request (www or root domain), redirect to main site
-            return redirect('https://www.zaptask.co.uk' . $request->getRequestUri());
+            // Not a subdomain request (www or root domain), let it pass through
+            $request->attributes->set('isSubdomain', false);
+            return $next($request);
         }
     }
 }
