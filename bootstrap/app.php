@@ -48,4 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
         if (config('app.force_https', true)) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
+        
+        // Use relative URLs for assets to support multiple domains
+        \Illuminate\Support\Facades\URL::forceRootUrl('');
     })->create();
