@@ -44,8 +44,8 @@ class SubdomainController extends Controller
             ]);
         }
 
-        // Pass the same data as the main dashboard
-        return Inertia::render('Subdomain/Dashboard', [
+        // Use the same dashboard as the main site
+        return Inertia::render('Dashboard', [
             'user' => $user,
             'company' => $company ? [
                 'id' => $company->id,
