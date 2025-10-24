@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
-import { login } from '@/routes';
+// import { login } from '@/routes';
 import { Form, Head } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
 import { ref, computed, watch } from 'vue';
@@ -163,7 +163,7 @@ const showIndividualOption = computed(() => subscriptionType.value === 'FREE');
 
             <div class="text-center text-sm text-muted-foreground">
                 Already have an account?
-                <TextLink :href="login()" class="underline underline-offset-4" :tabindex="6">Log in</TextLink>
+                <TextLink href="/login" class="underline underline-offset-4" :tabindex="6">Log in</TextLink>
             </div>
         </Form>
     </AuthBase>
