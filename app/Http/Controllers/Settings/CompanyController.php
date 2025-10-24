@@ -131,4 +131,20 @@ class CompanyController extends Controller
             return response()->json(['error' => 'Failed to check API permissions: ' . $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Test API key format and basic connectivity
+     */
+    public function testApiKey(): JsonResponse
+    {
+        try {
+            $result = $this->ionosService->testApiKey();
+            return response()->json($result);
+        } catch (\Exception $e) {
+            Log::error('API key test failed', [
+                'error' => $e->getMessage()
+            ]);
+            return response()->json(['error' => 'Failed to test API key: ' . $e->getMessage()], 500);
+        }
+    }
 }

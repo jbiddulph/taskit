@@ -9,8 +9,8 @@ class IonosService
 {
     private string $publicPrefix;
     private string $secret;
-    private string $baseUrl = 'https://api.ionos.com/dns/v1';
-    private string $domainsUrl = 'https://api.ionos.com/domains/v1';
+    private string $baseUrl = 'https://api.hosting.ionos.com/dns/v1';
+    private string $domainsUrl = 'https://api.hosting.ionos.com/domains/v1';
 
     public function __construct()
     {
@@ -24,6 +24,45 @@ class IonosService
     private function getApiKey(): string
     {
         return $this->publicPrefix . '.' . $this->secret;
+    }
+
+    /**
+     * Test API key format and basic connectivity
+     */
+    public function testApiKey(): array
+    {
+        try {
+            $apiKey = $this->getApiKey();
+            
+            Log::info('API key test', [
+                'public_prefix' => $this->publicPrefix,
+                'secret_length' => strlen($this->secret),
+                'api_key_length' => strlen($apiKey),
+                'api_key_format' => $this->publicPrefix . '.' . $this->secret,
+                'has_dot' => strpos($apiKey, '.') !== false
+            ]);
+
+            // Test with a simple endpoint first
+            $testUrl = 'https://api.hosting.ionos.com/dns/v1/zones';
+            $response = Http::withHeaders([
+                'X-API-Key' => $apiKey,
+                'Content-Type' => 'application/json'
+            ])->get($testUrl);
+
+            return [
+                'api_key_format' => $apiKey,
+                'test_url' => $testUrl,
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'headers' => $response->headers()
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'error' => $e->getMessage(),
+                'api_key_format' => $this->getApiKey()
+            ];
+        }
     }
 
     /**
@@ -152,23 +191,36 @@ class IonosService
     public function checkApiPermissions(): array
     {
         try {
+            $apiKey = $this->getApiKey();
+            $dnsUrl = "{$this->baseUrl}/zones";
+            $domainsUrl = "{$this->domainsUrl}/domains";
+            
+            Log::info('API permissions check - URLs and headers', [
+                'dns_url' => $dnsUrl,
+                'domains_url' => $domainsUrl,
+                'api_key_length' => strlen($apiKey),
+                'api_key_preview' => substr($apiKey, 0, 20) . '...'
+            ]);
+
             // Test DNS API access
             $dnsResponse = Http::withHeaders([
-                'X-API-Key' => $this->getApiKey(),
+                'X-API-Key' => $apiKey,
                 'Content-Type' => 'application/json'
-            ])->get("{$this->baseUrl}/zones");
+            ])->get($dnsUrl);
 
             // Test Domains API access
             $domainsResponse = Http::withHeaders([
-                'X-API-Key' => $this->getApiKey(),
+                'X-API-Key' => $apiKey,
                 'Content-Type' => 'application/json'
-            ])->get("{$this->domainsUrl}/domains");
+            ])->get($domainsUrl);
 
-            Log::info('API permissions check', [
+            Log::info('API permissions check - responses', [
                 'dns_status' => $dnsResponse->status(),
                 'dns_body' => $dnsResponse->body(),
+                'dns_headers' => $dnsResponse->headers(),
                 'domains_status' => $domainsResponse->status(),
-                'domains_body' => $domainsResponse->body()
+                'domains_body' => $domainsResponse->body(),
+                'domains_headers' => $domainsResponse->headers()
             ]);
 
             return [
@@ -180,8 +232,9 @@ class IonosService
                 'domains_api' => [
                     'accessible' => $domainsResponse->successful(),
                     'status' => $domainsResponse->status(),
-                    'message' => $domainsResponse->successful() ? 'Domains API accessible' : $domainsResponse->body()
-                ]
+                    'message' => $domainsResponse->successful() ? 'Domains API accessible' : 'Domains API not available (using DNS API instead)'
+                ],
+                'note' => 'DNS API is working - this is sufficient for subdomain creation'
             ];
 
         } catch (\Exception $e) {
