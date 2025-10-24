@@ -36,15 +36,16 @@ class SubdomainMiddleware
                 
                 // Set a flag to indicate this is a subdomain request
                 $request->attributes->set('isSubdomain', true);
+                
+                // Process the subdomain request
+                return $next($request);
             } else {
                 // Subdomain not found, redirect to main site with www
                 return redirect('https://www.zaptask.co.uk');
             }
         } else {
-            // Not a subdomain request (www or root domain), set flag to false
-            $request->attributes->set('isSubdomain', false);
+            // Not a subdomain request (www or root domain), redirect to main site
+            return redirect('https://www.zaptask.co.uk' . $request->getRequestUri());
         }
-        
-        return $next($request);
     }
 }
