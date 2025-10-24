@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import AuthenticatedSessionController from '@/actions/App/Http/Controllers/Auth/AuthenticatedSessionController';
 import InputError from '@/components/InputError.vue';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
@@ -46,7 +45,8 @@ defineProps<{
         </div>
 
         <Form
-            v-bind="AuthenticatedSessionController.store.form()"
+            :action="route('login.store')"
+            method="post"
             :reset-on-success="['password']"
             @success="$inertia.visit('/dashboard')"
             v-slot="{ errors, processing }"
