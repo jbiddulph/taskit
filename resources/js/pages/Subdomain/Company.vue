@@ -3,7 +3,7 @@ import { Head } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Globe, Users, Calendar, CheckCircle } from 'lucide-vue-next';
-import AppLayout from '@/layouts/AppLayout.vue';
+import SubdomainLayout from '@/layouts/SubdomainLayout.vue';
 
 interface Company {
     id: number;
@@ -26,7 +26,7 @@ const props = defineProps<Props>();
 <template>
     <Head :title="`${company.name} - Company Portal`" />
     
-    <AppLayout>
+    <SubdomainLayout>
         <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
             <div class="container mx-auto px-4 py-8">
                 <!-- Header -->
@@ -139,5 +139,5 @@ const props = defineProps<Props>();
                 </div>
             </div>
         </div>
-    </AppLayout>
+    </SubdomainLayout>
 </template>

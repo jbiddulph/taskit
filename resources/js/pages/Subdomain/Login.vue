@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, Globe, Lock } from 'lucide-vue-next';
-import AppLayout from '@/layouts/AppLayout.vue';
+import SubdomainLayout from '@/layouts/SubdomainLayout.vue';
 
 interface Company {
     id: number;
@@ -39,7 +39,7 @@ const submit = () => {
 <template>
     <Head :title="`Login - ${company.name}`" />
     
-    <AppLayout>
+    <SubdomainLayout>
         <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
             <div class="w-full max-w-md">
                 <!-- Header -->
@@ -123,5 +123,5 @@ const submit = () => {
                 </Card>
             </div>
         </div>
-    </AppLayout>
+    </SubdomainLayout>
 </template>
