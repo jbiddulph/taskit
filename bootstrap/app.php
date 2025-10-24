@@ -49,7 +49,4 @@ return Application::configure(basePath: dirname(__DIR__))
         if (config('app.force_https', true)) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
-        
-        // Register custom asset service provider
-        $app->register(\App\Providers\AssetServiceProvider::class);
     })->create();
