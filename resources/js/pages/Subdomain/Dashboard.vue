@@ -1,12 +1,162 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { type BreadcrumbItem } from '@/types';
+import { Head } from '@inertiajs/vue3';
 import TodoBoard from '@/components/TodoBoard.vue';
+import LimitWarnings from '@/components/LimitWarnings.vue';
+import ActivityFeed from '@/components/ActivityFeed.vue';
+import Icon from '@/components/Icon.vue';
+import { ref } from 'vue';
+
+interface Props {
+    user: {
+        id: number;
+        name: string;
+        email: string;
+        company_id?: number;
+    };
+    company?: {
+        id: number;
+        name: string;
+        code: string;
+        subscription_type: string;
+        current_member_count: number;
+        member_limit: number;
+        current_project_count: number;
+        project_limit: number;
+    } | null;
+}
+
+defineProps<Props>();
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Dashboard',
+        href: '/dashboard',
+    },
+];
+
+// Project color state for main tag border
+const currentProjectColor = ref<string | null>(null);
+
+// Activity Feed toggle state
+const showActivityFeed = ref(false);
+
+// Calendar and Filters state
+const showCalendar = ref(false);
+const showFilters = ref(false);
+
+// Bulk selection state
+const isSelectMode = ref(false);
+
+const handleProjectChange = (project: any) => {
+    currentProjectColor.value = project?.color || null;
+};
+
+const toggleSelectMode = () => {
+    isSelectMode.value = !isSelectMode.value;
+};
 </script>
+
+<style scoped>
+.activity-feed-container {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+</style>
 
 <template>
     <Head title="Dashboard" />
-    <AppLayout title="Dashboard">
-        <TodoBoard />
+    <AppLayout 
+        title="Dashboard" 
+        :breadcrumbs="breadcrumbs"
+        :current-project-color="currentProjectColor"
+        :show-activity-feed="showActivityFeed"
+        :show-calendar="showCalendar"
+        :show-filters="showFilters"
+        :is-select-mode="isSelectMode"
+        @toggle-activity-feed="showActivityFeed = !showActivityFeed"
+        @toggle-calendar="showCalendar = !showCalendar"
+        @toggle-filters="showFilters = !showFilters"
+        @toggle-select-mode="toggleSelectMode"
+    >
+        <template #dashboardActions>
+            <!-- Calendar Button -->
+            <button
+                @click="showCalendar = !showCalendar"
+                :title="showCalendar ? 'Hide Calendar' : 'Show Calendar'"
+                :class="[
+                    'inline-flex items-center justify-center p-2 transition-colors',
+                    showCalendar
+                        ? 'text-blue-600 dark:text-blue-400'
+                        : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                ]"
+            >
+                <Icon name="Calendar" class="w-5 h-5" />
+            </button>
+
+            <!-- Activity Feed Toggle Button -->
+            <button
+                @click="showActivityFeed = !showActivityFeed"
+                :title="showActivityFeed ? 'Hide Activity Feed' : 'Show Activity Feed'"
+                :class="[
+                    'inline-flex items-center justify-center p-2 transition-colors',
+                    showActivityFeed
+                        ? 'text-blue-600 dark:text-blue-400'
+                        : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                ]"
+            >
+                <Icon name="Activity" class="w-5 h-5" />
+            </button>
+
+            <!-- Select for Bulk Update Button -->
+            <button
+                @click="toggleSelectMode"
+                :title="isSelectMode ? 'Exit Select Mode' : 'Select for Bulk Update'"
+                :class="[
+                    'inline-flex items-center justify-center p-2 transition-colors',
+                    isSelectMode
+                        ? 'text-blue-600 dark:text-blue-400'
+                        : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                ]"
+            >
+                <Icon name="CheckSquare" class="w-5 h-5" />
+            </button>
+        </template>
+
+        <div class="space-y-6">
+            <!-- Limit Warnings -->
+            <LimitWarnings />
+
+            <!-- Main Content Area -->
+            <div class="flex gap-6">
+                <!-- Todo Board -->
+                <div class="flex-1">
+                    <TodoBoard 
+                        @project-change="handleProjectChange"
+                        :is-select-mode="isSelectMode"
+                        @toggle-select-mode="toggleSelectMode"
+                    />
+                </div>
+
+                <!-- Activity Feed -->
+                <div 
+                    v-if="showActivityFeed" 
+                    class="activity-feed-container w-80 flex-shrink-0"
+                >
+                    <ActivityFeed />
+                </div>
+            </div>
+        </div>
     </AppLayout>
 </template>
