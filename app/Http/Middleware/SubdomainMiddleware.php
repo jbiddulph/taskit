@@ -43,6 +43,7 @@ class SubdomainMiddleware
                 
                 if ($path === '' || $path === '/') {
                     // Show company page for root path
+                    \Log::info('SubdomainMiddleware: Routing to company page', ['path' => $path, 'company' => $company->name]);
                     return app(SubdomainController::class)->company($request);
                 } elseif ($path === 'login') {
                     // Show login page

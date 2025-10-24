@@ -108,6 +108,11 @@ class SubdomainController extends Controller
     {
         $company = $request->attributes->get('company');
         
+        \Log::info('SubdomainController::company called', [
+            'company' => $company ? $company->name : 'null',
+            'path' => $request->path()
+        ]);
+        
         if (!$company) {
             return redirect('https://www.zaptask.co.uk');
         }
