@@ -69,6 +69,9 @@ Route::middleware([SubdomainMiddleware::class])->group(function () {
     Route::get('/login', [SubdomainController::class, 'login'])->name('subdomain.login');
     Route::post('/login', [SubdomainController::class, 'authenticate'])->name('subdomain.authenticate');
     Route::get('/dashboard', [SubdomainController::class, 'dashboard'])->name('subdomain.dashboard');
+    
+    // Catch-all route for other paths - redirect to main site
+    Route::any('{path}', [SubdomainController::class, 'redirectToMain'])->where('path', '.*');
 });
 
 // Debug route to test subdomain detection

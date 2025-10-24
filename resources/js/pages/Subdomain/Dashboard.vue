@@ -2,8 +2,9 @@
 import { Head } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, Users, Calendar, CheckCircle, LogOut } from 'lucide-vue-next';
+import { Globe, Users, Calendar, CheckCircle, LogOut, Plus, FolderOpen } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
+import TodoBoard from '@/components/TodoBoard.vue';
 
 interface Company {
     id: number;
@@ -30,10 +31,20 @@ interface Todo {
     due_date?: string;
 }
 
+interface Project {
+    id: number;
+    name: string;
+    description?: string;
+    color: string;
+    is_active: boolean;
+    owner: User;
+}
+
 interface Props {
     company: Company;
     users: User[];
     todos: Todo[];
+    projects: Project[];
     isSubdomain: boolean;
 }
 
@@ -88,9 +99,18 @@ const goToMainSite = () => {
 
             <!-- Main Content -->
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <!-- Stats Cards -->
+                <!-- Company Header -->
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                        {{ company.name }} Portal
+                    </h1>
+                    <p class="text-gray-600 dark:text-gray-400">
+                        Welcome to your company's task management portal
+                    </p>
+                </div>
+
+                <!-- Quick Actions -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <!-- Users Card -->
                     <Card>
                         <CardHeader class="pb-2">
                             <CardTitle class="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -112,7 +132,6 @@ const goToMainSite = () => {
                         </CardContent>
                     </Card>
 
-                    <!-- Todos Card -->
                     <Card>
                         <CardHeader class="pb-2">
                             <CardTitle class="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -134,22 +153,21 @@ const goToMainSite = () => {
                         </CardContent>
                     </Card>
 
-                    <!-- Company Info Card -->
                     <Card>
                         <CardHeader class="pb-2">
                             <CardTitle class="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                Company Plan
+                                Projects
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div class="flex items-center gap-2">
-                                <CheckCircle class="w-8 h-8 text-purple-600" />
+                                <FolderOpen class="w-8 h-8 text-purple-600" />
                                 <div>
                                     <div class="text-2xl font-bold text-gray-900 dark:text-white">
-                                        {{ company.subscription_type }}
+                                        {{ projects.length }}
                                     </div>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                                        Subscription
+                                        Active projects
                                     </p>
                                 </div>
                             </div>
@@ -157,68 +175,19 @@ const goToMainSite = () => {
                     </Card>
                 </div>
 
-                <!-- Team Members -->
-                <Card class="mb-8">
-                    <CardHeader>
-                        <CardTitle>Team Members</CardTitle>
-                        <CardDescription>
-                            Current team members in {{ company.name }}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div class="space-y-3">
-                            <div v-for="user in users" :key="user.id" class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                                    {{ user.name.charAt(0).toUpperCase() }}
-                                </div>
-                                <div>
-                                    <div class="font-medium text-gray-900 dark:text-white">
-                                        {{ user.name }}
-                                    </div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">
-                                        {{ user.email }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <!-- Recent Tasks -->
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Recent Tasks</CardTitle>
-                        <CardDescription>
-                            Latest tasks for {{ company.name }}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div v-if="todos.length > 0" class="space-y-3">
-                            <div v-for="todo in todos.slice(0, 5)" :key="todo.id" class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                <div class="w-2 h-2 rounded-full" :class="{
-                                    'bg-red-500': todo.priority === 'high',
-                                    'bg-yellow-500': todo.priority === 'medium',
-                                    'bg-green-500': todo.priority === 'low'
-                                }"></div>
-                                <div class="flex-1">
-                                    <div class="font-medium text-gray-900 dark:text-white">
-                                        {{ todo.title }}
-                                    </div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">
-                                        {{ todo.description || 'No description' }}
-                                    </div>
-                                </div>
-                                <div class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ todo.status }}
-                                </div>
-                            </div>
-                        </div>
-                        <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
-                            <Calendar class="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                            <p>No tasks found for this company.</p>
-                        </div>
-                    </CardContent>
-                </Card>
+                <!-- Todo Board -->
+                <div class="mb-8">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+                            Task Management
+                        </h2>
+                        <Button @click="goToMainSite" class="flex items-center gap-2">
+                            <Plus class="w-4 h-4" />
+                            Full Dashboard
+                        </Button>
+                    </div>
+                    <TodoBoard />
+                </div>
             </div>
         </div>
     </AppLayout>

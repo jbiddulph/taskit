@@ -21,16 +21,34 @@ class SubdomainController extends Controller
             return redirect('https://zaptask.co.uk');
         }
 
+        // Check if user is authenticated
+        if (!Auth::check()) {
+            return redirect()->route('subdomain.login');
+        }
+
+        // Check if user belongs to this company
+        $user = Auth::user();
+        if ($user->company_id !== $company->id) {
+            Auth::logout();
+            return redirect()->route('subdomain.login')->withErrors([
+                'email' => 'You are not authorized to access this company portal.'
+            ]);
+        }
+
         // Get users from this company
         $users = User::where('company_id', $company->id)->get();
         
         // Get company todos
         $todos = $company->todos()->with('user')->get();
 
+        // Get user's projects
+        $projects = $user->projects()->with('owner')->get();
+
         return Inertia::render('Subdomain/Dashboard', [
             'company' => $company,
             'users' => $users,
             'todos' => $todos,
+            'projects' => $projects,
             'isSubdomain' => true
         ]);
     }
@@ -98,5 +116,14 @@ class SubdomainController extends Controller
             'company' => $company,
             'isSubdomain' => true
         ]);
+    }
+
+    /**
+     * Handle any other route on subdomain by redirecting to main site
+     */
+    public function redirectToMain(Request $request)
+    {
+        $path = $request->path();
+        return redirect('https://zaptask.co.uk/' . $path);
     }
 }
