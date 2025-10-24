@@ -60,7 +60,19 @@
           gtag('config', 'G-Z1ZXQ6Z1M9');
         </script>
 
-        @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
+        @php
+            use App\Helpers\ViteHelper;
+            $appAsset = ViteHelper::asset('resources/js/app.ts');
+            $pageAsset = ViteHelper::asset("resources/js/pages/{$page['component']}.vue");
+            $appCss = ViteHelper::css('resources/js/app.ts');
+        @endphp
+        
+        @if($appCss)
+            <link rel="stylesheet" href="{{ $appCss }}">
+        @endif
+        
+        <script type="module" src="{{ $appAsset }}"></script>
+        <script type="module" src="{{ $pageAsset }}"></script>
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
