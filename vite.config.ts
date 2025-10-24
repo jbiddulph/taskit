@@ -14,6 +14,7 @@ export default defineConfig({
             buildDirectory: 'build',
             publicDirectory: 'public',
             usePolling: false,
+            hotFile: 'hot',
         }),
         tailwindcss(),
         wayfinder({
