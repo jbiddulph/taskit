@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            \App\Http\Middleware\SetAppUrlMiddleware::class,
         ]);
 
         $middleware->api(append: [
@@ -47,14 +48,5 @@ return Application::configure(basePath: dirname(__DIR__))
         // Force HTTPS for all URL generation in production
         if (config('app.force_https', true)) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
-        }
-        
-        // For multi-domain support, use the current request host
-        $request = request();
-        if ($request) {
-            $host = $request->getHost();
-            if ($host && !str_contains($host, 'localhost')) {
-                \Illuminate\Support\Facades\URL::forceRootUrl('https://' . $host);
-            }
         }
     })->create();
