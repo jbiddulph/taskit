@@ -18,12 +18,20 @@ class SubdomainController extends Controller
     {
         $company = $request->attributes->get('company');
         
+        \Log::info('Subdomain dashboard accessed', [
+            'company' => $company ? $company->name : 'null',
+            'user_authenticated' => Auth::check(),
+            'user_id' => Auth::id(),
+            'session_id' => $request->session()->getId()
+        ]);
+        
         if (!$company) {
             return redirect('https://www.zaptask.co.uk');
         }
 
         // Check if user is authenticated
         if (!Auth::check()) {
+            \Log::info('User not authenticated, redirecting to login');
             return redirect()->route('subdomain.login');
         }
 
@@ -104,9 +112,13 @@ class SubdomainController extends Controller
             Auth::login($user, $request->boolean('remember'));
             $request->session()->regenerate();
             
+            // Force session to be saved
+            $request->session()->save();
+            
             \Log::info('Subdomain authentication successful', [
                 'user_id' => $user->id,
-                'company_id' => $company->id
+                'company_id' => $company->id,
+                'session_id' => $request->session()->getId()
             ]);
             
             return redirect()->intended('/dashboard');
