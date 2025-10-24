@@ -61,9 +61,9 @@
         </script>
 
         @php
-            $appAsset = @relativeVite('resources/js/app.ts');
-            $pageAsset = @relativeVite("resources/js/pages/{$page['component']}.vue");
-            $appCss = @relativeViteCss('resources/js/app.ts');
+            $appAsset = \App\Helpers\AssetHelper::viteAsset('resources/js/app.ts');
+            $pageAsset = \App\Helpers\AssetHelper::viteAsset("resources/js/pages/{$page['component']}.vue");
+            $appCss = \App\Helpers\AssetHelper::viteCss('resources/js/app.ts');
         @endphp
         
         @if($appCss)
