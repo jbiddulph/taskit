@@ -52,8 +52,15 @@ class SubdomainMiddleware
                         // User is authenticated, redirect to dashboard
                         return redirect('/dashboard');
                     }
-                    // Show login page
-                    return app(SubdomainController::class)->login($request);
+                    
+                    // Handle both GET and POST requests to /login
+                    if ($request->isMethod('POST')) {
+                        // Handle login form submission
+                        return app(SubdomainController::class)->authenticate($request);
+                    } else {
+                        // Show login page
+                        return app(SubdomainController::class)->login($request);
+                    }
                 } elseif ($path === 'dashboard') {
                     // Show dashboard
                     return app(SubdomainController::class)->dashboard($request);
