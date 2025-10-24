@@ -19,9 +19,9 @@ class IonosService
     }
 
     /**
-     * Get the Bearer token for authentication
+     * Get the API key for authentication
      */
-    private function getBearerToken(): string
+    private function getApiKey(): string
     {
         return $this->publicPrefix . '.' . $this->secret;
     }
@@ -122,7 +122,7 @@ class IonosService
             }
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->getBearerToken(),
+                'X-API-Key' => $this->getApiKey(),
                 'Content-Type' => 'application/json'
             ])->get("{$this->baseUrl}/zones/{$zoneId}/records");
 
@@ -154,13 +154,13 @@ class IonosService
         try {
             // Test DNS API access
             $dnsResponse = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->getBearerToken(),
+                'X-API-Key' => $this->getApiKey(),
                 'Content-Type' => 'application/json'
             ])->get("{$this->baseUrl}/zones");
 
             // Test Domains API access
             $domainsResponse = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->getBearerToken(),
+                'X-API-Key' => $this->getApiKey(),
                 'Content-Type' => 'application/json'
             ])->get("{$this->domainsUrl}/domains");
 
@@ -202,7 +202,7 @@ class IonosService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->getBearerToken(),
+                'X-API-Key' => $this->getApiKey(),
                 'Content-Type' => 'application/json'
             ])->get("{$this->domainsUrl}/domains");
 
@@ -251,7 +251,7 @@ class IonosService
 
             // Try to create zone using DNS API
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->getBearerToken(),
+                'X-API-Key' => $this->getApiKey(),
                 'Content-Type' => 'application/json'
             ])->post("{$this->baseUrl}/zones", [
                 'properties' => [
@@ -299,7 +299,7 @@ class IonosService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->getBearerToken(),
+                'X-API-Key' => $this->getApiKey(),
                 'Content-Type' => 'application/json'
             ])->get("{$this->baseUrl}/zones");
 
@@ -359,7 +359,7 @@ class IonosService
 
             // Try to create subdomain using Domains API
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->getBearerToken(),
+                'X-API-Key' => $this->getApiKey(),
                 'Content-Type' => 'application/json'
             ])->post("{$this->domainsUrl}/domains/{$domain}/subdomains", [
                 'properties' => [
@@ -416,7 +416,7 @@ class IonosService
             }
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->getBearerToken(),
+                'X-API-Key' => $this->getApiKey(),
                 'Content-Type' => 'application/json'
             ])->post("{$this->baseUrl}/zones/{$zoneId}/records", [
                 'properties' => [
@@ -538,7 +538,7 @@ class IonosService
             }
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->getBearerToken(),
+                'X-API-Key' => $this->getApiKey(),
                 'Content-Type' => 'application/json'
             ])->delete("{$this->baseUrl}/zones/{$zoneId}/records/{$recordId}");
 
@@ -579,7 +579,7 @@ class IonosService
             }
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->getBearerToken(),
+                'X-API-Key' => $this->getApiKey(),
                 'Content-Type' => 'application/json'
             ])->get("{$this->baseUrl}/zones/{$zoneId}/records");
 
