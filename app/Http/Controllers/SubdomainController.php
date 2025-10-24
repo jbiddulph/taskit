@@ -18,7 +18,7 @@ class SubdomainController extends Controller
         $company = $request->attributes->get('company');
         
         if (!$company) {
-            return redirect('https://zaptask.co.uk');
+            return redirect('https://www.zaptask.co.uk');
         }
 
         // Check if user is authenticated
@@ -61,7 +61,7 @@ class SubdomainController extends Controller
         $company = $request->attributes->get('company');
         
         if (!$company) {
-            return redirect('https://zaptask.co.uk');
+            return redirect('https://www.zaptask.co.uk');
         }
 
         return Inertia::render('Subdomain/Login', [
@@ -78,7 +78,7 @@ class SubdomainController extends Controller
         $company = $request->attributes->get('company');
         
         if (!$company) {
-            return redirect('https://zaptask.co.uk');
+            return redirect('https://www.zaptask.co.uk');
         }
 
         $credentials = $request->validate([
@@ -109,7 +109,7 @@ class SubdomainController extends Controller
         $company = $request->attributes->get('company');
         
         if (!$company) {
-            return redirect('https://zaptask.co.uk');
+            return redirect('https://www.zaptask.co.uk');
         }
 
         return Inertia::render('Subdomain/Company', [
