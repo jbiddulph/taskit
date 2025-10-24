@@ -13,6 +13,7 @@ export default defineConfig({
             refresh: true,
             buildDirectory: 'build',
             publicDirectory: 'public',
+            usePolling: false,
         }),
         tailwindcss(),
         wayfinder({

@@ -49,9 +49,12 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
         
-        // Use relative URLs for assets to support multiple domains
-        \Illuminate\Support\Facades\URL::forceRootUrl('');
-        
-        // Override APP_URL for Vite to use relative URLs
-        config(['app.url' => '']);
+        // For multi-domain support, use the current request host
+        $request = request();
+        if ($request) {
+            $host = $request->getHost();
+            if ($host && !str_contains($host, 'localhost')) {
+                \Illuminate\Support\Facades\URL::forceRootUrl('https://' . $host);
+            }
+        }
     })->create();
