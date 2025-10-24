@@ -45,7 +45,7 @@ defineProps<{
         </div>
 
         <Form
-            :action="route('login.store')"
+            action="/login"
             method="post"
             :reset-on-success="['password']"
             @success="$inertia.visit('/dashboard')"
