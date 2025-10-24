@@ -118,12 +118,4 @@ class SubdomainController extends Controller
         ]);
     }
 
-    /**
-     * Handle any other route on subdomain by redirecting to main site
-     */
-    public function redirectToMain(Request $request)
-    {
-        $path = $request->path();
-        return redirect('https://zaptask.co.uk/' . $path);
-    }
 }
