@@ -29,9 +29,26 @@ class IonosService
     }
 
     /**
-     * Get the headers for API requests
+     * Get the headers for DNS API requests (X-Tenant-Id optional)
      */
-    private function getHeaders(): array
+    private function getDnsHeaders(): array
+    {
+        $headers = [
+            'X-API-Key' => $this->getApiKey(),
+            'Content-Type' => 'application/json'
+        ];
+        
+        if ($this->tenantId) {
+            $headers['X-Tenant-Id'] = $this->tenantId;
+        }
+        
+        return $headers;
+    }
+
+    /**
+     * Get the headers for Domains API requests (X-Tenant-Id required)
+     */
+    private function getDomainsHeaders(): array
     {
         return [
             'X-API-Key' => $this->getApiKey(),
@@ -46,7 +63,7 @@ class IonosService
     public function getDnsRecords(string $zoneId): array
     {
         try {
-            $response = Http::withHeaders($this->getHeaders())->get("{$this->baseUrl}/zones/{$zoneId}/records");
+            $response = Http::withHeaders($this->getDnsHeaders())->get("{$this->baseUrl}/zones/{$zoneId}/records");
 
             return [
                 'success' => $response->successful(),
@@ -85,7 +102,7 @@ class IonosService
                 ];
             }
 
-            $response = Http::withHeaders($this->getHeaders())->post("{$this->baseUrl}/zones/{$zoneId}/records", [
+            $response = Http::withHeaders($this->getDnsHeaders())->post("{$this->baseUrl}/zones/{$zoneId}/records", [
                 'properties' => [
                     'name' => 'test-subdomain',
                     'type' => 'A',
@@ -225,7 +242,7 @@ class IonosService
                 return false;
             }
 
-            $response = Http::withHeaders($this->getHeaders())->get("{$this->baseUrl}/zones/{$zoneId}/records");
+            $response = Http::withHeaders($this->getDnsHeaders())->get("{$this->baseUrl}/zones/{$zoneId}/records");
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -265,10 +282,10 @@ class IonosService
             ]);
 
             // Test DNS API access
-            $dnsResponse = Http::withHeaders($this->getHeaders())->get($dnsUrl);
+            $dnsResponse = Http::withHeaders($this->getDnsHeaders())->get($dnsUrl);
 
             // Test Domains API access
-            $domainsResponse = Http::withHeaders($this->getHeaders())->get($domainsUrl);
+            $domainsResponse = Http::withHeaders($this->getDomainsHeaders())->get($domainsUrl);
 
             Log::info('API permissions check - responses', [
                 'dns_status' => $dnsResponse->status(),
@@ -310,7 +327,7 @@ class IonosService
     private function domainExists(string $domain): bool
     {
         try {
-            $response = Http::withHeaders($this->getHeaders())->get($this->domainsUrl);
+            $response = Http::withHeaders($this->getDomainsHeaders())->get($this->domainsUrl);
 
             Log::info('Ionos domains API response', [
                 'status' => $response->status(),
@@ -354,7 +371,7 @@ class IonosService
     {
         try {
             // Since we know the domain exists (we found it in DNS API), try to create zone
-            $response = Http::withHeaders($this->getHeaders())->post("{$this->baseUrl}/zones", [
+            $response = Http::withHeaders($this->getDnsHeaders())->post("{$this->baseUrl}/zones", [
                 'properties' => [
                     'name' => $domain,
                     'type' => 'NATIVE'
@@ -399,7 +416,7 @@ class IonosService
     private function getZoneId(string $domain): ?string
     {
         try {
-            $response = Http::withHeaders($this->getHeaders())->get("{$this->baseUrl}/zones");
+            $response = Http::withHeaders($this->getDnsHeaders())->get("{$this->baseUrl}/zones");
 
             Log::info('Ionos zones API response', [
                 'status' => $response->status(),
@@ -456,7 +473,7 @@ class IonosService
             }
 
             // Try to create subdomain using Domains API
-            $response = Http::withHeaders($this->getHeaders())->post("{$this->domainsUrl}/{$domain}/subdomains", [
+            $response = Http::withHeaders($this->getDomainsHeaders())->post("{$this->domainsUrl}/{$domain}/subdomains", [
                 'properties' => [
                     'name' => $subdomain,
                     'type' => 'A',
@@ -510,7 +527,7 @@ class IonosService
                 ];
             }
 
-            $response = Http::withHeaders($this->getHeaders())->post("{$this->baseUrl}/zones/{$zoneId}/records", [
+            $response = Http::withHeaders($this->getDnsHeaders())->post("{$this->baseUrl}/zones/{$zoneId}/records", [
                 'properties' => [
                     'name' => $subdomain,
                     'type' => 'A',
@@ -629,7 +646,7 @@ class IonosService
                 ];
             }
 
-            $response = Http::withHeaders($this->getHeaders())->delete("{$this->baseUrl}/zones/{$zoneId}/records/{$recordId}");
+            $response = Http::withHeaders($this->getDnsHeaders())->delete("{$this->baseUrl}/zones/{$zoneId}/records/{$recordId}");
 
             if ($response->successful()) {
                 return [
@@ -667,7 +684,7 @@ class IonosService
                 return null;
             }
 
-            $response = Http::withHeaders($this->getHeaders())->get("{$this->baseUrl}/zones/{$zoneId}/records");
+            $response = Http::withHeaders($this->getDnsHeaders())->get("{$this->baseUrl}/zones/{$zoneId}/records");
 
             if ($response->successful()) {
                 $data = $response->json();
