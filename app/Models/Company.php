@@ -22,6 +22,9 @@ class Company extends Model
         'subscription_status',
         'logo_url',
         'prune_completed_tasks',
+        'subdomain',
+        'subdomain_url',
+        'is_public',
     ];
 
     protected $casts = [
