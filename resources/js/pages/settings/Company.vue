@@ -419,14 +419,37 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
                     </div>
 
                     <!-- Subdomain Already Linked -->
-                    <div v-if="hasSubdomain" class="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-                        <div class="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                    <div v-if="hasSubdomain" class="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                        <div class="flex items-center gap-2 text-amber-700 dark:text-amber-300 mb-2">
                             <Globe class="w-5 h-5" />
-                            <span class="font-medium">Sub Domain Linked</span>
+                            <span class="font-medium">Subdomain Active & Locked</span>
                         </div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            Your company subdomain is already active and linked.
+                        <p class="text-sm text-amber-600 dark:text-amber-400 mb-3">
+                            Your company subdomain is active and cannot be changed once created.
                         </p>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-amber-600 dark:text-amber-400">
+                                Current subdomain: 
+                            </span>
+                            <a 
+                                :href="subdomainUrl" 
+                                target="_blank"
+                                class="inline-flex items-center gap-1 text-sm font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300"
+                            >
+                                {{ subdomainUrl }}
+                                <ExternalLink class="w-3 h-3" />
+                            </a>
+                        </div>
+                        <div class="mt-3 p-3 bg-amber-100 dark:bg-amber-900/30 rounded border border-amber-200 dark:border-amber-700">
+                            <div class="flex items-start gap-2">
+                                <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                </svg>
+                                <div class="text-xs text-amber-700 dark:text-amber-300">
+                                    <strong>Important:</strong> Subdomains cannot be modified or deleted once created. This ensures consistent branding and prevents broken links.
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Create Subdomain -->

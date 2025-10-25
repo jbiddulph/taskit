@@ -29,13 +29,16 @@ class ActivityController extends Controller
             ]);
         }
 
-        // If user has company_id, filter by company OR null company_id, otherwise show all activities for the user
+        // Filter activities to show only:
+        // 1. Activities from the user's company (if user has company)
+        // 2. Activities where the user is the actor
         if ($user->company_id) {
             $query = Activity::where(function($q) use ($user) {
                 $q->where('company_id', $user->company_id)
-                  ->orWhereNull('company_id');
+                  ->orWhere('actor_id', $user->id);
             });
         } else {
+            // If user has no company, only show their own activities
             $query = Activity::where('actor_id', $user->id);
         }
         
@@ -91,15 +94,24 @@ class ActivityController extends Controller
     {
         $user = Auth::user();
         
-        if (!$user || !$user->company_id) {
+        if (!$user) {
             return response()->json([
                 'success' => true,
                 'data' => []
             ]);
         }
 
-        $activities = Activity::forCompany($user->company_id)
-            ->with(['actor', 'project'])
+        // Use the same filtering logic as the main index method
+        if ($user->company_id) {
+            $query = Activity::where(function($q) use ($user) {
+                $q->where('company_id', $user->company_id)
+                  ->orWhere('actor_id', $user->id);
+            });
+        } else {
+            $query = Activity::where('actor_id', $user->id);
+        }
+
+        $activities = $query->with(['actor', 'project'])
             ->where('created_at', '>=', now()->subDay())
             ->orderBy('created_at', 'desc')
             ->limit(50)
@@ -118,14 +130,22 @@ class ActivityController extends Controller
     {
         $user = Auth::user();
         
-        if (!$user || !$user->company_id) {
+        if (!$user) {
             return response()->json([
                 'success' => true,
                 'data' => []
             ]);
         }
 
-        $query = Activity::forCompany($user->company_id);
+        // Use the same filtering logic as the main index method
+        if ($user->company_id) {
+            $query = Activity::where(function($q) use ($user) {
+                $q->where('company_id', $user->company_id)
+                  ->orWhere('actor_id', $user->id);
+            });
+        } else {
+            $query = Activity::where('actor_id', $user->id);
+        }
 
         // Filter by date range if specified
         if ($request->filled('date_from')) {
