@@ -53,6 +53,18 @@ const publicForm = useForm({
     is_public: props.company?.is_public || false
 });
 
+// Subdomain validation state
+const subdomainValidation = ref({
+    checking: false,
+    available: null,
+    message: '',
+    subdomain: '',
+    url: ''
+});
+
+// Debounced subdomain checking
+let subdomainCheckTimeout = null;
+
 const fileInput = ref<HTMLInputElement>();
 const uploading = ref(false);
 const removing = ref(false);
@@ -123,18 +135,37 @@ const removeLogo = () => {
 const createSubdomain = () => {
     if (!props.company) return;
     
+    // Use the validated subdomain if available, otherwise use the company name
+    const subdomainToUse = subdomainValidation.value.subdomain || subdomainForm.company_name;
+    
     creatingSubdomain.value = true;
     subdomainError.value = '';
     
-    subdomainForm.post('/settings/company/subdomain', {
-        onSuccess: () => {
-            creatingSubdomain.value = false;
-            router.reload();
-        },
-        onError: (errors) => {
-            creatingSubdomain.value = false;
-            subdomainError.value = errors.subdomain || 'Failed to create subdomain';
+    // Create a new form with the validated subdomain
+    const formData = new FormData();
+    formData.append('company_name', subdomainToUse);
+    
+    fetch('/settings/company/subdomain', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
         }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            router.reload();
+        } else {
+            subdomainError.value = data.message || 'Failed to create subdomain';
+        }
+    })
+    .catch(error => {
+        console.error('Error creating subdomain:', error);
+        subdomainError.value = 'Failed to create subdomain';
+    })
+    .finally(() => {
+        creatingSubdomain.value = false;
     });
 };
 
@@ -152,6 +183,60 @@ const checkApiPermissions = async () => {
     } finally {
         checkingPermissions.value = false;
     }
+};
+
+// Check subdomain availability
+const checkSubdomainAvailability = async (subdomain: string) => {
+    if (subdomain.length < 3) {
+        subdomainValidation.value = {
+            checking: false,
+            available: null,
+            message: '',
+            subdomain: '',
+            url: ''
+        };
+        return;
+    }
+
+    subdomainValidation.value.checking = true;
+    
+    try {
+        const response = await fetch(`/settings/company/check-subdomain?subdomain=${encodeURIComponent(subdomain)}`);
+        const data = await response.json();
+        
+        subdomainValidation.value = {
+            checking: false,
+            available: data.available,
+            message: data.message,
+            subdomain: data.subdomain || subdomain,
+            url: data.url || ''
+        };
+    } catch (error) {
+        console.error('Failed to check subdomain availability:', error);
+        subdomainValidation.value = {
+            checking: false,
+            available: false,
+            message: 'Failed to check subdomain availability',
+            subdomain: subdomain,
+            url: ''
+        };
+    }
+};
+
+// Debounced subdomain checking
+const onSubdomainInput = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    const value = target.value;
+    
+    // Clear previous timeout
+    if (subdomainCheckTimeout) {
+        clearTimeout(subdomainCheckTimeout);
+    }
+    
+    // Set new timeout
+    subdomainCheckTimeout = setTimeout(() => {
+        checkSubdomainAvailability(value);
+    }, 500); // 500ms delay
 };
 
 const togglePublicDashboard = () => {
@@ -351,13 +436,53 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
                                 <Label for="company-name" class="text-sm font-medium">
                                     Company Name
                                 </Label>
-                                <Input
-                                    id="company-name"
-                                    v-model="subdomainForm.company_name"
-                                    type="text"
-                                    placeholder="Enter your company name"
-                                    class="mt-1"
-                                />
+                                <div class="relative">
+                                    <Input
+                                        id="company-name"
+                                        v-model="subdomainForm.company_name"
+                                        @input="onSubdomainInput"
+                                        type="text"
+                                        placeholder="Enter your company name"
+                                        class="mt-1 pr-10"
+                                        :class="{
+                                            'border-green-500 focus:border-green-500': subdomainValidation.available === true,
+                                            'border-red-500 focus:border-red-500': subdomainValidation.available === false
+                                        }"
+                                    />
+                                    <!-- Validation icon -->
+                                    <div class="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                        <div v-if="subdomainValidation.checking" class="animate-spin">
+                                            <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                        </div>
+                                        <div v-else-if="subdomainValidation.available === true" class="text-green-500">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                        </div>
+                                        <div v-else-if="subdomainValidation.available === false" class="text-red-500">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Validation message -->
+                                <div v-if="subdomainValidation.message" class="mt-2">
+                                    <p :class="{
+                                        'text-green-600 dark:text-green-400': subdomainValidation.available === true,
+                                        'text-red-600 dark:text-red-400': subdomainValidation.available === false
+                                    }" class="text-xs">
+                                        {{ subdomainValidation.message }}
+                                    </p>
+                                    <p v-if="subdomainValidation.url" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        Your subdomain will be: <span class="font-mono">{{ subdomainValidation.url }}</span>
+                                    </p>
+                                </div>
+                                
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                     This will be converted to a subdomain (e.g., "My Company" → "my-company.zaptask.co.uk")
                                 </p>
@@ -365,7 +490,7 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
 
                             <Button
                                 @click="createSubdomain"
-                                :disabled="creatingSubdomain || !subdomainForm.company_name"
+                                :disabled="creatingSubdomain || !subdomainForm.company_name || subdomainValidation.available === false || subdomainValidation.checking"
                                 class="w-full"
                             >
                                 <Globe class="w-4 h-4 mr-2" />

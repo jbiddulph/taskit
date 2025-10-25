@@ -54,6 +54,9 @@ Route::get('settings/company/test-api-key', [CompanyController::class, 'testApiK
 // Company public dashboard routes
 Route::patch('settings/company/public', [CompanyController::class, 'togglePublic'])->name('company.public.toggle');
 
+// Company subdomain validation routes
+Route::get('settings/company/check-subdomain', [CompanyController::class, 'checkSubdomainAvailability'])->name('company.subdomain.check');
+
     // Company logo routes (only for paid plans)
     Route::post('settings/company-logo/upload', [App\Http\Controllers\CompanyLogoController::class, 'upload'])->name('company-logo.upload');
     Route::post('settings/company-logo/update-url', [App\Http\Controllers\CompanyLogoController::class, 'updateUrl'])->name('company-logo.update-url');

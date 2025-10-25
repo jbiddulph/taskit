@@ -140,6 +140,45 @@ class CompanyController extends Controller
     }
 
     /**
+     * Check subdomain availability
+     */
+    public function checkSubdomainAvailability(Request $request): JsonResponse
+    {
+        $request->validate([
+            'subdomain' => 'required|string|min:3|max:50|regex:/^[a-z0-9-]+$/'
+        ]);
+
+        $subdomain = strtolower(trim($request->subdomain));
+        
+        // Check if subdomain is already taken
+        $existingCompany = \App\Models\Company::where('subdomain', $subdomain)->first();
+        
+        if ($existingCompany) {
+            return response()->json([
+                'available' => false,
+                'message' => 'This subdomain is already taken'
+            ]);
+        }
+        
+        // Check if subdomain is reserved or invalid
+        $reserved = ['www', 'api', 'admin', 'app', 'mail', 'ftp', 'blog', 'shop', 'store', 'support', 'help', 'docs', 'status', 'cdn', 'assets', 'static', 'media', 'images', 'files', 'download', 'upload', 'test', 'dev', 'staging', 'demo', 'beta', 'alpha', 'preview', 'sandbox', 'playground', 'example', 'sample', 'template', 'default', 'main', 'primary', 'secondary', 'backup', 'archive', 'old', 'new', 'temp', 'tmp', 'cache', 'logs', 'config', 'settings', 'dashboard', 'panel', 'control', 'manage', 'admin', 'user', 'users', 'account', 'accounts', 'profile', 'profiles', 'login', 'logout', 'register', 'signup', 'signin', 'signout', 'auth', 'oauth', 'api', 'rest', 'graphql', 'webhook', 'callback', 'redirect', 'short', 'url', 'link', 'go', 'to', 'goto', 'jump', 'forward', 'proxy', 'mirror', 'clone', 'copy', 'duplicate', 'fork', 'branch', 'version', 'v1', 'v2', 'v3', 'latest', 'stable', 'release', 'rc', 'beta', 'alpha', 'dev', 'development', 'staging', 'production', 'prod', 'live', 'public', 'private', 'internal', 'external', 'secure', 'ssl', 'tls', 'https', 'http', 'ftp', 'sftp', 'ssh', 'telnet', 'smtp', 'pop', 'imap', 'dns', 'whois', 'ping', 'traceroute', 'nslookup', 'dig', 'host', 'curl', 'wget', 'rsync', 'scp', 'sftp', 'ftp', 'telnet', 'ssh', 'rsh', 'rlogin', 'rexec', 'rcp', 'rdist', 'rsh', 'rlogin', 'rexec', 'rcp', 'rdist', 'rsh', 'rlogin', 'rexec', 'rcp', 'rdist'];
+        
+        if (in_array($subdomain, $reserved)) {
+            return response()->json([
+                'available' => false,
+                'message' => 'This subdomain is reserved and cannot be used'
+            ]);
+        }
+        
+        return response()->json([
+            'available' => true,
+            'message' => 'This subdomain is available',
+            'subdomain' => $subdomain,
+            'url' => "https://{$subdomain}.zaptask.co.uk"
+        ]);
+    }
+
+    /**
      * Toggle public dashboard setting
      */
     public function togglePublic(Request $request)
