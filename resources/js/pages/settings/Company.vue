@@ -222,7 +222,14 @@ const checkSubdomainAvailability = async (subdomain: string) => {
 // Debounced subdomain checking
 const onSubdomainInput = (event: Event) => {
     const target = event.target as HTMLInputElement;
-    const value = target.value;
+    let value = target.value;
+    
+    // Transform input: lowercase and replace spaces with hyphens
+    value = value.toLowerCase().replace(/\s+/g, '-');
+    
+    // Update the input field with transformed value
+    target.value = value;
+    subdomainForm.company_name = value;
     
     // Clear previous timeout
     if (subdomainCheckTimeout) {
