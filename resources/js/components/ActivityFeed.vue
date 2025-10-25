@@ -126,6 +126,7 @@ interface Props {
   projectId?: number;
   userId?: number;
   visible?: boolean;
+  isReadOnly?: boolean;
 }
 
 const props = defineProps<Props>();

@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, Users, Calendar, CheckCircle } from 'lucide-vue-next';
+import { Globe, Users, Calendar, CheckCircle, Plus, Filter, Bell, Settings } from 'lucide-vue-next';
 import SubdomainLayout from '@/layouts/SubdomainLayout.vue';
-import { onMounted } from 'vue';
+import TodoBoard from '@/components/TodoBoard.vue';
+import ActivityFeed from '@/components/ActivityFeed.vue';
 
 interface Company {
     id: number;
@@ -17,23 +18,50 @@ interface Company {
     is_public?: boolean;
 }
 
+interface Todo {
+    id: number;
+    title: string;
+    description?: string;
+    status: string;
+    priority: string;
+    due_date?: string;
+    project_id?: number;
+    user_id: number;
+    parent_task_id?: number;
+    subtasks?: Todo[];
+    created_at: string;
+    updated_at: string;
+}
+
+interface Project {
+    id: number;
+    name: string;
+    description?: string;
+    color: string;
+    is_active: boolean;
+    viewing_order: number;
+    todos_count: number;
+    completed_todos_count: number;
+}
+
+interface Activity {
+    id: number;
+    type: string;
+    description: string;
+    actor_name: string;
+    created_at: string;
+}
+
 interface Props {
     company: Company;
     isSubdomain: boolean;
+    todos?: Todo[];
+    projects?: Project[];
+    activities?: Activity[];
+    selectedProject?: Project;
 }
 
 const props = defineProps<Props>();
-
-// Redirect to public dashboard if company is public
-onMounted(() => {
-    if (props.company.is_public) {
-        router.visit(`/public`, {
-            method: 'get',
-            preserveState: false,
-            preserveScroll: false
-        });
-    }
-});
 </script>
 
 <template>
@@ -64,11 +92,93 @@ onMounted(() => {
                 </div>
 
                 <!-- Public Dashboard for Public Companies -->
-                <div v-if="company.is_public">
-                    <!-- Redirect to public dashboard -->
-                    <div class="text-center">
-                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                        <p class="text-gray-600 dark:text-gray-300">Loading public dashboard...</p>
+                <div v-if="company.is_public" class="min-h-screen bg-gray-50 dark:bg-gray-900">
+                    <!-- Public Dashboard Header -->
+                    <div class="bg-white dark:bg-gray-800 shadow-sm border-b">
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div class="flex justify-between items-center py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="h-20 w-auto flex items-center justify-center overflow-hidden">
+                                        <img 
+                                            v-if="company.logo_url" 
+                                            :src="company.logo_url" 
+                                            :alt="`${company.name} logo`"
+                                            class="w-auto h-full object-contain"
+                                        />
+                                        <Globe v-else class="w-8 h-8 text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">
+                                            {{ company.name }}
+                                        </h1>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            Public Dashboard
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <Button as-child variant="outline" size="sm">
+                                        <a :href="`https://${company.subdomain}.zaptask.co.uk/login`">
+                                            Employee Login
+                                        </a>
+                                    </Button>
+                                    <Button as-child variant="outline" size="sm">
+                                        <a href="https://zaptask.co.uk">
+                                            Visit Main Site
+                                        </a>
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Dashboard Content -->
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                            <!-- Todo Board (3 columns) -->
+                            <div class="lg:col-span-3">
+                                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border">
+                                    <div class="p-6 border-b">
+                                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                            Project Tasks
+                                        </h2>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            View our current project tasks and progress
+                                        </p>
+                                    </div>
+                                    <div class="p-6">
+                                        <!-- Read-only Todo Board -->
+                                        <TodoBoard 
+                                            :todos="todos || []"
+                                            :projects="projects || []"
+                                            :selectedProject="selectedProject"
+                                            :isReadOnly="true"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Activity Feed (1 column) -->
+                            <div class="lg:col-span-1">
+                                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border">
+                                    <div class="p-6 border-b">
+                                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                            Recent Activity
+                                        </h2>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            Latest updates from our team
+                                        </p>
+                                    </div>
+                                    <div class="p-6">
+                                        <!-- Activity Feed -->
+                                        <ActivityFeed 
+                                            :activities="activities || []"
+                                            :isReadOnly="true"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

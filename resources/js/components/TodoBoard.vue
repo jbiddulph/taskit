@@ -113,6 +113,7 @@
           <div class="flex items-center gap-3">
             <!-- Add Todo Button - Full width on mobile, auto width on desktop -->
             <button
+              v-if="!props.isReadOnly"
               @click="handleShowForm"
               :disabled="!currentProject"
               class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -124,6 +125,7 @@
 
             <!-- Filters Button -->
             <button
+              v-if="!props.isReadOnly"
               @click="showFilters = !showFilters"
               :title="showFilters ? 'Hide Filters' : 'Show Filters'"
               :class="[
@@ -610,6 +612,7 @@ const props = defineProps<{
   showActivityFeed?: boolean;
   showCalendar?: boolean;
   isSelectMode?: boolean;
+  isReadOnly?: boolean;
 }>();
 
 // Define emits

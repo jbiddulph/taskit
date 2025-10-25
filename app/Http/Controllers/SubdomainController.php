@@ -159,17 +159,58 @@ class SubdomainController extends Controller
         
         \Log::info('SubdomainController::company called', [
             'company' => $company ? $company->name : 'null',
-            'path' => $request->path()
+            'path' => $request->path(),
+            'is_public' => $company ? $company->is_public : false
         ]);
         
         if (!$company) {
             return redirect('https://www.zaptask.co.uk');
         }
 
-        return Inertia::render('Subdomain/Company', [
+        $data = [
             'company' => $company,
             'isSubdomain' => true
-        ]);
+        ];
+
+        // If company is public, include dashboard data
+        if ($company->is_public) {
+            // Get all active projects for this company
+            $projects = $company->projects()
+                ->where('is_active', true)
+                ->orderBy('viewing_order')
+                ->get();
+
+            // Get all todos for this company's projects
+            $todos = \App\Models\Todo::whereIn('project_id', $projects->pluck('id'))
+                ->with(['user', 'project'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // Get recent activities for this company
+            $activities = \App\Models\Activity::where('company_id', $company->id)
+                ->with('actor')
+                ->orderBy('created_at', 'desc')
+                ->limit(20)
+                ->get()
+                ->map(function ($activity) {
+                    return [
+                        'id' => $activity->id,
+                        'type' => $activity->type,
+                        'description' => $activity->description,
+                        'actor_name' => $activity->actor ? $activity->actor->name : 'System',
+                        'created_at' => $activity->created_at->toISOString()
+                    ];
+                });
+
+            $data = array_merge($data, [
+                'todos' => $todos,
+                'projects' => $projects,
+                'activities' => $activities,
+                'selectedProject' => $projects->first()
+            ]);
+        }
+
+        return Inertia::render('Subdomain/Company', $data);
     }
 
     /**
