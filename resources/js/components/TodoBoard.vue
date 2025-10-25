@@ -69,7 +69,7 @@
           </div>
           
                       <!-- Create Project Button (only shown when no project is selected) -->
-            <div v-if="!currentProject" class="mt-4">
+            <div v-if="!currentProject && !props.isReadOnly" class="mt-4">
               <button
                 @click="showCreateProject = true"
                 class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
@@ -613,6 +613,9 @@ const props = defineProps<{
   showCalendar?: boolean;
   isSelectMode?: boolean;
   isReadOnly?: boolean;
+  todos?: any[];
+  projects?: any[];
+  selectedProject?: any;
 }>();
 
 // Define emits
@@ -1798,8 +1801,19 @@ watch(showCreateProject, (newValue) => {
 
 // Single onMounted hook to handle all initialization
 onMounted(async () => {
-  // Skip API calls and keyboard shortcuts in read-only mode
+  // In read-only mode, use passed data instead of making API calls
   if (props.isReadOnly) {
+    if (props.projects && props.projects.length > 0) {
+      projects.value = props.projects;
+      if (props.selectedProject) {
+        currentProject.value = props.selectedProject;
+      } else {
+        currentProject.value = props.projects[0];
+      }
+    }
+    if (props.todos && props.todos.length > 0) {
+      todos.value = props.todos;
+    }
     return;
   }
   
