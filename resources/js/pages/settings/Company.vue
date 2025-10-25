@@ -193,6 +193,11 @@ const checkSubdomainAvailability = async (subdomain: string) => {
     
     try {
         const response = await fetch(`/settings/company/check-subdomain?subdomain=${encodeURIComponent(subdomain)}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
         
         subdomainValidation.value = {
@@ -206,8 +211,8 @@ const checkSubdomainAvailability = async (subdomain: string) => {
         console.error('Failed to check subdomain availability:', error);
         subdomainValidation.value = {
             checking: false,
-            available: false,
-            message: 'Failed to check subdomain availability',
+            available: null,
+            message: 'Unable to check availability',
             subdomain: subdomain,
             url: ''
         };

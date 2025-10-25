@@ -168,7 +168,7 @@ class CompanyController extends Controller
         if ($existingCompany) {
             return response()->json([
                 'available' => false,
-                'message' => 'This subdomain is already taken'
+                'message' => 'Sorry, domain already taken!'
             ]);
         }
         
