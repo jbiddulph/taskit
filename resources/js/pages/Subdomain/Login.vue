@@ -52,12 +52,12 @@ const submit = () => {
                 <!-- Header -->
                 <div class="text-center mb-8">
                     <div class="flex justify-center mb-4">
-                        <div class="h-20 flex items-center justify-center overflow-hidden">
+                        <div class="h-20 w-auto flex items-center justify-center overflow-hidden">
                             <img 
                                 v-if="company.logo_url" 
                                 :src="company.logo_url" 
                                 :alt="`${company.name} logo`"
-                                class="w-full h-full object-cover"
+                                class="w-auto h-full object-contain"
                             />
                             <Globe v-else class="w-8 h-8 text-white" />
                         </div>
