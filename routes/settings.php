@@ -45,22 +45,20 @@ Route::middleware(['auth', 'subscription.access'])->group(function () {
         ]);
     })->name('company');
 
-// Company subdomain routes
-Route::post('settings/company/subdomain', [CompanyController::class, 'createSubdomain'])->name('company.subdomain.create');
-Route::delete('settings/company/subdomain', [CompanyController::class, 'deleteSubdomain'])->name('company.subdomain.delete');
-Route::get('settings/company/api-permissions', [CompanyController::class, 'checkApiPermissions'])->name('company.api-permissions');
-Route::get('settings/company/test-api-key', [CompanyController::class, 'testApiKey'])->name('company.test-api-key');
+    // Company subdomain routes
+    Route::post('settings/company/subdomain', [CompanyController::class, 'createSubdomain'])->name('company.subdomain.create');
+    Route::delete('settings/company/subdomain', [CompanyController::class, 'deleteSubdomain'])->name('company.subdomain.delete');
+    Route::get('settings/company/api-permissions', [CompanyController::class, 'checkApiPermissions'])->name('company.api-permissions');
+    Route::get('settings/company/test-api-key', [CompanyController::class, 'testApiKey'])->name('company.test-api-key');
 
-// Company public dashboard routes
-Route::patch('settings/company/public', [CompanyController::class, 'togglePublic'])->name('company.public.toggle');
+    // Company public dashboard routes
+    Route::patch('settings/company/public', [CompanyController::class, 'togglePublic'])->name('company.public.toggle');
 
-// Company name update route
-Route::patch('settings/company/name', [CompanyController::class, 'updateName'])->name('company.name.update');
+    // Company name update route
+    Route::patch('settings/company/name', [CompanyController::class, 'updateName'])->name('company.name.update');
 
-// Company subdomain validation routes
-Route::middleware(['auth'])->group(function () {
+    // Company subdomain validation routes
     Route::get('settings/company/check-subdomain', [CompanyController::class, 'checkSubdomainAvailability'])->name('company.subdomain.check');
-});
 
     // Company logo routes (only for paid plans)
     Route::post('settings/company-logo/upload', [App\Http\Controllers\CompanyLogoController::class, 'upload'])->name('company-logo.upload');

@@ -249,6 +249,13 @@ class CompanyController extends Controller
      */
     public function togglePublic(Request $request)
     {
+        Log::info('Public dashboard toggle method called', [
+            'user_id' => Auth::id(),
+            'request_data' => $request->all(),
+            'method' => $request->method(),
+            'url' => $request->url()
+        ]);
+
         $request->validate([
             'is_public' => 'required|boolean'
         ]);
@@ -257,12 +264,21 @@ class CompanyController extends Controller
         $company = $user->company;
 
         if (!$company) {
+            Log::warning('No company found for user', ['user_id' => $user->id]);
             return back()->withErrors(['public' => 'No company found for this user.']);
         }
 
         try {
+            $oldValue = $company->is_public;
             $company->update([
                 'is_public' => $request->is_public
+            ]);
+
+            Log::info('Public dashboard setting updated', [
+                'user_id' => $user->id,
+                'company_id' => $company->id,
+                'old_value' => $oldValue,
+                'new_value' => $request->is_public
             ]);
 
             $message = $request->is_public 
