@@ -102,3 +102,14 @@ Route::get('/debug-public', function (Request $request) {
         'middleware_processed' => $request->attributes->has('company')
     ]);
 });
+
+// Debug route to check environment variables
+Route::get('/debug-env', function () {
+    return response()->json([
+        'heroku_app_name' => env('HEROKU_APP_NAME'),
+        'heroku_app_name_config' => config('services.heroku.app_name'),
+        'heroku_api_length' => strlen(env('HEROKU_API')),
+        'cloudflare_zone_id' => env('CLOUDFLARE_ZONE_ID'),
+        'cloudflare_api_length' => strlen(env('CLOUDFLARE_API'))
+    ]);
+});

@@ -59,7 +59,9 @@ class CloudflareService
                 'api_token_length' => strlen($this->apiToken),
                 'heroku_api_key_length' => strlen($this->herokuApiKey),
                 'heroku_app_name' => $this->herokuAppName,
-                'heroku_url' => "{$this->herokuUrl}/apps/{$this->herokuAppName}"
+                'heroku_url' => "{$this->herokuUrl}/apps/{$this->herokuAppName}",
+                'env_heroku_app_name' => env('HEROKU_APP_NAME'),
+                'config_heroku_app_name' => config('services.heroku.app_name')
             ]);
 
             // Test Cloudflare API access
