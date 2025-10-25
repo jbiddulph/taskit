@@ -133,26 +133,38 @@ const removeLogo = () => {
 };
 
 const createSubdomain = () => {
-    if (!props.company) return;
+    console.log('🚀 createSubdomain function called');
+    console.log('Company:', props.company);
+    console.log('Form data:', subdomainForm.data());
+    
+    if (!props.company) {
+        console.log('❌ No company found');
+        return;
+    }
     
     // Use the validated subdomain if available, otherwise use the company name
     const subdomainToUse = subdomainValidation.value.subdomain || subdomainForm.company_name;
+    console.log('Subdomain to use:', subdomainToUse);
     
     creatingSubdomain.value = true;
     subdomainError.value = '';
     
     // Update the form data and submit using Inertia.js
     subdomainForm.company_name = subdomainToUse;
+    console.log('Updated form data:', subdomainForm.data());
+    console.log('Submitting to: /settings/company/subdomain');
     
     subdomainForm.post('/settings/company/subdomain', {
         onSuccess: () => {
+            console.log('✅ Subdomain creation successful');
             router.reload();
         },
         onError: (errors) => {
-            console.error('Error creating subdomain:', errors);
+            console.error('❌ Error creating subdomain:', errors);
             subdomainError.value = errors.subdomain || 'Failed to create subdomain';
         },
         onFinish: () => {
+            console.log('🏁 Subdomain creation finished');
             creatingSubdomain.value = false;
         }
     });
