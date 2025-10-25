@@ -993,10 +993,7 @@ const deleteTodo = async (id: string) => {
       deleteImagesInHtml(toDelete.description).catch(() => {});
     }
     
-    // Remove todo locally as fallback since realtime isn't working
-    todos.value = todos.value.filter(t => t.id !== id);
-    // Force reactivity update
-    todos.value = [...todos.value];
+    // Real-time updates will handle removing the todo from the list
     
     // Dispatch event to refresh sidebar project stats
     window.dispatchEvent(new CustomEvent('todoChanged'));
