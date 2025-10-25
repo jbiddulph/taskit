@@ -23,16 +23,6 @@ class CompanyController extends Controller
      */
     public function createSubdomain(Request $request)
     {
-        // Simple test log to verify method is called
-        error_log('=== SUBDOMAIN CREATION METHOD CALLED ===');
-        \Log::info('=== SUBDOMAIN CREATION METHOD CALLED ===', [
-            'timestamp' => now(),
-            'user_id' => Auth::id(),
-            'company_name' => $request->company_name,
-            'request_data' => $request->all(),
-            'request_method' => $request->method(),
-            'request_url' => $request->fullUrl()
-        ]);
 
         $request->validate([
             'company_name' => 'required|string|max:255'
@@ -55,50 +45,19 @@ class CompanyController extends Controller
             $subdomain = strtolower(preg_replace('/[^a-zA-Z0-9-]/', '-', $request->company_name));
             $subdomainUrl = 'https://' . $subdomain . '.zaptask.co.uk';
 
-            \Log::info('Pre-creating subdomain in database', [
-                'company_id' => $company->id,
-                'subdomain' => $subdomain,
-                'subdomain_url' => $subdomainUrl
-            ]);
-
             // Update database FIRST with subdomain information
-            $updateResult = $company->update([
+            $company->update([
                 'subdomain' => $subdomain,
                 'subdomain_url' => $subdomainUrl
-            ]);
-
-            \Log::info('Database update result', [
-                'update_result' => $updateResult,
-                'company_id' => $company->id,
-                'subdomain' => $subdomain,
-                'subdomain_url' => $subdomainUrl
-            ]);
-
-            // Verify the update was successful
-            $company->refresh();
-            \Log::info('Database verification after update', [
-                'company_subdomain' => $company->subdomain,
-                'company_subdomain_url' => $company->subdomain_url,
-                'update_successful' => $company->subdomain === $subdomain
             ]);
 
             // Now create subdomain using Cloudflare and Heroku APIs
             $result = $this->cloudflareService->createSubdomain($request->company_name);
 
-            \Log::info('CloudflareService result', [
-                'result' => $result,
-                'success_key_exists' => isset($result['success']),
-                'success_value' => $result['success'] ?? 'not_set'
-            ]);
-
             if ($result['success']) {
-                \Log::info('Subdomain creation successful - database already updated');
-                return back()->with('success', 'Subdomain created successfully! Database updated with: ' . $subdomain . ' | Your company can now be accessed at: ' . $subdomainUrl);
+                return back()->with('success', 'Subdomain created successfully! Your company can now be accessed at: ' . $subdomainUrl);
             } else {
                 // If API creation fails, clean up the database
-                \Log::warning('API creation failed, cleaning up database', [
-                    'result' => $result
-                ]);
                 
                 $company->update([
                     'subdomain' => null,

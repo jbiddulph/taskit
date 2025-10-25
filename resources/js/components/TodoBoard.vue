@@ -1847,15 +1847,10 @@ onMounted(async () => {
         
       case 'todo_deleted':
         // Remove todo from the list
-        console.log('🔥 TodoBoard: Todo deletion event received:', event.data);
         const deletedTodo = event.data;
         const deleteIndex = todos.value.findIndex(t => t.id === deletedTodo.id);
-        console.log('🔥 TodoBoard: Delete index:', deleteIndex, 'Total todos:', todos.value.length);
         if (deleteIndex !== -1) {
           todos.value.splice(deleteIndex, 1);
-          console.log('🔥 TodoBoard: Todo removed from list. New count:', todos.value.length);
-        } else {
-          console.log('🔥 TodoBoard: Todo not found in list for deletion');
         }
         break;
     }

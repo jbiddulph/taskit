@@ -133,51 +133,28 @@ const removeLogo = () => {
 };
 
 const createSubdomain = () => {
-    console.log('🚀 createSubdomain function called');
-    console.log('Company:', props.company);
-    console.log('Form data:', subdomainForm.data());
-    console.log('Button clicked - function triggered');
-    console.log('Button disabled conditions:', {
-        creatingSubdomain: creatingSubdomain.value,
-        noCompanyName: !subdomainForm.company_name,
-        subdomainNotAvailable: subdomainValidation.value.available === false,
-        checking: subdomainValidation.value.checking
-    });
     
     if (!props.company) {
-        console.log('❌ No company found');
         return;
     }
     
     // Use the validated subdomain if available, otherwise use the company name
     const subdomainToUse = subdomainValidation.value.subdomain || subdomainForm.company_name;
-    console.log('Subdomain to use:', subdomainToUse);
     
     creatingSubdomain.value = true;
     subdomainError.value = '';
     
     // Update the form data and submit using Inertia.js
     subdomainForm.company_name = subdomainToUse;
-    console.log('Updated form data:', subdomainForm.data());
-    console.log('Submitting to: /settings/company/subdomain');
     
     subdomainForm.post('/settings/company/subdomain', {
-        onBefore: () => {
-            console.log('🚀 About to send request to /settings/company/subdomain');
-            console.log('Form data:', subdomainForm.data());
-            console.log('CSRF token:', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'));
-        },
-        onSuccess: (page) => {
-            console.log('✅ Subdomain creation successful');
-            console.log('Response page:', page);
+        onSuccess: () => {
             router.reload();
         },
         onError: (errors) => {
-            console.error('❌ Error creating subdomain:', errors);
             subdomainError.value = errors.subdomain || 'Failed to create subdomain';
         },
         onFinish: () => {
-            console.log('🏁 Subdomain creation finished');
             creatingSubdomain.value = false;
         }
     });

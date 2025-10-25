@@ -462,7 +462,6 @@ class RealtimeService {
    * Handle todo delete
    */
   private handleTodoDelete(todo: any) {
-    console.log('🔥 RealtimeService: Todo deletion received:', todo);
     // Notify all todo callbacks
     this.todoCallbacks.forEach(callback => {
       callback({
