@@ -136,6 +136,13 @@ const createSubdomain = () => {
     console.log('🚀 createSubdomain function called');
     console.log('Company:', props.company);
     console.log('Form data:', subdomainForm.data());
+    console.log('Button clicked - function triggered');
+    console.log('Button disabled conditions:', {
+        creatingSubdomain: creatingSubdomain.value,
+        noCompanyName: !subdomainForm.company_name,
+        subdomainNotAvailable: subdomainValidation.value.available === false,
+        checking: subdomainValidation.value.checking
+    });
     
     if (!props.company) {
         console.log('❌ No company found');
