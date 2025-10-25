@@ -2,10 +2,13 @@
 import { Head } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, Users, Calendar, CheckCircle, Plus, Filter, Bell, Settings } from 'lucide-vue-next';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Globe, Users, Calendar, CheckCircle, Plus, Filter, Bell, Settings, Lock, Eye } from 'lucide-vue-next';
 import SubdomainLayout from '@/layouts/SubdomainLayout.vue';
 import TodoBoard from '@/components/TodoBoard.vue';
 import ActivityFeed from '@/components/ActivityFeed.vue';
+import { ref, onMounted, computed } from 'vue';
 
 interface Company {
     id: number;
@@ -62,6 +65,76 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+// Company code verification state
+const showCodeModal = ref(false);
+const enteredCode = ref('');
+const codeError = ref('');
+const isVerifying = ref(false);
+const hasValidCode = ref(false);
+
+// Check if company code is stored in localStorage
+const checkStoredCode = () => {
+    if (typeof window !== 'undefined') {
+        const storedCode = localStorage.getItem('company_key');
+        if (storedCode === props.company.code) {
+            hasValidCode.value = true;
+            return true;
+        }
+    }
+    return false;
+};
+
+// Verify company code
+const verifyCode = async () => {
+    if (!enteredCode.value.trim()) {
+        codeError.value = 'Please enter a company code';
+        return;
+    }
+
+    isVerifying.value = true;
+    codeError.value = '';
+
+    // Simulate verification delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    if (enteredCode.value.trim().toLowerCase() === props.company.code.toLowerCase()) {
+        // Store the correct code in localStorage
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('company_key', props.company.code);
+        }
+        hasValidCode.value = true;
+        showCodeModal.value = false;
+        enteredCode.value = '';
+    } else {
+        codeError.value = 'Invalid company code. Please try again.';
+    }
+
+    isVerifying.value = false;
+};
+
+// Clear stored code (for testing purposes)
+const clearStoredCode = () => {
+    if (typeof window !== 'undefined') {
+        localStorage.removeItem('company_key');
+        hasValidCode.value = false;
+        showCodeModal.value = true;
+    }
+};
+
+// Computed property to determine if content should be blurred
+const shouldBlurContent = computed(() => {
+    return props.company.is_public && !hasValidCode.value;
+});
+
+// Initialize on mount
+onMounted(() => {
+    if (props.company.is_public) {
+        if (!checkStoredCode()) {
+            showCodeModal.value = true;
+        }
+    }
+});
 </script>
 
 <template>
@@ -92,7 +165,7 @@ const props = defineProps<Props>();
                 </div>
 
                 <!-- Public Dashboard for Public Companies -->
-                <div v-if="company.is_public" class="min-h-screen bg-gray-50 dark:bg-gray-900">
+                <div v-if="company.is_public" class="min-h-screen bg-gray-50 dark:bg-gray-900 relative">
                     <!-- Public Dashboard Header -->
                     <div class="bg-white dark:bg-gray-800 shadow-sm border-b">
                         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -179,6 +252,71 @@ const props = defineProps<Props>();
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Blur Overlay -->
+                    <div 
+                        v-if="shouldBlurContent"
+                        class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center"
+                    >
+                        <!-- Company Code Verification Modal -->
+                        <Dialog :open="showCodeModal" @update:open="showCodeModal = $event">
+                            <DialogContent class="sm:max-w-md">
+                                <DialogHeader>
+                                    <DialogTitle class="flex items-center gap-2">
+                                        <Lock class="w-5 h-5 text-blue-600" />
+                                        Company Access Required
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                        Please enter the company code to view {{ company.name }}'s public dashboard.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="company-code" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Company Code
+                                        </label>
+                                        <Input
+                                            id="company-code"
+                                            v-model="enteredCode"
+                                            type="text"
+                                            placeholder="Enter company code"
+                                            class="w-full"
+                                            :disabled="isVerifying"
+                                            @keydown.enter="verifyCode"
+                                        />
+                                        <p v-if="codeError" class="text-sm text-red-600 dark:text-red-400 mt-1">
+                                            {{ codeError }}
+                                        </p>
+                                    </div>
+                                    
+                                    <div class="flex gap-3">
+                                        <Button 
+                                            @click="verifyCode" 
+                                            :disabled="isVerifying || !enteredCode.trim()"
+                                            class="flex-1"
+                                        >
+                                            <Lock class="w-4 h-4 mr-2" />
+                                            {{ isVerifying ? 'Verifying...' : 'Access Dashboard' }}
+                                        </Button>
+                                    </div>
+                                    
+                                    <div class="text-center">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            Contact {{ company.name }} for the company code
+                                        </p>
+                                        <!-- Debug button for testing -->
+                                        <button 
+                                            @click="clearStoredCode"
+                                            class="text-xs text-blue-600 hover:underline mt-2"
+                                        >
+                                            Clear stored code (for testing)
+                                        </button>
+                                    </div>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </div>
                 </div>
 
