@@ -42,6 +42,7 @@ return [
     'ionos' => [
         'public_prefix' => env('IONOS_PUBLIC_PREFIX'),
         'secret' => env('IONOS_SECRET'),
+        'tenant_id' => env('IONOS_TENANT_ID'),
     ],
 
 ];
