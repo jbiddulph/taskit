@@ -26,6 +26,16 @@ class CheckSubscriptionAccess
         
         $company = $user->company;
         
+        // Allow subdomain creation for company owners regardless of user limits
+        if ($request->is('settings/company/subdomain') && $request->isMethod('POST')) {
+            // Check if user is the company owner (first user or has admin privileges)
+            $isOwner = $company->users()->orderBy('created_at')->first()->id === $user->id;
+            
+            if ($isOwner) {
+                return $next($request);
+            }
+        }
+        
         // Check if user has access based on subscription limits
         $canAccess = $company->userCanAccess($user);
         
