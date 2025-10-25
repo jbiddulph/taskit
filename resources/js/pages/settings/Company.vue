@@ -155,8 +155,14 @@ const createSubdomain = () => {
     console.log('Submitting to: /settings/company/subdomain');
     
     subdomainForm.post('/settings/company/subdomain', {
-        onSuccess: () => {
+        onBefore: () => {
+            console.log('🚀 About to send request to /settings/company/subdomain');
+            console.log('Form data:', subdomainForm.data());
+            console.log('CSRF token:', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'));
+        },
+        onSuccess: (page) => {
             console.log('✅ Subdomain creation successful');
+            console.log('Response page:', page);
             router.reload();
         },
         onError: (errors) => {
