@@ -46,7 +46,16 @@ Route::middleware(['auth', 'subscription.access'])->group(function () {
     })->name('company');
 
 // Company subdomain routes
-Route::post('settings/company/subdomain', [CompanyController::class, 'createSubdomain'])->name('company.subdomain.create');
+Route::post('settings/company/subdomain', function(\Illuminate\Http\Request $request) {
+    \Log::info('=== ROUTE HIT: settings/company/subdomain ===', [
+        'timestamp' => now(),
+        'user_id' => auth()->id(),
+        'request_data' => $request->all(),
+        'request_method' => $request->method(),
+        'request_url' => $request->fullUrl()
+    ]);
+    return app(CompanyController::class)->createSubdomain($request);
+})->name('company.subdomain.create');
 Route::delete('settings/company/subdomain', [CompanyController::class, 'deleteSubdomain'])->name('company.subdomain.delete');
 Route::get('settings/company/api-permissions', [CompanyController::class, 'checkApiPermissions'])->name('company.api-permissions');
 Route::get('settings/company/test-api-key', [CompanyController::class, 'testApiKey'])->name('company.test-api-key');
