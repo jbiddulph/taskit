@@ -206,9 +206,28 @@ class CompanyController extends Controller
             return back()->withErrors(['name' => 'No company found for this user.']);
         }
 
+        // Verify user is an employee of the company
+        if ($user->company_id !== $company->id) {
+            Log::warning('Unauthorized company name update attempt', [
+                'user_id' => $user->id,
+                'user_company_id' => $user->company_id,
+                'target_company_id' => $company->id,
+                'new_name' => $request->name
+            ]);
+
+            return back()->withErrors(['name' => 'You are not authorized to update this company name.']);
+        }
+
         try {
             $company->update([
                 'name' => $request->name
+            ]);
+
+            Log::info('Company name updated successfully', [
+                'user_id' => $user->id,
+                'company_id' => $company->id,
+                'old_name' => $company->getOriginal('name'),
+                'new_name' => $request->name
             ]);
 
             return back()->with('success', 'Company name updated successfully.');
