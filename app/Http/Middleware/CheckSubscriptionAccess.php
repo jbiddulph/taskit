@@ -28,10 +28,25 @@ class CheckSubscriptionAccess
         
         // Allow subdomain creation for company owners regardless of user limits
         if ($request->is('settings/company/subdomain') && $request->isMethod('POST')) {
+            \Log::info('Subdomain creation request detected in middleware', [
+                'user_id' => $user->id,
+                'company_id' => $company->id,
+                'request_path' => $request->path(),
+                'request_method' => $request->method()
+            ]);
+            
             // Check if user is the company owner (first user or has admin privileges)
             $isOwner = $company->users()->orderBy('created_at')->first()->id === $user->id;
             
+            \Log::info('Subdomain creation middleware check', [
+                'user_id' => $user->id,
+                'company_id' => $company->id,
+                'is_owner' => $isOwner,
+                'first_user_id' => $company->users()->orderBy('created_at')->first()->id
+            ]);
+            
             if ($isOwner) {
+                \Log::info('Allowing subdomain creation for company owner');
                 return $next($request);
             }
         }
