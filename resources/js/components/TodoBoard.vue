@@ -256,7 +256,7 @@
 
     <!-- Bulk Operations Bar -->
     <BulkOperationsBar
-      v-if="props.isSelectMode"
+      v-if="props.isSelectMode && !props.isReadOnly"
       :available-assignees="uniqueAssignees"
       @bulk-status-change="handleBulkStatusChange"
       @bulk-priority-change="handleBulkPriorityChange"
@@ -350,7 +350,7 @@
 
     <!-- Todo Form Modal -->
     <TodoForm
-      v-if="showForm"
+      v-if="showForm && !props.isReadOnly"
       :todo="editingTodo"
       :is-editing="!!editingTodo"
       :current-project="currentProject"
@@ -359,7 +359,7 @@
     />
 
     <!-- Create Project Modal -->
-    <div v-if="showCreateProject" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click="showCreateProject = false">
+    <div v-if="showCreateProject && !props.isReadOnly" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click="showCreateProject = false">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full" @click.stop>
         <div class="p-6">
           <div class="flex items-center justify-between mb-6">
@@ -1798,6 +1798,11 @@ watch(showCreateProject, (newValue) => {
 
 // Single onMounted hook to handle all initialization
 onMounted(async () => {
+  // Skip API calls and keyboard shortcuts in read-only mode
+  if (props.isReadOnly) {
+    return;
+  }
+  
   // Register keyboard shortcuts
   registerKeyboardShortcuts();
   
@@ -1813,7 +1818,8 @@ onMounted(async () => {
   // Finally load todos for the current project
   await loadTodos();
   
-  // Subscribe to real-time todo updates
+  // Subscribe to real-time todo updates (skip in read-only mode)
+  if (!props.isReadOnly) {
   
   unsubscribeFromTodos = realtimeService.onTodo(async (event) => {
     
@@ -1972,6 +1978,7 @@ onMounted(async () => {
       }
     }
   });
+  }
 
   // Load saved views
   loadSavedViews();
