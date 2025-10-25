@@ -49,6 +49,12 @@ class CompanyController extends Controller
             // Create subdomain using Cloudflare and Heroku APIs
             $result = $this->cloudflareService->createSubdomain($request->company_name);
 
+            \Log::info('CloudflareService result', [
+                'result' => $result,
+                'success_key_exists' => isset($result['success']),
+                'success_value' => $result['success'] ?? 'not_set'
+            ]);
+
             if ($result['success']) {
                 // Update company with subdomain information
                 \Log::info('Updating company with subdomain info', [
