@@ -48,7 +48,25 @@ class CompanyController extends Controller
         }
 
         try {
-            // Create subdomain using Cloudflare and Heroku APIs
+            // Generate subdomain name first
+            $subdomain = strtolower(preg_replace('/[^a-zA-Z0-9-]/', '-', $request->company_name));
+            $subdomainUrl = 'https://' . $subdomain . '.zaptask.co.uk';
+
+            \Log::info('Pre-creating subdomain in database', [
+                'company_id' => $company->id,
+                'subdomain' => $subdomain,
+                'subdomain_url' => $subdomainUrl
+            ]);
+
+            // Update database FIRST with subdomain information
+            $company->update([
+                'subdomain' => $subdomain,
+                'subdomain_url' => $subdomainUrl
+            ]);
+
+            \Log::info('Database updated successfully with subdomain info');
+
+            // Now create subdomain using Cloudflare and Heroku APIs
             $result = $this->cloudflareService->createSubdomain($request->company_name);
 
             \Log::info('CloudflareService result', [
@@ -58,22 +76,19 @@ class CompanyController extends Controller
             ]);
 
             if ($result['success']) {
-                // Update company with subdomain information
-                \Log::info('Updating company with subdomain info', [
-                    'company_id' => $company->id,
-                    'subdomain' => $result['subdomain'],
-                    'subdomain_url' => $result['url']
-                ]);
-
-                $company->update([
-                    'subdomain' => $result['subdomain'],
-                    'subdomain_url' => $result['url']
-                ]);
-
-                \Log::info('Company updated successfully with subdomain');
-
-                return back()->with('success', 'Subdomain created successfully! Your company can now be accessed at: ' . $result['url']);
+                \Log::info('Subdomain creation successful - database already updated');
+                return back()->with('success', 'Subdomain created successfully! Your company can now be accessed at: ' . $subdomainUrl);
             } else {
+                // If API creation fails, clean up the database
+                \Log::warning('API creation failed, cleaning up database', [
+                    'result' => $result
+                ]);
+                
+                $company->update([
+                    'subdomain' => null,
+                    'subdomain_url' => null
+                ]);
+
                 return back()->withErrors(['subdomain' => $result['message']]);
             }
 
