@@ -33,7 +33,7 @@ const props = defineProps<Props>();
                 <!-- Header -->
                 <div class="text-center mb-8">
                     <div class="flex justify-center mb-4">
-                        <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
+                        <div class="h-20 flex items-center justify-center overflow-hidden">
                             <img 
                                 v-if="company.logo_url" 
                                 :src="company.logo_url" 
