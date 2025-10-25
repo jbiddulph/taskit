@@ -141,31 +141,20 @@ const createSubdomain = () => {
     creatingSubdomain.value = true;
     subdomainError.value = '';
     
-    // Create a new form with the validated subdomain
-    const formData = new FormData();
-    formData.append('company_name', subdomainToUse);
+    // Update the form data and submit using Inertia.js
+    subdomainForm.company_name = subdomainToUse;
     
-    fetch('/settings/company/subdomain', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
+    subdomainForm.post('/settings/company/subdomain', {
+        onSuccess: () => {
             router.reload();
-        } else {
-            subdomainError.value = data.message || 'Failed to create subdomain';
+        },
+        onError: (errors) => {
+            console.error('Error creating subdomain:', errors);
+            subdomainError.value = errors.subdomain || 'Failed to create subdomain';
+        },
+        onFinish: () => {
+            creatingSubdomain.value = false;
         }
-    })
-    .catch(error => {
-        console.error('Error creating subdomain:', error);
-        subdomainError.value = 'Failed to create subdomain';
-    })
-    .finally(() => {
-        creatingSubdomain.value = false;
     });
 };
 
