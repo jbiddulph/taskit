@@ -23,6 +23,8 @@ class CompanyController extends Controller
      */
     public function createSubdomain(Request $request)
     {
+        // Simple test log to verify method is called
+        error_log('=== SUBDOMAIN CREATION METHOD CALLED ===');
         \Log::info('Subdomain creation request received', [
             'user_id' => Auth::id(),
             'company_name' => $request->company_name,
