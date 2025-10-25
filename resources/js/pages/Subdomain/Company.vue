@@ -47,122 +47,134 @@ const props = defineProps<Props>();
                         {{ company.name }}
                     </h1>
                     <p class="text-lg text-gray-600 dark:text-gray-300">
-                        Company Portal
+                        {{ company.is_public ? `Welcome to ${company.name}` : 'Company Portal' }}
                     </p>
                 </div>
 
-                <!-- Company Info Card -->
-                <Card class="max-w-2xl mx-auto mb-8">
-                    <CardHeader>
-                        <CardTitle class="flex items-center gap-2">
-                            <Globe class="w-5 h-5" />
-                            Company Information
-                        </CardTitle>
-                        <CardDescription>
-                            Welcome to {{ company.name }}'s company portal
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div class="space-y-4">
-                            <div class="flex items-center gap-2">
-                                <CheckCircle class="w-5 h-5 text-green-600" />
-                                <span class="font-medium">Company Code:</span>
-                                <span class="text-gray-600 dark:text-gray-300">{{ company.code }}</span>
+                <!-- Conditional Content Based on is_public -->
+                <div v-if="company.is_public" class="max-w-2xl mx-auto">
+                    <!-- Welcome Message for Public Companies -->
+                    <Card class="mb-8">
+                        <CardHeader>
+                            <CardTitle class="text-center">
+                                Welcome to {{ company.name }}
+                            </CardTitle>
+                            <CardDescription class="text-center">
+                                We're excited to have you here! Explore our company and learn more about what we do.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div class="text-center space-y-4">
+                                <p class="text-lg text-gray-600 dark:text-gray-300">
+                                    Thank you for visiting {{ company.name }}. We're a {{ company.subscription_type }} company 
+                                    using ZapTask for our project management and team collaboration.
+                                </p>
+                                <div class="flex justify-center gap-4">
+                                    <Button as-child>
+                                        <a :href="`https://${company.subdomain}.zaptask.co.uk/login`">
+                                            Employee Login
+                                        </a>
+                                    </Button>
+                                    <Button as-child variant="outline">
+                                        <a href="https://zaptask.co.uk">
+                                            Visit ZapTask
+                                        </a>
+                                    </Button>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <CheckCircle class="w-5 h-5 text-green-600" />
-                                <span class="font-medium">Subscription:</span>
-                                <span class="text-gray-600 dark:text-gray-300">{{ company.subscription_type }}</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <CheckCircle class="w-5 h-5 text-green-600" />
-                                <span class="font-medium">Subdomain:</span>
-                                <span class="text-gray-600 dark:text-gray-300">{{ company.subdomain_url }}</span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                </div>
 
-                <!-- Action Cards -->
-                <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                    <!-- Public Dashboard Card (only if company is public) -->
-                    <Card v-if="company.is_public">
+                <div v-else>
+                    <!-- Company Info Card for Private Companies -->
+                    <Card class="max-w-2xl mx-auto mb-8">
                         <CardHeader>
                             <CardTitle class="flex items-center gap-2">
                                 <Globe class="w-5 h-5" />
-                                Public Dashboard
+                                Company Information
                             </CardTitle>
                             <CardDescription>
-                                View our projects and tasks without logging in
+                                Welcome to {{ company.name }}'s company portal
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Button as-child class="w-full">
-                                <a :href="`https://${company.subdomain}.zaptask.co.uk/public`">
-                                    View Public Dashboard
-                                </a>
-                            </Button>
-                            <Button as-child variant="outline" class="w-full">
-                                <a href="https://zaptask.co.uk">
-                                    Visit Main Site
-                                </a>
-                            </Button>
-                        </CardContent>
-                    </Card>
-
-                    <!-- Login Card -->
-                    <Card>
-                        <CardHeader>
-                            <CardTitle class="flex items-center gap-2">
-                                <Users class="w-5 h-5" />
-                                Employee Access
-                            </CardTitle>
-                            <CardDescription>
-                                Login to access your company dashboard
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Button as-child class="w-full">
-                                <a :href="`https://${company.subdomain}.zaptask.co.uk/login`">
-                                    Employee Login
-                                </a>
-                            </Button>
-                            <Button as-child variant="outline" class="w-full">
-                                <a href="https://zaptask.co.uk">
-                                    Visit Main Site
-                                </a>
-                            </Button>
-                        </CardContent>
-                    </Card>
-
-                    <!-- Features Card -->
-                    <Card>
-                        <CardHeader>
-                            <CardTitle class="flex items-center gap-2">
-                                <Calendar class="w-5 h-5" />
-                                Company Features
-                            </CardTitle>
-                            <CardDescription>
-                                Access your company's task management system
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                            <div class="space-y-4">
                                 <div class="flex items-center gap-2">
-                                    <CheckCircle class="w-4 h-4 text-green-600" />
-                                    Task Management
+                                    <CheckCircle class="w-5 h-5 text-green-600" />
+                                    <span class="font-medium">Company Code:</span>
+                                    <span class="text-gray-600 dark:text-gray-300">{{ company.code }}</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <CheckCircle class="w-4 h-4 text-green-600" />
-                                    Team Collaboration
+                                    <CheckCircle class="w-5 h-5 text-green-600" />
+                                    <span class="font-medium">Subscription:</span>
+                                    <span class="text-gray-600 dark:text-gray-300">{{ company.subscription_type }}</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <CheckCircle class="w-4 h-4 text-green-600" />
-                                    Project Tracking
+                                    <CheckCircle class="w-5 h-5 text-green-600" />
+                                    <span class="font-medium">Subdomain:</span>
+                                    <span class="text-gray-600 dark:text-gray-300">{{ company.subdomain_url }}</span>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
+
+                    <!-- Action Cards for Private Companies -->
+                    <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                        <!-- Login Card -->
+                        <Card>
+                            <CardHeader>
+                                <CardTitle class="flex items-center gap-2">
+                                    <Users class="w-5 h-5" />
+                                    Employee Access
+                                </CardTitle>
+                                <CardDescription>
+                                    Login to access your company dashboard
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Button as-child class="w-full">
+                                    <a :href="`https://${company.subdomain}.zaptask.co.uk/login`">
+                                        Employee Login
+                                    </a>
+                                </Button>
+                                <Button as-child variant="outline" class="w-full">
+                                    <a href="https://zaptask.co.uk">
+                                        Visit Main Site
+                                    </a>
+                                </Button>
+                            </CardContent>
+                        </Card>
+
+                        <!-- Features Card -->
+                        <Card>
+                            <CardHeader>
+                                <CardTitle class="flex items-center gap-2">
+                                    <Calendar class="w-5 h-5" />
+                                    Company Features
+                                </CardTitle>
+                                <CardDescription>
+                                    Access your company's task management system
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                                    <div class="flex items-center gap-2">
+                                        <CheckCircle class="w-4 h-4 text-green-600" />
+                                        Task Management
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <CheckCircle class="w-4 h-4 text-green-600" />
+                                        Team Collaboration
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <CheckCircle class="w-4 h-4 text-green-600" />
+                                        Project Tracking
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
 
                 <!-- Footer -->
