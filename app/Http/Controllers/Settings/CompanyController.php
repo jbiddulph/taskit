@@ -191,6 +191,41 @@ class CompanyController extends Controller
     }
 
     /**
+     * Update company name
+     */
+    public function updateName(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|min:2'
+        ]);
+
+        $user = Auth::user();
+        $company = $user->company;
+
+        if (!$company) {
+            return back()->withErrors(['name' => 'No company found for this user.']);
+        }
+
+        try {
+            $company->update([
+                'name' => $request->name
+            ]);
+
+            return back()->with('success', 'Company name updated successfully.');
+
+        } catch (\Exception $e) {
+            Log::error('Company name update failed', [
+                'user_id' => $user->id,
+                'company_id' => $company->id,
+                'new_name' => $request->name,
+                'error' => $e->getMessage()
+            ]);
+
+            return back()->withErrors(['name' => 'Failed to update company name. Please try again.']);
+        }
+    }
+
+    /**
      * Toggle public dashboard setting
      */
     public function togglePublic(Request $request)

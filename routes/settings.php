@@ -54,6 +54,9 @@ Route::get('settings/company/test-api-key', [CompanyController::class, 'testApiK
 // Company public dashboard routes
 Route::patch('settings/company/public', [CompanyController::class, 'togglePublic'])->name('company.public.toggle');
 
+// Company name update route
+Route::patch('settings/company/name', [CompanyController::class, 'updateName'])->name('company.name.update');
+
 // Company subdomain validation routes
 Route::middleware(['auth'])->group(function () {
     Route::get('settings/company/check-subdomain', [CompanyController::class, 'checkSubdomainAvailability'])->name('company.subdomain.check');

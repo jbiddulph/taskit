@@ -53,6 +53,11 @@ const publicForm = useForm({
     is_public: props.company?.is_public || false
 });
 
+// Form for company name update
+const nameForm = useForm({
+    name: props.company?.name || ''
+});
+
 // Subdomain validation state
 const subdomainValidation = ref({
     checking: false,
@@ -242,6 +247,17 @@ const onSubdomainInput = (event: Event) => {
     }, 500); // 500ms delay
 };
 
+const updateCompanyName = () => {
+    nameForm.patch('/settings/company/name', {
+        onSuccess: () => {
+            router.reload();
+        },
+        onError: (errors) => {
+            console.error('Failed to update company name:', errors);
+        }
+    });
+};
+
 const togglePublicDashboard = () => {
     publicForm.patch('/settings/company/public', {
         onSuccess: () => {
@@ -340,6 +356,65 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
                     </CardContent>
                 </Card>
             </div>
+
+            <!-- Company Name Section -->
+            <Card>
+                <CardHeader>
+                    <CardTitle class="flex items-center gap-2">
+                        <Info class="w-5 h-5" />
+                        Company Information
+                    </CardTitle>
+                    <CardDescription>
+                        Update your company name and basic information.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent class="space-y-4">
+                    <div>
+                        <Label for="company-name-edit" class="text-sm font-medium">
+                            Company Name
+                        </Label>
+                        <div class="flex gap-2 mt-1">
+                            <Input
+                                id="company-name-edit"
+                                v-model="nameForm.name"
+                                type="text"
+                                placeholder="Enter company name"
+                                class="flex-1"
+                            />
+                            <Button
+                                @click="updateCompanyName"
+                                :disabled="nameForm.processing || !nameForm.name || nameForm.name === company?.name"
+                                size="sm"
+                            >
+                                {{ nameForm.processing ? 'Updating...' : 'Update' }}
+                            </Button>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            This will update your company name across the platform.
+                        </p>
+                    </div>
+                    
+                    <!-- Company Details Display -->
+                    <div v-if="company" class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div>
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Company Name:</span>
+                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ company.name }}</p>
+                        </div>
+                        <div>
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Company Code:</span>
+                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ company.code }}</p>
+                        </div>
+                        <div>
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Subscription Type:</span>
+                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ company.subscription_type }}</p>
+                        </div>
+                        <div>
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Company ID:</span>
+                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ company.id }}</p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
             <!-- Subdomain Section -->
             <Card v-if="hasAccess">
