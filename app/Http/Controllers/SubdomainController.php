@@ -38,6 +38,17 @@ class SubdomainController extends Controller
         // Check if user belongs to this company
         $user = Auth::user();
         if ($user->company_id !== $company->id) {
+            // Log unauthorized access attempt for security monitoring
+            \Log::warning('Unauthorized subdomain access attempt', [
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+                'user_company_id' => $user->company_id,
+                'target_company_id' => $company->id,
+                'target_company_name' => $company->name,
+                'subdomain' => $request->getHost(),
+                'action' => 'forced_logout_and_redirect'
+            ]);
+            
             Auth::logout();
             return redirect()->route('subdomain.login')->withErrors([
                 'email' => 'You are not authorized to access this company portal.'
@@ -101,8 +112,11 @@ class SubdomainController extends Controller
         \Log::info('Subdomain authentication attempt', [
             'email' => $credentials['email'],
             'company_id' => $company->id,
+            'company_name' => $company->name,
             'user_found' => $user ? $user->id : 'null',
-            'password_check' => $user ? Hash::check($credentials['password'], $user->password) : 'no_user'
+            'user_company_id' => $user ? $user->company_id : 'null',
+            'password_check' => $user ? Hash::check($credentials['password'], $user->password) : 'no_user',
+            'subdomain' => $request->getHost()
         ]);
 
         if ($user && Hash::check($credentials['password'], $user->password)) {
@@ -121,6 +135,15 @@ class SubdomainController extends Controller
             
             return redirect()->intended('https://' . $request->getHost() . '/dashboard');
         }
+
+        // Log failed authentication attempts for security monitoring
+        \Log::warning('Subdomain authentication failed', [
+            'email' => $credentials['email'],
+            'company_id' => $company->id,
+            'company_name' => $company->name,
+            'subdomain' => $request->getHost(),
+            'reason' => $user ? 'invalid_password' : 'user_not_found_in_company'
+        ]);
 
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
