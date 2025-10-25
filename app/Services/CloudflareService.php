@@ -11,6 +11,7 @@ class CloudflareService
     private string $accountId;
     private string $apiToken;
     private string $herokuApiKey;
+    private string $herokuAppName;
     private string $baseUrl = 'https://api.cloudflare.com/client/v4';
     private string $herokuUrl = 'https://api.heroku.com';
 
@@ -20,6 +21,7 @@ class CloudflareService
         $this->accountId = config('services.cloudflare.account_id');
         $this->apiToken = config('services.cloudflare.api_token');
         $this->herokuApiKey = config('services.heroku.api_key');
+        $this->herokuAppName = config('services.heroku.app_name');
     }
 
     /**
@@ -55,7 +57,9 @@ class CloudflareService
                 'cloudflare_zone_id' => $this->zoneId,
                 'cloudflare_account_id' => $this->accountId,
                 'api_token_length' => strlen($this->apiToken),
-                'heroku_api_key_length' => strlen($this->herokuApiKey)
+                'heroku_api_key_length' => strlen($this->herokuApiKey),
+                'heroku_app_name' => $this->herokuAppName,
+                'heroku_url' => "{$this->herokuUrl}/apps/{$this->herokuAppName}"
             ]);
 
             // Test Cloudflare API access
@@ -64,7 +68,7 @@ class CloudflareService
 
             // Test Heroku API access
             $herokuResponse = Http::withHeaders($this->getHerokuHeaders())
-                ->get("{$this->herokuUrl}/apps/taskit");
+                ->get("{$this->herokuUrl}/apps/{$this->herokuAppName}");
 
             Log::info('API permissions check - responses', [
                 'cloudflare_status' => $cloudflareResponse->status(),
@@ -115,7 +119,7 @@ class CloudflareService
 
             // Step 1: Add domain to Heroku
             $herokuResponse = Http::withHeaders($this->getHerokuHeaders())
-                ->post("{$this->herokuUrl}/apps/taskit/domains", [
+                ->post("{$this->herokuUrl}/apps/{$this->herokuAppName}/domains", [
                     'hostname' => $hostname
                 ]);
 
@@ -272,7 +276,7 @@ class CloudflareService
     {
         try {
             $response = Http::withHeaders($this->getHerokuHeaders())
-                ->delete("{$this->herokuUrl}/apps/taskit/domains/{$hostname}");
+                ->delete("{$this->herokuUrl}/apps/{$this->herokuAppName}/domains/{$hostname}");
 
             Log::info('Heroku domain deletion response', [
                 'hostname' => $hostname,
@@ -311,7 +315,7 @@ class CloudflareService
 
             // Test Heroku API
             $herokuResponse = Http::withHeaders($this->getHerokuHeaders())
-                ->get("{$this->herokuUrl}/apps/taskit");
+                ->get("{$this->herokuUrl}/apps/{$this->herokuAppName}");
 
             return [
                 'cloudflare' => [

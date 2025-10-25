@@ -47,6 +47,7 @@ return [
 
     'heroku' => [
         'api_key' => env('HEROKU_API'),
+        'app_name' => env('HEROKU_APP_NAME', 'taskit'),
     ],
 
 ];
