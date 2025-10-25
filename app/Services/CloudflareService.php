@@ -119,11 +119,31 @@ class CloudflareService
                 'hostname' => $hostname
             ]);
 
-            // Step 1: Add domain to Heroku
+            // Step 1: Check available SNI endpoints first
+            $sniResponse = Http::withHeaders($this->getHerokuHeaders())
+                ->get("{$this->herokuUrl}/apps/{$this->herokuAppName}/sni-endpoints");
+
+            Log::info('Heroku SNI endpoints check', [
+                'status' => $sniResponse->status(),
+                'body' => $sniResponse->body()
+            ]);
+
+            $sniEndpoints = $sniResponse->json();
+            $sniEndpointId = null;
+
+            if ($sniResponse->successful() && !empty($sniEndpoints)) {
+                // Use the first available SNI endpoint
+                $sniEndpointId = $sniEndpoints[0]['id'] ?? null;
+            }
+
+            // Step 2: Add domain to Heroku
+            $domainData = ['hostname' => $hostname];
+            if ($sniEndpointId) {
+                $domainData['sni_endpoint'] = $sniEndpointId;
+            }
+
             $herokuResponse = Http::withHeaders($this->getHerokuHeaders())
-                ->post("{$this->herokuUrl}/apps/{$this->herokuAppName}/domains", [
-                    'hostname' => $hostname
-                ]);
+                ->post("{$this->herokuUrl}/apps/{$this->herokuAppName}/domains", $domainData);
 
             Log::info('Heroku domain creation response', [
                 'status' => $herokuResponse->status(),
