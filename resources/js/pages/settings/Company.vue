@@ -259,6 +259,9 @@ const updateCompanyName = () => {
 };
 
 const togglePublicDashboard = () => {
+    // Toggle the is_public value before sending
+    publicForm.is_public = !publicForm.is_public;
+    
     publicForm.patch('/settings/company/public', {
         onSuccess: () => {
             router.reload();
@@ -745,7 +748,7 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
                             :variant="publicForm.is_public ? 'default' : 'outline'"
                             size="sm"
                         >
-                            {{ publicForm.processing ? 'Updating...' : (publicForm.is_public ? 'Enabled' : 'Enable') }}
+                            {{ publicForm.processing ? 'Updating...' : (publicForm.is_public ? 'Disable' : 'Enable') }}
                         </Button>
                     </div>
                     
