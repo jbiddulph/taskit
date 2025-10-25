@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Services\IonosService;
+use App\Services\CloudflareService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -11,11 +11,11 @@ use Illuminate\Support\Facades\Log;
 
 class CompanyController extends Controller
 {
-    protected IonosService $ionosService;
+    protected CloudflareService $cloudflareService;
 
-    public function __construct(IonosService $ionosService)
+    public function __construct(CloudflareService $cloudflareService)
     {
-        $this->ionosService = $ionosService;
+        $this->cloudflareService = $cloudflareService;
     }
 
     /**
@@ -40,8 +40,8 @@ class CompanyController extends Controller
         }
 
         try {
-            // Create subdomain using Ionos API
-            $result = $this->ionosService->createSubdomain($request->company_name);
+            // Create subdomain using Cloudflare and Heroku APIs
+            $result = $this->cloudflareService->createSubdomain($request->company_name);
 
             if ($result['success']) {
                 // Update company with subdomain information
@@ -52,15 +52,6 @@ class CompanyController extends Controller
 
                 return back()->with('success', 'Subdomain created successfully! Your company can now be accessed at: ' . $result['url']);
             } else {
-                // Check if it's a permission issue and provide helpful instructions
-                if (strpos($result['message'], 'DNS zone management requires additional permissions') !== false) {
-                    $instructions = $this->ionosService->getManualSetupInstructions();
-                    return back()->withErrors([
-                        'subdomain' => $result['message'],
-                        'instructions' => $instructions['instructions']
-                    ]);
-                }
-                
                 return back()->withErrors(['subdomain' => $result['message']]);
             }
 
@@ -89,8 +80,8 @@ class CompanyController extends Controller
         }
 
         try {
-            // Delete subdomain using Ionos API
-            $result = $this->ionosService->deleteSubdomain($company->subdomain);
+            // Delete subdomain using Cloudflare and Heroku APIs
+            $result = $this->cloudflareService->deleteSubdomain($company->subdomain);
 
             if ($result['success']) {
                 // Remove subdomain information from company
@@ -117,12 +108,12 @@ class CompanyController extends Controller
     }
 
     /**
-     * Check API permissions for Ionos services
+     * Check API permissions for Cloudflare and Heroku services
      */
     public function checkApiPermissions(): JsonResponse
     {
         try {
-            $permissions = $this->ionosService->checkApiPermissions();
+            $permissions = $this->cloudflareService->checkApiPermissions();
             return response()->json($permissions);
         } catch (\Exception $e) {
             Log::error('API permissions check failed', [
@@ -133,18 +124,18 @@ class CompanyController extends Controller
     }
 
     /**
-     * Test API key format and basic connectivity
+     * Test API connectivity for Cloudflare and Heroku
      */
     public function testApiKey(): JsonResponse
     {
         try {
-            $result = $this->ionosService->testApiKey();
+            $result = $this->cloudflareService->testApiConnectivity();
             return response()->json($result);
         } catch (\Exception $e) {
-            Log::error('API key test failed', [
+            Log::error('API connectivity test failed', [
                 'error' => $e->getMessage()
             ]);
-            return response()->json(['error' => 'Failed to test API key: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Failed to test API connectivity: ' . $e->getMessage()], 500);
         }
     }
 

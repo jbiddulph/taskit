@@ -39,10 +39,14 @@ return [
         'tracking_id' => env('GOOGLE_ANALYTICS_TRACKING_ID'),
     ],
 
-    'ionos' => [
-        'public_prefix' => env('IONOS_PUBLIC_PREFIX'),
-        'secret' => env('IONOS_SECRET'),
-        'tenant_id' => env('IONOS_TENANT_ID'),
+    'cloudflare' => [
+        'zone_id' => env('CLOUDFLARE_ZONE_ID'),
+        'account_id' => env('CLOUDFLARE_ACCOUNT_ID'),
+        'api_token' => env('CLOUDFLARE_API'),
+    ],
+
+    'heroku' => [
+        'api_key' => env('HEROKU_API'),
     ],
 
 ];

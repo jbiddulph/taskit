@@ -261,7 +261,7 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
                         Company Subdomain
                     </CardTitle>
                     <CardDescription>
-                        Create a custom subdomain for your company. This will allow guests to access your company's dashboard directly.
+                        Create a custom subdomain for your company using Cloudflare DNS and Heroku. This will allow guests to access your company's dashboard directly.
                     </CardDescription>
                     <div class="mt-4">
                         <Button 
@@ -292,21 +292,21 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
                         </div>
                         <div v-else class="space-y-2 text-sm">
                             <div class="flex items-center gap-2">
-                                <span class="font-medium">DNS API:</span>
-                                <span :class="apiPermissions.dns_api?.accessible ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                                    {{ apiPermissions.dns_api?.accessible ? '✓ Accessible' : '✗ Not Accessible' }}
+                                <span class="font-medium">Cloudflare API:</span>
+                                <span :class="apiPermissions.cloudflare_api?.accessible ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                                    {{ apiPermissions.cloudflare_api?.accessible ? '✓ Accessible' : '✗ Not Accessible' }}
                                 </span>
-                                <span v-if="!apiPermissions.dns_api?.accessible" class="text-xs text-gray-500">
-                                    ({{ apiPermissions.dns_api?.message }})
+                                <span v-if="!apiPermissions.cloudflare_api?.accessible" class="text-xs text-gray-500">
+                                    ({{ apiPermissions.cloudflare_api?.message }})
                                 </span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="font-medium">Domains API:</span>
-                                <span :class="apiPermissions.domains_api?.accessible ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                                    {{ apiPermissions.domains_api?.accessible ? '✓ Accessible' : '✗ Not Accessible' }}
+                                <span class="font-medium">Heroku API:</span>
+                                <span :class="apiPermissions.heroku_api?.accessible ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                                    {{ apiPermissions.heroku_api?.accessible ? '✓ Accessible' : '✗ Not Accessible' }}
                                 </span>
-                                <span v-if="!apiPermissions.domains_api?.accessible" class="text-xs text-gray-500">
-                                    ({{ apiPermissions.domains_api?.message }})
+                                <span v-if="!apiPermissions.heroku_api?.accessible" class="text-xs text-gray-500">
+                                    ({{ apiPermissions.heroku_api?.message }})
                                 </span>
                             </div>
                         </div>
