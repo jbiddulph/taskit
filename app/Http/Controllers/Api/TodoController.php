@@ -301,7 +301,7 @@ class TodoController extends Controller
         $this->assignmentNotificationService->sendAssignmentNotification($todo, $oldAssignee);
 
         // Log activity
-        Activity::createTodoActivity($todo, Auth::user(), 'todo_updated', $changes);
+        Activity::createTodoActivity($todo, Auth::user(), 'todo_updated');
 
         return response()->json([
             'success' => true,
