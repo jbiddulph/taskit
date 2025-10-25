@@ -929,16 +929,7 @@ const saveTodo = async (todo: Todo) => {
           project_id: currentProject.value.id
         });
         
-        // Add subtask locally as fallback since realtime isn't working
-        const parentIndex = todos.value.findIndex(t => t.id === todo.parent_task_id);
-        if (parentIndex !== -1) {
-          if (!todos.value[parentIndex].subtasks) {
-            todos.value[parentIndex].subtasks = [];
-          }
-          todos.value[parentIndex].subtasks!.push(newTodo);
-          // Force reactivity update
-          todos.value = [...todos.value];
-        }
+        // Real-time updates will handle adding the subtask to the list
       } else {
         // Create regular todo
         newTodo = await todoApi.createTodo({
@@ -946,10 +937,7 @@ const saveTodo = async (todo: Todo) => {
           project_id: currentProject.value.id
         });
         
-        // Add todo locally as fallback since realtime isn't working
-        todos.value.push(newTodo);
-        // Force reactivity update
-        todos.value = [...todos.value];
+        // Real-time updates will handle adding the todo to the list
       }
       
       if ((window as any).$notify) {
