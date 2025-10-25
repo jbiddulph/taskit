@@ -52,8 +52,14 @@ const submit = () => {
                 <!-- Header -->
                 <div class="text-center mb-8">
                     <div class="flex justify-center mb-4">
-                        <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
-                            <Globe class="w-8 h-8 text-white" />
+                        <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
+                            <img 
+                                v-if="company.logo_url" 
+                                :src="company.logo_url" 
+                                :alt="`${company.name} logo`"
+                                class="w-full h-full object-cover"
+                            />
+                            <Globe v-else class="w-8 h-8 text-white" />
                         </div>
                     </div>
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
