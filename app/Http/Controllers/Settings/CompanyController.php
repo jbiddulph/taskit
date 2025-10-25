@@ -59,12 +59,25 @@ class CompanyController extends Controller
             ]);
 
             // Update database FIRST with subdomain information
-            $company->update([
+            $updateResult = $company->update([
                 'subdomain' => $subdomain,
                 'subdomain_url' => $subdomainUrl
             ]);
 
-            \Log::info('Database updated successfully with subdomain info');
+            \Log::info('Database update result', [
+                'update_result' => $updateResult,
+                'company_id' => $company->id,
+                'subdomain' => $subdomain,
+                'subdomain_url' => $subdomainUrl
+            ]);
+
+            // Verify the update was successful
+            $company->refresh();
+            \Log::info('Database verification after update', [
+                'company_subdomain' => $company->subdomain,
+                'company_subdomain_url' => $company->subdomain_url,
+                'update_successful' => $company->subdomain === $subdomain
+            ]);
 
             // Now create subdomain using Cloudflare and Heroku APIs
             $result = $this->cloudflareService->createSubdomain($request->company_name);
@@ -77,7 +90,7 @@ class CompanyController extends Controller
 
             if ($result['success']) {
                 \Log::info('Subdomain creation successful - database already updated');
-                return back()->with('success', 'Subdomain created successfully! Your company can now be accessed at: ' . $subdomainUrl);
+                return back()->with('success', 'Subdomain created successfully! Database updated with: ' . $subdomain . ' | Your company can now be accessed at: ' . $subdomainUrl);
             } else {
                 // If API creation fails, clean up the database
                 \Log::warning('API creation failed, cleaning up database', [
