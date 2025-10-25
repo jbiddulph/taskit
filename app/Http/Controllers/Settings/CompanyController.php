@@ -23,6 +23,12 @@ class CompanyController extends Controller
      */
     public function createSubdomain(Request $request)
     {
+        \Log::info('Subdomain creation request received', [
+            'user_id' => Auth::id(),
+            'company_name' => $request->company_name,
+            'request_data' => $request->all()
+        ]);
+
         $request->validate([
             'company_name' => 'required|string|max:255'
         ]);
@@ -45,10 +51,18 @@ class CompanyController extends Controller
 
             if ($result['success']) {
                 // Update company with subdomain information
+                \Log::info('Updating company with subdomain info', [
+                    'company_id' => $company->id,
+                    'subdomain' => $result['subdomain'],
+                    'subdomain_url' => $result['url']
+                ]);
+
                 $company->update([
                     'subdomain' => $result['subdomain'],
                     'subdomain_url' => $result['url']
                 ]);
+
+                \Log::info('Company updated successfully with subdomain');
 
                 return back()->with('success', 'Subdomain created successfully! Your company can now be accessed at: ' . $result['url']);
             } else {
