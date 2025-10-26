@@ -803,10 +803,35 @@ class RealtimeService {
           console.log('🧪 Database realtime test - INSERT event:', payload);
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'taskit_todos',
+          filter: `company_id=eq.${this.currentCompanyId}`
+        },
+        (payload) => {
+          console.log('🧪 Database realtime test - UPDATE event:', payload);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'taskit_todos',
+          filter: `company_id=eq.${this.currentCompanyId}`
+        },
+        (payload) => {
+          console.log('🧪 Database realtime test - DELETE event:', payload);
+        }
+      )
       .subscribe((status) => {
         console.log('🧪 Database realtime test status:', status);
         if (status === 'SUBSCRIBED') {
           console.log('✅ Database realtime subscription successful!');
+          console.log('🧪 Now try creating, updating, or deleting a todo to see if events are received');
           // Keep the subscription for testing
         } else if (status === 'CHANNEL_ERROR') {
           console.error('❌ Database realtime subscription failed!');
