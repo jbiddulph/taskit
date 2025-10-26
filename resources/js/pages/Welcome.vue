@@ -161,7 +161,7 @@ onMounted(() => {
                             </p>
                             
                             <!-- Company Subdomain Highlight -->
-                            <div class="mt-10 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                            <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
                                 <div class="flex items-center gap-3">
                                     <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600">
                                         <svg class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -171,11 +171,9 @@ onMounted(() => {
                                     <div>
                                         <h3 class="font-semibold text-blue-900 dark:text-blue-100 mb-1">Get Your Own Company Domain</h3>
                                         <p class="text-sm text-blue-700 dark:text-blue-200">
-                                            Create your company subdomain at 
                                             <span class="font-semibold bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded text-blue-900 dark:text-blue-100">
                                                 your-company.zaptask.co.uk
                                             </span>
-                                            and showcase your projects publicly!
                                         </p>
                                     </div>
                                 </div>
