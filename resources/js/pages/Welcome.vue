@@ -77,27 +77,6 @@ onMounted(() => {
                         The ultimate task management platform designed for teams that want to get things done efficiently.
                     </p>
                     
-                    <!-- Company Subdomain Highlight -->
-                    <div class="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-                        <div class="flex items-center gap-3">
-                            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600">
-                                <svg class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="font-semibold text-blue-900 dark:text-blue-100 mb-1">Get Your Own Company Domain</h3>
-                                <p class="text-sm text-blue-700 dark:text-blue-200">
-                                    Create your company subdomain at 
-                                    <span class="font-semibold bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded text-blue-900 dark:text-blue-100">
-                                        your-company.zaptask.co.uk
-                                    </span>
-                                    and showcase your projects publicly!
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    
                     <!-- Features Section -->
                     <div id="features" class="mb-6 space-y-4">
                         <div class="flex items-start gap-3">
@@ -180,6 +159,27 @@ onMounted(() => {
                             <p class="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
                                 Organize your projects, track progress, and collaborate with your team effortlessly.
                             </p>
+                            
+                            <!-- Company Subdomain Highlight -->
+                            <div class="mt-10 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600">
+                                        <svg class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-blue-900 dark:text-blue-100 mb-1">Get Your Own Company Domain</h3>
+                                        <p class="text-sm text-blue-700 dark:text-blue-200">
+                                            Create your company subdomain at 
+                                            <span class="font-semibold bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded text-blue-900 dark:text-blue-100">
+                                                your-company.zaptask.co.uk
+                                            </span>
+                                            and showcase your projects publicly!
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
                         <!-- Decorative Elements -->
