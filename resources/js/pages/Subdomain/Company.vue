@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Globe, Users, Calendar, CheckCircle, Plus, Filter, Bell, Settings, Lock, Eye } from 'lucide-vue-next';
+import { Globe, Users, Calendar, CheckCircle, Plus, Filter, Bell, Settings, Lock, Eye, Activity, CheckSquare } from 'lucide-vue-next';
 import SubdomainLayout from '@/layouts/SubdomainLayout.vue';
 import TodoBoard from '@/components/TodoBoard.vue';
 import ActivityFeed from '@/components/ActivityFeed.vue';
 import { realtimeService } from '@/services/realtimeService';
 import { ref, onMounted, computed } from 'vue';
+import Icon from '@/components/Icon.vue';
 
 interface Company {
     id: number;
@@ -74,6 +75,15 @@ const codeError = ref('');
 const isVerifying = ref(false);
 const hasValidCode = ref(false);
 
+// Dashboard action states
+const showCalendar = ref(false);
+const showActivityFeed = ref(false);
+const isSelectMode = ref(false);
+
+// Todo details modal state
+const showTodoModal = ref(false);
+const selectedTodo = ref<Todo | null>(null);
+
 // Check if company code is stored in localStorage
 const checkStoredCode = () => {
     if (typeof window !== 'undefined') {
@@ -121,6 +131,42 @@ const clearStoredCode = () => {
         hasValidCode.value = false;
         showCodeModal.value = true;
     }
+};
+
+// Dashboard action toggle functions
+const toggleCalendar = () => {
+    showCalendar.value = !showCalendar.value;
+};
+
+const toggleActivityFeed = () => {
+    showActivityFeed.value = !showActivityFeed.value;
+};
+
+const toggleSelectMode = () => {
+    isSelectMode.value = !isSelectMode.value;
+};
+
+// Todo modal functions
+const openTodoModal = (todo: Todo) => {
+    selectedTodo.value = todo;
+    showTodoModal.value = true;
+};
+
+const closeTodoModal = () => {
+    showTodoModal.value = false;
+    selectedTodo.value = null;
+};
+
+// Format date helper function
+const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 };
 
 // Computed property to determine if content should be blurred
@@ -190,6 +236,46 @@ onMounted(() => {
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-3">
+                                    <!-- Dashboard Action Buttons -->
+                                    <button
+                                        @click="toggleCalendar"
+                                        :title="showCalendar ? 'Hide Calendar' : 'Show Calendar'"
+                                        :class="[
+                                            'inline-flex items-center justify-center p-2 transition-colors',
+                                            showCalendar 
+                                                ? 'text-blue-600 dark:text-blue-400' 
+                                                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                                        ]"
+                                    >
+                                        <Calendar class="w-5 h-5" />
+                                    </button>
+
+                                    <button
+                                        @click="toggleActivityFeed"
+                                        :title="showActivityFeed ? 'Hide Activity Feed' : 'Show Activity Feed'"
+                                        :class="[
+                                            'inline-flex items-center justify-center p-2 transition-colors',
+                                            showActivityFeed 
+                                                ? 'text-blue-600 dark:text-blue-400' 
+                                                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                                        ]"
+                                    >
+                                        <Activity class="w-5 h-5" />
+                                    </button>
+
+                                    <button
+                                        @click="toggleSelectMode"
+                                        :title="isSelectMode ? 'Exit Select Mode' : 'Select for Bulk Update'"
+                                        :class="[
+                                            'inline-flex items-center justify-center p-2 transition-colors',
+                                            isSelectMode 
+                                                ? 'text-blue-600 dark:text-blue-400' 
+                                                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                                        ]"
+                                    >
+                                        <CheckSquare class="w-5 h-5" />
+                                    </button>
+
                                     <Button as-child variant="outline" size="sm">
                                         <a :href="`https://${company.subdomain}.zaptask.co.uk/login`">
                                             Employee Login
@@ -224,6 +310,13 @@ onMounted(() => {
                                     :projects="projects || []"
                                     :selectedProject="selectedProject"
                                     :isReadOnly="true"
+                                    :showCalendar="showCalendar"
+                                    :showActivityFeed="showActivityFeed"
+                                    :isSelectMode="isSelectMode"
+                                    @todo-click="openTodoModal"
+                                    @toggle-calendar="toggleCalendar"
+                                    @toggle-activity-feed="toggleActivityFeed"
+                                    @toggle-select-mode="toggleSelectMode"
                                 />
                             </div>
                         </div>
@@ -381,5 +474,76 @@ onMounted(() => {
                 </div>
             </div>
         </div>
+
+        <!-- Todo Details Modal -->
+        <Dialog :open="showTodoModal" @update:open="showTodoModal = $event">
+            <DialogContent class="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle class="flex items-center gap-2">
+                        <Icon name="FileText" class="w-5 h-5 text-blue-600" />
+                        Task Details
+                    </DialogTitle>
+                    <DialogDescription>
+                        View detailed information about this task
+                    </DialogDescription>
+                </DialogHeader>
+                
+                <div v-if="selectedTodo" class="space-y-6">
+                    <!-- Task Title -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                            {{ selectedTodo.title }}
+                        </h3>
+                        <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                            <span class="flex items-center gap-1">
+                                <Icon name="Calendar" class="w-4 h-4" />
+                                {{ selectedTodo.due_date ? formatDate(selectedTodo.due_date) : 'No due date' }}
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <Icon name="Flag" class="w-4 h-4" />
+                                {{ selectedTodo.priority }}
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <Icon name="Circle" class="w-4 h-4" />
+                                {{ selectedTodo.status }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Task Description -->
+                    <div v-if="selectedTodo.description">
+                        <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Description</h4>
+                        <div class="prose prose-sm max-w-none text-gray-700 dark:text-gray-300" v-html="selectedTodo.description"></div>
+                    </div>
+
+                    <!-- Task Metadata -->
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="font-medium text-gray-900 dark:text-white">Created:</span>
+                            <span class="text-gray-600 dark:text-gray-400 ml-2">{{ formatDate(selectedTodo.created_at) }}</span>
+                        </div>
+                        <div>
+                            <span class="font-medium text-gray-900 dark:text-white">Last Updated:</span>
+                            <span class="text-gray-600 dark:text-gray-400 ml-2">{{ formatDate(selectedTodo.updated_at) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Subtasks -->
+                    <div v-if="selectedTodo.subtasks && selectedTodo.subtasks.length > 0">
+                        <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Subtasks</h4>
+                        <div class="space-y-2">
+                            <div 
+                                v-for="subtask in selectedTodo.subtasks" 
+                                :key="subtask.id"
+                                class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                            >
+                                <Icon name="CheckCircle" class="w-4 h-4 text-green-500" />
+                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ subtask.title }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
     </SubdomainLayout>
 </template>

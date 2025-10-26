@@ -18,12 +18,12 @@
               {{ currentProject ? currentProject.name : 'Todo Board' }}
             </h1>
             <button
-              v-if="currentProject"
+              v-if="currentProject && !props.isReadOnly"
               @click="startEditProject"
               class="p-1 text-gray-400 hover:text-blue-500 transition-colors"
               title="Edit project name"
             >
-              <Icon name="Edit3" class="w-5 h-5" />
+<Icon name="Edit3" class="w-5 h-5" />
             </button>
           </div>
           <div class="text-gray-600 dark:text-gray-400">
@@ -33,6 +33,7 @@
               <div v-if="!editingProjectDescription" class="flex items-center gap-2">
                 <span>{{ currentProject.description || 'No description' }}</span>
                 <button
+                  v-if="!props.isReadOnly"
                   @click="startEditProjectDescription"
                   class="p-1 text-gray-400 hover:text-blue-500 transition-colors"
                   title="Edit project description"
@@ -292,6 +293,7 @@
         @menu="() => {}"
         @add-subtask="handleAddSubtask"
         @toggle-selection="toggleSelection"
+        @todo-click="emit('todo-click', $event)"
       />
       
       <TodoColumn
@@ -311,6 +313,7 @@
         @menu="() => {}"
         @add-subtask="handleAddSubtask"
         @toggle-selection="toggleSelection"
+        @todo-click="emit('todo-click', $event)"
       />
       
       <TodoColumn
@@ -330,6 +333,7 @@
         @menu="() => {}"
         @add-subtask="handleAddSubtask"
         @toggle-selection="toggleSelection"
+        @todo-click="emit('todo-click', $event)"
       />
       
       <TodoColumn
@@ -349,6 +353,7 @@
         @menu="() => {}"
         @add-subtask="handleAddSubtask"
         @toggle-selection="toggleSelection"
+        @todo-click="emit('todo-click', $event)"
       />
     </div>
 
@@ -628,6 +633,7 @@ const emit = defineEmits<{
   'toggle-activity-feed': [];
   'toggle-calendar': [];
   'toggle-select-mode': [];
+  'todo-click': [todo: any];
 }>();
 
 const todos = ref<Todo[]>([]);
@@ -1549,6 +1555,20 @@ const onProjectChange = async () => {
     isUpdatingProject.value = true;
     
     const projectId = parseInt(selectedProjectId.value);
+    
+    // In read-only mode, find project from props
+    if (props.isReadOnly && props.projects) {
+      const project = props.projects.find(p => p.id === projectId);
+      if (project) {
+        currentProject.value = project;
+        // Filter todos for the selected project
+        if (props.todos) {
+          todos.value = props.todos.filter(todo => todo.project_id === projectId);
+        }
+        return;
+      }
+    }
+    
     const project = await todoApi.getProject(projectId);
     
     currentProject.value = project;

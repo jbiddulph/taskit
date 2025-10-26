@@ -201,6 +201,7 @@
     <div v-if="!todo.parent_task_id" class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
       <div class="flex items-center justify-between">
         <button
+          v-if="!isReadOnly"
           @click.stop="$emit('add-subtask', todo)"
           class="flex items-center gap-2 text-xs text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
         >
@@ -287,6 +288,7 @@ const emit = defineEmits<{
   update: [todo: Todo];
   'add-subtask': [todo: Todo];
   'toggle-selection': [todo: Todo];
+  'todo-click': [todo: Todo];
 }>();
 
 // Title editing state
@@ -327,6 +329,9 @@ const handleClick = () => {
   if (!isDragging) {
     if (props.isSelectMode) {
       emit('toggle-selection', props.todo);
+    } else if (props.isReadOnly) {
+      // In read-only mode, emit todo-click for modal display
+      emit('todo-click', props.todo);
     } else {
       emit('edit', props.todo);
     }

@@ -118,13 +118,6 @@
         Delete
       </button>
       <button
-        @click="clearSelection"
-        class="control-button"
-        :disabled="isProcessing"
-      >
-        Clear
-      </button>
-      <button
         @click="toggleSelectMode"
         class="control-button primary"
         :disabled="isProcessing"

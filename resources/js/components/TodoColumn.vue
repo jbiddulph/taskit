@@ -98,6 +98,7 @@
               @update="$emit('update', $event)"
               @add-subtask="$emit('add-subtask', $event)"
               @toggle-selection="$emit('toggle-selection', $event)"
+              @todo-click="$emit('todo-click', $event)"
             />
           </div>
           
@@ -161,6 +162,7 @@ const emit = defineEmits<{
   reorder: [draggedTodo: Todo, targetTodo: Todo, position: 'before' | 'after'];
   'add-subtask': [todo: Todo];
   'toggle-selection': [todo: Todo];
+  'todo-click': [todo: Todo];
 }>();
 
 const dropZone = ref<HTMLElement>();
