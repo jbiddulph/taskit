@@ -35,72 +35,12 @@ interface Props {
 }
 
 defineProps<Props>();
-
-// Dashboard action states
-const showCalendar = ref(false);
-const showActivityFeed = ref(false);
-const isSelectMode = ref(false);
-
-const toggleCalendar = () => {
-  showCalendar.value = !showCalendar.value;
-};
-
-const toggleActivityFeed = () => {
-  showActivityFeed.value = !showActivityFeed.value;
-};
-
-const toggleSelectMode = () => {
-  isSelectMode.value = !isSelectMode.value;
-};
 </script>
 
 <template>
   <Head title="Clients" />
 
   <AppLayout :company="company">
-    <template #dashboardActions>
-      <!-- Calendar Button -->
-      <button
-        @click="toggleCalendar"
-        :title="showCalendar ? 'Hide Calendar' : 'Show Calendar'"
-        :class="[
-          'inline-flex items-center justify-center p-2 transition-colors',
-          showCalendar 
-            ? 'text-blue-600 dark:text-blue-400' 
-            : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
-        ]"
-      >
-        <Icon name="Calendar" class="w-5 h-5" />
-      </button>
-
-      <!-- Activity Feed Toggle Button -->
-      <button
-        @click="toggleActivityFeed"
-        :title="showActivityFeed ? 'Hide Activity Feed' : 'Show Activity Feed'"
-        :class="[
-          'inline-flex items-center justify-center p-2 transition-colors',
-          showActivityFeed 
-            ? 'text-blue-600 dark:text-blue-400' 
-            : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
-        ]"
-      >
-        <Icon name="Activity" class="w-5 h-5" />
-      </button>
-
-      <!-- Select for Bulk Update Button -->
-      <button
-        @click="toggleSelectMode"
-        :title="isSelectMode ? 'Exit Select Mode' : 'Select for Bulk Update'"
-        :class="[
-          'inline-flex items-center justify-center p-2 transition-colors',
-          isSelectMode 
-            ? 'text-blue-600 dark:text-blue-400' 
-            : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
-        ]"
-      >
-        <Icon name="CheckSquare" class="w-5 h-5" />
-      </button>
-    </template>
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
@@ -108,6 +48,15 @@ const toggleSelectMode = () => {
             <!-- Header -->
             <div class="flex justify-between items-center mb-6">
               <div>
+                <div class="flex items-center gap-3 mb-2">
+                  <Link
+                    href="/dashboard"
+                    class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-2"
+                  >
+                    <Icon name="ArrowLeft" class="w-4 h-4" />
+                    <span class="text-sm font-medium">Dashboard</span>
+                  </Link>
+                </div>
                 <h1 class="text-2xl font-semibold">Clients</h1>
                 <p class="text-gray-600 dark:text-gray-400 mt-1">
                   Manage your client relationships and projects

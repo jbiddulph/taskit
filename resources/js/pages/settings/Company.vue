@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Head, useForm, usePage, router } from '@inertiajs/vue3';
+import { Head, useForm, usePage, router, Link } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { AlertCircle, Info, Upload, Trash2, Image, Globe, ExternalLink, CheckCircle } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
+import Icon from '@/components/Icon.vue';
 import { uploadLogoToTaskitBucket } from '@/services/supabaseClient';
 
 interface User {
@@ -292,13 +293,47 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
         <SettingsLayout>
         <div class="space-y-6">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Company Settings</h1>
+                <div class="flex items-center gap-3 mb-2">
+                    <Link
+                        href="/dashboard"
+                        class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-2"
+                    >
+                        <Icon name="ArrowLeft" class="w-4 h-4" />
+                        <span class="text-sm font-medium">Dashboard</span>
+                    </Link>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    Company Settings
+                    <span v-if="company" class="text-lg font-normal text-gray-600 dark:text-gray-400 ml-2">
+                        - {{ company.name }}
+                    </span>
+                </h1>
                 <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
                     Manage your company's branding and subdomain.
                 </p>
             </div>
 
-            <!-- Access Check -->
+            <!-- Company Settings Information -->
+            <div class="mb-6">
+                <Card class="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
+                    <CardContent class="p-4">
+                        <div class="flex items-start gap-3">
+                            <Info class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <h3 class="font-medium text-blue-900 dark:text-blue-100 mb-2">Company Settings</h3>
+                                <p class="text-sm text-blue-700 dark:text-blue-300 mb-2">
+                                    Here you can add a custom domain for your company and enable a public dashboard.
+                                </p>
+                                <ul class="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                                    <li>• <strong>Custom Domain:</strong> Create a subdomain like "your-company.zaptask.co.uk"</li>
+                                    <li>• <strong>Public Dashboard:</strong> Allow visitors to view your dashboard without logging in</li>
+                                    <li>• <strong>Company Code:</strong> Provide visitors with your company code to access the public dashboard</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
             <div v-if="!hasAccess" class="mb-6">
                 <Card class="border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
                     <CardContent class="p-4">
