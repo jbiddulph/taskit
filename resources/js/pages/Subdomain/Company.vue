@@ -147,6 +147,9 @@ onMounted(() => {
         (window as any).testDatabaseRealtime = () => {
             realtimeService.testDatabaseRealtime();
         };
+        (window as any).testSupabaseConnection = () => {
+            realtimeService.testSupabaseConnection();
+        };
     }
 });
 </script>

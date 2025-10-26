@@ -825,6 +825,8 @@ class RealtimeService {
         },
         (payload) => {
           console.log('🧪 Database realtime test - DELETE event:', payload);
+          console.log('🧪 DELETE payload.old:', payload.old);
+          console.log('🧪 DELETE payload.new:', payload.new);
         }
       )
       .subscribe((status) => {
@@ -832,6 +834,7 @@ class RealtimeService {
         if (status === 'SUBSCRIBED') {
           console.log('✅ Database realtime subscription successful!');
           console.log('🧪 Now try creating, updating, or deleting a todo to see if events are received');
+          console.log('🧪 DELETE events should show payload.old with the deleted todo data');
           // Keep the subscription for testing
         } else if (status === 'CHANNEL_ERROR') {
           console.error('❌ Database realtime subscription failed!');
