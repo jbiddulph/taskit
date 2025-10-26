@@ -139,6 +139,14 @@ onMounted(() => {
         // Use company ID as both user ID and company ID for public access
         console.log('🔥 Initializing real-time service for public dashboard with company ID:', props.company.id);
         realtimeService.init(props.company.id, props.company.id);
+        
+        // Add test functions to window for debugging
+        (window as any).testRealtimeEvents = () => {
+            realtimeService.testRealtimeEvents();
+        };
+        (window as any).testDatabaseRealtime = () => {
+            realtimeService.testDatabaseRealtime();
+        };
     }
 });
 </script>

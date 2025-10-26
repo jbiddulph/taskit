@@ -39,6 +39,9 @@ onMounted(() => {
     (window as any).testDatabaseRealtime = () => {
       realtimeService.testDatabaseRealtime();
     };
+    (window as any).testRealtimeEvents = () => {
+      realtimeService.testRealtimeEvents();
+    };
     (window as any).testActivityRealtime = () => {
       console.log('Testing activity real-time...');
       console.log('Current company ID:', props.company?.id);

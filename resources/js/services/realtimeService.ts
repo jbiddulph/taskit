@@ -749,6 +749,36 @@ class RealtimeService {
   }
 
   /**
+   * Test real-time functionality by manually triggering events
+   */
+  testRealtimeEvents() {
+    console.log('🧪 Testing real-time events manually...');
+    
+    // Test todo creation
+    const testTodo = {
+      id: 999999,
+      title: 'Test Todo',
+      project_id: 1,
+      company_id: this.currentCompanyId
+    };
+    
+    console.log('🧪 Triggering test todo_created event...');
+    this.handleNewTodo(testTodo);
+    
+    // Test todo update
+    setTimeout(() => {
+      console.log('🧪 Triggering test todo_updated event...');
+      this.handleTodoUpdate({...testTodo, title: 'Updated Test Todo'});
+    }, 1000);
+    
+    // Test todo deletion
+    setTimeout(() => {
+      console.log('🧪 Triggering test todo_deleted event...');
+      this.handleTodoDelete(testTodo);
+    }, 2000);
+  }
+
+  /**
    * Test database realtime subscription
    */
   testDatabaseRealtime() {
