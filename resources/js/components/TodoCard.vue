@@ -50,6 +50,7 @@
           <Icon name="Clock" class="w-4 h-4" />
         </button> -->
         <button
+          v-if="!isReadOnly"
           @click.stop="$emit('delete', todo.id)"
           class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
         >
@@ -61,17 +62,19 @@
     <!-- Title -->
     <div class="mb-2">
       <div v-if="!editingTitle" class="flex items-center gap-2">
-        <h3 
+        <h3
           :class="[
-            'font-medium text-gray-900 dark:text-gray-100 line-clamp-2 flex-1 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors',
-            { 'line-through opacity-60': todo.status === 'done' }
+            'font-medium text-gray-900 dark:text-gray-100 line-clamp-2 flex-1 transition-colors',
+            { 'line-through opacity-60': todo.status === 'done' },
+            { 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400': !isReadOnly }
           ]"
-          @click.stop="startEditTitle"
-          title="Click to edit title"
+          @click.stop="!isReadOnly && startEditTitle()"
+          :title="isReadOnly ? '' : 'Click to edit title'"
         >
           {{ todo.title }}
         </h3>
         <button
+          v-if="!isReadOnly"
           @click.stop="startEditTitle"
           class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-500 transition-opacity p-1"
           title="Edit title"
@@ -274,6 +277,7 @@ interface Props {
   isSelectMode?: boolean;
   isSelected?: boolean;
   projectColor?: string | null;
+  isReadOnly?: boolean;
 }
 
 const props = defineProps<Props>();

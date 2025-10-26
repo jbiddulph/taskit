@@ -92,6 +92,7 @@
               :is-select-mode="isSelectMode"
               :is-selected="selectedItems?.has(todo.id) || false"
               :project-color="currentProjectColor"
+              :is-read-only="isReadOnly"
               @edit="$emit('edit', $event)"
               @delete="$emit('delete', $event)"
               @update="$emit('update', $event)"
@@ -133,6 +134,7 @@ interface Props {
   currentProjectColor?: string | null;
   isSelectMode?: boolean;
   selectedItems?: Set<number>;
+  isReadOnly?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
