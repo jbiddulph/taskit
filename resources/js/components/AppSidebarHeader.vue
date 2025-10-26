@@ -7,7 +7,6 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { BreadcrumbItemType } from '@/types';
 import { Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import { HeartHandshake } from 'lucide-vue-next';
 
 const props = withDefaults(
     defineProps<{
@@ -75,16 +74,6 @@ const closeMobileMenu = () => {
                     <span class="hidden sm:inline">Company</span>
                 </Link>
                 
-                <!-- Clients Link -->
-                <Link 
-                    href="/clients" 
-                    class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                    title="Manage Clients"
-                >
-                    <HeartHandshake class="w-4 h-4" />
-                    <span class="hidden sm:inline">Clients</span>
-                </Link>
-                
                 <CompanyUsersDropdown />
             </div>
             
@@ -149,16 +138,6 @@ const closeMobileMenu = () => {
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                             </svg>
                             <span class="font-medium">Company Information</span>
-                        </Link>
-                        
-                        <!-- Clients Link -->
-                        <Link 
-                            href="/clients" 
-                            @click="closeMobileMenu"
-                            class="flex items-center gap-3 p-3 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        >
-                            <HeartHandshake class="w-5 h-5" />
-                            <span class="font-medium">Manage Clients</span>
                         </Link>
                         
                         <!-- Team Dropdown -->
