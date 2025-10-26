@@ -1835,12 +1835,15 @@ onMounted(async () => {
   // Subscribe to real-time todo updates (allow in read-only mode for viewing)
   // if (!props.isReadOnly) {
   
+  console.log('🔥 Setting up real-time todo subscription...');
   unsubscribeFromTodos = realtimeService.onTodo(async (event) => {
+    console.log('🔥 Real-time todo event received:', event.type, event.data);
     
     switch (event.type) {
       case 'todo_created':
         // Add new todo to the list if it belongs to current project
         const newTodo = event.data;
+        console.log('🔥 Processing todo_created:', newTodo);
         if (!currentProject.value || newTodo.project_id === currentProject.value.id) {
           if (!todos.value.find(t => t.id === newTodo.id)) {
             // Ensure the new todo has the project relationship
@@ -1848,14 +1851,21 @@ onMounted(async () => {
               ...newTodo,
               project: currentProject.value
             };
+            console.log('🔥 Adding new todo to list:', todoWithProject);
             todos.value.push(todoWithProject);
+            console.log('🔥 Updated todos list:', todos.value.length, 'todos');
+          } else {
+            console.log('🔥 Todo already exists, skipping');
           }
+        } else {
+          console.log('🔥 Todo not for current project, skipping');
         }
         break;
         
       case 'todo_updated':
         // Update existing todo in the list
         const updatedTodo = event.data;
+        console.log('🔥 Processing todo_updated:', updatedTodo);
         const updateIndex = todos.value.findIndex(t => t.id === updatedTodo.id);
         if (updateIndex !== -1) {
           // Preserve the project relationship from the existing todo
@@ -1864,16 +1874,25 @@ onMounted(async () => {
             ...updatedTodo,
             project: existingTodo.project || currentProject.value
           };
+          console.log('🔥 Updating todo at index:', updateIndex, todoWithProject);
           todos.value[updateIndex] = todoWithProject;
+          console.log('🔥 Updated todos list:', todos.value.length, 'todos');
+        } else {
+          console.log('🔥 Todo not found for update, skipping');
         }
         break;
         
       case 'todo_deleted':
         // Remove todo from the list
         const deletedTodo = event.data;
+        console.log('🔥 Processing todo_deleted:', deletedTodo);
         const deleteIndex = todos.value.findIndex(t => t.id === deletedTodo.id);
         if (deleteIndex !== -1) {
+          console.log('🔥 Removing todo at index:', deleteIndex);
           todos.value.splice(deleteIndex, 1);
+          console.log('🔥 Updated todos list:', todos.value.length, 'todos');
+        } else {
+          console.log('🔥 Todo not found for deletion, skipping');
         }
         break;
     }
