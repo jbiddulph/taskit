@@ -35,7 +35,7 @@ class RealtimeService {
     this.currentCompanyId = companyId;
     
     // Test Supabase connection
-    this.testSupabaseConnection();
+    this.testSupabaseConnectionPrivate();
     
     this.subscribeToCompanyMessages();
     this.subscribeToNotifications();
@@ -47,14 +47,32 @@ class RealtimeService {
   }
   
   /**
-   * Test Supabase real-time connection
+   * Test Supabase real-time connection (private)
    */
-  private testSupabaseConnection() {
+  private testSupabaseConnectionPrivate() {
     const testChannel = supabase
       .channel('connection-test')
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           testChannel.unsubscribe();
+        }
+      });
+  }
+
+  /**
+   * Public method to test Supabase connection
+   */
+  public testSupabaseConnection() {
+    console.log('🧪 Testing Supabase connection...');
+    const testChannel = supabase
+      .channel('connection-test-public')
+      .subscribe((status) => {
+        console.log('🧪 Supabase connection test status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Supabase connection successful!');
+          testChannel.unsubscribe();
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Supabase connection failed!');
         }
       });
   }
