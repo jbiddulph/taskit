@@ -43,6 +43,12 @@ class ClientController extends Controller
 
         return Inertia::render('Clients/Index', [
             'clients' => $clients,
+            'company' => $user->company ? [
+                'id' => $user->company->id,
+                'name' => $user->company->name,
+                'code' => $user->company->code,
+                'subscription_type' => $user->company->subscription_type,
+            ] : null,
         ]);
     }
 
@@ -57,7 +63,14 @@ class ClientController extends Controller
             abort(403, 'Access denied. Only company users can manage clients.');
         }
 
-        return Inertia::render('Clients/Create');
+        return Inertia::render('Clients/Create', [
+            'company' => $user->company ? [
+                'id' => $user->company->id,
+                'name' => $user->company->name,
+                'code' => $user->company->code,
+                'subscription_type' => $user->company->subscription_type,
+            ] : null,
+        ]);
     }
 
     /**
@@ -140,6 +153,12 @@ class ClientController extends Controller
 
         return Inertia::render('Clients/Show', [
             'client' => $clientData,
+            'company' => $user->company ? [
+                'id' => $user->company->id,
+                'name' => $user->company->name,
+                'code' => $user->company->code,
+                'subscription_type' => $user->company->subscription_type,
+            ] : null,
         ]);
     }
 
@@ -156,6 +175,12 @@ class ClientController extends Controller
 
         return Inertia::render('Clients/Edit', [
             'client' => $client,
+            'company' => $user->company ? [
+                'id' => $user->company->id,
+                'name' => $user->company->name,
+                'code' => $user->company->code,
+                'subscription_type' => $user->company->subscription_type,
+            ] : null,
         ]);
     }
 

@@ -3,6 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
 import { update, show } from '@/routes/clients';
+import { ref } from 'vue';
 
 interface Client {
   id: number;
@@ -22,6 +23,12 @@ interface Client {
 
 interface Props {
   client: Client;
+  company?: {
+    id: number;
+    name: string;
+    code: string;
+    subscription_type: string;
+  } | null;
 }
 
 const { client } = defineProps<Props>();
@@ -48,12 +55,72 @@ const submit = () => {
     }
   });
 };
+
+// Dashboard action states
+const showCalendar = ref(false);
+const showActivityFeed = ref(false);
+const isSelectMode = ref(false);
+
+const toggleCalendar = () => {
+  showCalendar.value = !showCalendar.value;
+};
+
+const toggleActivityFeed = () => {
+  showActivityFeed.value = !showActivityFeed.value;
+};
+
+const toggleSelectMode = () => {
+  isSelectMode.value = !isSelectMode.value;
+};
 </script>
 
 <template>
   <Head :title="`Edit ${client.name}`" />
 
-  <AppLayout>
+  <AppLayout :company="company">
+    <template #dashboardActions>
+      <!-- Calendar Button -->
+      <button
+        @click="toggleCalendar"
+        :title="showCalendar ? 'Hide Calendar' : 'Show Calendar'"
+        :class="[
+          'inline-flex items-center justify-center p-2 transition-colors',
+          showCalendar 
+            ? 'text-blue-600 dark:text-blue-400' 
+            : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+        ]"
+      >
+        <Icon name="Calendar" class="w-5 h-5" />
+      </button>
+
+      <!-- Activity Feed Toggle Button -->
+      <button
+        @click="toggleActivityFeed"
+        :title="showActivityFeed ? 'Hide Activity Feed' : 'Show Activity Feed'"
+        :class="[
+          'inline-flex items-center justify-center p-2 transition-colors',
+          showActivityFeed 
+            ? 'text-blue-600 dark:text-blue-400' 
+            : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+        ]"
+      >
+        <Icon name="Activity" class="w-5 h-5" />
+      </button>
+
+      <!-- Select for Bulk Update Button -->
+      <button
+        @click="toggleSelectMode"
+        :title="isSelectMode ? 'Exit Select Mode' : 'Select for Bulk Update'"
+        :class="[
+          'inline-flex items-center justify-center p-2 transition-colors',
+          isSelectMode 
+            ? 'text-blue-600 dark:text-blue-400' 
+            : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+        ]"
+      >
+        <Icon name="CheckSquare" class="w-5 h-5" />
+      </button>
+    </template>
     <div class="py-12">
       <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
