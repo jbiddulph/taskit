@@ -29,6 +29,7 @@ interface Todo {
     description?: string;
     status: string;
     priority: string;
+    type?: string;
     due_date?: string;
     project_id?: number;
     user_id: number;
@@ -505,7 +506,7 @@ onMounted(() => {
                             </span>
                             <span class="flex items-center gap-1">
                                 <Icon name="Circle" class="w-4 h-4" />
-                                {{ selectedTodo.status }}
+                                {{ selectedTodo.type || 'Task' }}
                             </span>
                         </div>
                     </div>

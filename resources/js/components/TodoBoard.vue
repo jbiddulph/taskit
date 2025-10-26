@@ -1831,12 +1831,16 @@ onMounted(async () => {
       projects.value = props.projects;
       if (props.selectedProject) {
         currentProject.value = props.selectedProject;
+        selectedProjectId.value = props.selectedProject.id.toString();
       } else {
         currentProject.value = props.projects[0];
+        selectedProjectId.value = props.projects[0].id.toString();
       }
-    }
-    if (props.todos && props.todos.length > 0) {
-      todos.value = props.todos;
+      
+      // Filter todos for the selected project
+      if (props.todos && props.todos.length > 0) {
+        todos.value = props.todos.filter(todo => todo.project_id === currentProject.value?.id);
+      }
     }
     return;
   }
