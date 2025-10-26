@@ -835,9 +835,51 @@ class RealtimeService {
           console.log('✅ Database realtime subscription successful!');
           console.log('🧪 Now try creating, updating, or deleting a todo to see if events are received');
           console.log('🧪 DELETE events should show payload.old with the deleted todo data');
+          console.log('🧪 If you see INSERT/UPDATE but no DELETE, the issue is with Supabase DELETE permissions');
           // Keep the subscription for testing
         } else if (status === 'CHANNEL_ERROR') {
           console.error('❌ Database realtime subscription failed!');
+        }
+      });
+  }
+
+  /**
+   * Test DELETE events specifically
+   */
+  testDeleteEvents() {
+    console.log('🧪 Testing DELETE events specifically...');
+    
+    if (!this.currentCompanyId) {
+      console.log('🚨 No company ID available for testing');
+      return;
+    }
+
+    const deleteTestChannel = supabase
+      .channel('delete-test')
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'taskit_todos',
+          filter: `company_id=eq.${this.currentCompanyId}`
+        },
+        (payload) => {
+          console.log('🧪 DELETE TEST - Event received:', payload);
+          console.log('🧪 DELETE TEST - payload.old:', payload.old);
+          console.log('🧪 DELETE TEST - payload.new:', payload.new);
+          console.log('🧪 DELETE TEST - payload.eventType:', payload.eventType);
+          console.log('🧪 DELETE TEST - payload.schema:', payload.schema);
+          console.log('🧪 DELETE TEST - payload.table:', payload.table);
+        }
+      )
+      .subscribe((status) => {
+        console.log('🧪 DELETE TEST - Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ DELETE TEST - Subscription successful!');
+          console.log('🧪 DELETE TEST - Now delete a todo and watch for DELETE events');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ DELETE TEST - Subscription failed!');
         }
       });
   }

@@ -45,6 +45,9 @@ onMounted(() => {
     (window as any).testSupabaseConnection = () => {
       realtimeService.testSupabaseConnection();
     };
+    (window as any).testDeleteEvents = () => {
+      realtimeService.testDeleteEvents();
+    };
     (window as any).testActivityRealtime = () => {
       console.log('Testing activity real-time...');
       console.log('Current company ID:', props.company?.id);

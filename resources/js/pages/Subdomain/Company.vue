@@ -150,6 +150,9 @@ onMounted(() => {
         (window as any).testSupabaseConnection = () => {
             realtimeService.testSupabaseConnection();
         };
+        (window as any).testDeleteEvents = () => {
+            realtimeService.testDeleteEvents();
+        };
     }
 });
 </script>
