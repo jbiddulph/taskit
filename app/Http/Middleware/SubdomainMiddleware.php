@@ -86,6 +86,22 @@ class SubdomainMiddleware
                         \Log::info('Company is not public, redirecting to main site');
                         return redirect('https://www.zaptask.co.uk');
                     }
+                } elseif (str_starts_with($path, 'settings') || 
+                          str_starts_with($path, 'clients') || 
+                          str_starts_with($path, 'companies') ||
+                          str_starts_with($path, 'api/')) {
+                    // Block main site routes on subdomains
+                    \Log::info('SubdomainMiddleware: Blocking main site route on subdomain', [
+                        'path' => $path,
+                        'company' => $company->name
+                    ]);
+                    
+                    // Redirect to appropriate main site route
+                    if (str_starts_with($path, 'settings')) {
+                        return redirect('https://www.zaptask.co.uk/settings');
+                    } else {
+                        return redirect('https://www.zaptask.co.uk');
+                    }
                 } else {
                     // For other paths, continue with normal routing
                     return $next($request);
