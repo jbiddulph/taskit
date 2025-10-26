@@ -1832,8 +1832,8 @@ onMounted(async () => {
   // Finally load todos for the current project
   await loadTodos();
   
-  // Subscribe to real-time todo updates (skip in read-only mode)
-  if (!props.isReadOnly) {
+  // Subscribe to real-time todo updates (allow in read-only mode for viewing)
+  // if (!props.isReadOnly) {
   
   unsubscribeFromTodos = realtimeService.onTodo(async (event) => {
     
@@ -1992,7 +1992,7 @@ onMounted(async () => {
       }
     }
   });
-  }
+  // }
 
   // Load saved views
   loadSavedViews();
