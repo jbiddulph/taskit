@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Globe, Users, Calendar, CheckCircle, Plus, Filter, Bell, Settings, Lock, Eye, Activity, CheckSquare } from 'lucide-vue-next';
+import { Globe, Users, Calendar, CheckCircle, Plus, Filter, Bell, Settings, Lock, Eye, Activity } from 'lucide-vue-next';
 import SubdomainLayout from '@/layouts/SubdomainLayout.vue';
 import TodoBoard from '@/components/TodoBoard.vue';
 import ActivityFeed from '@/components/ActivityFeed.vue';
@@ -79,7 +79,6 @@ const hasValidCode = ref(false);
 // Dashboard action states
 const showCalendar = ref(false);
 const showActivityFeed = ref(false);
-const isSelectMode = ref(false);
 
 // Todo details modal state
 const showTodoModal = ref(false);
@@ -141,10 +140,6 @@ const toggleCalendar = () => {
 
 const toggleActivityFeed = () => {
     showActivityFeed.value = !showActivityFeed.value;
-};
-
-const toggleSelectMode = () => {
-    isSelectMode.value = !isSelectMode.value;
 };
 
 // Todo modal functions
@@ -264,19 +259,6 @@ onMounted(() => {
                                         <Activity class="w-5 h-5" />
                                     </button>
 
-                                    <button
-                                        @click="toggleSelectMode"
-                                        :title="isSelectMode ? 'Exit Select Mode' : 'Select for Bulk Update'"
-                                        :class="[
-                                            'inline-flex items-center justify-center p-2 transition-colors',
-                                            isSelectMode 
-                                                ? 'text-blue-600 dark:text-blue-400' 
-                                                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
-                                        ]"
-                                    >
-                                        <CheckSquare class="w-5 h-5" />
-                                    </button>
-
                                     <Button as-child variant="outline" size="sm">
                                         <a :href="`https://${company.subdomain}.zaptask.co.uk/login`">
                                             Employee Login
@@ -313,11 +295,9 @@ onMounted(() => {
                                     :isReadOnly="true"
                                     :showCalendar="showCalendar"
                                     :showActivityFeed="showActivityFeed"
-                                    :isSelectMode="isSelectMode"
                                     @todo-click="openTodoModal"
                                     @toggle-calendar="toggleCalendar"
                                     @toggle-activity-feed="toggleActivityFeed"
-                                    @toggle-select-mode="toggleSelectMode"
                                 />
                             </div>
                         </div>
