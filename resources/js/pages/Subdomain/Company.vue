@@ -8,6 +8,7 @@ import { Globe, Users, Calendar, CheckCircle, Plus, Filter, Bell, Settings, Lock
 import SubdomainLayout from '@/layouts/SubdomainLayout.vue';
 import TodoBoard from '@/components/TodoBoard.vue';
 import ActivityFeed from '@/components/ActivityFeed.vue';
+import { realtimeService } from '@/services/realtimeService';
 import { ref, onMounted, computed } from 'vue';
 
 interface Company {
@@ -133,6 +134,11 @@ onMounted(() => {
         if (!checkStoredCode()) {
             showCodeModal.value = true;
         }
+        
+        // Initialize real-time service for public dashboard
+        // Use company ID as both user ID and company ID for public access
+        console.log('🔥 Initializing real-time service for public dashboard with company ID:', props.company.id);
+        realtimeService.init(props.company.id, props.company.id);
     }
 });
 </script>

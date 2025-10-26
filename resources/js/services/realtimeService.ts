@@ -30,6 +30,7 @@ class RealtimeService {
    * Initialize real-time service with user context
    */
   init(userId: number, companyId: number) {
+    console.log('🔥 RealtimeService.init called with userId:', userId, 'companyId:', companyId);
     this.currentUserId = userId;
     this.currentCompanyId = companyId;
     
@@ -41,6 +42,8 @@ class RealtimeService {
     this.subscribeToProjects();
     this.subscribeToTodos();
     this.subscribeToActivities();
+    
+    console.log('🔥 RealtimeService initialization complete');
   }
   
   /**
@@ -219,11 +222,14 @@ class RealtimeService {
    * Subscribe to todos for real-time updates
    */
   private subscribeToTodos() {
+    console.log('🔥 subscribeToTodos called with companyId:', this.currentCompanyId);
     if (!this.currentCompanyId) {
+      console.log('🚨 No company ID available for todo subscription');
       return;
     }
 
     const channelName = `company_todos_${this.currentCompanyId}`;
+    console.log('🔥 Setting up todo subscription for channel:', channelName);
     
     // Remove existing channel if it exists
     if (this.channels.has(channelName)) {
@@ -270,7 +276,12 @@ class RealtimeService {
         }
       )
       .subscribe((status) => {
-        // Subscription status handled silently
+        console.log('🔥 Todo subscription status:', status, 'for channel:', channelName);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Todo subscription successful!');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Todo subscription failed!');
+        }
       });
 
     this.channels.set(channelName, channel);
