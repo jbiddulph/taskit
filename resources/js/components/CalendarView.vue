@@ -20,7 +20,7 @@
           <div class="flex items-center gap-1">
             <!-- Add button for future days only - always positioned on the right -->
             <button
-              v-if="isFutureOnly(cell.date)"
+              v-if="isFutureOnly(cell.date) && !props.isReadOnly"
               @click="$emit('addTodo', cell.date)"
               class="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors flex items-center justify-center gap-0.5"
               title="Add todo for this date"
@@ -84,6 +84,7 @@ import type { Todo } from '@/services/todoApi';
 
 interface Props {
   todos: Todo[];
+  isReadOnly?: boolean;
 }
 
 const props = defineProps<Props>();

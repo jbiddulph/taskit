@@ -323,7 +323,7 @@ onMounted(() => {
                         </div>
 
                         <!-- Activity Feed Below -->
-                        <div class="mt-8">
+                        <div v-if="showActivityFeed" class="mt-8">
                             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border">
                                 <div class="p-6 border-b">
                                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white">

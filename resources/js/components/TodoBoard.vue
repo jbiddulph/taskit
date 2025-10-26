@@ -251,7 +251,7 @@
 
     <!-- Statistics / Calendar -->
     <div v-if="props.showCalendar" class="mb-4">
-      <CalendarView :todos="todos" @edit-todo="handleEditTodoFromCalendar" @add-todo="handleAddTodoFromCalendar" />
+      <CalendarView :todos="todos" :isReadOnly="props.isReadOnly" @edit-todo="handleEditTodoFromCalendar" @add-todo="handleAddTodoFromCalendar" />
     </div>
     <TodoStats v-else :todos="todos" />
 
