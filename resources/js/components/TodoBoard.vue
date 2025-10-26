@@ -1894,7 +1894,12 @@ onMounted(async () => {
         if (deleteIndex !== -1) {
           console.log('🔥 Removing todo at index:', deleteIndex);
           todos.value.splice(deleteIndex, 1);
+          // Force reactivity update to ensure UI changes immediately
+          todos.value = [...todos.value];
           console.log('🔥 Updated todos list:', todos.value.length, 'todos');
+          
+          // Dispatch event to refresh sidebar project stats
+          window.dispatchEvent(new CustomEvent('todoChanged'));
         } else {
           console.log('🔥 Todo not found for deletion, skipping');
         }

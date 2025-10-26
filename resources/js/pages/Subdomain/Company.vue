@@ -163,32 +163,12 @@ onMounted(() => {
     <SubdomainLayout>
         <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
             <div class="container mx-auto px-4 py-8">
-                <!-- Header -->
-                <div class="text-center mb-8">
-                    <div class="flex justify-center mb-4">
-                        <div class="h-20 w-auto flex items-center justify-center overflow-hidden">
-                            <img 
-                                v-if="company.logo_url" 
-                                :src="company.logo_url" 
-                                :alt="`${company.name} logo`"
-                                class="w-auto h-full object-contain"
-                            />
-                            <Globe v-else class="w-8 h-8 text-white" />
-                        </div>
-                    </div>
-                    <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-                        {{ company.name }}
-                    </h1>
-                    <p class="text-lg text-gray-600 dark:text-gray-300">
-                        {{ company.is_public ? `Welcome to ${company.name}` : 'Company Portal' }}
-                    </p>
-                </div>
 
                 <!-- Public Dashboard for Public Companies -->
                 <div v-if="company.is_public" class="min-h-screen bg-gray-50 dark:bg-gray-900 relative">
                     <!-- Public Dashboard Header -->
                     <div class="bg-white dark:bg-gray-800 shadow-sm border-b">
-                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="px-4 sm:px-6 lg:px-8">
                             <div class="flex justify-between items-center py-4">
                                 <div class="flex items-center gap-3">
                                     <div class="h-20 w-auto flex items-center justify-center overflow-hidden">
@@ -226,49 +206,45 @@ onMounted(() => {
                     </div>
 
                     <!-- Main Dashboard Content -->
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                            <!-- Todo Board (3 columns) -->
-                            <div class="lg:col-span-3">
-                                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border">
-                                    <div class="p-6 border-b">
-                                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                                            Project Tasks
-                                        </h2>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">
-                                            View our current project tasks and progress
-                                        </p>
-                                    </div>
-                                    <div class="p-6">
-                                        <!-- Read-only Todo Board -->
-                                        <TodoBoard 
-                                            :todos="todos || []"
-                                            :projects="projects || []"
-                                            :selectedProject="selectedProject"
-                                            :isReadOnly="true"
-                                        />
-                                    </div>
-                                </div>
+                    <div class="px-4 sm:px-6 lg:px-8 py-8">
+                        <!-- Full Width Todo Board -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border">
+                            <div class="p-6 border-b">
+                                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                    Project Tasks
+                                </h2>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                    View our current project tasks and progress
+                                </p>
                             </div>
+                            <div class="p-6">
+                                <!-- Read-only Todo Board -->
+                                <TodoBoard 
+                                    :todos="todos || []"
+                                    :projects="projects || []"
+                                    :selectedProject="selectedProject"
+                                    :isReadOnly="true"
+                                />
+                            </div>
+                        </div>
 
-                            <!-- Activity Feed (1 column) -->
-                            <div class="lg:col-span-1">
-                                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border">
-                                    <div class="p-6 border-b">
-                                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                                            Recent Activity
-                                        </h2>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">
-                                            Latest updates from our team
-                                        </p>
-                                    </div>
-                                    <div class="p-6">
-                                        <!-- Activity Feed -->
-                                        <ActivityFeed 
-                                            :activities="activities || []"
-                                            :isReadOnly="true"
-                                        />
-                                    </div>
+                        <!-- Activity Feed Below -->
+                        <div class="mt-8">
+                            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border">
+                                <div class="p-6 border-b">
+                                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                        Recent Activity
+                                    </h2>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        Latest updates from our team
+                                    </p>
+                                </div>
+                                <div class="p-6">
+                                    <!-- Activity Feed -->
+                                    <ActivityFeed 
+                                        :activities="activities || []"
+                                        :isReadOnly="true"
+                                    />
                                 </div>
                             </div>
                         </div>
