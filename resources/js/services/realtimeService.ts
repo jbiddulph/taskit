@@ -248,6 +248,7 @@ class RealtimeService {
           filter: `company_id=eq.${this.currentCompanyId}`
         },
         (payload) => {
+          console.log('🔥 Supabase INSERT event received:', payload);
           this.handleNewTodo(payload.new as any);
         }
       )
@@ -260,6 +261,7 @@ class RealtimeService {
           filter: `company_id=eq.${this.currentCompanyId}`
         },
         (payload) => {
+          console.log('🔥 Supabase UPDATE event received:', payload);
           this.handleTodoUpdate(payload.new as any);
         }
       )
@@ -272,6 +274,7 @@ class RealtimeService {
           filter: `company_id=eq.${this.currentCompanyId}`
         },
         (payload) => {
+          console.log('🔥 Supabase DELETE event received:', payload);
           this.handleTodoDelete(payload.old as any);
         }
       )
@@ -447,8 +450,12 @@ class RealtimeService {
    * Handle new todo created
    */
   private handleNewTodo(todo: any) {
+    console.log('🔥 handleNewTodo called with todo:', todo);
+    console.log('🔥 Todo callbacks count:', this.todoCallbacks.size);
+    
     // Notify all todo callbacks
-    this.todoCallbacks.forEach((callback) => {
+    this.todoCallbacks.forEach((callback, index) => {
+      console.log(`🔥 Calling todo callback ${index + 1}/${this.todoCallbacks.size}`);
       callback({
         type: 'todo_created',
         data: todo
@@ -460,8 +467,12 @@ class RealtimeService {
    * Handle todo update
    */
   private handleTodoUpdate(todo: any) {
+    console.log('🔥 handleTodoUpdate called with todo:', todo);
+    console.log('🔥 Todo callbacks count:', this.todoCallbacks.size);
+    
     // Notify all todo callbacks
-    this.todoCallbacks.forEach(callback => {
+    this.todoCallbacks.forEach((callback, index) => {
+      console.log(`🔥 Calling todo callback ${index + 1}/${this.todoCallbacks.size}`);
       callback({
         type: 'todo_updated',
         data: todo
@@ -473,8 +484,12 @@ class RealtimeService {
    * Handle todo delete
    */
   private handleTodoDelete(todo: any) {
+    console.log('🔥 handleTodoDelete called with todo:', todo);
+    console.log('🔥 Todo callbacks count:', this.todoCallbacks.size);
+    
     // Notify all todo callbacks
-    this.todoCallbacks.forEach(callback => {
+    this.todoCallbacks.forEach((callback, index) => {
+      console.log(`🔥 Calling todo callback ${index + 1}/${this.todoCallbacks.size}`);
       callback({
         type: 'todo_deleted',
         data: todo
