@@ -41,6 +41,16 @@ class Notification extends Model
                 $notification->is_read = false;
             }
         });
+
+        // Ensure created_at is set for Supabase realtime
+        static::created(function ($notification) {
+            \Log::info('Notification created successfully', [
+                'id' => $notification->id,
+                'user_id' => $notification->user_id,
+                'type' => $notification->type,
+                'title' => $notification->title
+            ]);
+        });
     }
 
     /**
