@@ -11,15 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Enable RLS for taskit_notifications table
-        \DB::statement("ALTER TABLE taskit_notifications ENABLE ROW LEVEL SECURITY");
-        
-        // Allow authenticated users to read their own notifications
-        \DB::statement("
-            CREATE POLICY \"Users can read own notifications\" ON taskit_notifications
-            FOR SELECT
-            USING (auth.uid()::text = user_id::text)
-        ");
+        // Note: RLS policies should be configured directly in Supabase
+        // This migration is a placeholder for documentation
+        // To enable notifications:
+        // 1. Go to Supabase Dashboard > Database > Replication
+        // 2. Make sure 'taskit_notifications' is enabled for replication
+        // 3. Add RLS policy: Allow SELECT where user_id matches authenticated user
     }
 
     /**
@@ -27,8 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Drop RLS policies
-        \DB::statement("DROP POLICY IF EXISTS \"Users can read own notifications\" ON taskit_notifications");
-        \DB::statement("ALTER TABLE taskit_notifications DISABLE ROW LEVEL SECURITY");
+        // No-op as RLS is managed in Supabase
     }
 };
