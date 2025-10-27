@@ -163,6 +163,28 @@ class RealtimeService {
         console.log('📢 Notification real-time subscription status:', status);
         if (status === 'SUBSCRIBED') {
           console.log('✅ Notification subscription successful');
+          console.log('🔍 Testing notification subscription...');
+          
+          // Test if the subscription is working by listening to all postgres_changes
+          supabase
+            .channel('test_notifications')
+            .on(
+              'postgres_changes',
+              {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'taskit_notifications'
+              },
+              (payload) => {
+                console.log('🧪 TEST: Received notification INSERT:', payload);
+                console.log('🧪 TEST: New record:', payload.new);
+                console.log('🧪 TEST: Current user ID:', this.currentUserId);
+                console.log('🧪 TEST: Should handle?', (payload.new as any).user_id === this.currentUserId);
+              }
+            )
+            .subscribe((testStatus) => {
+              console.log('🧪 TEST subscription status:', testStatus);
+            });
         } else if (status === 'CHANNEL_ERROR') {
           console.error('❌ Notification subscription error');
         } else if (status === 'TIMED_OUT') {
