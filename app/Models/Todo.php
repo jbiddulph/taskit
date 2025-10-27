@@ -223,7 +223,7 @@ class Todo extends Model
                 ]);
                 
                 $notification = Notification::create([
-                    'user_id' => $this->user_id, // Todo author receives the notification
+                    'user_id' => $mentionedUser->id, // The mentioned user receives the notification
                     'mentioned_user_id' => $mentionedUser->id, // ID of the mentioned user (John 977, ID 24)
                     'type' => 'mention',
                     'title' => 'You were mentioned',
@@ -239,7 +239,7 @@ class Todo extends Model
                 
                 // Send Pusher notification if webSocketService is available
                 if ($webSocketService && method_exists($webSocketService, 'mentionAdded')) {
-                    $webSocketService->mentionAdded($notification, $this->user_id); // Send to todo author
+                    $webSocketService->mentionAdded($notification, $mentionedUser->id); // Send to mentioned user
                 }
             } else {
                 \Log::info('User not found for mention', [
