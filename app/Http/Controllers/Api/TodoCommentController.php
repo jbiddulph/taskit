@@ -69,7 +69,7 @@ class TodoCommentController extends Controller
             ], 422);
         }
 
-        $comment = $todo->addComment($request->content, $user);
+        $comment = $todo->addComment($request->content, $user, $this->webSocketService);
         $comment->load('user');
 
         // Send real-time notification

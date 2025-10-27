@@ -103,6 +103,23 @@ class TodoWebSocketService
     }
 
     /**
+     * Notify when a user is mentioned in a comment
+     */
+    public function mentionAdded($notification, int $userId): void
+    {
+        if ($this->pusher) {
+            $this->pusher->trigger(
+                "user.{$userId}",
+                'mention.added',
+                [
+                    'notification' => $notification,
+                    'message' => $notification->message ?? 'You were mentioned in a comment'
+                ]
+            );
+        }
+    }
+
+    /**
      * Notify when a comment is updated
      */
     public function commentUpdated(TodoComment $comment): void

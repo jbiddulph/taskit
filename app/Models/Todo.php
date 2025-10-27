@@ -163,7 +163,7 @@ class Todo extends Model
     }
 
     // Methods
-    public function addComment(string $content, User $user): TodoComment
+    public function addComment(string $content, User $user, $webSocketService = null): TodoComment
     {
         $comment = $this->comments()->create([
             'user_id' => $user->id,
@@ -171,7 +171,7 @@ class Todo extends Model
         ]);
 
         // Parse mentions and create notifications
-        $this->createMentionNotifications($content, $user, $comment);
+        $this->createMentionNotifications($content, $user, $comment, $webSocketService);
 
         return $comment;
     }
@@ -179,7 +179,7 @@ class Todo extends Model
     /**
      * Parse mentions from comment content and create notifications
      */
-    protected function createMentionNotifications(string $content, User $commenter, TodoComment $comment): void
+    protected function createMentionNotifications(string $content, User $commenter, TodoComment $comment, $webSocketService = null): void
     {
         // Parse @mentions from the content
         preg_match_all('/@(\w+)/', $content, $matches);
@@ -222,7 +222,7 @@ class Todo extends Model
                     'todo_id' => $this->id
                 ]);
                 
-                Notification::create([
+                $notification = Notification::create([
                     'user_id' => $mentionedUser->id,
                     'type' => 'mention',
                     'title' => 'You were mentioned',
@@ -235,6 +235,11 @@ class Todo extends Model
                         'commenter_name' => $commenter->name,
                     ],
                 ]);
+                
+                // Send Pusher notification if webSocketService is available
+                if ($webSocketService && method_exists($webSocketService, 'mentionAdded')) {
+                    $webSocketService->mentionAdded($notification, $mentionedUser->id);
+                }
             } else {
                 \Log::info('User not found for mention', [
                     'mentioned_name' => $mentionedName,
