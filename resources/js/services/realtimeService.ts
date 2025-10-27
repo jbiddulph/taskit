@@ -128,12 +128,17 @@ class RealtimeService {
    * Subscribe to notifications for real-time updates
    */
   private subscribeToNotifications() {
-    if (!this.currentUserId) return;
+    if (!this.currentUserId) {
+      console.log('🚨 Cannot subscribe to notifications - no user ID');
+      return;
+    }
 
     const channelName = `user_notifications_${this.currentUserId}`;
+    console.log('📢 Subscribing to notifications channel:', channelName);
     
     // Remove existing channel if it exists
     if (this.channels.has(channelName)) {
+      console.log('🔄 Removing existing notifications channel');
       this.channels.get(channelName)?.unsubscribe();
       this.channels.delete(channelName);
     }
@@ -149,11 +154,22 @@ class RealtimeService {
           filter: `user_id=eq.${this.currentUserId}`
         },
         (payload) => {
+          console.log('📢 Notification INSERT event received:', payload);
+          console.log('📢 Payload.new:', payload.new);
           this.handleNewNotification(payload.new as any);
         }
       )
       .subscribe((status) => {
-        console.log('Notification real-time subscription status:', status);
+        console.log('📢 Notification real-time subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Notification subscription successful');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Notification subscription error');
+        } else if (status === 'TIMED_OUT') {
+          console.error('⏰ Notification subscription timed out');
+        } else if (status === 'CLOSED') {
+          console.warn('🔒 Notification subscription closed');
+        }
       });
 
     this.channels.set(channelName, channel);
@@ -373,16 +389,24 @@ class RealtimeService {
    * Handle new notification received
    */
   private handleNewNotification(notification: any) {
-    console.log('New notification received:', notification);
+    console.log('🔔 New notification received:', notification);
+    console.log('🔔 Notification type:', notification.type);
+    console.log('🔔 Notification title:', notification.title);
+    console.log('🔔 Notification user_id:', notification.user_id);
     
     // Check if this is a chat message notification and if chat is currently open with sender
     const isMessageNotification = notification.data?.message_id && notification.data?.sender_id;
     const isChatOpen = isMessageNotification && this.isChatOpenWithUser(notification.data.sender_id);
     
+    console.log('🔔 Is message notification:', isMessageNotification);
+    console.log('🔔 Is chat open:', isChatOpen);
+    console.log('🔔 Callback count:', this.notificationCallbacks.size);
+    
     // Only show notification if chat is not open with the sender
     if (!isChatOpen) {
       // Notify all notification callbacks
-      this.notificationCallbacks.forEach(callback => {
+      this.notificationCallbacks.forEach((callback, index) => {
+        console.log(`🔔 Calling notification callback ${index + 1}/${this.notificationCallbacks.size}`);
         callback({
           type: 'new_notification',
           data: notification
