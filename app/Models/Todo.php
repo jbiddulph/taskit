@@ -164,10 +164,57 @@ class Todo extends Model
     // Methods
     public function addComment(string $content, User $user): TodoComment
     {
-        return $this->comments()->create([
+        $comment = $this->comments()->create([
             'user_id' => $user->id,
             'content' => $content,
         ]);
+
+        // Parse mentions and create notifications
+        $this->createMentionNotifications($content, $user, $comment);
+
+        return $comment;
+    }
+
+    /**
+     * Parse mentions from comment content and create notifications
+     */
+    protected function createMentionNotifications(string $content, User $commenter, TodoComment $comment): void
+    {
+        // Parse @mentions from the content
+        preg_match_all('/@(\w+)/', $content, $matches);
+        
+        if (empty($matches[1])) {
+            return;
+        }
+
+        // Get all company users
+        $companyUsers = User::where('company_id', $this->user->company_id)
+            ->where('id', '!=', $commenter->id) // Exclude the commenter
+            ->get();
+
+        foreach ($matches[1] as $mentionedName) {
+            // Find the mentioned user by name (case insensitive, partial match)
+            $mentionedUser = $companyUsers->first(function ($u) use ($mentionedName) {
+                return strtolower($u->name) === strtolower($mentionedName) ||
+                       stripos(strtolower($u->name), strtolower($mentionedName)) !== false;
+            });
+
+            if ($mentionedUser) {
+                Notification::create([
+                    'user_id' => $mentionedUser->id,
+                    'type' => 'mention',
+                    'title' => 'You were mentioned',
+                    'message' => "{$commenter->name} mentioned you in a comment",
+                    'data' => [
+                        'comment_id' => $comment->id,
+                        'todo_id' => $this->id,
+                        'todo_title' => $this->title,
+                        'commenter_id' => $commenter->id,
+                        'commenter_name' => $commenter->name,
+                    ],
+                ]);
+            }
+        }
     }
 
     public function addAttachment(string $filePath, string $originalFilename, string $mimeType, int $fileSize, User $user): TodoAttachment

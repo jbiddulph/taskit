@@ -93,12 +93,14 @@ const suggestionStyle = computed(() => {
   if (!textarea.value) return {};
   
   const rect = textarea.value.getBoundingClientRect();
-  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
   
+  // Position the dropdown just below the textarea
   return {
-    top: `${rect.bottom + scrollTop}px`,
-    left: `${rect.left}px`,
-    width: `${rect.width}px`
+    position: 'absolute',
+    top: `${rect.height + 4}px`, // 4px gap below the textarea
+    left: '0px',
+    width: '100%',
+    maxWidth: '350px'
   };
 });
 
