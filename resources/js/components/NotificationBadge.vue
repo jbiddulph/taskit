@@ -176,6 +176,8 @@ const loadNotifications = async () => {
   try {
     loading.value = true;
     const response = await notificationApi.getNotifications(currentPage.value);
+    console.log('📬 Loaded notifications:', response.data.length);
+    console.log('📬 Notification types:', response.data.map(n => n.type));
     if (currentPage.value === 1) {
       notifications.value = response.data;
     } else {
@@ -191,6 +193,7 @@ const loadNotifications = async () => {
 const loadUnreadCount = async () => {
   try {
     const response = await notificationApi.getUnreadCount();
+    console.log('🔔 Unread count:', response.count);
     unreadCount.value = response.count;
   } catch (error) {
     console.error('Failed to load unread count:', error);

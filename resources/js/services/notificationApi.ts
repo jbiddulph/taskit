@@ -3,7 +3,7 @@ import axios from 'axios';
 export interface Notification {
   id: number;
   user_id: number;
-  type: 'info' | 'warning' | 'error' | 'success';
+  type: 'info' | 'warning' | 'error' | 'success' | 'mention' | 'comment' | 'assignment';
   title: string;
   message: string;
   data?: any;
@@ -86,7 +86,7 @@ class NotificationApiService {
    */
   async createNotification(data: {
     user_id: number;
-    type: 'info' | 'warning' | 'error' | 'success';
+    type: 'info' | 'warning' | 'error' | 'success' | 'mention' | 'comment' | 'assignment';
     title: string;
     message: string;
     data?: any;
