@@ -59,8 +59,9 @@
           <div
             v-for="notification in notifications"
             :key="notification.id"
-            class="p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            class="p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
             :class="{ 'bg-blue-50 dark:bg-blue-900/20': !notification.is_read }"
+            @click="handleNotificationClick(notification)"
           >
             <div class="flex items-start gap-3">
               <!-- Notification Icon -->
@@ -87,7 +88,7 @@
                   </div>
                   
                   <!-- Actions -->
-                  <div class="flex items-center gap-1 ml-2">
+                  <div class="flex items-center gap-1 ml-2" @click.stop>
                     <button
                       v-if="!notification.is_read"
                       @click="markAsRead(notification.id)"
@@ -237,6 +238,51 @@ const deleteNotification = async (notificationId: number) => {
     await loadUnreadCount();
   } catch (error) {
     console.error('Failed to delete notification:', error);
+  }
+};
+
+const handleNotificationClick = async (notification: Notification) => {
+  // Mark as read if unread
+  if (!notification.is_read) {
+    await markAsRead(notification.id);
+  }
+
+  // Handle different notification types
+  const data = notification.data || {};
+
+  // Mention notifications - navigate to the Todo
+  if (notification.type === 'mention' && data.todo_id) {
+    // Close notification dropdown
+    showNotifications.value = false;
+    
+    // Navigate to the Todo
+    window.location.href = `/todos/${data.todo_id}`;
+    return;
+  }
+
+  // Message notifications - open chat with sender
+  if (notification.data?.sender_id) {
+    const senderId = notification.data.sender_id;
+    const senderName = notification.data.sender_name || 'Unknown User';
+    
+    // Fetch user details and open chat
+    try {
+      // Emit event to open chat with this user
+      window.dispatchEvent(new CustomEvent('openChat', {
+        detail: {
+          user: {
+            id: senderId,
+            name: senderName,
+            email: ''
+          }
+        }
+      }));
+      
+      // Close notification dropdown
+      showNotifications.value = false;
+    } catch (error) {
+      console.error('Failed to open chat:', error);
+    }
   }
 };
 
