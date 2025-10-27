@@ -29,6 +29,21 @@ class Notification extends Model
     ];
 
     /**
+     * Boot method to set up event listeners
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Automatically set is_read to false for new notifications
+        static::creating(function ($notification) {
+            if (!isset($notification->is_read)) {
+                $notification->is_read = false;
+            }
+        });
+    }
+
+    /**
      * Get the user that owns the notification.
      */
     public function user(): BelongsTo

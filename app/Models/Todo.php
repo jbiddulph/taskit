@@ -195,10 +195,12 @@ class Todo extends Model
             return;
         }
 
-        // Get all company users
-        $companyUsers = User::where('company_id', $this->user->company_id)
-            ->where('id', '!=', $commenter->id) // Exclude the commenter
-            ->get();
+        // Get all company users - if no company_id, get all users (for compatibility)
+        $query = User::query();
+        if ($this->user->company_id) {
+            $query->where('company_id', $this->user->company_id);
+        }
+        $companyUsers = $query->where('id', '!=', $commenter->id)->get();
 
         \Log::info('Company users found for mentions', [
             'count' => $companyUsers->count(),
