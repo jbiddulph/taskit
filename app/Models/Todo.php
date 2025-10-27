@@ -181,59 +181,90 @@ class Todo extends Model
      */
     protected function createMentionNotifications(string $content, User $commenter, TodoComment $comment, $webSocketService = null): void
     {
-        // Parse @mentions from the content - extract mention data
-        preg_match_all('/@\[([^\]]+)\]\((\d+)\)/', $content, $matches);
+        // Try to parse structured mentions first: @[Name](ID)
+        preg_match_all('/@\[([^\]]+)\]\((\d+)\)/', $content, $structuredMatches);
+        
+        // Also try to parse plain mentions: @Name
+        preg_match_all('/@(\w+(?:\s+\w+)*)/', $content, $plainMatches);
         
         \Log::info('Mention parsing', [
             'content' => $content,
-            'matches' => $matches,
+            'structured_matches' => $structuredMatches,
+            'plain_matches' => $plainMatches,
             'company_id' => $this->user->company_id
         ]);
         
-        if (empty($matches[1])) {
-            \Log::info('No mentions found in content');
-            return;
+        // Process structured mentions first
+        if (!empty($structuredMatches[2])) {
+            foreach ($structuredMatches[2] as $index => $mentionedUserId) {
+                $mentionedName = $structuredMatches[1][$index] ?? '';
+                $this->createNotificationForUser($mentionedUserId, $mentionedName, $commenter, $comment, $webSocketService);
+            }
         }
-
-        foreach ($matches[2] as $index => $mentionedUserId) {
-            $mentionedName = $matches[1][$index] ?? '';
+        
+        // Process plain mentions
+        if (!empty($plainMatches[1])) {
+            // Get all company users for matching
+            $query = User::query();
+            if ($this->user->company_id) {
+                $query->where('company_id', $this->user->company_id);
+            }
+            $companyUsers = $query->where('id', '!=', $commenter->id)->get();
             
-            // Get the mentioned user by ID
-            $mentionedUser = User::find($mentionedUserId);
-            
-            if ($mentionedUser) {
-                \Log::info('Creating mention notification', [
-                    'mentioned_user_id' => $mentionedUser->id,
-                    'mentioned_user_name' => $mentionedUser->name,
-                    'comment_id' => $comment->id,
-                    'todo_id' => $this->id
-                ]);
+            foreach ($plainMatches[1] as $mentionedName) {
+                // Find the mentioned user by name (case insensitive, partial match)
+                $mentionedUser = $companyUsers->first(function ($u) use ($mentionedName) {
+                    $cleanName = str_replace(' ', '', strtolower($u->name));
+                    $cleanMention = str_replace(' ', '', strtolower($mentionedName));
+                    return $cleanName === $cleanMention || strpos($cleanName, $cleanMention) !== false;
+                });
                 
-                $notification = Notification::create([
-                    'user_id' => $mentionedUser->id, // The mentioned user receives the notification
-                    'mentioned_user_id' => $mentionedUser->id, // ID from the mention data
-                    'type' => 'mention',
-                    'title' => 'You were mentioned',
-                    'message' => "{$commenter->name} mentioned you in a comment",
-                    'data' => [
-                        'comment_id' => $comment->id,
-                        'todo_id' => $this->id,
-                        'todo_title' => $this->title,
-                        'commenter_id' => $commenter->id,
-                        'commenter_name' => $commenter->name,
-                        'mentioned_user_id' => $mentionedUser->id,
-                    ],
-                ]);
-                
-                // Send Pusher notification if webSocketService is available
-                if ($webSocketService && method_exists($webSocketService, 'mentionAdded')) {
-                    $webSocketService->mentionAdded($notification, $mentionedUser->id); // Send to mentioned user
+                if ($mentionedUser) {
+                    $this->createNotificationForUser($mentionedUser->id, $mentionedUser->name, $commenter, $comment, $webSocketService);
+                } else {
+                    \Log::info('User not found for mention', [
+                        'mentioned_name' => $mentionedName,
+                        'available_users' => $companyUsers->pluck('name')->toArray()
+                    ]);
                 }
-            } else {
-                \Log::info('User not found for mention', [
-                    'mentioned_user_id' => $mentionedUserId,
-                    'mentioned_name' => $mentionedName
-                ]);
+            }
+        }
+    }
+    
+    /**
+     * Create a notification for a mentioned user
+     */
+    protected function createNotificationForUser($userId, $userName, User $commenter, TodoComment $comment, $webSocketService = null): void
+    {
+        $mentionedUser = User::find($userId);
+        
+        if ($mentionedUser) {
+            \Log::info('Creating mention notification', [
+                'mentioned_user_id' => $mentionedUser->id,
+                'mentioned_user_name' => $mentionedUser->name,
+                'comment_id' => $comment->id,
+                'todo_id' => $this->id
+            ]);
+            
+            $notification = Notification::create([
+                'user_id' => $mentionedUser->id,
+                'mentioned_user_id' => $mentionedUser->id,
+                'type' => 'mention',
+                'title' => 'You were mentioned',
+                'message' => "{$commenter->name} mentioned you in a comment",
+                'data' => [
+                    'comment_id' => $comment->id,
+                    'todo_id' => $this->id,
+                    'todo_title' => $this->title,
+                    'commenter_id' => $commenter->id,
+                    'commenter_name' => $commenter->name,
+                    'mentioned_user_id' => $mentionedUser->id,
+                ],
+            ]);
+            
+            // Send Pusher notification if webSocketService is available
+            if ($webSocketService && method_exists($webSocketService, 'mentionAdded')) {
+                $webSocketService->mentionAdded($notification, $mentionedUser->id);
             }
         }
     }
