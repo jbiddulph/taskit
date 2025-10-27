@@ -125,6 +125,7 @@ const loadMessages = async () => {
   loading.value = true;
   try {
     const response = await fetch(`/api/company-users/${otherUser.value.id}/messages`, {
+      credentials: 'include', // Include cookies for session authentication
       headers: {
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest'
@@ -170,6 +171,7 @@ const sendMessage = async () => {
     const csrfToken = await getCSRFToken();
     const response = await fetch('/api/company-messages', {
       method: 'POST',
+      credentials: 'include', // Include cookies for session authentication
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
