@@ -258,9 +258,31 @@ const handleNotificationClick = async (notification: Notification) => {
     // Close notification dropdown
     showNotifications.value = false;
     
+    // Check if we're in a subdomain and construct proper URL
+    const host = window.location.host;
+    const isSubdomain = host.includes('.zaptask.co.uk');
+    const protocol = window.location.protocol;
+    
+    // Build URL with subdomain if needed
+    let baseUrl = '';
+    if (isSubdomain) {
+      baseUrl = `${protocol}//${host}`;
+    } else {
+      // Check if we need to add the subdomain
+      const subdomainMatch = host.match(/^([^.]+)\./);
+      if (subdomainMatch) {
+        baseUrl = `${protocol}//${host}`;
+      } else {
+        // No subdomain yet, try to construct it
+        baseUrl = `${protocol}//${host}`;
+      }
+    }
+    
     // Navigate to the Todo with comment ID to highlight the specific mention
     const commentId = data.comment_id ? `?highlight=${data.comment_id}` : '';
-    window.location.href = `/todos/${data.todo_id}${commentId}`;
+    const url = `${baseUrl}/todos/${data.todo_id}${commentId}`;
+    console.log('🔗 Navigating to:', url);
+    window.location.href = url;
     return;
   }
 
