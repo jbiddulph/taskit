@@ -181,12 +181,12 @@ class Todo extends Model
      */
     protected function createMentionNotifications(string $content, User $commenter, TodoComment $comment, $webSocketService = null): void
     {
-        // Parse @mentions from the content
-        preg_match_all('/@(\w+)/', $content, $matches);
+        // Parse @mentions from the content - extract mention data
+        preg_match_all('/@\[([^\]]+)\]\((\d+)\)/', $content, $matches);
         
         \Log::info('Mention parsing', [
             'content' => $content,
-            'matches' => $matches[1] ?? [],
+            'matches' => $matches,
             'company_id' => $this->user->company_id
         ]);
         
@@ -195,25 +195,12 @@ class Todo extends Model
             return;
         }
 
-        // Get all company users - if no company_id, get all users (for compatibility)
-        $query = User::query();
-        if ($this->user->company_id) {
-            $query->where('company_id', $this->user->company_id);
-        }
-        $companyUsers = $query->where('id', '!=', $commenter->id)->get();
-
-        \Log::info('Company users found for mentions', [
-            'count' => $companyUsers->count(),
-            'users' => $companyUsers->pluck('name')->toArray()
-        ]);
-
-        foreach ($matches[1] as $mentionedName) {
-            // Find the mentioned user by name (case insensitive, partial match)
-            $mentionedUser = $companyUsers->first(function ($u) use ($mentionedName) {
-                return strtolower($u->name) === strtolower($mentionedName) ||
-                       stripos(strtolower($u->name), strtolower($mentionedName)) !== false;
-            });
-
+        foreach ($matches[2] as $index => $mentionedUserId) {
+            $mentionedName = $matches[1][$index] ?? '';
+            
+            // Get the mentioned user by ID
+            $mentionedUser = User::find($mentionedUserId);
+            
             if ($mentionedUser) {
                 \Log::info('Creating mention notification', [
                     'mentioned_user_id' => $mentionedUser->id,
@@ -224,7 +211,7 @@ class Todo extends Model
                 
                 $notification = Notification::create([
                     'user_id' => $mentionedUser->id, // The mentioned user receives the notification
-                    'mentioned_user_id' => $mentionedUser->id, // ID of the mentioned user (John 977, ID 24)
+                    'mentioned_user_id' => $mentionedUser->id, // ID from the mention data
                     'type' => 'mention',
                     'title' => 'You were mentioned',
                     'message' => "{$commenter->name} mentioned you in a comment",
@@ -234,6 +221,7 @@ class Todo extends Model
                         'todo_title' => $this->title,
                         'commenter_id' => $commenter->id,
                         'commenter_name' => $commenter->name,
+                        'mentioned_user_id' => $mentionedUser->id,
                     ],
                 ]);
                 
@@ -243,8 +231,8 @@ class Todo extends Model
                 }
             } else {
                 \Log::info('User not found for mention', [
-                    'mentioned_name' => $mentionedName,
-                    'available_users' => $companyUsers->pluck('name')->toArray()
+                    'mentioned_user_id' => $mentionedUserId,
+                    'mentioned_name' => $mentionedName
                 ]);
             }
         }
