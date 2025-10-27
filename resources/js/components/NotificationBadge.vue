@@ -255,8 +255,9 @@ const handleNotificationClick = async (notification: Notification) => {
     // Close notification dropdown
     showNotifications.value = false;
     
-    // Navigate to the Todo
-    window.location.href = `/todos/${data.todo_id}`;
+    // Navigate to the Todo with comment ID to highlight the specific mention
+    const commentId = data.comment_id ? `?highlight=${data.comment_id}` : '';
+    window.location.href = `/todos/${data.todo_id}${commentId}`;
     return;
   }
 

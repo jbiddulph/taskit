@@ -27,7 +27,15 @@
     <div v-else>
       <div v-if="comments.length === 0" class="text-sm text-gray-500">No comments yet.</div>
       <ul class="space-y-3">
-        <li v-for="comment in comments" :key="comment.id" class="p-3 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <li 
+          v-for="comment in comments" 
+          :key="comment.id" 
+          :data-comment-id="comment.id"
+          class="p-3 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 transition-all duration-300"
+          :class="{
+            'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600': highlightedCommentId === comment.id
+          }"
+        >
           <div class="flex items-start justify-between gap-3">
             <div class="flex-1">
               <div class="mb-1 text-xs text-gray-600 dark:text-gray-400">
@@ -48,11 +56,12 @@
             </div>
             <div class="flex gap-2">
               <button
-                v-if="editingId !== comment.id"
+                v-if="editingId !== comment.id && comment.user?.id === currentUser?.id"
                 @click="startEdit(comment)"
                 class="text-gray-500 hover:text-blue-600 text-sm"
               >Edit</button>
               <button
+                v-if="comment.user?.id === currentUser?.id"
                 @click="remove(comment)"
                 class="text-gray-500 hover:text-red-600 text-sm"
               >Delete</button>
@@ -65,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { todoApi, type TodoComment } from '@/services/todoApi';
 import MentionInput from '@/components/MentionInput.vue';
@@ -88,6 +97,7 @@ const comments = ref<TodoComment[]>([]);
 
 const editingId = ref<number | null>(null);
 const editContent = ref('');
+const highlightedCommentId = ref<number | null>(null);
 
 // Load company users for mentions
 const { users: availableUsers, loadUsers } = useCompanyUsers();
@@ -108,7 +118,36 @@ const handleMentions = (mentions: { userId: number; userName: string }[]) => {
 const load = async () => {
   try {
     loading.value = true;
-    comments.value = await todoApi.getComments(props.todoId);
+    const loadedComments = await todoApi.getComments(props.todoId);
+    
+    // Sort comments by creation date (newest first)
+    comments.value = loadedComments.sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    
+    // Check for highlight parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const highlightId = urlParams.get('highlight');
+    if (highlightId) {
+      highlightedCommentId.value = parseInt(highlightId);
+      // Scroll to highlighted comment after a short delay
+      await nextTick();
+      setTimeout(() => {
+        const commentElement = document.querySelector(`[data-comment-id="${highlightId}"]`);
+        if (commentElement) {
+          commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+      
+      // Clear highlight after 5 seconds and remove URL parameter
+      setTimeout(() => {
+        highlightedCommentId.value = null;
+        // Remove highlight parameter from URL without page reload
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('highlight');
+        window.history.replaceState({}, '', newUrl.toString());
+      }, 5000);
+    }
   } catch (e) {
     console.error('Failed to load comments', e);
   } finally {
@@ -125,7 +164,7 @@ const handleAdd = async () => {
     if (!created.user && currentUser) {
       created.user = { id: currentUser.id, name: currentUser.name, email: currentUser.email };
     }
-    comments.value.push(created);
+    comments.value.unshift(created);
     newComment.value = '';
     (window as any).$notify?.({ type: 'success', title: 'Comment Added', message: 'Your comment was added.' });
   } catch (e) {
