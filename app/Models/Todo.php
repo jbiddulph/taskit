@@ -224,6 +224,7 @@ class Todo extends Model
                 
                 $notification = Notification::create([
                     'user_id' => $mentionedUser->id,
+                    'mentioned_user_id' => $mentionedUser->id,
                     'type' => 'mention',
                     'title' => 'You were mentioned',
                     'message' => "{$commenter->name} mentioned you in a comment",
