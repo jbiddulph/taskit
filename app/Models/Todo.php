@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Log;
 
 class Todo extends Model
 {
@@ -183,7 +184,14 @@ class Todo extends Model
         // Parse @mentions from the content
         preg_match_all('/@(\w+)/', $content, $matches);
         
+        \Log::info('Mention parsing', [
+            'content' => $content,
+            'matches' => $matches[1] ?? [],
+            'company_id' => $this->user->company_id
+        ]);
+        
         if (empty($matches[1])) {
+            \Log::info('No mentions found in content');
             return;
         }
 
@@ -191,6 +199,11 @@ class Todo extends Model
         $companyUsers = User::where('company_id', $this->user->company_id)
             ->where('id', '!=', $commenter->id) // Exclude the commenter
             ->get();
+
+        \Log::info('Company users found for mentions', [
+            'count' => $companyUsers->count(),
+            'users' => $companyUsers->pluck('name')->toArray()
+        ]);
 
         foreach ($matches[1] as $mentionedName) {
             // Find the mentioned user by name (case insensitive, partial match)
@@ -200,6 +213,13 @@ class Todo extends Model
             });
 
             if ($mentionedUser) {
+                \Log::info('Creating mention notification', [
+                    'mentioned_user_id' => $mentionedUser->id,
+                    'mentioned_user_name' => $mentionedUser->name,
+                    'comment_id' => $comment->id,
+                    'todo_id' => $this->id
+                ]);
+                
                 Notification::create([
                     'user_id' => $mentionedUser->id,
                     'type' => 'mention',
@@ -212,6 +232,11 @@ class Todo extends Model
                         'commenter_id' => $commenter->id,
                         'commenter_name' => $commenter->name,
                     ],
+                ]);
+            } else {
+                \Log::info('User not found for mention', [
+                    'mentioned_name' => $mentionedName,
+                    'available_users' => $companyUsers->pluck('name')->toArray()
                 ]);
             }
         }
