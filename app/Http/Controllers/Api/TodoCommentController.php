@@ -75,26 +75,24 @@ class TodoCommentController extends Controller
         // Send real-time notification
         $this->webSocketService->commentAdded($comment);
 
-        // Push notification to the assigned user (if different from commenter)
-        if ($todo->assignee) {
-            $assignedUser = \App\Models\User::where('name', $todo->assignee)->first();
-            if ($assignedUser && $assignedUser->id !== $user->id) {
-                Notification::create([
-                    'user_id' => $assignedUser->id,
-                    'type' => 'comment',
-                    'title' => 'New Comment on Your Task',
-                    'message' => "A new comment was added to '{$todo->title}'.",
-                    'data' => [
-                        'todo_id' => $todo->id,
-                        'todo_title' => $todo->title,
-                        'project_id' => $todo->project_id,
-                        'project_name' => optional($todo->project)->name,
-                        'comment_id' => $comment->id,
-                        'comment_preview' => mb_substr($request->content, 0, 120),
-                        'commented_by' => $user->name,
-                    ],
-                ]);
-            }
+        // Push notification to the todo author (if different from commenter)
+        $todoAuthor = \App\Models\User::find($todo->user_id);
+        if ($todoAuthor && $todoAuthor->id !== $user->id) {
+            Notification::create([
+                'user_id' => $todoAuthor->id, // Todo author (ID 25) receives comment notifications
+                'type' => 'comment',
+                'title' => 'New Comment on Your Task',
+                'message' => "A new comment was added to '{$todo->title}'.",
+                'data' => [
+                    'todo_id' => $todo->id,
+                    'todo_title' => $todo->title,
+                    'project_id' => $todo->project_id,
+                    'project_name' => optional($todo->project)->name,
+                    'comment_id' => $comment->id,
+                    'comment_preview' => mb_substr($request->content, 0, 120),
+                    'commented_by' => $user->name,
+                ],
+            ]);
         }
 
         // Log activity

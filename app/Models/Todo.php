@@ -247,8 +247,8 @@ class Todo extends Model
             ]);
             
             $notification = Notification::create([
-                'user_id' => $mentionedUser->id,
-                'mentioned_user_id' => $mentionedUser->id,
+                'user_id' => $mentionedUser->id, // The mentioned user receives the notification
+                'mentioned_user_id' => $mentionedUser->id, // Store who was mentioned
                 'type' => 'mention',
                 'title' => 'You were mentioned',
                 'message' => "{$commenter->name} mentioned you in a comment",
@@ -264,7 +264,7 @@ class Todo extends Model
             
             // Send Pusher notification if webSocketService is available
             if ($webSocketService && method_exists($webSocketService, 'mentionAdded')) {
-                $webSocketService->mentionAdded($notification, $mentionedUser->id);
+                $webSocketService->mentionAdded($notification, $mentionedUser->id); // Send to mentioned user
             }
         }
     }
