@@ -184,8 +184,9 @@ class Todo extends Model
         // Try to parse structured mentions first: @[Name](ID)
         preg_match_all('/@\[([^\]]+)\]\((\d+)\)/', $content, $structuredMatches);
         
-        // Also try to parse plain mentions: @Name
-        preg_match_all('/@(\w+(?:\s+\w+)*)/', $content, $plainMatches);
+        // Also try to parse plain mentions: @Name (capture only immediate name tokens)
+        // This captures the shortest reasonable name segment after '@' (1-3 tokens)
+        preg_match_all('/@([A-Za-z0-9_]+(?:\s+[A-Za-z0-9_]+){0,2})\b/', $content, $plainMatches);
         
         \Log::info('Mention parsing', [
             'content' => $content,
@@ -211,12 +212,19 @@ class Todo extends Model
             }
             $companyUsers = $query->where('id', '!=', $commenter->id)->get();
             
-            foreach ($plainMatches[1] as $mentionedName) {
-                // Find the mentioned user by name (case insensitive, partial match)
-                $mentionedUser = $companyUsers->first(function ($u) use ($mentionedName) {
-                    $cleanName = str_replace(' ', '', strtolower($u->name));
-                    $cleanMention = str_replace(' ', '', strtolower($mentionedName));
-                    return $cleanName === $cleanMention || strpos($cleanName, $cleanMention) !== false;
+            foreach ($plainMatches[1] as $mentionedRaw) {
+                $mentionedName = trim($mentionedRaw);
+                $cleanMention = strtolower(preg_replace('/\s+/', ' ', $mentionedName));
+
+                // Prefer prefix match (the mention text should start with the user's name)
+                $mentionedUser = $companyUsers->first(function ($u) use ($cleanMention) {
+                    $userNameClean = strtolower(preg_replace('/\s+/', ' ', $u->name));
+                    return str_starts_with($cleanMention, $userNameClean);
+                })
+                // Fallback to contains if no prefix match found
+                ?: $companyUsers->first(function ($u) use ($cleanMention) {
+                    $userNameClean = strtolower(preg_replace('/\s+/', ' ', $u->name));
+                    return str_contains($cleanMention, $userNameClean);
                 });
                 
                 if ($mentionedUser) {
