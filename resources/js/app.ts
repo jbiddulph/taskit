@@ -7,6 +7,7 @@ import { createApp, h } from 'vue';
 import { initializeTheme } from './composables/useAppearance';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
+import { i18n } from './i18n';
 
 // Global axios configuration for Sanctum/CSRF
 axios.defaults.withCredentials = true;
@@ -27,6 +28,7 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         createApp({ render: () => h(App, props) })
             .use(plugin)
+            .use(i18n)
             .mount(el);
     },
     progress: {

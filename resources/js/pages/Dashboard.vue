@@ -8,6 +8,7 @@ import LimitWarnings from '../components/LimitWarnings.vue';
 import ActivityFeed from '../components/ActivityFeed.vue';
 import Icon from '../components/Icon.vue';
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface Props {
     user: {
@@ -30,9 +31,11 @@ interface Props {
 
 defineProps<Props>();
 
+const { t } = useI18n();
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Dashboard',
+        title: t('dashboard.title'),
         href: '/dashboard',
     },
 ];
@@ -77,14 +80,14 @@ const toggleSelectMode = () => {
 </style>
 
 <template>
-    <Head title="Dashboard" />
+    <Head :title="t('dashboard.title')" />
 
     <AppLayout :breadcrumbs="breadcrumbs" :company="company" :project-color="currentProjectColor">
         <template #dashboardActions>
             <!-- Calendar Button -->
             <button
                 @click="showCalendar = !showCalendar"
-                :title="showCalendar ? 'Hide Calendar' : 'Show Calendar'"
+                :title="showCalendar ? t('dashboard.hide_calendar') : t('dashboard.show_calendar')"
                 :class="[
                     'inline-flex items-center justify-center p-2 transition-colors',
                     showCalendar 
@@ -98,7 +101,7 @@ const toggleSelectMode = () => {
             <!-- Activity Feed Toggle Button -->
             <button
                 @click="showActivityFeed = !showActivityFeed"
-                :title="showActivityFeed ? 'Hide Activity Feed' : 'Show Activity Feed'"
+                :title="showActivityFeed ? t('dashboard.hide_activity_feed') : t('dashboard.show_activity_feed')"
                 :class="[
                     'inline-flex items-center justify-center p-2 transition-colors',
                     showActivityFeed 
@@ -112,7 +115,7 @@ const toggleSelectMode = () => {
             <!-- Select for Bulk Update Button -->
             <button
                 @click="toggleSelectMode"
-                :title="isSelectMode ? 'Exit Select Mode' : 'Select for Bulk Update'"
+                :title="isSelectMode ? t('dashboard.exit_select_mode') : t('dashboard.select_for_bulk_update')"
                 :class="[
                     'inline-flex items-center justify-center p-2 transition-colors',
                     isSelectMode 
