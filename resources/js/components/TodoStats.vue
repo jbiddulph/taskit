@@ -3,7 +3,7 @@
     <!-- Total Todos -->
     <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-2">
       <div class="text-center">
-        <p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Total Todos</p>
+        <p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{t('dashboard.total_todos')}}</p>
         <div class="flex items-center justify-center">
           <div class="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-2">
             <Icon name="List" class="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -58,11 +58,12 @@
 import { computed } from 'vue';
 import Icon from '@/components/Icon.vue';
 import type { Todo, TodoStats } from '@/services/todoApi';
+import { useI18n } from 'vue-i18n';
 
 interface Props {
   todos: Todo[];
 }
-
+const { t } = useI18n();
 const props = defineProps<Props>();
 
 const stats = computed<TodoStats>(() => {
