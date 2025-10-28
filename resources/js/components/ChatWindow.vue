@@ -167,7 +167,8 @@ const sendMessage = async () => {
   newMessage.value = '';
   
   try {
-    // Get fresh CSRF token
+    // Ensure CSRF cookie exists before POST
+    await fetch('/sanctum/csrf-cookie', { method: 'GET', credentials: 'include' }).catch(() => {});
     const csrfToken = await getCSRFToken();
     const response = await fetch('/api/company-messages', {
       method: 'POST',

@@ -6,6 +6,17 @@ import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import { initializeTheme } from './composables/useAppearance';
 import { router } from '@inertiajs/vue3';
+import axios from 'axios';
+
+// Global axios configuration for Sanctum/CSRF
+axios.defaults.withCredentials = true;
+axios.defaults.xsrfCookieName = 'XSRF-TOKEN';
+axios.defaults.xsrfHeaderName = 'X-XSRF-TOKEN';
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+axios.defaults.baseURL = '/api';
+
+// Prefetch CSRF cookie once per session (ignore errors)
+axios.get('/sanctum/csrf-cookie').catch(() => {});
 
 const appName = import.meta.env.VITE_APP_NAME || 'ZapTask';
 

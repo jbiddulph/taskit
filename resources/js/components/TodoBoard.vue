@@ -2048,6 +2048,32 @@ onMounted(async () => {
 
   // Load saved views
   loadSavedViews();
+
+  // Listen for openTodoById dispatched by notifications
+  const handleOpenTodoById = async (e: any) => {
+    try {
+      const id = e?.detail?.todoId;
+      if (!id) return;
+      if (todos.value.length === 0) {
+        await loadTodos();
+      }
+      let todo = todos.value.find(t => t.id === id) as unknown as Todo | undefined;
+      if (!todo) {
+        const fetched = await todoApi.getTodo(id);
+        todo = fetched as unknown as Todo;
+      }
+      if (todo) {
+        await editTodo(todo as unknown as Todo);
+        const highlight = e?.detail?.highlight || null;
+        if (highlight) {
+          window.dispatchEvent(new CustomEvent('highlightComment', { detail: { commentId: highlight } }));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to open todo by id:', err);
+    }
+  };
+  window.addEventListener('openTodoById', handleOpenTodoById);
 });
 
 // Cleanup on unmount
@@ -2055,6 +2081,8 @@ onUnmounted(() => {
   if (unsubscribeFromTodos) {
     unsubscribeFromTodos();
   }
+  // Remove listeners
+  window.removeEventListener('openTodoById', (e: any) => {});
 });
 
 </script>
