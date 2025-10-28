@@ -1,4 +1,3 @@
-import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
@@ -17,11 +16,7 @@ export default defineConfig({
             hotFile: 'hot',
         }),
         tailwindcss(),
-        // Make Wayfinder non-blocking in production builds by disabling generation
-        ...(process.env.NODE_ENV === 'production'
-            ? []
-            : [wayfinder({ formVariants: true })]
-        ),
+        // Wayfinder disabled to avoid build-time artisan dependency
         vue({
             template: {
                 transformAssetUrls: {
