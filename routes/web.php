@@ -8,6 +8,9 @@ use App\Http\Middleware\SubdomainMiddleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
+use App\Models\Todo;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -104,6 +107,31 @@ Route::get('/debug-public', function (Request $request) {
 });
 
 // Debug route to check environment variables
+
+// Todo detail route (apex domain): redirect to the company's subdomain URL for the todo
+Route::get('/todos/{todo}', function (Request $request, Todo $todo) {
+    $highlight = $request->query('highlight');
+
+    $user = $todo->user; // author/owner of the todo
+    $company = $user?->company;
+
+    // If company has a subdomain, redirect to it to ensure correct SPA routing/auth cookie
+    if ($company && $company->subdomain) {
+        $host = $request->getHost();
+        // Build subdomain host (handles www/apex)
+        $baseHost = preg_replace('/^(www\.)?/i', '', $host);
+        $targetHost = $company->subdomain . '.' . $baseHost;
+        $scheme = $request->isSecure() ? 'https' : 'http';
+        $path = "/todos/{$todo->id}" . ($highlight ? "?highlight=" . urlencode($highlight) : '');
+        return redirect()->away("{$scheme}://{$targetHost}{$path}");
+    }
+
+    // Fallback: render SPA page on apex (requires user to be logged in on apex)
+    return Inertia::render('Todos/Show', [
+        'todoId' => (int) $todo->id,
+        'highlight' => $highlight ? (int) $highlight : null,
+    ]);
+})->name('todos.show.web');
 Route::get('/debug-env', function () {
     return response()->json([
         'heroku_app_name' => env('HEROKU_APP_NAME'),
