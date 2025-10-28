@@ -7,7 +7,7 @@
     >
       <div class="flex items-center gap-2">
         <Icon v-if="selectedType" :name="getTypeIcon(selectedType)" class="w-4 h-4" />
-        <span>{{ selectedType || 'Select type' }}</span>
+        <span>{{ selectedType ? getTypeLabel(selectedType) : t('todos.select_type') }}</span>
       </div>
       <Icon name="ChevronDown" class="w-4 h-4 text-gray-400" />
     </button>
@@ -22,7 +22,7 @@
           @click="selectType('')"
           class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
         >
-          <span class="text-gray-400">Select type</span>
+          <span class="text-gray-400">{{ t('todos.select_type') }}</span>
         </button>
         <button
           v-for="type in types"
@@ -32,7 +32,7 @@
           class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
         >
           <Icon :name="type.icon" class="w-4 h-4" />
-          <span>{{ type.label }}</span>
+          <span>{{ getTypeLabel(type.value) }}</span>
         </button>
       </div>
     </div>
@@ -42,6 +42,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import Icon from '@/components/Icon.vue';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 
 interface Props {
   modelValue?: string;
@@ -75,6 +77,17 @@ const getTypeIcon = (type: string): string => {
     'Epic': 'Layers'
   };
   return iconMap[type] || 'Circle';
+};
+
+const getTypeLabel = (type: string): string => {
+  const labelMap: Record<string, string> = {
+    'Bug': t('todos.type_bug'),
+    'Feature': t('todos.type_feature'),
+    'Task': t('todos.type_task'),
+    'Story': t('todos.type_story'),
+    'Epic': t('todos.type_epic')
+  };
+  return labelMap[type] || type;
 };
 
 const toggleDropdown = () => {
