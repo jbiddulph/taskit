@@ -1,13 +1,13 @@
 <template>
   <div class="mt-6">
-    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Comments</h3>
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{{ t('comments.title') }}</h3>
 
     <!-- New comment form -->
     <form @submit.prevent="handleAdd" class="mb-4">
       <MentionInput
         v-model="newComment"
         :users="availableUsers"
-        placeholder="Write a comment... @mention someone"
+        :placeholder="t('comments.write_comment')"
         @mention="handleMentions"
         class="mb-2"
       />
@@ -17,15 +17,15 @@
           :disabled="adding || !newComment.trim()"
           class="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {{ adding ? 'Adding...' : 'Add Comment' }}
+          {{ adding ? t('comments.adding') : t('comments.add_comment') }}
         </button>
       </div>
     </form>
 
     <!-- Comments list -->
-    <div v-if="loading" class="text-sm text-gray-500">Loading comments...</div>
+    <div v-if="loading" class="text-sm text-gray-500">{{ t('comments.loading') }}</div>
     <div v-else>
-      <div v-if="comments.length === 0" class="text-sm text-gray-500">No comments yet.</div>
+      <div v-if="comments.length === 0" class="text-sm text-gray-500">{{ t('comments.no_comments') }}</div>
       <ul class="space-y-3">
         <li 
           v-for="comment in comments" 
@@ -39,7 +39,7 @@
           <div class="flex items-start justify-between gap-3">
             <div class="flex-1">
               <div class="mb-1 text-xs text-gray-600 dark:text-gray-400">
-                <span class="font-medium text-gray-800 dark:text-gray-200">{{ comment.user?.name || 'User' }}</span>
+                <span class="font-medium text-gray-800 dark:text-gray-200">{{ comment.user?.name || t('comments.user') }}</span>
                 <span class="mx-1">·</span>
                 <span>{{ formatDate(comment.created_at) }}</span>
               </div>
@@ -49,8 +49,8 @@
                   type="text"
                   class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 />
-                <button @click="saveEdit(comment)" class="px-3 py-2 bg-green-600 text-white rounded-md">Save</button>
-                <button @click="cancelEdit" class="px-3 py-2 bg-gray-300 text-gray-800 rounded-md">Cancel</button>
+                <button @click="saveEdit(comment)" class="px-3 py-2 bg-green-600 text-white rounded-md">{{ t('common.save') }}</button>
+                <button @click="cancelEdit" class="px-3 py-2 bg-gray-300 text-gray-800 rounded-md">{{ t('common.cancel') }}</button>
               </div>
               <div v-else class="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-line">{{ comment.content }}</div>
             </div>
@@ -59,12 +59,12 @@
                 v-if="editingId !== comment.id && comment.user?.id === currentUser?.id"
                 @click="startEdit(comment)"
                 class="text-gray-500 hover:text-blue-600 text-sm"
-              >Edit</button>
+              >{{ t('common.edit') }}</button>
               <button
                 v-if="comment.user?.id === currentUser?.id"
                 @click="remove(comment)"
                 class="text-gray-500 hover:text-red-600 text-sm"
-              >Delete</button>
+              >{{ t('common.delete') }}</button>
             </div>
           </div>
         </li>
@@ -80,6 +80,8 @@ import { todoApi, type TodoComment } from '@/services/todoApi';
 import MentionInput from '@/components/MentionInput.vue';
 import { mentionService } from '@/services/mentionService';
 import { useCompanyUsers } from '@/composables/useCompanyUsers';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 
 interface Props {
   todoId: number;
