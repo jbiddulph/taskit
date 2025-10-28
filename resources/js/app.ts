@@ -16,7 +16,8 @@ axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 axios.defaults.baseURL = '/api';
 
 // Prefetch CSRF cookie once per session (ignore errors)
-axios.get('/sanctum/csrf-cookie').catch(() => {});
+// Use absolute URL so axios baseURL ('/api') is not prefixed
+axios.get(`${window.location.origin}/sanctum/csrf-cookie`, { withCredentials: true }).catch(() => {});
 
 const appName = import.meta.env.VITE_APP_NAME || 'ZapTask';
 

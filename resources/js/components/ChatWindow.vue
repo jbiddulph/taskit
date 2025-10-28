@@ -140,7 +140,7 @@ const sendMessage = async () => {
   
   try {
     // Ensure CSRF token is fresh before sending
-    await axios.get('/sanctum/csrf-cookie');
+    await axios.get(`${window.location.origin}/sanctum/csrf-cookie`, { withCredentials: true });
     
     const response = await axios.post('/company-messages', {
       recipient_id: otherUser.value.id,
