@@ -63,22 +63,22 @@
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Priority *
+                {{t('todos_priority')}} *
               </label>
               <select
                 v-model="form.priority"
                 required
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
               >
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-                <option value="Critical">Critical</option>
+                <option :value="t('todos.priority_low')">{{t('todos.priority_low')}}</option>
+                <option :value="t('todos.priority_medium')">{{t('todos.priority_medium')}}</option>
+                <option :value="t('todos.priority_high')">{{t('todos.priority_high')}}</option>
+                <option :value="t('todos.priority_critical')">{{t('todos.priority_critical')}}</option>
               </select>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Type
+                {{t('todos.type')}}
               </label>
               <TypeSelector v-model="form.type" />
             </div>
@@ -88,7 +88,7 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Assignee
+                {{t('todos.assignee')}}
               </label>
               <select
                 v-model="form.assignee"
@@ -100,7 +100,7 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Due Date
+                {{t('todos.due_date')}}
               </label>
               <input
                 v-model="form.due_date"
@@ -110,7 +110,7 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Tags
+                {{t('todos.tags')}}
               </label>
               <input
                 v-model="tagsInput"
@@ -149,13 +149,13 @@
               @click="$emit('close')"
               class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              Cancel
+              {{ t('common.cancel') }}
             </button>
             <button
               type="submit"
               class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              {{ isEditing ? 'Update' : 'Create' }}
+              {{ isEditing ? t('common.update') : t('common.create') }}
             </button>
           </div>
         </form>
@@ -188,6 +188,8 @@ import { type Project } from '@/services/todoApi';
 import type { Todo } from '@/services/todoApi';
 // import { uploadImageToTaskitBucket } from '@/services/supabaseClient';
 import { useAnalytics } from '../composables/useAnalytics';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 
 interface Props {
   todo?: Todo;

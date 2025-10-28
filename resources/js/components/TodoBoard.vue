@@ -169,7 +169,7 @@
               <option :value="t('todos.priority_low')">{{t('todos.priority_low')}}</option>
               <option :value="t('todos.priority_medium')">{{t('todos.priority_medium')}}</option>
               <option :value="t('todos.priority_high')">{{t('todos.priority_high')}}</option>
-              <option :value="t('todos.priority_Critical')">{{t('todos.priority_critical')}}</option>
+              <option :value="t('todos.priority_critical')">{{t('todos.priority_critical')}}</option>
             </select>
           </div>
           
