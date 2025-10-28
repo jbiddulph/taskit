@@ -4,7 +4,7 @@
       <div class="p-6">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-            {{ isEditing ? 'Edit Todo' : 'Add New Todo' }}
+            {{ isEditing ? t('todos.edit_todo') : t('todos.create_todo') }}
           </h2>
           <div class="flex items-center gap-2">
             <!-- Templates button - Hidden for now -->
@@ -30,21 +30,21 @@
           <!-- Title -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Title *
+              {{ t('todos.todo_title') }} *
             </label>
             <input
               v-model="form.title"
               type="text"
               required
               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              placeholder="Enter todo title"
+              :placeholder="t('todos.todo_title')"
             />
           </div>
 
           <!-- Description -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Description
+              {{ t('todos.todo_description') }}
             </label>
             <TipTapEditor v-model="form.description" />
           </div>
@@ -63,17 +63,17 @@
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {{t('todos_priority')}} *
+                {{t('todos.priority')}} *
               </label>
               <select
                 v-model="form.priority"
                 required
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
               >
-                <option :value="t('todos.priority_low')">{{t('todos.priority_low')}}</option>
-                <option :value="t('todos.priority_medium')">{{t('todos.priority_medium')}}</option>
-                <option :value="t('todos.priority_high')">{{t('todos.priority_high')}}</option>
-                <option :value="t('todos.priority_critical')">{{t('todos.priority_critical')}}</option>
+                <option value="Low">{{t('todos.priority_low')}}</option>
+                <option value="Medium">{{t('todos.priority_medium')}}</option>
+                <option value="High">{{t('todos.priority_high')}}</option>
+                <option value="Critical">{{t('todos.priority_critical')}}</option>
               </select>
             </div>
             <div>
@@ -117,7 +117,7 @@
                 type="text"
                 @keydown.enter.prevent="addTag"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                placeholder="Type and press Enter to add tags"
+                :placeholder="t('todos.add_tag')"
               />
             </div>
           </div>
