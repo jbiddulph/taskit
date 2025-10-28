@@ -1,5 +1,5 @@
 <template>
-  <div class="relative">
+    <div class="relative inline-block">
     <button
       @click="toggleDropdown"
       class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
@@ -19,7 +19,7 @@
     >
       <div
         v-if="isOpen"
-        class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50"
+        class="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50"
       >
         <div class="py-1">
           <button
@@ -85,7 +85,7 @@ const getCurrentLanguageName = () => {
 // Close dropdown when clicking outside
 const handleClickOutside = (event: Event) => {
   const target = event.target as HTMLElement;
-  if (!target.closest('.relative')) {
+  if (!target.closest('.relative.inline-block')) {
     isOpen.value = false;
   }
 };
