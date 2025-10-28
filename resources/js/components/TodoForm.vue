@@ -160,8 +160,8 @@
           </div>
         </form>
 
-        <!-- Comments (only when editing existing todo) -->
-        <TodoComments v-if="isEditing && form.id" :todo-id="Number(form.id)" />
+        <!-- Comments -->
+        <TodoComments v-if="form.id || !isEditing" :todo-id="form.id ? Number(form.id) : 0" />
       </div>
     </div>
 

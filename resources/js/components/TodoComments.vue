@@ -118,6 +118,13 @@ const handleMentions = (mentions: { userId: number; userName: string }[]) => {
 };
 
 const load = async () => {
+  // Skip loading if todoId is 0 (new todo)
+  if (props.todoId === 0) {
+    comments.value = [];
+    loading.value = false;
+    return;
+  }
+  
   try {
     loading.value = true;
     const loadedComments = await todoApi.getComments(props.todoId);
@@ -159,6 +166,21 @@ const load = async () => {
 
 const handleAdd = async () => {
   if (!newComment.value.trim()) return;
+  
+  // For new todos (todoId = 0), just add to local state
+  if (props.todoId === 0) {
+    const newCommentObj = {
+      id: Date.now(), // Temporary ID
+      content: newComment.value.trim(),
+      user: currentUser ? { id: currentUser.id, name: currentUser.name, email: currentUser.email } : null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    comments.value.unshift(newCommentObj);
+    newComment.value = '';
+    return;
+  }
+  
   try {
     adding.value = true;
     const created = await todoApi.addComment(props.todoId, newComment.value.trim());
@@ -189,6 +211,20 @@ const cancelEdit = () => {
 
 const saveEdit = async (c: TodoComment) => {
   if (!editContent.value.trim()) return;
+  
+  // For new todos (todoId = 0), just update local state
+  if (props.todoId === 0) {
+    const idx = comments.value.findIndex(x => String(x.id) === String(c.id));
+    if (idx !== -1) {
+      comments.value[idx].content = editContent.value.trim();
+      comments.value[idx].updated_at = new Date().toISOString();
+      comments.value = [...comments.value];
+    }
+    editingId.value = null;
+    editContent.value = '';
+    return;
+  }
+  
   try {
     const updated = await todoApi.updateComment(props.todoId, c.id as unknown as number, editContent.value.trim());
     const idx = comments.value.findIndex(x => String(x.id) === String(c.id));
@@ -207,6 +243,13 @@ const saveEdit = async (c: TodoComment) => {
 
 const remove = async (c: TodoComment) => {
   if (!confirm('Delete this comment?')) return;
+  
+  // For new todos (todoId = 0), just remove from local state
+  if (props.todoId === 0) {
+    comments.value = comments.value.filter(x => String(x.id) !== String(c.id));
+    return;
+  }
+  
   try {
     await todoApi.deleteComment(props.todoId, c.id as unknown as number);
     comments.value = comments.value.filter(x => String(x.id) !== String(c.id));
