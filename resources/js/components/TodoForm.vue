@@ -161,7 +161,8 @@
         </form>
 
         <!-- Comments -->
-        <TodoComments v-if="form.id || !isEditing" :todo-id="form.id ? Number(form.id) : 0" />
+        <!-- Debug: form.id={{ form.id }}, isEditing={{ isEditing }} -->
+        <TodoComments v-if="true" :todo-id="form.id ? Number(form.id) : 0" />
       </div>
     </div>
 
