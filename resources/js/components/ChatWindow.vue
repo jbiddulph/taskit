@@ -2,6 +2,7 @@
 import { ref, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import Icon from '@/components/Icon.vue';
 import { realtimeService } from '@/services/realtimeService';
+import axios from 'axios';
 
 interface Message {
   id: number;
@@ -31,35 +32,6 @@ const isMinimized = ref(false);
 const loading = ref(false);
 const sending = ref(false);
 
-// Get fresh CSRF token
-const getCSRFToken = async (): Promise<string> => {
-  // First try to get from meta tag
-  const metaToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-  if (metaToken) {
-    return metaToken;
-  }
-  
-  // If not available, try to refresh it
-  try {
-    const response = await fetch('/sanctum/csrf-cookie', {
-      method: 'GET',
-      credentials: 'same-origin'
-    });
-    
-    if (response.ok) {
-      // Try again to get the token from meta tag
-      const refreshedToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      if (refreshedToken) {
-        return refreshedToken;
-      }
-    }
-  } catch (error) {
-    console.error('Failed to refresh CSRF token:', error);
-  }
-  
-  // Fallback to any available token
-  return document.querySelector('input[name="_token"]')?.getAttribute('value') || '';
-};
 const newMessage = ref('');
 const messages = ref<Message[]>([]);
 const otherUser = ref<ChatUser | null>(null);
@@ -167,27 +139,16 @@ const sendMessage = async () => {
   newMessage.value = '';
   
   try {
-    // Ensure CSRF cookie exists before POST
-    await fetch('/sanctum/csrf-cookie', { method: 'GET', credentials: 'include' }).catch(() => {});
-    const csrfToken = await getCSRFToken();
-    const response = await fetch('/api/company-messages', {
-      method: 'POST',
-      credentials: 'include', // Include cookies for session authentication
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-TOKEN': csrfToken
-      },
-      body: JSON.stringify({
-        recipient_id: otherUser.value.id,
-        message: messageText
-      })
+    // Ensure CSRF token is fresh before sending
+    await axios.get('/sanctum/csrf-cookie');
+    
+    const response = await axios.post('/company-messages', {
+      recipient_id: otherUser.value.id,
+      message: messageText
     });
     
-    if (response.ok) {
-      const data = await response.json();
-      messages.value.push(data.data);
+    if (response.data.success) {
+      messages.value.push(response.data.data);
       await nextTick();
       scrollToBottom();
       
@@ -230,10 +191,29 @@ const sendMessage = async () => {
         }
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     // Restore message on error
     newMessage.value = messageText;
     console.error('Failed to send message:', error);
+    if (error.response?.status === 419) {
+      if ((window as any).$notify) {
+        (window as any).$notify({
+          type: 'error',
+          title: 'Authentication Error',
+          message: 'Session expired. Please refresh the page and try again.',
+          duration: 5000
+        });
+      }
+    } else {
+      if ((window as any).$notify) {
+        (window as any).$notify({
+          type: 'error',
+          title: 'Message Failed',
+          message: error.message || 'Failed to send message. Please try again.',
+          duration: 3000
+        });
+      }
+    }
   } finally {
     sending.value = false;
   }
