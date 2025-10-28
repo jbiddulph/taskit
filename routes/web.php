@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
 use App\Models\Todo;
 
 Route::get('/', function () {
