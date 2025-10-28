@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3'
-import AppSidebarLayout from '@/layouts/AppSidebarLayout.vue'
+import AppSidebarLayout from '@/layouts/app/AppSidebarLayout.vue'
 import TodoBoard from '@/components/TodoBoard.vue'
 import TodoComments from '@/components/TodoComments.vue'
 import { ref, onMounted } from 'vue'

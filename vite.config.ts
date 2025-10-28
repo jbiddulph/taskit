@@ -17,9 +17,11 @@ export default defineConfig({
             hotFile: 'hot',
         }),
         tailwindcss(),
-        wayfinder({
-            formVariants: true,
-        }),
+        // Make Wayfinder non-blocking in production builds by disabling generation
+        ...(process.env.NODE_ENV === 'production'
+            ? []
+            : [wayfinder({ formVariants: true })]
+        ),
         vue({
             template: {
                 transformAssetUrls: {
