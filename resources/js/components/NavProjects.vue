@@ -4,6 +4,8 @@ import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, Sideba
 import { todoApi, type Project } from '@/services/todoApi';
 import { realtimeService } from '@/services/realtimeService';
 import Icon from '@/components/Icon.vue';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 // import { usePage } from '@inertiajs/vue3';
 const projects = ref<Project[]>([]);
 const groupedProjects = ref<any>(null);
@@ -165,7 +167,7 @@ const deleteProject = async (project: Project, event: Event) => {
     if (choice) {
       // User chose to delete everything
       if (confirm(`⚠️ FINAL WARNING: This will permanently delete:\n` +
-        `• Project: "${project.name}"\n` +
+        `• ${t('dashboard.project')}: "${project.name}"\n` +
         `• ${todoCount} todos\n\n` +
         `This action CANNOT be undone. Are you absolutely sure?`)) {
         

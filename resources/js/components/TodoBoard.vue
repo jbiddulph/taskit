@@ -165,11 +165,11 @@
               v-model="priorityFilter"
               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
-              <option value="">All Priorities</option>
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-              <option value="Critical">Critical</option>
+              <option value="">{{t('filters.all_priorities')}}</option>
+              <option :value="t('todos.priority_low')">{{t('todos.priority_low')}}</option>
+              <option :value="t('todos.priority_medium')">{{t('todos.priority_medium')}}</option>
+              <option :value="t('todos.priority_high')">{{t('todos.priority_high')}}</option>
+              <option :value="t('todos.priority_Critical')">{{t('todos.priority_critical')}}</option>
             </select>
           </div>
           
@@ -317,7 +317,7 @@
       />
       
       <TodoColumn
-        title="Q&A / Testing"
+        :title="t('dashboard.qa_testing')"
         status="qa-testing"
         :todos="filteredTodos.qaTesting"
         :current-project-id="currentProject?.id || null"
@@ -615,7 +615,8 @@ import { deleteImagesInHtml } from '@/services/supabaseClient';
 import { useAnalytics } from '../composables/useAnalytics';
 import { useKeyboardShortcuts } from '../composables/useKeyboardShortcuts';
 import { useBulkOperations } from '../composables/useBulkOperations';
-
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 // Define props
 const props = defineProps<{
   showActivityFeed?: boolean;
