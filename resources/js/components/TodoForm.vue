@@ -26,28 +26,64 @@
           </div>
         </div>
 
-        <form @submit.prevent="handleSubmit" class="space-y-4">
-          <!-- Title -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{ t('todos.todo_title') }} *
-            </label>
-            <input
-              v-model="form.title"
-              type="text"
-              required
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              :placeholder="t('todos.todo_title')"
-            />
+        <!-- Tabs (only for Create mode) -->
+        <div v-if="!isEditing" class="mb-4 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex gap-4">
+            <button
+              type="button"
+              @click="activeTab = 'basic'"
+              :class="[
+                'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+                activeTab === 'basic'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              ]"
+            >
+              Basic
+            </button>
+            <button
+              type="button"
+              @click="activeTab = 'advanced'"
+              :class="[
+                'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+                activeTab === 'advanced'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              ]"
+            >
+              Advanced
+            </button>
           </div>
+        </div>
 
-          <!-- Description -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{ t('todos.todo_description') }}
-            </label>
-            <TipTapEditor v-model="form.description" />
-          </div>
+        <form @submit.prevent="handleSubmit" class="space-y-4">
+          <!-- Basic Tab Content (for Create) or All Fields (for Edit) -->
+          <template v-if="!isEditing ? activeTab === 'basic' : true">
+            <!-- Title -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {{ t('todos.todo_title') }} *
+              </label>
+              <input
+                v-model="form.title"
+                type="text"
+                required
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                :placeholder="t('todos.todo_title')"
+              />
+            </div>
+
+            <!-- Description -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {{ t('todos.todo_description') }}
+              </label>
+              <TipTapEditor v-model="form.description" />
+            </div>
+          </template>
+
+          <!-- Advanced Tab Content -->
+          <template v-if="!isEditing ? activeTab === 'advanced' : true">
 
           <!-- Project (Read-only) - Hidden for now -->
           <!-- <div v-if="currentProject">
@@ -63,11 +99,10 @@
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {{t('todos.priority')}} *
+                {{t('todos.priority')}}
               </label>
               <select
                 v-model="form.priority"
-                required
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
               >
                 <option value="Low">{{t('todos.priority_low')}}</option>
@@ -141,6 +176,7 @@
           </div>
 
           <!-- Status removed: controlled by board drag/drop -->
+          </template>
 
           <!-- Action buttons -->
           <div class="flex justify-end gap-3 pt-4">
@@ -160,9 +196,8 @@
           </div>
         </form>
 
-        <!-- Comments -->
-        <!-- Debug: form.id={{ form.id }}, isEditing={{ isEditing }} -->
-        <TodoComments v-if="true" :todo-id="form.id ? Number(form.id) : 0" />
+        <!-- Comments (only when editing) -->
+        <TodoComments v-if="isEditing && form.id" :todo-id="Number(form.id)" />
       </div>
     </div>
 
@@ -214,6 +249,9 @@ const { trackTodoEvent } = useAnalytics();
 
 // Template selector state
 const showTemplateSelector = ref(false);
+
+// Active tab state (for Basic/Advanced tabs in Create mode)
+const activeTab = ref<'basic' | 'advanced'>('basic');
 
 
 type SimpleUser = { id: number; name: string; email: string };
