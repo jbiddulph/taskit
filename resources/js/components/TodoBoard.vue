@@ -1805,6 +1805,20 @@ const loadTodos = async () => {
     const subtasks = allTodos.filter(t => t.parent_task_id !== null);
     const parentTasks = allTodos.filter(t => t.parent_task_id === null);
     
+    // Attach subtasks to their parent tasks
+    allTodos.forEach(todo => {
+      if (!todo.parent_task_id) {
+        // Initialize subtasks array if it doesn't exist
+        if (!todo.subtasks) {
+          todo.subtasks = [];
+        }
+        
+        // Find and attach all subtasks that belong to this parent
+        const childSubtasks = subtasks.filter(st => st.parent_task_id === todo.id);
+        todo.subtasks = childSubtasks;
+      }
+    });
+    
     todos.value = allTodos;
     
 
