@@ -946,10 +946,12 @@ const saveTodo = async (todo: Todo) => {
       let newTodo;
       if (todo.parent_task_id) {
         // Create subtask
+        console.log('🎯 Creating subtask with parent_task_id:', todo.parent_task_id, 'Payload:', { ...todo, project_id: currentProject.value.id });
         newTodo = await todoApi.createSubtask(todo.parent_task_id, {
           ...todo,
           project_id: currentProject.value.id
         });
+        console.log('🎯 Created subtask:', newTodo);
         
         // Real-time updates will handle adding the subtask to the list
       } else {
