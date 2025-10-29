@@ -108,8 +108,8 @@ const handleInput = () => {
   const cursorPosition = textarea.value?.selectionStart || 0;
   const beforeCursor = content.value.substring(0, cursorPosition);
   
-  // Check if we're typing a mention
-  const mentionMatch = beforeCursor.match(/@(\w*)$/);
+  // Check if we're typing a mention (support Unicode letters, stop at space or another @)
+  const mentionMatch = beforeCursor.match(/@([^\s@]*)$/u);
   
   if (mentionMatch) {
     mentionStart.value = cursorPosition - mentionMatch[0].length;

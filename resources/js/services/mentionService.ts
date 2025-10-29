@@ -43,7 +43,7 @@ class MentionService {
   // Parse mentions from text
   parseMentions(text: string): Mention[] {
     const mentions: Mention[] = [];
-    const mentionRegex = /@(\w+)/g;
+    const mentionRegex = /@([^\s@]+)/gu;
     let match;
 
     while ((match = mentionRegex.exec(text)) !== null) {
@@ -69,7 +69,7 @@ class MentionService {
   // Get mention suggestions based on cursor position
   getSuggestions(text: string, cursorPosition: number): MentionUser[] {
     const beforeCursor = text.substring(0, cursorPosition);
-    const mentionMatch = beforeCursor.match(/@(\w*)$/);
+    const mentionMatch = beforeCursor.match(/@([^\s@]*)$/u);
     
     if (!mentionMatch) return [];
 
@@ -80,12 +80,12 @@ class MentionService {
   // Check if cursor is in a mention
   isInMention(text: string, cursorPosition: number): boolean {
     const beforeCursor = text.substring(0, cursorPosition);
-    return /@\w*$/.test(beforeCursor);
+    return /@[^\s@]*$/u.test(beforeCursor);
   }
 
   // Replace mention with formatted text
   formatMentions(text: string): string {
-    return text.replace(/@(\w+)/g, (match, userName) => {
+    return text.replace(/@([^\s@]+)/gu, (match, userName) => {
       const user = this.users.value.find(u => 
         u.name.toLowerCase().replace(/\s+/g, '') === userName.toLowerCase()
       );
@@ -101,7 +101,7 @@ class MentionService {
   // Extract plain text mentions for notifications
   extractMentions(text: string): { userId: number; userName: string }[] {
     const mentions: { userId: number; userName: string }[] = [];
-    const mentionRegex = /@(\w+)/g;
+    const mentionRegex = /@([^\s@]+)/gu;
     let match;
 
     while ((match = mentionRegex.exec(text)) !== null) {
