@@ -896,6 +896,8 @@ const handleAddSubtask = (parentTodo: Todo) => {
 };
 
 const saveTodo = async (todo: Todo) => {
+  console.log('💾 saveTodo called with todo:', todo);
+  console.log('💾 parent_task_id:', todo.parent_task_id);
   try {
     if (!currentProject.value) {
       if ((window as any).$notify) {
