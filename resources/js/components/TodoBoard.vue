@@ -983,8 +983,9 @@ const saveTodo = async (todo: Todo) => {
   }
 };
 
-const deleteTodo = async (id: string) => {
-  const todo = todos.value.find(t => t.id === id);
+const deleteTodo = async (id: number | string) => {
+  const todoId = typeof id === 'string' ? parseInt(id) : id;
+  const todo = todos.value.find(t => t.id === todoId);
   if (!todo) return;
   
   if (!confirm(`Are you sure you want to delete "${todo.title}"?\n\nThis action cannot be undone.`)) {
@@ -992,12 +993,15 @@ const deleteTodo = async (id: string) => {
   }
   
   try {
-    const toDelete = todos.value.find(t => t.id === id);
-    await todoApi.deleteTodo(id);
+    const toDelete = todos.value.find(t => t.id === todoId);
+    await todoApi.deleteTodo(todoId);
+    
+    // Remove from local state
+    todos.value = todos.value.filter(t => t.id !== todoId);
     
     // Track todo deletion event
     trackTodoEvent('deleted', {
-      todo_id: id,
+      todo_id: todoId,
       project_id: currentProject.value?.id,
       project_name: currentProject.value?.name,
       priority: toDelete?.priority,
