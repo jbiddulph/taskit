@@ -1798,17 +1798,24 @@ const loadCurrentProject = async () => {
 
 // Load todos from API
 const loadTodos = async () => {
+  console.log('🚀 loadTodos called');
   try {
     const filters: any = {};
     if (currentProject.value) {
       filters.project_id = currentProject.value.id;
+      console.log('🚀 Loading todos for project:', currentProject.value.id);
+    } else {
+      console.log('🚀 No current project set');
     }
     const response = await todoApi.getTodos(filters);
+    console.log('🚀 API response received:', response);
     
     // Check specific todos
     const allTodos = response.data.todo.concat(response.data['in-progress']).concat(response.data['qa-testing']).concat(response.data.done);
     const subtasks = allTodos.filter(t => t.parent_task_id !== null);
     const parentTasks = allTodos.filter(t => t.parent_task_id === null);
+    
+    console.log('📋 Loaded todos - Total:', allTodos.length, 'Subtasks:', subtasks.length, 'Parents:', parentTasks.length);
     
     // Attach subtasks to their parent tasks
     allTodos.forEach(todo => {
@@ -1824,15 +1831,17 @@ const loadTodos = async () => {
         
         // Debug logging
         if (childSubtasks.length > 0) {
-          console.log(`Todo "${todo.title}" has ${childSubtasks.length} subtasks:`, childSubtasks.map(s => s.title));
+          console.log(`✅ Todo "${todo.title}" has ${childSubtasks.length} subtasks:`, childSubtasks.map(s => s.title));
         }
       }
     });
     
     todos.value = allTodos;
+    console.log('📋 Final todos array:', todos.value.length);
     
 
   } catch (error) {
+    console.error('❌ Error loading todos:', error);
   }
 };
 
