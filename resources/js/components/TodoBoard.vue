@@ -1813,10 +1813,16 @@ const loadTodos = async () => {
     }
     const response = await todoApi.getTodos(filters);
     console.log('🚀 API response received:', response);
+    console.log('🚀 response.data.todo:', response.data.todo);
+    console.log('🚀 response.data[\'in-progress\']:', response.data['in-progress']);
+    console.log('🚀 response.data[\'qa-testing\']:', response.data['qa-testing']);
+    console.log('🚀 response.data.done:', response.data.done);
     
     // Check specific todos
     const allTodos = response.data.todo.concat(response.data['in-progress']).concat(response.data['qa-testing']).concat(response.data.done);
+    console.log('🚀 All todos from API:', allTodos.map(t => ({ id: t.id, title: t.title, parent_task_id: t.parent_task_id })));
     const subtasks = allTodos.filter(t => t.parent_task_id !== null);
+    console.log('🚀 Filtered subtasks:', subtasks.map(s => ({ id: s.id, title: s.title, parent_task_id: s.parent_task_id })));
     const parentTasks = allTodos.filter(t => t.parent_task_id === null);
     
     console.log('📋 Loaded todos - Total:', allTodos.length, 'Subtasks:', subtasks.length, 'Parents:', parentTasks.length);
@@ -1836,9 +1842,17 @@ const loadTodos = async () => {
         // Debug logging
         if (childSubtasks.length > 0) {
           console.log(`✅ Todo "${todo.title}" has ${childSubtasks.length} subtasks:`, childSubtasks.map(s => s.title));
+        } else {
+          console.log(`ℹ️ Todo "${todo.title}" has NO subtasks (looking for parent_task_id=${todo.id})`);
         }
+      } else {
+        console.log(`ℹ️ Skipping subtask "${todo.title}" (parent_task_id=${todo.parent_task_id})`);
       }
     });
+    
+    // Debug: Check if we have any todos with subtasks attached
+    const todosWithSubtasks = allTodos.filter(t => t.subtasks && t.subtasks.length > 0);
+    console.log(`📊 Todos with subtasks attached: ${todosWithSubtasks.length}`);
     
     todos.value = allTodos;
     console.log('📋 Final todos array:', todos.value.length);
