@@ -775,6 +775,11 @@ let unsubscribeFromTodos: (() => void) | null = null;
 // Computed properties
 const filteredTodos = computed(() => {
   const filtered = todos.value.filter(todo => {
+    // Exclude subtasks from the filtered list (they're attached to parents)
+    if (todo.parent_task_id !== null) {
+      return false;
+    }
+    
     const matchesSearch = !searchQuery.value || 
       todo.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       todo.description?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
