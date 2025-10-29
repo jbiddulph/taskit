@@ -1821,6 +1821,11 @@ const loadTodos = async () => {
         // Find and attach all subtasks that belong to this parent
         const childSubtasks = subtasks.filter(st => st.parent_task_id === todo.id);
         todo.subtasks = childSubtasks;
+        
+        // Debug logging
+        if (childSubtasks.length > 0) {
+          console.log(`Todo "${todo.title}" has ${childSubtasks.length} subtasks:`, childSubtasks.map(s => s.title));
+        }
       }
     });
     
