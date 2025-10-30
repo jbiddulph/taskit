@@ -10,7 +10,7 @@
     >
       <div class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
         <Icon name="loader-circle" class="w-5 h-5 animate-spin text-blue-600" />
-        <span class="text-sm text-gray-900 dark:text-gray-100">Adding all...</span>
+        <span class="text-sm text-gray-900 dark:text-gray-100">{{ t('dashboard.adding_all_please_wait') }}</span>
       </div>
     </div>
     <!-- Header with Search and Filters -->
