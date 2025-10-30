@@ -1977,6 +1977,36 @@ watch(showCreateProject, (newValue) => {
   }
 });
 
+// Helper to submit all pending bulk todos (top-level so template can call)
+async function onSubmitBulkTodos() {
+  if (!currentProject.value) return;
+  for (const p of pendingBulkTodos.value) {
+    try {
+      if (p.parent_task_id) {
+        await todoApi.createSubtask(p.parent_task_id, {
+          ...p,
+          project_id: currentProject.value.id,
+          status: 'todo',
+        } as any);
+      } else {
+        await todoApi.createTodo({
+          ...p,
+          project_id: currentProject.value.id,
+          status: 'todo',
+        } as any);
+      }
+    } catch (e) {
+      console.error('Failed to create in bulk', e);
+    }
+  }
+  pendingBulkTodos.value = [];
+  isBulkMode.value = false;
+  await loadTodos();
+  if ((window as any).$notify) {
+    (window as any).$notify({ type: 'success', title: 'Bulk Added', message: 'All pending todos created.' });
+  }
+}
+
 // Single onMounted hook to handle all initialization
 onMounted(async () => {
   // In read-only mode, use passed data instead of making API calls
@@ -2085,35 +2115,7 @@ onMounted(async () => {
     }
   });
 
-  // Helper to submit all pending bulk todos (top-level so template can call)
-  async function onSubmitBulkTodos() {
-    if (!currentProject.value) return;
-    for (const p of pendingBulkTodos.value) {
-      try {
-        if (p.parent_task_id) {
-          await todoApi.createSubtask(p.parent_task_id, {
-            ...p,
-            project_id: currentProject.value.id,
-            status: 'todo',
-          } as any);
-        } else {
-          await todoApi.createTodo({
-            ...p,
-            project_id: currentProject.value.id,
-            status: 'todo',
-          } as any);
-        }
-      } catch (e) {
-        console.error('Failed to create in bulk', e);
-      }
-    }
-    pendingBulkTodos.value = [];
-    isBulkMode.value = false;
-    await loadTodos();
-    if ((window as any).$notify) {
-      (window as any).$notify({ type: 'success', title: 'Bulk Added', message: 'All pending todos created.' });
-    }
-  }
+  
   
   // Set up event listeners
   const handleStorageChange = (e: StorageEvent) => {
