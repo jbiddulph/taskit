@@ -231,6 +231,7 @@ defineOptions({
                                             <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">💬 Comments & Notifications</h4>
                                             <ul class="space-y-1 text-sm text-[#706f6c] dark:text-[#A1A09A]">
                                                 <li>• Add comments to any task</li>
+                                                <li>• Use <code class="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-blue-600 dark:text-blue-400 font-mono text-xs">@</code> to mention team members and notify them instantly</li>
                                                 <li>• Task owners get instant notifications</li>
                                                 <li>• Check notifications in the top-right bell icon</li>
                                             </ul>
@@ -355,6 +356,10 @@ defineOptions({
                                         </li>
                                         <li class="flex items-center gap-2">
                                             <span class="w-1.5 h-1.5 bg-cyan-500 rounded-full"></span>
+                                            <strong>Team chat:</strong> Company employees can chat by selecting their name in the Team dropdown from the top Dashboard menu
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-cyan-500 rounded-full"></span>
                                             <strong>Real-time updates:</strong> See changes instantly as team members work
                                         </li>
                                         <li class="flex items-center gap-2">
@@ -462,7 +467,144 @@ defineOptions({
                             </div>
                         </div>
 
-                        <!-- Step 10: Tips & Tricks -->
+                        <!-- Step 10: Multi-Language Support -->
+                        <div class="bg-white dark:bg-[#161615] rounded-lg p-8 border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                            <div class="flex items-start gap-4">
+                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400 font-bold text-lg flex-shrink-0">
+                                    10
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">
+                                        🌍 Multi-Language Support
+                                    </h3>
+                                    <p class="text-[#706f6c] dark:text-[#A1A09A] mb-4">
+                                        ZapTask now supports 13 languages! To change your language:
+                                    </p>
+                                    <ol class="space-y-2 text-sm text-[#706f6c] dark:text-[#A1A09A] ml-4">
+                                        <li class="flex items-center gap-2">
+                                            <span class="text-purple-600 dark:text-purple-400 font-bold">1.</span>
+                                            <span>Login to your dashboard, click your name at the bottom left</span>
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="text-purple-600 dark:text-purple-400 font-bold">2.</span>
+                                            <span>Go to <strong>Settings &gt; Appearance</strong></span>
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="text-purple-600 dark:text-purple-400 font-bold">3.</span>
+                                            <span>Select your preferred language from the dropdown</span>
+                                        </li>
+                                    </ol>
+                                    <div class="mt-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                                        <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">
+                                            <strong>Supported languages:</strong> English, Spanish, French, German, Portuguese, Italian, Dutch, Russian, Japanese, Korean, Chinese, Arabic, Hebrew
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 11: Bulk Todo Management -->
+                        <div class="bg-white dark:bg-[#161615] rounded-lg p-8 border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                            <div class="flex items-start gap-4">
+                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-400 font-bold text-lg flex-shrink-0">
+                                    11
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">
+                                        📦 Bulk Todo Management
+                                    </h3>
+                                    <p class="text-[#706f6c] dark:text-[#A1A09A] mb-4">
+                                        Add multiple todos at once with our bulk add feature.
+                                    </p>
+                                    <ul class="space-y-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-orange-500 rounded-full"></span>
+                                            <strong>Click + Add Bulk:</strong> Opens the todo form in bulk mode
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-orange-500 rounded-full"></span>
+                                            <strong>Pending list:</strong> All pending todos appear in the projects bar at the top
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-orange-500 rounded-full"></span>
+                                            <strong>Review & adjust:</strong> Edit or remove todos before adding them all
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-orange-500 rounded-full"></span>
+                                            <strong>Add All:</strong> Click "Add All" to create all pending todos at once
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 12: Data Export & Import -->
+                        <div class="bg-white dark:bg-[#161615] rounded-lg p-8 border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                            <div class="flex items-start gap-4">
+                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 font-bold text-lg flex-shrink-0">
+                                    12
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">
+                                        📥 Data Export & Import
+                                    </h3>
+                                    <p class="text-[#706f6c] dark:text-[#A1A09A] mb-4">
+                                        Keep your data safe and portable with export and import features.
+                                    </p>
+                                    <ul class="space-y-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
+                                            <strong>Export:</strong> Export your projects, todos, and data anytime for backup
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
+                                            <strong>Import:</strong> Import data from other tools or restore from a backup
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
+                                            <strong>Location:</strong> Access these features in <strong>Settings &gt; Export/Import</strong>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 13: Company Domain & Public Dashboard -->
+                        <div class="bg-white dark:bg-[#161615] rounded-lg p-8 border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                            <div class="flex items-start gap-4">
+                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 font-bold text-lg flex-shrink-0">
+                                    13
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">
+                                        🌐 Company Domain & Public Dashboard
+                                    </h3>
+                                    <p class="text-[#706f6c] dark:text-[#A1A09A] mb-4">
+                                        Get your own company domain and share a read-only public dashboard with clients.
+                                    </p>
+                                    <ul class="space-y-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                                            <strong>Company domain:</strong> Available on MIDI or MAXI plans (e.g., your-company.zaptask.co.uk)
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                                            <strong>Public dashboard:</strong> Share a read-only version using your company code
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                                            <strong>Limited access:</strong> Shows Kanban board without edit capabilities
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                                            <strong>Project switching:</strong> Visitors can switch between projects to view different boards
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 14: Tips & Tricks -->
                         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/30 rounded-lg p-8 border border-blue-200 dark:border-blue-800">
                             <div class="flex items-start gap-4">
                                 <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white font-bold text-lg flex-shrink-0">
