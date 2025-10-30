@@ -120,8 +120,20 @@
               class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Icon name="Plus" class="w-4 h-4" />
-              <span class="hidden sm:inline">Add Todo</span>
+              <span class="hidden sm:inline">Add</span>
               <span class="sm:hidden">Add</span>
+            </button>
+
+            <!-- Add Bulk Button -->
+            <button
+              v-if="!props.isReadOnly"
+              @click="startBulkMode"
+              :disabled="!currentProject"
+              class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Icon name="Plus" class="w-4 h-4" />
+              <span class="hidden sm:inline">Add Bulk</span>
+              <span class="sm:hidden">Bulk</span>
             </button>
 
             <!-- Filters Button -->
@@ -142,6 +154,52 @@
         </div>
       </div>
 
+  <!-- Bulk Pending Table -->
+  <div v-if="pendingBulkTodos.length > 0" class="mt-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+    <div class="flex items-center justify-between mb-2">
+      <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">Pending Todos to Add ({{ pendingBulkTodos.length }})</h3>
+      <div class="flex items-center gap-2">
+        <button
+          @click="handleShowForm"
+          class="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-200 dark:hover:bg-gray-600"
+        >
+          <Icon name="Plus" class="w-3 h-3" /> Add another
+        </button>
+        <button
+          @click="submitBulkTodos"
+          class="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          <Icon name="Check" class="w-3 h-3" /> Add All
+        </button>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-xs">
+        <thead class="text-left text-gray-600 dark:text-gray-300">
+          <tr>
+            <th class="px-2 py-1">Title</th>
+            <th class="px-2 py-1">Priority</th>
+            <th class="px-2 py-1">Type</th>
+            <th class="px-2 py-1">Assignee</th>
+            <th class="px-2 py-1">Due Date</th>
+            <th class="px-2 py-1"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(p, idx) in pendingBulkTodos" :key="idx" class="border-t border-gray-100 dark:border-gray-700">
+            <td class="px-2 py-1">{{ p.title }}</td>
+            <td class="px-2 py-1">{{ p.priority || '-' }}</td>
+            <td class="px-2 py-1">{{ p.type || '-' }}</td>
+            <td class="px-2 py-1">{{ p.assignee || '-' }}</td>
+            <td class="px-2 py-1">{{ p.due_date || '-' }}</td>
+            <td class="px-2 py-1 text-right">
+              <button @click="removePending(idx)" class="text-red-600 hover:text-red-700">Remove</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
       <!-- Search and Filters -->
       <div v-if="showFilters" class="mt-4 space-y-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
         <!-- Search Bar -->
@@ -363,6 +421,7 @@
       :todo="editingTodo"
       :is-editing="!!editingTodo"
       :current-project="currentProject"
+      :modal-title="!editingTodo && isBulkMode ? 'Add Bulk' : undefined"
       @close="closeForm"
       @save="saveTodo"
     />
@@ -638,6 +697,27 @@ const emit = defineEmits<{
 }>();
 
 const todos = ref<Todo[]>([]);
+const isBulkMode = ref(false);
+type PendingTodo = {
+  title: string;
+  description?: string;
+  priority?: string;
+  type?: string;
+  assignee?: string;
+  due_date?: string;
+  tags?: string[];
+  parent_task_id?: number | null;
+};
+const pendingBulkTodos = ref<PendingTodo[]>([]);
+
+const startBulkMode = () => {
+  isBulkMode.value = true;
+  handleShowForm();
+};
+
+const removePending = (idx: number) => {
+  pendingBulkTodos.value.splice(idx, 1);
+};
 const projects = ref<Project[]>([]);
 const showForm = ref(false);
 const showCreateProject = ref(false);
@@ -944,6 +1024,24 @@ const saveTodo = async (todo: Todo) => {
         });
       }
     } else {
+      // In bulk mode, collect locally instead of immediate API create
+      if (isBulkMode.value) {
+        pendingBulkTodos.value.push({
+          title: todo.title,
+          description: todo.description,
+          priority: todo.priority,
+          type: todo.type,
+          assignee: todo.assignee,
+          due_date: (todo as any).due_date,
+          tags: (todo as any).tags || [],
+          parent_task_id: (todo as any).parent_task_id || null,
+        });
+        showForm.value = false;
+        if ((window as any).$notify) {
+          (window as any).$notify({ type: 'success', title: 'Queued', message: 'Todo added to bulk list.' });
+        }
+        return;
+      }
       // Add new todo or subtask
       let newTodo;
       if (todo.parent_task_id) {
@@ -1986,6 +2084,36 @@ onMounted(async () => {
         break;
     }
   });
+
+  // Helper to submit all pending bulk todos
+  async function submitBulkTodos() {
+    if (!currentProject.value) return;
+    for (const p of pendingBulkTodos.value) {
+      try {
+        if (p.parent_task_id) {
+          await todoApi.createSubtask(p.parent_task_id, {
+            ...p,
+            project_id: currentProject.value.id,
+            status: 'todo',
+          } as any);
+        } else {
+          await todoApi.createTodo({
+            ...p,
+            project_id: currentProject.value.id,
+            status: 'todo',
+          } as any);
+        }
+      } catch (e) {
+        console.error('Failed to create in bulk', e);
+      }
+    }
+    pendingBulkTodos.value = [];
+    isBulkMode.value = false;
+    await loadTodos();
+    if ((window as any).$notify) {
+      (window as any).$notify({ type: 'success', title: 'Bulk Added', message: 'All pending todos created.' });
+    }
+  }
   
   // Set up event listeners
   const handleStorageChange = (e: StorageEvent) => {

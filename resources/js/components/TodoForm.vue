@@ -4,7 +4,7 @@
       <div class="p-6">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-            {{ isEditing ? t('todos.edit_todo') : t('todos.create_todo') }}
+            {{ modalTitle || (isEditing ? t('todos.edit_todo') : t('todos.create_todo')) }}
           </h2>
           <div class="flex items-center gap-2">
             <!-- Templates button - Hidden for now -->
@@ -231,6 +231,7 @@ interface Props {
   todo?: Todo;
   isEditing?: boolean;
   currentProject?: Project | null;
+  modalTitle?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
