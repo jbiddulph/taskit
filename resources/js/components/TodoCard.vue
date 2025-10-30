@@ -209,9 +209,9 @@
           Add Subtask
         </button>
         
-        <!-- Show/Hide Subtasks Toggle (show when subtasks array exists) -->
+        <!-- Show/Hide Subtasks Toggle (only if subtasks exist) -->
         <button
-          v-if="todo.subtasks"
+          v-if="todo.subtasks && todo.subtasks.length > 0"
           @click.stop="toggleSubtasks"
           class="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
         >
@@ -219,7 +219,7 @@
             :name="subtasksVisible ? 'ChevronUp' : 'ChevronDown'" 
             class="w-3 h-3" 
           />
-          {{ subtasksVisible ? 'Hide' : 'Show' }} Subtasks ({{ todo.subtasks?.length || 0 }})
+          {{ subtasksVisible ? 'Hide' : 'Show' }} Subtasks ({{ todo.subtasks.length }})
         </button>
       </div>
     </div>
