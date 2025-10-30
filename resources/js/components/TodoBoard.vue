@@ -25,28 +25,28 @@
         <div class="flex-1">
           <div class="flex items-center gap-3 mb-2">
             <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {{ currentProject ? currentProject.name : 'Todo Board' }}
+              {{ currentProject ? currentProject.name : t('dashboard.todo_board') }}
             </h1>
             <button
               v-if="currentProject && !props.isReadOnly"
               @click="startEditProject"
               class="p-1 text-gray-400 hover:text-blue-500 transition-colors"
-              title="Edit project name"
+              :title="t('dashboard.edit_project_name')"
             >
 <Icon name="Edit3" class="w-5 h-5" />
             </button>
           </div>
           <div class="text-gray-600 dark:text-gray-400">
-            <span v-if="!currentProject">Select a project to manage todos</span>
+            <span v-if="!currentProject">{{ t('dashboard.select_project') }}</span>
             <div v-else class="flex items-center gap-2">
-              <span>Project: {{ currentProject.key }} - </span>
+              <span>{{ t('dashboard.project_label') }}: {{ currentProject.key }} - </span>
               <div v-if="!editingProjectDescription" class="flex items-center gap-2">
-                <span>{{ currentProject.description || 'No description' }}</span>
+                <span>{{ currentProject.description || t('dashboard.no_description') }}</span>
                 <button
                   v-if="!props.isReadOnly"
                   @click="startEditProjectDescription"
                   class="p-1 text-gray-400 hover:text-blue-500 transition-colors"
-                  title="Edit project description"
+                  :title="t('dashboard.edit_project_description')"
                 >
                   <Icon name="Edit3" class="w-4 h-4" />
                 </button>
@@ -58,20 +58,20 @@
                   @keydown.escape="cancelEditProjectDescription"
                   @blur="saveProjectDescription"
                   class="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="Enter project description"
+                  :placeholder="t('todos.enter_project_description')"
                   ref="projectDescriptionInput"
                 />
                 <button
                   @click="saveProjectDescription"
                   class="p-1 text-green-500 hover:text-green-600 transition-colors"
-                  title="Save"
+                  :title="t('common.save')"
                 >
                   <Icon name="Check" class="w-4 h-4" />
                 </button>
                 <button
                   @click="cancelEditProjectDescription"
                   class="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                  title="Cancel"
+                  :title="t('common.cancel')"
                 >
                   <Icon name="X" class="w-4 h-4" />
                 </button>
@@ -86,7 +86,7 @@
                 class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
               >
                 <Icon name="Plus" class="w-4 h-4" />
-                Create Project
+                {{ t('dashboard.create_project') }}
               </button>
             </div>
         </div>
@@ -130,8 +130,8 @@
               class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Icon name="Plus" class="w-4 h-4" />
-              <span class="hidden sm:inline">Add</span>
-              <span class="sm:hidden">Add</span>
+              <span class="hidden sm:inline">{{ t('dashboard.add') }}</span>
+              <span class="sm:hidden">{{ t('dashboard.add') }}</span>
             </button>
 
             <!-- Add Bulk Button -->
@@ -142,15 +142,15 @@
               class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Icon name="Plus" class="w-4 h-4" />
-              <span class="hidden sm:inline">Add Bulk</span>
-              <span class="sm:hidden">Bulk</span>
+              <span class="hidden sm:inline">{{ t('dashboard.add_bulk') }}</span>
+              <span class="sm:hidden">{{ t('dashboard.bulk') }}</span>
             </button>
 
             <!-- Filters Button -->
             <button
               v-if="!props.isReadOnly"
               @click="showFilters = !showFilters"
-              :title="showFilters ? 'Hide Filters' : 'Show Filters'"
+              :title="showFilters ? t('dashboard.hide_filters') : t('dashboard.show_filters')"
               :class="[
                 'inline-flex items-center justify-center w-10 h-10 rounded-lg border transition-colors',
                 showFilters 
@@ -168,21 +168,21 @@
   <div v-if="pendingBulkTodos.length > 0" class="mt-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
     <div class="flex items-center justify-between mb-3">
       <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">
-        Pending Todos to Add ({{ pendingBulkTodos.length }})
+        {{ t('dashboard.pending_todos_to_add') }} ({{ pendingBulkTodos.length }})
       </h3>
       <div class="flex items-center gap-2">
         <button
           @click="handleShowForm"
           class="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-200 dark:hover:bg-gray-600"
         >
-          <Icon name="Plus" class="w-3 h-3" /> Add another
+          <Icon name="Plus" class="w-3 h-3" /> {{ t('dashboard.add_another') }}
         </button>
         <button
           @click="onSubmitBulkTodos"
           class="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
           :disabled="pendingBulkTodos.length === 0 || !currentProject"
         >
-          <Icon name="Check" class="w-3 h-3" /> Add All
+          <Icon name="Check" class="w-3 h-3" /> {{ t('dashboard.add_all') }}
         </button>
       </div>
     </div>
@@ -204,7 +204,7 @@
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <button @click="removePending(idx)" class="text-xs text-red-600 hover:text-red-700">Remove</button>
+            <button @click="removePending(idx)" class="text-xs text-red-600 hover:text-red-700">{{ t('dashboard.remove') }}</button>
           </div>
         </div>
       </div>
@@ -218,7 +218,7 @@
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search todos..."
+            :placeholder="t('dashboard.search_placeholder')"
             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
           />
         </div>
@@ -228,7 +228,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <!-- Priority Filter -->
           <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Priority Filter</label>
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('dashboard.priority_filter') }}</label>
             <select
               v-model="priorityFilter"
               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -243,18 +243,18 @@
           
           <!-- Type Filter -->
           <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Type Filter</label>
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('dashboard.type_filter') }}</label>
             <TypeFilter v-model="typeFilter" />
           </div>
           
           <!-- Assignee Filter -->
           <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Assignee Filter</label>
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('dashboard.assignee_filter') }}</label>
             <select
               v-model="assigneeFilter"
               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
-              <option value="">All Assignees</option>
+              <option value="">{{ t('dashboard.all_assignees') }}</option>
               <option v-for="assignee in uniqueAssignees" :key="assignee" :value="assignee">
                 {{ assignee }}
               </option>
@@ -269,10 +269,10 @@
             type="button"
             @click="showSaveViewModal = true"
             class="flex-1 sm:flex-none px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-            title="Save current filters as a view"
+            :title="t('dashboard.save_view_tooltip')"
           >
             <Icon name="Save" class="w-4 h-4 inline mr-2" />
-            Save View
+            {{ t('dashboard.save_view') }}
           </button>
 
 
@@ -283,7 +283,7 @@
               @change="onApplySavedView"
               class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
-              <option value="">Saved Views</option>
+              <option value="">{{ t('dashboard.saved_views') }}</option>
               <option v-for="view in savedViews" :key="view.name" :value="view.name">{{ view.name }}</option>
             </select>
 
@@ -292,10 +292,10 @@
               type="button"
               @click="deleteSavedView"
               class="px-3 py-2 text-sm bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg border border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/50"
-              title="Delete selected view"
+              :title="t('dashboard.delete_view')"
             >
               <Icon name="Trash2" class="w-4 h-4 inline mr-1" />
-              Delete
+              {{ t('common.delete') }}
             </button>
           </div>
         </div>
@@ -305,14 +305,14 @@
       <div v-if="hasActiveFilters" class="mt-3 flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-2">
         <div class="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
           <Icon name="Filter" class="w-4 h-4" />
-          <span>Filters have been applied</span>
+          <span>{{ t('dashboard.filters_applied') }}</span>
         </div>
         <button
           @click="clearAllFilters"
           class="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors"
         >
           <Icon name="X" class="w-4 h-4" />
-          <span>Clear filters</span>
+          <span>{{ t('dashboard.clear_filters') }}</span>
         </button>
       </div>
     </div>
@@ -343,7 +343,7 @@
     <!-- Kanban Board -->
     <div class="flex-1 flex gap-3 overflow-x-auto pb-2">
       <TodoColumn
-        title="To Do"
+        :title="t('todos.to_do')"
         status="todo"
         :todos="filteredTodos.todo"
         :show-add-button="true"
@@ -365,7 +365,7 @@
       />
       
       <TodoColumn
-        title="In Progress"
+        :title="t('todos.in_progress')"
         status="in-progress"
         :todos="filteredTodos.inProgress"
         :current-project-id="currentProject?.id || null"
@@ -405,7 +405,7 @@
       />
       
       <TodoColumn
-        title="Done"
+        :title="t('todos.done')"
         status="done"
         :todos="filteredTodos.done"
         :current-project-id="currentProject?.id || null"
@@ -431,7 +431,7 @@
       :todo="editingTodo"
       :is-editing="!!editingTodo"
       :current-project="currentProject"
-      :modal-title="!editingTodo && isBulkMode ? 'Add Bulk' : undefined"
+      :modal-title="!editingTodo && isBulkMode ? t('dashboard.add_bulk') : undefined"
       @close="closeForm"
       @save="saveTodo"
     />
@@ -441,7 +441,7 @@
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full" @click.stop>
         <div class="p-6">
           <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Create New Project</h2>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">{{ t('projects.create_new_project') }}</h2>
             <button
               @click="showCreateProject = false"
               class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -453,32 +453,32 @@
           <form @submit.prevent="createProject" class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Project Name *
+                {{ t('projects.project_name') }} *
               </label>
               <input
                 v-model="newProject.name"
                 type="text"
                 required
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                placeholder="Enter project name"
+                :placeholder="t('todos.enter_project_name')"
               />
             </div>
             
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Description (Optional)
+                {{ t('projects.description_optional') }}
               </label>
               <textarea
                 v-model="newProject.description"
                 rows="3"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                placeholder="Enter project description"
+                :placeholder="t('todos.enter_project_description')"
               ></textarea>
             </div>
             
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Project Key (Optional)
+                {{ t('projects.project_key_optional') }}
               </label>
               <input
                 v-model="newProject.key"
@@ -487,18 +487,18 @@
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 placeholder="e.g., PROJ, FEAT"
               />
-              <p class="text-sm text-gray-500 mt-1">Leave empty to auto-generate</p>
+              <p class="text-sm text-gray-500 mt-1">{{ t('projects.leave_empty_auto') }}</p>
             </div>
             
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Client (Optional)
+                {{ t('projects.client_optional') }}
               </label>
               <select
                 v-model="newProject.client_id"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
               >
-                <option :value="null">No Client</option>
+                <option :value="null">{{ t('projects.no_client') }}</option>
                 <option 
                   v-for="client in clients" 
                   :key="client.id" 
@@ -511,7 +511,7 @@
             
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Color
+                {{ t('projects.color') }}
               </label>
               <div class="flex items-center gap-3">
                 <input
@@ -528,14 +528,14 @@
                 type="submit"
                 class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
               >
-                Create Project
+                {{ t('projects.create_project') }}
               </button>
               <button
                 type="button"
                 @click="showCreateProject = false"
                 class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
               >
-                Cancel
+                {{ t('common.cancel') }}
               </button>
             </div>
           </form>
@@ -548,7 +548,7 @@
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full" @click.stop>
         <div class="p-6">
           <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Edit Project</h2>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">{{ t('projects.edit_project') }}</h2>
             <button
               @click="showEditProject = false"
               class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -560,26 +560,26 @@
           <form @submit.prevent="saveEditProject" class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Project Name *
+                {{ t('projects.project_name') }} *
               </label>
               <input
                 v-model="editingProjectName"
                 type="text"
                 required
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                placeholder="Enter project name"
+                :placeholder="t('todos.enter_project_name')"
               />
             </div>
             
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Client (Optional)
+                {{ t('projects.client_optional') }}
               </label>
               <select
                 v-model="editingProjectClientId"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
               >
-                <option :value="null">No Client</option>
+                <option :value="null">{{ t('projects.no_client') }}</option>
                 <option 
                   v-for="client in clients" 
                   :key="client.id" 
@@ -595,14 +595,14 @@
                 type="submit"
                 class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
               >
-                Save Changes
+                {{ t('projects.save_changes') }}
               </button>
               <button
                 type="button"
                 @click="showEditProject = false"
                 class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
               >
-                Cancel
+                {{ t('common.cancel') }}
               </button>
             </div>
           </form>
@@ -614,7 +614,7 @@
     <div v-if="showSaveViewModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click="showSaveViewModal = false">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4" @click.stop>
         <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Save Current View</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('dashboard.save_view') }}</h3>
           <button
             @click="showSaveViewModal = false"
             class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -626,7 +626,7 @@
         <div class="p-6">
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              View Name
+              {{ t('dashboard.saved_views') }}
             </label>
             <input
               v-model="newSavedViewName"
@@ -644,14 +644,14 @@
               :disabled="!newSavedViewName.trim()"
               class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save View
+              {{ t('dashboard.save_view') }}
             </button>
             <button
               type="button"
               @click="showSaveViewModal = false"
               class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
             >
-              Cancel
+              {{ t('common.cancel') }}
             </button>
           </div>
         </div>

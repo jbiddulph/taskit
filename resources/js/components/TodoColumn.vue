@@ -41,8 +41,8 @@
         class="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400"
       >
         <Icon name="Inbox" class="w-12 h-12 mb-2 opacity-50" />
-        <p class="text-sm text-center">No todos yet</p>
-        <p class="text-xs text-center opacity-75">Drag and drop here or click + to add</p>
+        <p class="text-sm text-center">{{ t('todos.no_todos_yet_short') }}</p>
+        <p class="text-xs text-center opacity-75">{{ t('dashboard.drag_drop_or_click') }}</p>
       </div>
 
       <!-- Drag Over Indicator -->
@@ -51,7 +51,7 @@
         class="absolute inset-0 bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-300 rounded-lg flex items-center justify-center pointer-events-none"
       >
         <div class="text-blue-600 dark:text-blue-300 text-lg font-medium">
-          Drop here to move todo
+          {{ t('dashboard.drop_here_to_move') }}
         </div>
       </div>
 
@@ -123,8 +123,11 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import Icon from '@/components/Icon.vue';
 import TodoCard from './TodoCard.vue';
+import { useI18n } from 'vue-i18n';
 
 import type { Todo } from '@/services/todoApi';
+
+const { t } = useI18n();
 
 interface Props {
   title: string;
