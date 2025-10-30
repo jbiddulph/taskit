@@ -3,6 +3,16 @@
     class="h-full flex flex-col"
     :class="{ 'pb-24': props.isSelectMode && hasSelection }"
   >
+    <!-- Bulk submit overlay -->
+    <div
+      v-if="isSubmittingBulk"
+      class="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center"
+    >
+      <div class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+        <Icon name="loader-circle" class="w-5 h-5 animate-spin text-blue-600" />
+        <span class="text-sm text-gray-900 dark:text-gray-100">Adding all...</span>
+      </div>
+    </div>
     <!-- Header with Search and Filters -->
     <div 
       class="mb-4 py-2 px-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 relative"
@@ -698,6 +708,7 @@ const emit = defineEmits<{
 
 const todos = ref<Todo[]>([]);
 const isBulkMode = ref(false);
+const isSubmittingBulk = ref(false);
 type PendingTodo = {
   title: string;
   description?: string;
@@ -1980,30 +1991,35 @@ watch(showCreateProject, (newValue) => {
 // Helper to submit all pending bulk todos (top-level so template can call)
 async function onSubmitBulkTodos() {
   if (!currentProject.value) return;
-  for (const p of pendingBulkTodos.value) {
-    try {
-      if (p.parent_task_id) {
-        await todoApi.createSubtask(p.parent_task_id, {
-          ...p,
-          project_id: currentProject.value.id,
-          status: 'todo',
-        } as any);
-      } else {
-        await todoApi.createTodo({
-          ...p,
-          project_id: currentProject.value.id,
-          status: 'todo',
-        } as any);
+  isSubmittingBulk.value = true;
+  try {
+    for (const p of pendingBulkTodos.value) {
+      try {
+        if (p.parent_task_id) {
+          await todoApi.createSubtask(p.parent_task_id, {
+            ...p,
+            project_id: currentProject.value.id,
+            status: 'todo',
+          } as any);
+        } else {
+          await todoApi.createTodo({
+            ...p,
+            project_id: currentProject.value.id,
+            status: 'todo',
+          } as any);
+        }
+      } catch (e) {
+        console.error('Failed to create in bulk', e);
       }
-    } catch (e) {
-      console.error('Failed to create in bulk', e);
     }
-  }
-  pendingBulkTodos.value = [];
-  isBulkMode.value = false;
-  await loadTodos();
-  if ((window as any).$notify) {
-    (window as any).$notify({ type: 'success', title: 'Bulk Added', message: 'All pending todos created.' });
+    pendingBulkTodos.value = [];
+    isBulkMode.value = false;
+    await loadTodos();
+    if ((window as any).$notify) {
+      (window as any).$notify({ type: 'success', title: 'Bulk Added', message: 'All pending todos created.' });
+    }
+  } finally {
+    isSubmittingBulk.value = false;
   }
 }
 
