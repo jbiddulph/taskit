@@ -97,7 +97,44 @@ class TodoController extends Controller
                 $query->dueToday();
             }
 
-            return $query->get();
+            $parents = $query->get();
+
+            // Explicitly fetch subtasks as a fallback to ensure they are included in the payload
+            $subtasksQuery = Todo::query()
+                ->when($user->company_id, function ($q) use ($user) {
+                    $q->where('company_id', $user->company_id);
+                })
+                ->whereNotNull('parent_task_id')
+                ->with(['project', 'parentTask']);
+
+            if ($request->filled('project_id')) {
+                $subtasksQuery->where('project_id', (int) $request->project_id);
+            }
+
+            // Apply the same optional filters to subtasks
+            if ($request->filled('search')) {
+                $subtasksQuery->where(function ($q) use ($request) {
+                    $term = '%' . $request->search . '%';
+                    $q->where('title', 'ILIKE', $term)
+                      ->orWhere('description', 'ILIKE', $term);
+                });
+            }
+            if ($request->filled('priority')) {
+                $subtasksQuery->where('priority', $request->priority);
+            }
+            if ($request->filled('type')) {
+                $subtasksQuery->where('type', $request->type);
+            }
+            if ($request->filled('assignee')) {
+                $subtasksQuery->where('assignee', $request->assignee);
+            }
+            if ($request->filled('status')) {
+                $subtasksQuery->where('status', $request->status);
+            }
+
+            $explicitSubtasks = $subtasksQuery->get();
+
+            return $parents->concat($explicitSubtasks);
         })();
 
         // Determine which todos are newly assigned to the current user (and not created by them)
@@ -117,16 +154,17 @@ class TodoController extends Controller
             $todo->setAttribute('is_new_assigned', $isNew);
         });
 
-        // Collect all subtasks from parent tasks
+        // Collect all subtasks from parent tasks (via eager load) and merge with explicit subtasks already included
         $allSubtasks = collect();
         $todos->each(function ($todo) use ($allSubtasks) {
-            if ($todo->subtasks) {
+            if ($todo->relationLoaded('subtasks') && $todo->subtasks) {
                 $allSubtasks = $allSubtasks->merge($todo->subtasks);
             }
         });
 
         // Combine parent tasks and subtasks
-        $allTodos = $todos->merge($allSubtasks);
+        // Merge and ensure uniqueness by ID to avoid duplicates
+        $allTodos = $todos->merge($allSubtasks)->unique('id')->values();
 
         // Group by status for Kanban board
         $grouped = [
@@ -138,8 +176,8 @@ class TodoController extends Controller
 
         // Debug logging to see what data is being returned
         \Log::info('API returning todos', [
-            'parent_todo_count' => $todos->count(),
-            'subtask_count' => $allSubtasks->count(),
+            'parent_todo_count' => $todos->whereNull('parent_task_id')->count(),
+            'subtask_count' => $todos->whereNotNull('parent_task_id')->count() + $allSubtasks->count(),
             'total_todo_count' => $allTodos->count(),
             'todo_priorities' => $todos->take(5)->map(function($todo) {
                 return ['id' => $todo->id, 'priority' => $todo->priority];
