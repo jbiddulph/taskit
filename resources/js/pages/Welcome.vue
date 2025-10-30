@@ -259,7 +259,7 @@ onMounted(() => {
         <section id="pricing" class="w-full py-8 lg:py-12 mt-12" style="background-color: #E1E7FF;">
             <div class="max-w-6xl mx-auto px-6">
                 <div class="text-center mb-12">
-                    <h2 class="text-3xl lg:text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">
+                    <h2 class="text-3xl lg:text-4xl font-bold text-[#1b1b18] dark:text-[#A1A09A] mb-4">
                         Choose Your Plan
                     </h2>
                     <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] max-w-2xl mx-auto">
