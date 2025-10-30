@@ -160,24 +160,6 @@ onMounted(() => {
                                 Organize your projects, track progress, and collaborate with your team effortlessly.
                             </p>
                             
-                            <!-- Company Subdomain Highlight -->
-                            <div class="mt-4 md:mt-6 p-3 md:p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-                                <div class="flex items-center gap-2 md:gap-3">
-                                    <div class="flex h-6 w-6 md:h-8 md:w-8 items-center justify-center rounded-full bg-blue-600">
-                                        <svg class="h-3 w-3 md:h-4 md:w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h3 class="text-sm md:text-base font-semibold text-blue-900 dark:text-blue-100 mb-1">Get Your Own Company Domain</h3>
-                                        <p class="text-xs md:text-sm text-blue-700 dark:text-blue-200">
-                                            <span class="font-semibold bg-blue-100 dark:bg-blue-800 px-1.5 py-0.5 md:px-2 md:py-1 rounded text-blue-900 dark:text-blue-100 text-xs md:text-sm">
-                                                your-company.zaptask.co.uk
-                                            </span>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         
                         <!-- Decorative Elements -->
@@ -188,6 +170,87 @@ onMounted(() => {
                 </div>
             </main>
         </div>
+        
+        <!-- Company Domain & Languages Section -->
+        <section class="w-full max-w-6xl mx-auto px-6 py-12 mt-12">
+            <div class="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 rounded-2xl p-8 md:p-12 border border-blue-200 dark:border-blue-700 shadow-lg">
+                <div class="text-center mb-8">
+                    <div class="flex items-center justify-center gap-3 mb-6">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600">
+                            <svg class="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <h2 class="text-3xl md:text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">
+                        Get Your Own Company Domain
+                    </h2>
+                    <p class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-400 mb-6">
+                        your-company.zaptask.co.uk
+                    </p>
+                </div>
+                
+                <div class="border-t border-blue-200 dark:border-blue-700 pt-8">
+                    <h3 class="text-2xl md:text-3xl font-bold text-center text-[#1b1b18] dark:text-[#EDEDEC] mb-6">
+                        Now Available in 13 Languages
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                        <div class="flex items-center gap-2 p-3 bg-white dark:bg-[#161615] rounded-lg shadow">
+                            <span class="text-2xl">🇬🇧</span>
+                            <span class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">English (en)</span>
+                        </div>
+                        <div class="flex items-center gap-2 p-3 bg-white dark:bg-[#161615] rounded-lg shadow">
+                            <span class="text-2xl">🇪🇸</span>
+                            <span class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Spanish (es)</span>
+                        </div>
+                        <div class="flex items-center gap-2 p-3 bg-white dark:bg-[#161615] rounded-lg shadow">
+                            <span class="text-2xl">🇫🇷</span>
+                            <span class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">French (fr)</span>
+                        </div>
+                        <div class="flex items-center gap-2 p-3 bg-white dark:bg-[#161615] rounded-lg shadow">
+                            <span class="text-2xl">🇩🇪</span>
+                            <span class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">German (de)</span>
+                        </div>
+                        <div class="flex items-center gap-2 p-3 bg-white dark:bg-[#161615] rounded-lg shadow">
+                            <span class="text-2xl">🇵🇹</span>
+                            <span class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Portuguese (pt)</span>
+                        </div>
+                        <div class="flex items-center gap-2 p-3 bg-white dark:bg-[#161615] rounded-lg shadow">
+                            <span class="text-2xl">🇮🇹</span>
+                            <span class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Italian (it)</span>
+                        </div>
+                        <div class="flex items-center gap-2 p-3 bg-white dark:bg-[#161615] rounded-lg shadow">
+                            <span class="text-2xl">🇳🇱</span>
+                            <span class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Dutch (nl)</span>
+                        </div>
+                        <div class="flex items-center gap-2 p-3 bg-white dark:bg-[#161615] rounded-lg shadow">
+                            <span class="text-2xl">🇷🇺</span>
+                            <span class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Russian (ru)</span>
+                        </div>
+                        <div class="flex items-center gap-2 p-3 bg-white dark:bg-[#161615] rounded-lg shadow">
+                            <span class="text-2xl">🇯🇵</span>
+                            <span class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Japanese (ja)</span>
+                        </div>
+                        <div class="flex items-center gap-2 p-3 bg-white dark:bg-[#161615] rounded-lg shadow">
+                            <span class="text-2xl">🇰🇷</span>
+                            <span class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Korean (ko)</span>
+                        </div>
+                        <div class="flex items-center gap-2 p-3 bg-white dark:bg-[#161615] rounded-lg shadow">
+                            <span class="text-2xl">🇨🇳</span>
+                            <span class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Chinese (zh)</span>
+                        </div>
+                        <div class="flex items-center gap-2 p-3 bg-white dark:bg-[#161615] rounded-lg shadow">
+                            <span class="text-2xl">🇸🇦</span>
+                            <span class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Arabic (ar)</span>
+                        </div>
+                        <div class="flex items-center gap-2 p-3 bg-white dark:bg-[#161615] rounded-lg shadow col-span-2 md:col-span-1">
+                            <span class="text-2xl">🇮🇱</span>
+                            <span class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Hebrew (he)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
         
         <!-- Pricing Section -->
         <section id="pricing" class="w-full py-8 lg:py-12 mt-12" style="background-color: #E1E7FF;">
