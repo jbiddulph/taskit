@@ -185,6 +185,9 @@ onMounted(() => {
                     <h2 class="text-3xl md:text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">
                         Get Your Own Company Domain
                     </h2>
+                    <p class="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-3">
+                        Sign up your company on a MIDI or MAXI plan to get your FREE domain
+                    </p>
                     <p class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-400 mb-6">
                         your-company.zaptask.co.uk
                     </p>
