@@ -154,10 +154,12 @@
         </div>
       </div>
 
-  <!-- Bulk Pending Table -->
+  <!-- Bulk Pending - Mobile-friendly stacked cards -->
   <div v-if="pendingBulkTodos.length > 0" class="mt-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-    <div class="flex items-center justify-between mb-2">
-      <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">Pending Todos to Add ({{ pendingBulkTodos.length }})</h3>
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">
+        Pending Todos to Add ({{ pendingBulkTodos.length }})
+      </h3>
       <div class="flex items-center gap-2">
         <button
           @click="handleShowForm"
@@ -166,38 +168,36 @@
           <Icon name="Plus" class="w-3 h-3" /> Add another
         </button>
         <button
-          @click="submitBulkTodos"
-          class="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+          @click="onSubmitBulkTodos"
+          class="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          :disabled="pendingBulkTodos.length === 0 || !currentProject"
         >
           <Icon name="Check" class="w-3 h-3" /> Add All
         </button>
       </div>
     </div>
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-xs">
-        <thead class="text-left text-gray-600 dark:text-gray-300">
-          <tr>
-            <th class="px-2 py-1">Title</th>
-            <th class="px-2 py-1">Priority</th>
-            <th class="px-2 py-1">Type</th>
-            <th class="px-2 py-1">Assignee</th>
-            <th class="px-2 py-1">Due Date</th>
-            <th class="px-2 py-1"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(p, idx) in pendingBulkTodos" :key="idx" class="border-t border-gray-100 dark:border-gray-700">
-            <td class="px-2 py-1">{{ p.title }}</td>
-            <td class="px-2 py-1">{{ p.priority || '-' }}</td>
-            <td class="px-2 py-1">{{ p.type || '-' }}</td>
-            <td class="px-2 py-1">{{ p.assignee || '-' }}</td>
-            <td class="px-2 py-1">{{ p.due_date || '-' }}</td>
-            <td class="px-2 py-1 text-right">
-              <button @click="removePending(idx)" class="text-red-600 hover:text-red-700">Remove</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+
+    <div class="space-y-2">
+      <div
+        v-for="(p, idx) in pendingBulkTodos"
+        :key="idx"
+        class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+      >
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ p.title }}</div>
+            <div class="mt-1 flex flex-wrap gap-1 text-[11px] text-gray-600 dark:text-gray-300">
+              <span v-if="p.priority" class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-200">{{ p.priority }}</span>
+              <span v-if="p.type" class="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-200">{{ p.type }}</span>
+              <span v-if="p.assignee" class="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-200">{{ p.assignee }}</span>
+              <span v-if="p.due_date" class="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-200">{{ p.due_date }}</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button @click="removePending(idx)" class="text-xs text-red-600 hover:text-red-700">Remove</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
       <!-- Search and Filters -->
@@ -2085,8 +2085,8 @@ onMounted(async () => {
     }
   });
 
-  // Helper to submit all pending bulk todos
-  async function submitBulkTodos() {
+  // Helper to submit all pending bulk todos (top-level so template can call)
+  async function onSubmitBulkTodos() {
     if (!currentProject.value) return;
     for (const p of pendingBulkTodos.value) {
       try {
