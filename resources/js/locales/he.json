@@ -138,7 +138,22 @@
     "create_first_todo": "צור את המשימה הראשונה שלך",
     "bulk_actions": "פעולות מרוכזות",
     "select_all": "בחר הכל",
-    "deselect_all": "בטל בחירת הכל"
+    "deselect_all": "בטל בחירת הכל",
+    "to_do": "לעשות",
+    "in_progress": "בתהליך",
+    "done": "הושלם",
+    "no_todos_yet_short": "אין משימות עדיין",
+    "click_to_edit_title": "לחץ כדי לערוך כותרת",
+    "edit_title": "ערוך כותרת",
+    "enter_todo_title": "הכנס כותרת משימה",
+    "enter_project_name": "הכנס שם פרויקט",
+    "enter_project_description": "הכנס תיאור פרויקט",
+    "items_selected": "פריטים נבחרו",
+    "please_select": "אנא בחר",
+    "unassigned": "לא משויך",
+    "type_comma_separated": "הקלד כאן, מופרד בפסיקים",
+    "processing": "מעבד...",
+    "done_button": "הושלם"
   },
   "projects": {
     "title": "פרויקטים",
@@ -148,7 +163,16 @@
     "project_description": "תיאור",
     "project_color": "צבע",
     "no_projects": "לא נמצאו פרויקטים",
-    "create_first_project": "צור את הפרויקט הראשון שלך"
+    "create_first_project": "צור את הפרויקט הראשון שלך",
+    "create_new_project": "צור פרויקט חדש",
+    "description_optional": "תיאור (אופציונלי)",
+    "project_key_optional": "מפתח פרויקט (אופציונלי)",
+    "client_optional": "לקוח (אופציונלי)",
+    "no_client": "אין לקוח",
+    "leave_empty_auto": "השאר ריק ליצירה אוטומטית",
+    "client": "לקוח",
+    "color": "צבע",
+    "save_changes": "שמור שינויים"
   },
   "clients": {
     "title": "לקוחות",
