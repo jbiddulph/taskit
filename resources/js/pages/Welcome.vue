@@ -258,6 +258,46 @@ onMounted(() => {
             </div>
         </section>
         
+        <!-- Additional Features Section -->
+        <section id="features-advanced" class="w-full py-12 mt-12">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Calendar Feature -->
+                    <div class="bg-white dark:bg-[#161615] rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
+                        <div class="flex items-center justify-center mb-4">
+                            <img src="/images/calendar.png" alt="Calendar View" class="rounded-lg shadow-md w-full h-auto max-h-48 object-contain">
+                        </div>
+                        <h3 class="text-xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">📅 Calendar View</h3>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                            Visualize your tasks across the month. Add events directly from the calendar with quick "+ Add" buttons on any day. Current day is highlighted, and tasks with due dates automatically appear on the calendar.
+                        </p>
+                    </div>
+                    
+                    <!-- Activity Feed Feature -->
+                    <div class="bg-white dark:bg-[#161615] rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
+                        <div class="flex items-center justify-center mb-4">
+                            <img src="/images/activity-feed.png" alt="Activity Feed" class="rounded-lg shadow-md w-full h-auto max-h-48 object-contain">
+                        </div>
+                        <h3 class="text-xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">📊 Activity Feed</h3>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                            Track all activity in your workspace with real-time updates. See create, update, and delete actions instantly with visual indicators and timestamps. Filter activities by type using the dropdown menu.
+                        </p>
+                    </div>
+                    
+                    <!-- Bulk Editor Feature -->
+                    <div class="bg-white dark:bg-[#161615] rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
+                        <div class="flex items-center justify-center mb-4">
+                            <img src="/images/bulk-editor.png" alt="Bulk Editor" class="rounded-lg shadow-md w-full h-auto max-h-48 object-contain">
+                        </div>
+                        <h3 class="text-xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">✏️ Bulk Editor</h3>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                            Edit multiple tasks at once to save time. Select tasks with checkboxes to trigger the bulk editor bar. Change status, priority, assignee, type, due date, or tags for all selected tasks simultaneously.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
         <!-- Pricing Section -->
         <section id="pricing" class="w-full py-8 lg:py-12 mt-12" style="background-color: #E1E7FF;">
             <div class="max-w-6xl mx-auto px-6">

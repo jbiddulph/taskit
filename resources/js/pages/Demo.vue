@@ -604,7 +604,112 @@ defineOptions({
                             </div>
                         </div>
 
-                        <!-- Step 14: Tips & Tricks -->
+                        <!-- Step 14: Adding Events from the Calendar -->
+                        <div class="bg-white dark:bg-[#161615] rounded-lg p-8 border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                            <div class="flex items-start gap-4">
+                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 font-bold text-lg flex-shrink-0">
+                                    14
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">
+                                        📅 Adding Events from the Calendar
+                                    </h3>
+                                    <p class="text-[#706f6c] dark:text-[#A1A09A] mb-4">
+                                        Use the calendar view to visualize and manage your tasks across the month.
+                                    </p>
+                                    <ul class="space-y-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                                            <strong>Calendar view:</strong> Access the calendar from the main navigation
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                                            <strong>Quick add:</strong> Click the "+ Add" button on any day to create a new task
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                                            <strong>Due dates:</strong> Tasks with due dates automatically appear on the calendar
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                                            <strong>Today indicator:</strong> Current day is highlighted with a "Today" label
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 15: Activity Feed -->
+                        <div class="bg-white dark:bg-[#161615] rounded-lg p-8 border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                            <div class="flex items-start gap-4">
+                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 font-bold text-lg flex-shrink-0">
+                                    15
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">
+                                        📊 Activity Feed
+                                    </h3>
+                                    <p class="text-[#706f6c] dark:text-[#A1A09A] mb-4">
+                                        Track all activity in your workspace with real-time updates and filtering.
+                                    </p>
+                                    <ul class="space-y-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                            <strong>Real-time tracking:</strong> See all create, update, and delete actions instantly
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                            <strong>Activity types:</strong> Visual indicators show different action types (create, update, delete)
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                            <strong>Filter options:</strong> Use "All Activities" dropdown to filter by type
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                            <strong>Timestamps:</strong> See when each action occurred with relative time (e.g., "Just now", "2m ago")
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 16: Bulk Editor -->
+                        <div class="bg-white dark:bg-[#161615] rounded-lg p-8 border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                            <div class="flex items-start gap-4">
+                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400 font-bold text-lg flex-shrink-0">
+                                    16
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">
+                                        ✏️ Bulk Editor
+                                    </h3>
+                                    <p class="text-[#706f6c] dark:text-[#A1A09A] mb-4">
+                                        Edit multiple tasks at once to save time on routine updates.
+                                    </p>
+                                    <ul class="space-y-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                                            <strong>Select tasks:</strong> Use checkboxes to select multiple tasks
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                                            <strong>Bulk editor:</strong> Selected tasks trigger the bulk editor bar at the top
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                                            <strong>Batch updates:</strong> Change status, priority, assignee, type, due date, or tags for all selected
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                                            <strong>Delete multiple:</strong> Remove multiple tasks at once with the delete button
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 17: Tips & Tricks -->
                         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/30 rounded-lg p-8 border border-blue-200 dark:border-blue-800">
                             <div class="flex items-start gap-4">
                                 <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white font-bold text-lg flex-shrink-0">
