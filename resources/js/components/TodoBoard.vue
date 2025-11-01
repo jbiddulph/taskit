@@ -134,6 +134,23 @@
               <span class="sm:hidden">{{ t('dashboard.add') }}</span>
             </button>
 
+            <!-- Voice Record Button -->
+            <button
+              v-if="!props.isReadOnly"
+              @click="handleVoiceRecord"
+              :disabled="!currentProject || isRecording"
+              :class="[
+                'flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+                isRecording 
+                  ? 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500' 
+                  : 'bg-purple-600 text-white hover:bg-purple-700 focus:ring-purple-500'
+              ]"
+              :title="isRecording ? t('dashboard.stop_recording') : t('dashboard.voice_record')"
+            >
+              <Icon name="Mic" class="w-4 h-4" />
+              <span class="hidden sm:inline">{{ isRecording ? t('dashboard.recording') : t('dashboard.voice') }}</span>
+            </button>
+
             <!-- Add Bulk Button -->
             <button
               v-if="!props.isReadOnly"
@@ -1369,6 +1386,128 @@ const handleShowForm = () => {
     return;
   }
   showForm.value = true;
+};
+
+// Voice recording state
+const isRecording = ref(false);
+const recognition = ref<any>(null);
+
+// Initialize voice recording
+const initVoiceRecording = () => {
+  // Check if browser supports Web Speech API
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    console.warn('Web Speech API not supported in this browser');
+    return;
+  }
+
+  const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+  recognition.value = new SpeechRecognition();
+  
+  recognition.value.continuous = false;
+  recognition.value.interimResults = false;
+  recognition.value.lang = 'en-US';
+
+  recognition.value.onresult = (event: any) => {
+    const transcript = event.results[0][0].transcript;
+    console.log('Voice transcription:', transcript);
+    
+    // Create a new todo with the transcribed text as the title
+    if (transcript.trim()) {
+      const newTodo = {
+        id: 0,
+        user_id: 0,
+        project_id: currentProject.value!.id,
+        company_id: 0,
+        title: transcript.trim(),
+        description: '',
+        status: 'todo' as const,
+        priority: 'Medium' as const,
+        type: 'Task',
+        assignee: '',
+        due_date: '',
+        tags: [],
+        parent_task_id: null,
+        created_at: '',
+        updated_at: '',
+        project: currentProject.value,
+        comments: [],
+        attachments: [],
+        subtasks: []
+      };
+      
+      saveTodo(newTodo as Todo);
+    }
+    
+    isRecording.value = false;
+  };
+
+  recognition.value.onerror = (event: any) => {
+    console.error('Speech recognition error:', event.error);
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: 'Voice Recognition Error',
+        message: `Failed to recognize speech: ${event.error}`
+      });
+    }
+    isRecording.value = false;
+  };
+
+  recognition.value.onend = () => {
+    isRecording.value = false;
+  };
+};
+
+const handleVoiceRecord = () => {
+  if (!currentProject.value) {
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'warning',
+        title: 'Project Required',
+        message: 'Please select a project first before creating a voice todo.'
+      });
+    }
+    return;
+  }
+
+  if (!recognition.value) {
+    initVoiceRecording();
+    // If initialization failed, recognition will still be null
+    if (!recognition.value) {
+      if ((window as any).$notify) {
+        (window as any).$notify({
+          type: 'error',
+          title: 'Browser Not Supported',
+          message: 'Voice recording is not supported in this browser. Please use Chrome, Edge, or Safari.'
+        });
+      }
+      return;
+    }
+  }
+
+  if (isRecording.value) {
+    // Stop recording
+    recognition.value.stop();
+    isRecording.value = false;
+  } else {
+    // Start recording
+    try {
+      recognition.value.start();
+      isRecording.value = true;
+      
+      if ((window as any).$notify) {
+        (window as any).$notify({
+          type: 'info',
+          title: 'Listening...',
+          message: 'Speak now to create a todo',
+          duration: 2000
+        });
+      }
+    } catch (error) {
+      console.error('Failed to start speech recognition:', error);
+      isRecording.value = false;
+    }
+  }
 };
 
 const startEditProject = () => {
