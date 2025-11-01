@@ -13,6 +13,51 @@
         <span class="text-sm text-gray-900 dark:text-gray-100">{{ t('dashboard.adding_all_please_wait') }}</span>
       </div>
     </div>
+
+    <!-- Voice recording overlay -->
+    <div
+      v-if="isRecording"
+      class="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center"
+    >
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl border-2 border-red-500 p-8 max-w-md w-full mx-4">
+        <div class="flex flex-col items-center gap-4">
+          <!-- Pulsing microphone icon -->
+          <div class="relative">
+            <div class="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75"></div>
+            <div class="relative bg-red-600 rounded-full p-6">
+              <Icon name="Mic" class="w-12 h-12 text-white" />
+            </div>
+          </div>
+          
+          <!-- Recording text -->
+          <div class="text-center">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              {{ t('dashboard.recording') }}
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              {{ t('dashboard.speak_now_to_create_todo') }}
+            </p>
+          </div>
+
+          <!-- Timer -->
+          <div class="text-4xl font-bold text-red-600 dark:text-red-400 font-mono">
+            {{ formatTimer(recordingTime) }}
+          </div>
+
+          <!-- Stop button -->
+          <button
+            @click="stopRecording"
+            class="mt-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors font-medium"
+          >
+            <div class="flex items-center gap-2">
+              <Icon name="Square" class="w-5 h-5" />
+              {{ t('dashboard.stop_recording') }}
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Header with Search and Filters -->
     <div 
       class="mb-4 py-2 px-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 relative"
@@ -1391,6 +1436,8 @@ const handleShowForm = () => {
 // Voice recording state
 const isRecording = ref(false);
 const recognition = ref<any>(null);
+const recordingTime = ref(0);
+const recordingTimer = ref<number | null>(null);
 
 // Initialize voice recording
 const initVoiceRecording = () => {
@@ -1455,7 +1502,40 @@ const initVoiceRecording = () => {
 
   recognition.value.onend = () => {
     isRecording.value = false;
+    stopTimer();
   };
+};
+
+// Timer formatting function
+const formatTimer = (seconds: number): string => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+};
+
+// Start timer
+const startTimer = () => {
+  recordingTime.value = 0;
+  recordingTimer.value = window.setInterval(() => {
+    recordingTime.value++;
+  }, 1000);
+};
+
+// Stop timer
+const stopTimer = () => {
+  if (recordingTimer.value) {
+    clearInterval(recordingTimer.value);
+    recordingTimer.value = null;
+  }
+};
+
+// Stop recording handler
+const stopRecording = () => {
+  if (recognition.value && isRecording.value) {
+    recognition.value.stop();
+  }
+  isRecording.value = false;
+  stopTimer();
 };
 
 const handleVoiceRecord = () => {
@@ -1487,25 +1567,17 @@ const handleVoiceRecord = () => {
 
   if (isRecording.value) {
     // Stop recording
-    recognition.value.stop();
-    isRecording.value = false;
+    stopRecording();
   } else {
     // Start recording
     try {
       recognition.value.start();
       isRecording.value = true;
-      
-      if ((window as any).$notify) {
-        (window as any).$notify({
-          type: 'info',
-          title: 'Listening...',
-          message: 'Speak now to create a todo',
-          duration: 2000
-        });
-      }
+      startTimer();
     } catch (error) {
       console.error('Failed to start speech recognition:', error);
       isRecording.value = false;
+      stopTimer();
     }
   }
 };
@@ -2422,6 +2494,8 @@ onUnmounted(() => {
   if (unsubscribeFromTodos) {
     unsubscribeFromTodos();
   }
+  // Clean up voice recording timer
+  stopTimer();
   // Remove listeners
   window.removeEventListener('openTodoById', (e: any) => {});
 });
