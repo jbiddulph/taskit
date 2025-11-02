@@ -1454,7 +1454,7 @@ const initVoiceRecording = () => {
   recognition.value.interimResults = false;
   recognition.value.lang = 'en-US';
 
-  recognition.value.onresult = (event: any) => {
+  recognition.value.onresult = async (event: any) => {
     const transcript = event.results[0][0].transcript;
     console.log('Voice transcription:', transcript);
     
@@ -1482,14 +1482,28 @@ const initVoiceRecording = () => {
         subtasks: []
       };
       
-      saveTodo(newTodo as Todo);
+      try {
+        await saveTodo(newTodo as Todo);
+        console.log('✅ Voice todo created successfully:', transcript);
+      } catch (error) {
+        console.error('❌ Error creating voice todo:', error);
+        if ((window as any).$notify) {
+          (window as any).$notify({
+            type: 'error',
+            title: 'Save Failed',
+            message: 'Failed to create todo from voice recording. Please try again.'
+          });
+        }
+      }
     }
     
-    isRecording.value = false;
+    // Don't set isRecording to false here - let onend handle it
+    // This is important for mobile browsers
+    console.log('✅ onresult completed, waiting for onend');
   };
 
   recognition.value.onerror = (event: any) => {
-    console.error('Speech recognition error:', event.error);
+    console.error('❌ Speech recognition error:', event.error);
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -1498,9 +1512,15 @@ const initVoiceRecording = () => {
       });
     }
     isRecording.value = false;
+    stopTimer();
+  };
+
+  recognition.value.onstart = () => {
+    console.log('🎤 Speech recognition started');
   };
 
   recognition.value.onend = () => {
+    console.log('🛑 Speech recognition ended');
     isRecording.value = false;
     stopTimer();
   };
@@ -1531,6 +1551,7 @@ const stopTimer = () => {
 
 // Stop recording handler
 const stopRecording = () => {
+  console.log('🔴 Stop recording called');
   if (recognition.value && isRecording.value) {
     recognition.value.stop();
   }
@@ -1567,15 +1588,18 @@ const handleVoiceRecord = () => {
 
   if (isRecording.value) {
     // Stop recording
+    console.log('🛑 Already recording, stopping...');
     stopRecording();
   } else {
     // Start recording
+    console.log('🎤 Starting voice recording...');
     try {
       recognition.value.start();
       isRecording.value = true;
       startTimer();
+      console.log('✅ Recording started successfully');
     } catch (error) {
-      console.error('Failed to start speech recognition:', error);
+      console.error('❌ Failed to start speech recognition:', error);
       isRecording.value = false;
       stopTimer();
     }
