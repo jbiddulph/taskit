@@ -3,6 +3,7 @@
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SubdomainController;
 use App\Http\Middleware\SubdomainMiddleware;
 use Illuminate\Http\Request;
@@ -29,6 +30,8 @@ Route::get('/terms', function () {
 
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
 
 
