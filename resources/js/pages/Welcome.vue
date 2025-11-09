@@ -266,7 +266,7 @@ onMounted(() => {
                     <!-- Calendar Feature -->
                     <div class="bg-white dark:bg-[#161615] rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
                         <div class="flex items-center justify-center mb-4">
-                            <img src="/images/calendar.png" alt="Calendar View" class="rounded-lg shadow-md w-full h-auto max-h-48 object-contain">
+                            <img src="/images/calendar.png" alt="Illustration showcasing the calendar scheduling view" class="rounded-lg shadow-md w-full h-auto max-h-48 object-contain">
                         </div>
                         <h3 class="text-xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">📅 Calendar View</h3>
                         <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
@@ -277,7 +277,7 @@ onMounted(() => {
                     <!-- Activity Feed Feature -->
                     <div class="bg-white dark:bg-[#161615] rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
                         <div class="flex items-center justify-center mb-4">
-                            <img src="/images/activity-feed.png" alt="Activity Feed" class="rounded-lg shadow-md w-full h-auto max-h-48 object-contain">
+                            <img src="/images/activity-feed.png" alt="Illustration showing activity feed updates" class="rounded-lg shadow-md w-full h-auto max-h-48 object-contain">
                         </div>
                         <h3 class="text-xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">📊 Activity Feed</h3>
                         <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
@@ -288,7 +288,7 @@ onMounted(() => {
                     <!-- Bulk Editor Feature -->
                     <div class="bg-white dark:bg-[#161615] rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
                         <div class="flex items-center justify-center mb-4">
-                            <img src="/images/bulk-editor.png" alt="Bulk Editor" class="rounded-lg shadow-md w-full h-auto max-h-48 object-contain">
+                            <img src="/images/bulk-editor.png" alt="Illustration of the bulk editing workflow" class="rounded-lg shadow-md w-full h-auto max-h-48 object-contain">
                         </div>
                         <h3 class="text-xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">✏️ Bulk Editor</h3>
                         <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
