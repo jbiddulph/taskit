@@ -42,7 +42,7 @@ onMounted(() => {
                 <div class="flex justify-between items-center py-4">
                     <div class="flex items-center">
                         <Link href="/" class="flex items-center space-x-2">
-                            <img src="/zap_icon.png" alt="ZapTask" class="w-8 h-8 dark:bg-white dark:rounded-md dark:p-1">
+                            <img src="/zap_icon.png" alt="" class="w-8 h-8 dark:bg-white dark:rounded-md dark:p-1" aria-hidden="true">
                             <span class="text-xl font-bold text-gray-900 dark:text-white">ZapTask</span>
                         </Link>
                     </div>
@@ -262,6 +262,7 @@ onMounted(() => {
         <section id="features-advanced" class="w-full py-12 mt-12">
             <div class="max-w-6xl mx-auto px-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- TODO: Replace placeholder PNGs in public/images with real marketing screenshots -->
                     <!-- Calendar Feature -->
                     <div class="bg-white dark:bg-[#161615] rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
                         <div class="flex items-center justify-center mb-4">
@@ -305,7 +306,7 @@ onMounted(() => {
                     <h2 class="text-3xl lg:text-4xl font-bold text-[#1b1b18] dark:text-[#A1A09A] mb-4">
                         Choose Your Plan
                     </h2>
-                    <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] max-w-2xl mx-auto">
+                    <p class="text-lg text-[#4a4a45] dark:text-[#D0D0CB] max-w-2xl mx-auto">
                         Select the perfect plan for your team size and project needs
                     </p>
                 </div>
@@ -316,12 +317,12 @@ onMounted(() => {
                     <div class="text-center mb-6">
                         <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">FREE</h3>
                         <div class="text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1">£0</div>
-                        <div class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Forever free</div>
+                        <div class="text-sm text-[#4a4a45] dark:text-[#D0D0CB]">Forever free</div>
                     </div>
                     
                     <div class="space-y-4 mb-8">
                         <div class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-3">Perfect for:</div>
-                        <div class="space-y-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                        <div class="space-y-2 text-sm text-[#4a4a45] dark:text-[#D0D0CB]">
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
@@ -351,7 +352,7 @@ onMounted(() => {
                     
                     <Link
                         :href="register({ query: { plan: 'FREE' } })"
-                        class="w-full inline-block text-center rounded-lg bg-blue-500 px-6 py-3 text-sm font-medium text-white hover:bg-blue-600 transition-colors duration-200"
+                        class="w-full inline-block text-center rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
                     >
                         Get Started Free
                     </Link>
@@ -363,12 +364,12 @@ onMounted(() => {
                     <div class="text-center mb-6">
                         <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">MIDI</h3>
                         <div class="text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1">£6</div>
-                        <div class="text-sm text-[#706f6c] dark:text-[#A1A09A]">per month</div>
+                        <div class="text-sm text-[#4a4a45] dark:text-[#D0D0CB]">per month</div>
                     </div>
                     
                     <div class="space-y-4 mb-8">
                         <div class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-3">Perfect for:</div>
-                        <div class="space-y-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                        <div class="space-y-2 text-sm text-[#4a4a45] dark:text-[#D0D0CB]">
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
@@ -398,26 +399,26 @@ onMounted(() => {
                     
                     <Link
                         :href="register({ query: { plan: 'MIDI' } })"
-                        class="w-full inline-block text-center rounded-lg bg-blue-500 px-6 py-3 text-sm font-medium text-white hover:bg-blue-600 transition-colors duration-200"
+                        class="w-full inline-block text-center rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
                     >
                         Start MIDI Plan
                     </Link>
                 </div>
                 
                 <!-- MAXI Plan -->
-                <div class="relative bg-white dark:bg-[#161615] rounded-lg p-8 shadow-[0_4px_20px_rgba(0,0,0,0.1)] border-2 border-yellow-500 hover:shadow-[0_8px_30px_rgba(0,0,0,0.15)] transition-shadow duration-300">
+                <div class="relative bg-white dark:bg-[#161615] rounded-lg p-8 shadow-[0_4px_20px_rgba(0,0,0,0.1)] border-2 border-amber-500 hover:shadow-[0_8px_30px_rgba(0,0,0,0.15)] transition-shadow duration-300">
                     <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                        <span class="bg-yellow-500 text-white px-4 py-1 rounded-full text-sm font-medium">Best Value</span>
+                        <span class="bg-amber-400 text-[#1b1b18] px-4 py-1 rounded-full text-sm font-medium">Best Value</span>
                     </div>
                     <div class="text-center mb-6">
                         <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">MAXI</h3>
                         <div class="text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1">£9</div>
-                        <div class="text-sm text-[#706f6c] dark:text-[#A1A09A]">per month</div>
+                        <div class="text-sm text-[#4a4a45] dark:text-[#D0D0CB]">per month</div>
                     </div>
                     
                     <div class="space-y-4 mb-8">
                         <div class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-3">Perfect for:</div>
-                        <div class="space-y-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                        <div class="space-y-2 text-sm text-[#4a4a45] dark:text-[#D0D0CB]">
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
@@ -453,14 +454,14 @@ onMounted(() => {
                     
                     <Link
                         :href="register({ query: { plan: 'MAXI' } })"
-                        class="w-full inline-block text-center rounded-lg bg-yellow-500 px-6 py-3 text-sm font-medium text-white hover:bg-yellow-600 transition-colors duration-200"
+                        class="w-full inline-block text-center rounded-lg bg-amber-500 px-6 py-3 text-sm font-medium text-[#1b1b18] hover:bg-amber-600 transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
                     >
                         Start MAXI Plan
                     </Link>
                 </div>
             </div>
             
-                <div class="text-center mt-12 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                <div class="text-center mt-12 text-sm text-[#4a4a45] dark:text-[#D0D0CB]">
                     <p>All plans include our core features: Kanban boards, real-time collaboration, file attachments, and email notifications.</p>
                 </div>
             </div>
@@ -472,7 +473,7 @@ onMounted(() => {
                 <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-4">
                     Try ZapTask Demo
                 </h3>
-                <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] mb-6">
+                <p class="text-lg text-[#4a4a45] dark:text-[#D0D0CB] mb-6">
                     Experience ZapTask with our pre-configured demo account
                 </p>
                 <div class="bg-white dark:bg-[#161615] rounded-lg p-6 max-w-md mx-auto border border-blue-300 dark:border-blue-700">
@@ -480,18 +481,18 @@ onMounted(() => {
                         <div class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Demo Login Credentials:</div>
                         <div class="text-left space-y-2">
                             <div class="flex items-center justify-between bg-gray-50 dark:bg-[#1a1a19] px-3 py-2 rounded">
-                                <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Email:</span>
+                                <span class="text-sm text-[#4a4a45] dark:text-[#D0D0CB]">Email:</span>
                                 <span class="text-sm font-mono text-[#1b1b18] dark:text-[#EDEDEC] select-all">demo@zaptask.co.uk</span>
                             </div>
                             <div class="flex items-center justify-between bg-gray-50 dark:bg-[#1a1a19] px-3 py-2 rounded">
-                                <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Password:</span>
+                                <span class="text-sm text-[#4a4a45] dark:text-[#D0D0CB]">Password:</span>
                                 <span class="text-sm font-mono text-[#1b1b18] dark:text-[#EDEDEC] select-all">zaptask123</span>
                             </div>
                         </div>
                     </div>
                     <Link
                         href="/login"
-                        class="mt-4 w-full inline-block text-center rounded-lg bg-blue-500 px-6 py-3 text-sm font-medium text-white hover:bg-blue-600 transition-colors duration-200"
+                        class="mt-4 w-full inline-block text-center rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
                     >
                         Try Demo Now
                     </Link>
@@ -506,7 +507,7 @@ onMounted(() => {
                     <!-- Company Info -->
                     <div class="md:col-span-2">
                         <div class="flex items-center gap-2 mb-4">
-                            <img src="/zap_icon_white.svg" alt="ZapTask" class="w-8 h-8" />
+                            <img src="/zap_icon_white.svg" alt="" class="w-8 h-8" aria-hidden="true" />
                             <span class="text-xl font-bold text-white">ZapTask</span>
                         </div>
                         <p class="text-gray-300 text-sm mb-4 max-w-md">
