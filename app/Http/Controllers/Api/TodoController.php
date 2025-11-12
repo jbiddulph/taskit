@@ -245,7 +245,7 @@ class TodoController extends Controller
 
         // Send to n8n webhook
         Http::post('https://n8n.neurohub.uk/webhook/new-task', [
-            'id' => $$todo->id,
+            'id' => $todo->id,
             'title' => $todo->title,
             'description' => $todo->description,
             'priority' => $todo->priority,
