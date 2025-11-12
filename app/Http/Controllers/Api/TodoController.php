@@ -242,6 +242,15 @@ class TodoController extends Controller
             'status' => $request->status,
         ]);
 
+        // Send to n8n webhook
+        Http::post('https://n8n.neurohub.uk/webhook/new-task', [
+            'id' => $task->id,
+            'title' => $task->title,
+            'description' => $task->description,
+            'priority' => $task->priority,
+            'created_at' => $task->created_at,
+        ]);
+
         $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
 
         // Invalidate caches
