@@ -243,14 +243,24 @@ class TodoController extends Controller
             'status' => $request->status,
         ]);
 
-        // Send to n8n webhook
-        Http::post('https://n8n.neurohub.uk/webhook/new-task', [
-            'id' => $todo->id,
-            'title' => $todo->title,
-            'description' => $todo->description,
-            'priority' => $todo->priority,
+        $payload = [
+            'id'         => $todo->id,
+            'title'      => $todo->title,
+            'description'=> $todo->description,
+            'priority'   => $todo->priority,
+            'assignee'   => $todo->assignee,
+            'project_id' => $todo->project_id,
             'created_at' => $todo->created_at,
-        ]);
+        ];
+        
+        try {
+            Http::post('https://n8n.neurohub.uk/webhook/new-task', $payload);
+        } catch (\Throwable $e) {
+            logger()->warning('Failed to notify n8n webhook for todo creation', [
+                'todo_id' => $todo->id,
+                'error'   => $e->getMessage(),
+            ]);
+        }
 
         $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
 
