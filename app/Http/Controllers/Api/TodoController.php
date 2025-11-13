@@ -7,6 +7,7 @@ use App\Models\Todo;
 use Illuminate\Support\Facades\Http;
 use App\Models\Notification;
 use App\Models\Activity;
+use App\Models\User;
 use App\Services\TodoWebSocketService;
 use App\Services\AssignmentNotificationService;
 use App\Services\CacheService;
@@ -218,6 +219,8 @@ class TodoController extends Controller
             'due_date' => 'nullable|date|after:today',
             'story_points' => 'nullable|integer|min:1|max:21',
             'status' => 'required|in:todo,in-progress,qa-testing,done',
+            'email_assignee' => 'sometimes|boolean',
+            'assignee_email' => 'nullable|email',
         ]);
 
         if ($validator->fails()) {
@@ -227,8 +230,23 @@ class TodoController extends Controller
             ], 422);
         }
 
+        $user = Auth::user();
+
+        $assigneeEmail = $request->input('assignee_email');
+
+        if (!$assigneeEmail && $request->filled('assignee')) {
+            $assigneeEmail = User::query()
+                ->where('name', $request->assignee)
+                ->when($user?->company_id, function ($query, $companyId) {
+                    $query->where('company_id', $companyId);
+                })
+                ->value('email');
+        }
+
+        $emailAssignee = $request->boolean('email_assignee');
+
         $todo = Todo::create([
-            'user_id' => Auth::id(),
+            'user_id' => $user->id,
             'project_id' => $request->project_id,
             'parent_task_id' => $request->parent_task_id,
             'title' => $request->title,
@@ -238,7 +256,7 @@ class TodoController extends Controller
             'tags' => $request->tags,
             'assignee' => $request->assignee,
             'due_date' => $request->due_date,
-            'company_id' => Auth::user()->company_id,
+            'company_id' => $user->company_id,
             'story_points' => $request->story_points,
             'status' => $request->status,
         ]);
@@ -251,8 +269,14 @@ class TodoController extends Controller
             'assignee'   => $todo->assignee,
             'project_id' => $todo->project_id,
             'created_at' => $todo->created_at,
+            'assignee_email' => $assigneeEmail,
+            'email_assignee' => $emailAssignee,
         ];
         
+        if (is_null($assigneeEmail)) {
+            unset($payload['assignee_email']);
+        }
+
         try {
             Http::post('https://n8n.neurohub.uk/webhook/new-task', $payload);
         } catch (\Throwable $e) {

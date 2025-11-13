@@ -33,6 +33,8 @@ export interface Todo {
     type?: 'Bug' | 'Feature' | 'Task' | 'Story' | 'Epic';
     tags?: string[];
     assignee?: string;
+    assignee_email?: string | null;
+    email_assignee?: boolean;
     due_date?: string;
     story_points?: number;
     status: 'todo' | 'in-progress' | 'qa-testing' | 'done';

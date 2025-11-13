@@ -157,6 +157,29 @@
             </div>
           </div>
 
+        <div
+          v-if="!isEditing"
+          class="flex items-start gap-3 rounded-md border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-800/50"
+        >
+          <input
+            id="email-assignee"
+            v-model="form.email_assignee"
+            type="checkbox"
+            class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <div>
+            <label
+              for="email-assignee"
+              class="text-sm font-medium text-gray-700 dark:text-gray-200"
+            >
+              Email assignee
+            </label>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Send an email notification to the selected assignee when the todo is created.
+            </p>
+          </div>
+        </div>
+
           <!-- Tags display -->
           <div v-if="form.tags && form.tags.length > 0" class="flex flex-wrap gap-2">
             <span
@@ -213,7 +236,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import TipTapEditor from '@/components/TipTapEditor.vue';
 import TypeSelector from '@/components/TypeSelector.vue';
 import TodoTemplateSelector from '@/components/TodoTemplateSelector.vue';
@@ -301,11 +324,31 @@ const form = ref({
   due_date: '',
   story_points: undefined as number | undefined,
   status: 'todo' as const,
+  email_assignee: true,
 });
 
 const tagsInput = ref('');
 
+const selectedAssignee = computed<SimpleUser | null>(() => {
+  if (!form.value.assignee) {
+    return null;
+  }
 
+  const match = users.value.find((u) => u.name === form.value.assignee);
+  if (match) {
+    return match;
+  }
+
+  if (currentUser && currentUser.name === form.value.assignee) {
+    return {
+      id: currentUser.id,
+      name: currentUser.name,
+      email: currentUser.email,
+    };
+  }
+
+  return null;
+});
 
 const resetForm = () => {
   form.value = {
@@ -319,6 +362,7 @@ const resetForm = () => {
     due_date: '',
     story_points: undefined,
     status: 'todo',
+    email_assignee: true,
   };
   tagsInput.value = '';
 };
@@ -331,6 +375,7 @@ onMounted(() => {
 watch(() => props.todo, (newTodo) => {
   if (newTodo) {
     form.value = { ...newTodo };
+    form.value.email_assignee = false;
     
     // Fix date format for HTML date input (YYYY-MM-DD)
     if (newTodo.due_date) {
@@ -346,6 +391,7 @@ watch(() => props.todo, (newTodo) => {
     if (currentUserName) {
       form.value.assignee = currentUserName;
     }
+    form.value.email_assignee = true;
   }
 }, { immediate: true });
 
@@ -383,6 +429,8 @@ const handleSubmit = async () => {
     
     if (props.isEditing) {
       todoData.id = parseInt(form.value.id);
+      delete todoData.email_assignee;
+      delete todoData.assignee_email;
       // Track todo update event
       trackTodoEvent('updated', {
         todo_id: todoData.id,
@@ -394,6 +442,8 @@ const handleSubmit = async () => {
         has_assignee: !!todoData.assignee,
       });
     } else {
+      todoData.email_assignee = !!form.value.email_assignee;
+      todoData.assignee_email = selectedAssignee.value?.email || null;
       // Track todo creation event
       trackTodoEvent('created', {
         project_id: props.currentProject.id,
