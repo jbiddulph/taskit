@@ -324,7 +324,7 @@ const form = ref({
   due_date: '',
   story_points: undefined as number | undefined,
   status: 'todo' as const,
-  email_assignee: true,
+  email_assignee: false,
 });
 
 const tagsInput = ref('');
@@ -362,7 +362,7 @@ const resetForm = () => {
     due_date: '',
     story_points: undefined,
     status: 'todo',
-    email_assignee: true,
+    email_assignee: false,
   };
   tagsInput.value = '';
 };
@@ -391,7 +391,6 @@ watch(() => props.todo, (newTodo) => {
     if (currentUserName) {
       form.value.assignee = currentUserName;
     }
-    form.value.email_assignee = true;
   }
 }, { immediate: true });
 
