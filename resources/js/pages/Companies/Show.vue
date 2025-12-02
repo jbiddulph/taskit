@@ -245,8 +245,11 @@ const updateProjectClient = async (projectId: number, event: Event) => {
                             <label class="text-sm font-medium text-gray-500">Members</label>
                             <p class="text-lg">
                                 {{ company.current_member_count }} / 
-                                <span v-if="company.subscription_type === 'MAXI'">Unlimited</span>
-                                <span v-else-if="company.subscription_type === 'MIDI'">10</span>
+                                <span v-if="company.subscription_type === 'MAXI' || company.subscription_type === 'BUSINESS' || company.subscription_type === 'LTD_BUSINESS'">Unlimited</span>
+                                <span v-else-if="company.subscription_type === 'MIDI' || company.subscription_type === 'LTD_TEAM'">5</span>
+                                <span v-else-if="company.subscription_type === 'LTD_AGENCY'">20</span>
+                                <span v-else-if="company.subscription_type === 'LTD_SOLO'">1</span>
+                                <span v-else>1</span>
                                 <span v-else>{{ company.member_limit }}</span>
                             </p>
                         </div>
@@ -254,8 +257,11 @@ const updateProjectClient = async (projectId: number, event: Event) => {
                             <label class="text-sm font-medium text-gray-500">Projects</label>
                             <p class="text-lg">
                                 {{ company.current_project_count }} / 
-                                <span v-if="company.subscription_type === 'MAXI'">Unlimited</span>
-                                <span v-else-if="company.subscription_type === 'MIDI'">20</span>
+                                <span v-if="company.subscription_type === 'MAXI' || company.subscription_type === 'BUSINESS' || company.subscription_type === 'LTD_BUSINESS'">Unlimited</span>
+                                <span v-else-if="company.subscription_type === 'MIDI' || company.subscription_type === 'LTD_TEAM'">20</span>
+                                <span v-else-if="company.subscription_type === 'LTD_AGENCY'">100</span>
+                                <span v-else-if="company.subscription_type === 'LTD_SOLO'">10</span>
+                                <span v-else>3</span>
                                 <span v-else>{{ company.project_limit }}</span>
                             </p>
                         </div>

@@ -31,7 +31,7 @@ const dismissedProjectWarning = ref(
 // Check if we should show member warning (at limit - 1)
 const shouldShowMemberWarning = computed(() => {
     if (dismissedMemberWarning.value) return false;
-    if (props.company.subscription_type === 'MAXI') return false; // Unlimited
+    if (props.company.subscription_type === 'MAXI' || props.company.subscription_type === 'BUSINESS' || props.company.subscription_type === 'LTD_BUSINESS') return false; // Unlimited
     
     const threshold = props.company.member_limit - 1;
     return props.company.current_member_count >= threshold;
@@ -40,7 +40,7 @@ const shouldShowMemberWarning = computed(() => {
 // Check if we should show project warning (at 80% of limit)
 const shouldShowProjectWarning = computed(() => {
     if (dismissedProjectWarning.value) return false;
-    if (props.company.subscription_type === 'MAXI') return false; // Unlimited
+    if (props.company.subscription_type === 'MAXI' || props.company.subscription_type === 'BUSINESS' || props.company.subscription_type === 'LTD_BUSINESS') return false; // Unlimited
     
     const threshold = Math.floor(props.company.project_limit * 0.8);
     return props.company.current_project_count >= threshold;
@@ -58,9 +58,9 @@ const dismissProjectWarning = () => {
 
 const getMemberUpgradeText = () => {
     if (props.company.subscription_type === 'FREE') {
-        return 'Upgrade to MIDI (£6/month) or MAXI (£9/month) to add more members.';
+        return 'Upgrade to MIDI (£6/month) or MAXI (£12/month) to add more members.';
     }
-    return 'Upgrade to MAXI (£9/month) to add more members.';
+    return 'Upgrade to MAXI (£12/month) to add more members.';
 };
 
 const getProjectUpgradeText = () => {
@@ -134,13 +134,13 @@ const getProjectUpgradeText = () => {
                             </Link>
                             or 
                             <Link href="/subscription" class="font-bold text-red-800 dark:text-red-200 hover:underline">
-                                MAXI (£9/month)
+                                MAXI (£12/month)
                             </Link>
                             {{ getProjectUpgradeText().before }}
                         </template>
                         <template v-else>
                             <Link href="/subscription" class="font-bold text-red-800 dark:text-red-200 hover:underline">
-                                Upgrade to MAXI (£9/month)
+                                Upgrade to MAXI (£12/month)
                             </Link>
                             {{ getProjectUpgradeText().before }}
                         </template>

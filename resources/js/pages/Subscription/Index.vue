@@ -42,6 +42,11 @@ interface Plans {
     FREE: Plan;
     MIDI: Plan;
     MAXI: Plan;
+    BUSINESS?: Plan;
+    LTD_SOLO?: Plan;
+    LTD_TEAM?: Plan;
+    LTD_AGENCY?: Plan;
+    LTD_BUSINESS?: Plan;
 }
 
 interface Props {
@@ -58,6 +63,7 @@ const loading = ref(false);
 const currentPlan = computed(() => props.company?.effective_subscription_type || props.company?.subscription_type || 'FREE');
 const isActive = computed(() => props.company?.subscription_status === 'active');
 const hasPendingChange = computed(() => !!props.company?.pending_change);
+const billingInterval = ref<'month' | 'year'>('month');
 
 // Company creation modal state
 const showCompanyModal = ref(false);
@@ -127,9 +133,18 @@ const getButtonText = (planType: string): string => {
     const plan = props.plans[planType as keyof Plans];
     
     // Define plan hierarchy for comparison
-    const planHierarchy = { 'FREE': 0, 'MIDI': 1, 'MAXI': 2 };
-    const currentLevel = planHierarchy[current as keyof typeof planHierarchy] || 0;
-    const targetLevel = planHierarchy[planType as keyof typeof planHierarchy] || 0;
+    const planHierarchy: Record<string, number> = { 
+        'FREE': 0, 
+        'MIDI': 1, 
+        'MAXI': 2, 
+        'BUSINESS': 3,
+        'LTD_SOLO': 1.5, // Lifetime deals are between FREE and MIDI
+        'LTD_TEAM': 2.5,
+        'LTD_AGENCY': 3.5,
+        'LTD_BUSINESS': 4.5
+    };
+    const currentLevel = planHierarchy[current] ?? 0;
+    const targetLevel = planHierarchy[planType] ?? 0;
     
     if (targetLevel > currentLevel) {
         return `Upgrade to ${plan.name}`;
@@ -150,15 +165,36 @@ const handlePlanChange = (planType: string) => {
     console.log('About to call changePlan...');
     
     try {
-        changePlan(planType);
+        // Check if this is a lifetime deal
+        const plan = props.plans[planType as keyof Plans];
+        const isLifetime = (plan as any)?.is_lifetime || false;
+        
+        // For lifetime deals, always use 'month' (it's a one-time payment)
+        // For recurring plans, use the selected billing interval
+        const interval = isLifetime ? 'month' : billingInterval.value;
+        
+        changePlan(planType, interval);
         console.log('changePlan called successfully');
     } catch (error) {
         console.error('Error calling changePlan:', error);
     }
 };
 
-const changePlan = async (planType: string) => {
-    console.log('changePlan called with:', planType);
+const getYearlyPrice = (planType: string): string | null => {
+    const plan = props.plans[planType as keyof Plans];
+    if (plan && 'price_yearly' in plan) {
+        return formatPrice((plan as any).price_yearly);
+    }
+    return null;
+};
+
+const isLifetimePlan = (planType: string): boolean => {
+    const plan = props.plans[planType as keyof Plans];
+    return (plan as any)?.is_lifetime || false;
+};
+
+const changePlan = async (planType: string, interval: 'month' | 'year' = 'month') => {
+    console.log('changePlan called with:', planType, 'interval:', interval);
     console.log('loading.value:', loading.value);
     console.log('currentPlan.value:', currentPlan.value);
     
@@ -171,7 +207,7 @@ const changePlan = async (planType: string) => {
     console.log('Setting loading to true, using Inertia router approach...');
     
     // Use Inertia router which handles CSRF automatically
-    router.post('/subscription/change-plan', { plan: planType }, {
+    router.post('/subscription/change-plan', { plan: planType, billing_interval: interval }, {
         onBefore: () => {
             console.log('Inertia request starting...');
             return true;
@@ -474,6 +510,34 @@ const reactivateSubscription = async () => {
                     Available Plans
                 </h2>
                 
+                <!-- Billing Interval Toggle (only for recurring plans) -->
+                <div v-if="availablePlans.MIDI || availablePlans.MAXI" class="mb-6 flex justify-center">
+                    <div class="inline-flex rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-1">
+                        <button
+                            @click="billingInterval = 'month'"
+                            :class="[
+                                'px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                                billingInterval === 'month'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                            ]"
+                        >
+                            Monthly
+                        </button>
+                        <button
+                            @click="billingInterval = 'year'"
+                            :class="[
+                                'px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                                billingInterval === 'year'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                            ]"
+                        >
+                            Yearly
+                        </button>
+                    </div>
+                </div>
+                
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Card 
                         v-for="(plan, planType) in availablePlans" 
@@ -496,10 +560,22 @@ const reactivateSubscription = async () => {
                             </CardTitle>
                             <CardDescription>
                                 <div class="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                                    {{ planType === 'FREE' ? 'Free' : formatPrice(plan.price) }}
+                                    <template v-if="planType === 'FREE'">Free</template>
+                                    <template v-else-if="isLifetimePlan(planType)">{{ formatPrice(plan.price) }}</template>
+                                    <template v-else-if="billingInterval === 'year' && getYearlyPrice(planType)">
+                                        {{ getYearlyPrice(planType) }}
+                                    </template>
+                                    <template v-else>{{ formatPrice(plan.price) }}</template>
                                 </div>
                                 <div class="text-sm text-gray-500">
-                                    {{ planType === 'FREE' ? 'Forever' : 'per month' }}
+                                    <template v-if="planType === 'FREE'">Forever</template>
+                                    <template v-else-if="isLifetimePlan(planType)">One-time payment</template>
+                                    <template v-else-if="billingInterval === 'year'">per year</template>
+                                    <template v-else>per month</template>
+                                </div>
+                                <div v-if="!isLifetimePlan(planType) && planType !== 'FREE' && getYearlyPrice(planType)" class="text-xs text-green-600 dark:text-green-400 mt-1">
+                                    <template v-if="billingInterval === 'year'">Save £{{ ((plan.price * 12) - (plan as any).price_yearly) / 100 }}</template>
+                                    <template v-else>or {{ getYearlyPrice(planType) }}/year (save £{{ ((plan.price * 12) - (plan as any).price_yearly) / 100 }})</template>
                                 </div>
                             </CardDescription>
                         </CardHeader>
@@ -515,15 +591,15 @@ const reactivateSubscription = async () => {
                                 </li>
                             </ul>
                             
-                                                    <Button
-                            v-if="planType !== currentPlan"
-                            @click="handlePlanChange(planType)"
-                            :disabled="loading"
-                            :variant="planType === 'MIDI' || planType === 'MAXI' ? 'default' : 'outline'"
-                            class="w-full"
-                        >
-                            {{ getButtonText(planType) }}
-                        </Button>
+                            <Button
+                                v-if="planType !== currentPlan"
+                                @click="handlePlanChange(planType)"
+                                :disabled="loading"
+                                :variant="planType === 'MIDI' || planType === 'MAXI' || planType?.startsWith('LTD_') ? 'default' : 'outline'"
+                                class="w-full"
+                            >
+                                {{ getButtonText(planType) }}
+                            </Button>
                             
                             <div v-else class="text-center">
                                 <span class="text-sm text-gray-500">Current Plan</span>

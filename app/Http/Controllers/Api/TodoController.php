@@ -245,6 +245,22 @@ class TodoController extends Controller
 
         $emailAssignee = $request->boolean('email_assignee');
 
+        // Check todo limits for company users
+        if ($user->company_id) {
+            $company = $user->company;
+            if (!$company->canCreateNewTodos()) {
+                $currentCount = $company->getCurrentTodoCount();
+                $limit = $company->getTodoLimit();
+                
+                if ($company->subscription_type === 'FREE') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Todo limit reached ({$limit} todos). Upgrade to MIDI (£6/month) or MAXI (£12/month) for unlimited todos."
+                    ], 403);
+                }
+            }
+        }
+
         $todo = Todo::create([
             'user_id' => $user->id,
             'project_id' => $request->project_id,
@@ -576,6 +592,23 @@ class TodoController extends Controller
                 'success' => false,
                 'errors' => $validator->errors()
             ], 422);
+        }
+
+        // Check todo limits for company users (subtasks count towards the limit)
+        $user = Auth::user();
+        if ($user->company_id) {
+            $company = $user->company;
+            if (!$company->canCreateNewTodos()) {
+                $currentCount = $company->getCurrentTodoCount();
+                $limit = $company->getTodoLimit();
+                
+                if ($company->subscription_type === 'FREE') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Todo limit reached ({$limit} todos). Upgrade to MIDI (£6/month) or MAXI (£12/month) for unlimited todos."
+                    ], 403);
+                }
+            }
         }
 
         $subtask = Todo::create([

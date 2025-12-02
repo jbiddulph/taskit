@@ -46,12 +46,19 @@ class SetupStripeProducts extends Command
 
             foreach ($results as $planType => $data) {
                 $this->line("STRIPE_{$planType}_PRICE_ID={$data['price_id']}");
+                if (isset($data['price_id_yearly'])) {
+                    $this->line("STRIPE_{$planType}_PRICE_ID_YEARLY={$data['price_id_yearly']}");
+                }
             }
 
             $this->line('');
             $this->info('Product details:');
             foreach ($results as $planType => $data) {
-                $this->line("• {$planType}: Product ID {$data['product_id']}, Price ID {$data['price_id']}");
+                $line = "• {$planType}: Product ID {$data['product_id']}, Monthly Price ID {$data['price_id']}";
+                if (isset($data['price_id_yearly'])) {
+                    $line .= ", Yearly Price ID {$data['price_id_yearly']}";
+                }
+                $this->line($line);
             }
 
             $this->line('');

@@ -85,12 +85,12 @@ class ProjectController extends Controller
                 if ($company->subscription_type === 'FREE') {
                     return response()->json([
                         'success' => false,
-                        'message' => "Project limit reached ({$limit} projects). Upgrade to MIDI (£6/month) or MAXI (£9/month) to create more projects."
+                        'message' => "Project limit reached ({$limit} projects). Upgrade to MIDI (£6/month) or MAXI (£12/month) to create more projects."
                     ], 403);
                 } elseif ($company->subscription_type === 'MIDI') {
                     return response()->json([
                         'success' => false,
-                        'message' => "Project limit reached ({$limit} projects). Upgrade to MAXI (£9/month) to create more projects."
+                        'message' => "Project limit reached ({$limit} projects). Upgrade to MAXI (£12/month) to create more projects."
                     ], 403);
                 }
             }

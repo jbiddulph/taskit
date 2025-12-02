@@ -45,7 +45,8 @@ class SubscriptionController extends Controller
     public function checkout(Request $request): JsonResponse
     {
         $request->validate([
-            'plan' => 'required|in:MIDI,MAXI',
+            'plan' => 'required|in:MIDI,MAXI,BUSINESS,LTD_SOLO,LTD_TEAM,LTD_AGENCY,LTD_BUSINESS',
+            'billing_interval' => 'nullable|in:month,year',
         ]);
 
         $user = Auth::user();
@@ -55,18 +56,24 @@ class SubscriptionController extends Controller
             return response()->json(['error' => 'No company found'], 400);
         }
 
-        // If company already has an active subscription, prevent creating new one
-        if ($company->stripe_subscription_id && $company->subscription_status === 'active') {
+        $plan = config("stripe.plans.{$request->plan}");
+        $isLifetime = $plan['is_lifetime'] ?? false;
+
+        // For lifetime deals, allow purchase even if they have a subscription
+        // For recurring subscriptions, prevent creating new one if already active
+        if (!$isLifetime && $company->stripe_subscription_id && $company->subscription_status === 'active') {
             return response()->json(['error' => 'Company already has an active subscription'], 400);
         }
 
         try {
+            $billingInterval = $request->input('billing_interval', 'month');
             $session = $this->stripeService->createCheckoutSession(
                 $company,
                 $request->plan,
                 $user->email,
                 route('subscription.success') . '?session_id={CHECKOUT_SESSION_ID}',
-                route('subscription.cancel')
+                route('subscription.cancel'),
+                $billingInterval
             );
 
             return response()->json(['checkout_url' => $session->url]);
@@ -255,7 +262,7 @@ public function cancelSubscription()
         ]);
 
         $request->validate([
-            'plan' => 'required|in:FREE,MIDI,MAXI',
+            'plan' => 'required|in:FREE,MIDI,MAXI,BUSINESS,LTD_SOLO,LTD_TEAM,LTD_AGENCY,LTD_BUSINESS',
         ]);
 
         $user = Auth::user();
@@ -336,8 +343,17 @@ public function cancelSubscription()
             }
 
             if ($company->stripe_subscription_id) {
-                // Check if this is a downgrade (MAXI to MIDI) or upgrade (MIDI to MAXI)
-                $planHierarchy = ['FREE' => 0, 'MIDI' => 1, 'MAXI' => 2];
+                // Check if this is a downgrade or upgrade
+                $planHierarchy = [
+                    'FREE' => 0, 
+                    'MIDI' => 1, 
+                    'MAXI' => 2, 
+                    'BUSINESS' => 3,
+                    'LTD_SOLO' => 1.5,
+                    'LTD_TEAM' => 2.5,
+                    'LTD_AGENCY' => 3.5,
+                    'LTD_BUSINESS' => 4.5
+                ];
                 $currentLevel = $planHierarchy[$company->subscription_type] ?? 0;
                 $targetLevel = $planHierarchy[$request->plan] ?? 0;
                 $isDowngrade = $targetLevel < $currentLevel;
@@ -414,12 +430,14 @@ public function cancelSubscription()
                 
                 try {
                     error_log('=== CALLING STRIPE SERVICE ===');
+                    $billingInterval = $request->input('billing_interval', 'month');
                     $session = $this->stripeService->createCheckoutSession(
                         $company,
                         $request->plan,
                         $user->email,
                         route('subscription.success') . '?session_id={CHECKOUT_SESSION_ID}',
-                        route('subscription.cancel')
+                        route('subscription.cancel'),
+                        $billingInterval
                     );
                     error_log('=== STRIPE SERVICE SUCCESS ===');
                 } catch (\Exception $stripeException) {
@@ -519,7 +537,7 @@ public function cancelSubscription()
     {
         $request->validate([
             'company_name' => 'required|string|max:255',
-            'target_plan' => 'required|in:MIDI,MAXI',
+            'target_plan' => 'required|in:MIDI,MAXI,BUSINESS,LTD_SOLO,LTD_TEAM,LTD_AGENCY,LTD_BUSINESS',
         ]);
 
         $user = Auth::user();
@@ -550,12 +568,14 @@ public function cancelSubscription()
             ]);
 
             // Now create checkout session for the target plan
+            $billingInterval = $request->input('billing_interval', 'month');
             $session = $this->stripeService->createCheckoutSession(
                 $company,
                 $request->target_plan,
                 $user->email,
                 route('subscription.success') . '?session_id={CHECKOUT_SESSION_ID}',
-                route('subscription.cancel')
+                route('subscription.cancel'),
+                $billingInterval
             );
 
             \Log::info('Checkout session created for new company', [

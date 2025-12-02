@@ -86,7 +86,7 @@ const showIndividualOption = computed(() => subscriptionType.value === 'FREE');
                     >
                         <option value="FREE">FREE - £0/month</option>
                         <option value="MIDI">MIDI - £6/month</option>
-                        <option value="MAXI">MAXI - £9/month</option>
+                        <option value="MAXI">MAXI - £12/month</option>
                     </select>
                     <InputError :message="errors.subscription_type" />
                 </div>

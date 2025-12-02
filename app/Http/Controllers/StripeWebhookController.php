@@ -73,6 +73,7 @@ class StripeWebhookController extends Controller
     {
         $companyId = $session->metadata->company_id ?? null;
         $planType = $session->metadata->plan_type ?? null;
+        $isLifetime = ($session->metadata->is_lifetime ?? 'false') === 'true';
 
         if (!$companyId || !$planType) {
             Log::error('Missing metadata in checkout session', ['session_id' => $session->id]);
@@ -85,15 +86,48 @@ class StripeWebhookController extends Controller
             return;
         }
 
-        $company->update([
+        $updateData = [
             'stripe_customer_id' => $session->customer,
             'subscription_type' => $planType,
             'subscription_status' => 'active',
-        ]);
+        ];
+
+        // For lifetime deals (one-time payments), we don't set subscription_id
+        // For recurring subscriptions, the subscription will be created separately
+        if ($isLifetime) {
+            // Lifetime deals don't have subscriptions, just set the plan type
+            Log::info('Lifetime deal checkout completed', [
+                'company_id' => $companyId,
+                'plan_type' => $planType,
+                'session_id' => $session->id
+            ]);
+        } else {
+            // For subscriptions, the subscription will be created via subscription.created event
+            // But we can set the subscription_id if it's available
+            if ($session->subscription) {
+                $updateData['stripe_subscription_id'] = $session->subscription;
+                
+                // Get subscription details for end date
+                try {
+                    $subscription = \Stripe\Subscription::retrieve($session->subscription);
+                    if ($subscription->current_period_end) {
+                        $updateData['subscription_ends_at'] = now()->createFromTimestamp($subscription->current_period_end);
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Could not retrieve subscription details', [
+                        'subscription_id' => $session->subscription,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        }
+
+        $company->update($updateData);
 
         Log::info('Checkout session completed', [
             'company_id' => $companyId,
             'plan_type' => $planType,
+            'is_lifetime' => $isLifetime,
             'session_id' => $session->id
         ]);
     }

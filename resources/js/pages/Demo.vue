@@ -427,25 +427,26 @@ defineOptions({
                                         <div class="bg-gray-50 dark:bg-[#1a1a19] p-4 rounded-lg">
                                             <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">FREE Plan</h4>
                                             <ul class="text-xs text-[#706f6c] dark:text-[#A1A09A] space-y-1">
-                                                <li>• Up to 5 members</li>
-                                                <li>• Up to 10 projects</li>
-                                                <li>• Unlimited todos</li>
+                                                <li>• 1 user</li>
+                                                <li>• 3 projects</li>
+                                                <li>• 200 todos</li>
                                             </ul>
                                         </div>
                                         <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
                                             <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">MIDI Plan - £6/month</h4>
                                             <ul class="text-xs text-[#706f6c] dark:text-[#A1A09A] space-y-1">
-                                                <li>• Up to 10 members</li>
+                                                <li>• Up to 5 members</li>
                                                 <li>• Up to 20 projects</li>
-                                                <li>• Custom logo upload</li>
+                                                <li>• Unlimited todos</li>
                                             </ul>
                                         </div>
                                         <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                                            <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">MAXI Plan - £9/month</h4>
+                                            <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">MAXI Plan - £12/month</h4>
                                             <ul class="text-xs text-[#706f6c] dark:text-[#A1A09A] space-y-1">
-                                                <li>• Unlimited members</li>
-                                                <li>• Unlimited projects</li>
-                                                <li>• Custom logo & themes</li>
+                                                <li>• Up to 20 members</li>
+                                                <li>• Up to 100 projects</li>
+                                                <li>• Integrations & automations</li>
+                                                <li>• Priority support</li>
                                             </ul>
                                         </div>
                                     </div>

@@ -81,11 +81,11 @@ class RegisteredUserController extends Controller
                 
                 if ($company->subscription_type === 'FREE') {
                     return back()->withErrors([
-                        'company_code' => "This company has reached its member limit ({$limit} members). A registered member needs to upgrade to MIDI (£6/month) or MAXI (£9/month) to add more members."
+                        'company_code' => "This company has reached its member limit ({$limit} members). A registered member needs to upgrade to MIDI (£6/month) or MAXI (£12/month) to add more members."
                     ]);
                 } elseif ($company->subscription_type === 'MIDI') {
                     return back()->withErrors([
-                        'company_code' => "This company has reached its member limit ({$limit} members). A registered member needs to upgrade to MAXI (£9/month) to add more members."
+                        'company_code' => "This company has reached its member limit ({$limit} members). A registered member needs to upgrade to MAXI (£12/month) to add more members."
                     ]);
                 }
             }

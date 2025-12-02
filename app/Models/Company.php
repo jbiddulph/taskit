@@ -131,10 +131,15 @@ class Company extends Model
     public function getMemberLimit(): int
     {
         return match($this->subscription_type) {
-            'FREE' => 5,
-            'MIDI' => 10,
-            'MAXI' => PHP_INT_MAX, // Unlimited
-            default => 5
+            'FREE' => 1,
+            'MIDI' => 5,
+            'MAXI' => 20,
+            'BUSINESS' => PHP_INT_MAX, // Unlimited
+            'LTD_SOLO' => 1,
+            'LTD_TEAM' => 5,
+            'LTD_AGENCY' => 20,
+            'LTD_BUSINESS' => 50,
+            default => 1
         };
     }
 
@@ -144,10 +149,27 @@ class Company extends Model
     public function getProjectLimit(): int
     {
         return match($this->subscription_type) {
-            'FREE' => 10,
+            'FREE' => 3,
             'MIDI' => 20,
-            'MAXI' => PHP_INT_MAX, // Unlimited
-            default => 10
+            'MAXI' => 100,
+            'BUSINESS' => PHP_INT_MAX, // Unlimited
+            'LTD_SOLO' => 10,
+            'LTD_TEAM' => 20,
+            'LTD_AGENCY' => 100,
+            'LTD_BUSINESS' => PHP_INT_MAX, // Unlimited
+            default => 3
+        };
+    }
+
+    /**
+     * Get todo limit based on subscription type
+     */
+    public function getTodoLimit(): int
+    {
+        return match($this->subscription_type) {
+            'FREE' => 200,
+            'MIDI', 'MAXI', 'BUSINESS', 'LTD_SOLO', 'LTD_TEAM', 'LTD_AGENCY', 'LTD_BUSINESS' => PHP_INT_MAX, // Unlimited
+            default => 200
         };
     }
 
@@ -170,6 +192,17 @@ class Company extends Model
     }
 
     /**
+     * Check if company can create new todos
+     */
+    public function canCreateNewTodos(): bool
+    {
+        $currentTodoCount = \App\Models\Todo::whereHas('project', function ($query) {
+            $query->where('company_id', $this->id);
+        })->count();
+        return $currentTodoCount < $this->getTodoLimit();
+    }
+
+    /**
      * Get current member count
      */
     public function getCurrentMemberCount(): int
@@ -183,6 +216,16 @@ class Company extends Model
     public function getCurrentProjectCount(): int
     {
         return $this->projects()->count();
+    }
+
+    /**
+     * Get current todo count
+     */
+    public function getCurrentTodoCount(): int
+    {
+        return \App\Models\Todo::whereHas('project', function ($query) {
+            $query->where('company_id', $this->id);
+        })->count();
     }
 
     /**

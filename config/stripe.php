@@ -29,35 +29,105 @@ return [
             'price' => 0,
             'stripe_price_id' => null, // No Stripe subscription needed
             'features' => [
-                'Individuals - unlimited projects & todos',
-                'Small companies - up to 5 members',
-                'Up to 10 projects',
-                'Unlimited todos'
+                '1 user',
+                '3 projects',
+                '200 todos',
+                'Basic features'
             ]
         ],
         'MIDI' => [
             'name' => 'MIDI Plan',
             'price' => 600, // £6.00 in pence
+            'price_yearly' => 6000, // £60.00 in pence (save £12)
             'currency' => 'gbp',
             'stripe_price_id' => env('STRIPE_MIDI_PRICE_ID'),
+            'stripe_price_id_yearly' => env('STRIPE_MIDI_PRICE_ID_YEARLY'),
             'features' => [
-                'Small-medium companies - up to 10 members',
+                'Up to 5 members',
                 'Up to 20 projects',
-                'Unlimited todos',
-                'Custom logo upload'
+                'Unlimited todos'
             ]
         ],
         'MAXI' => [
             'name' => 'MAXI Plan',
-            'price' => 900, // £9.00 in pence
+            'price' => 1200, // £12.00 in pence
+            'price_yearly' => 12000, // £120.00 in pence (save £24)
             'currency' => 'gbp',
             'stripe_price_id' => env('STRIPE_MAXI_PRICE_ID'),
+            'stripe_price_id_yearly' => env('STRIPE_MAXI_PRICE_ID_YEARLY'),
             'features' => [
-                'Medium-large companies - unlimited members',
-                'Unlimited projects',
+                'Up to 20 members',
+                'Up to 100 projects',
                 'Unlimited todos',
-                'Custom logo upload',
-                'Custom color themes'
+                'Integrations',
+                'Automations',
+                'Priority support'
+            ]
+        ],
+        'BUSINESS' => [
+            'name' => 'BUSINESS Plan',
+            'price' => 2900, // £29.00 in pence
+            'currency' => 'gbp',
+            'stripe_price_id' => env('STRIPE_BUSINESS_PRICE_ID'),
+            'features' => [
+                'Unlimited members',
+                'Unlimited projects',
+                'Admin controls',
+                'SSO / audit logs',
+                'Support SLAs'
+            ]
+        ],
+        // Lifetime Deal (LTD) Plans - one-time payments
+        'LTD_SOLO' => [
+            'name' => 'LTD Solo',
+            'price' => 3900, // £39.00 in pence (one-time)
+            'currency' => 'gbp',
+            'stripe_price_id' => env('STRIPE_LTD_SOLO_PRICE_ID'),
+            'is_lifetime' => true,
+            'features' => [
+                '1 user',
+                '10 projects',
+                'Unlimited todos',
+                'No team features'
+            ]
+        ],
+        'LTD_TEAM' => [
+            'name' => 'LTD Team',
+            'price' => 7900, // £79.00 in pence (one-time)
+            'currency' => 'gbp',
+            'stripe_price_id' => env('STRIPE_LTD_TEAM_PRICE_ID'),
+            'is_lifetime' => true,
+            'features' => [
+                'Up to 5 members',
+                'Up to 20 projects',
+                'Unlimited todos',
+                'All MIDI-level features'
+            ]
+        ],
+        'LTD_AGENCY' => [
+            'name' => 'LTD Agency',
+            'price' => 14900, // £149.00 in pence (one-time)
+            'currency' => 'gbp',
+            'stripe_price_id' => env('STRIPE_LTD_AGENCY_PRICE_ID'),
+            'is_lifetime' => true,
+            'features' => [
+                'Up to 20 members',
+                'Up to 100 projects',
+                'Unlimited todos',
+                'Most features (except enterprise-level)'
+            ]
+        ],
+        'LTD_BUSINESS' => [
+            'name' => 'LTD Business',
+            'price' => 24900, // £249.00 in pence (one-time)
+            'currency' => 'gbp',
+            'stripe_price_id' => env('STRIPE_LTD_BUSINESS_PRICE_ID'),
+            'is_lifetime' => true,
+            'features' => [
+                'Up to 50 members',
+                'Unlimited projects',
+                'All current features',
+                'Priority support'
             ]
         ]
     ]

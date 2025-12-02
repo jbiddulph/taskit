@@ -66,36 +66,57 @@ class StripeService
     }
 
     /**
-     * Create a checkout session for subscription
+     * Create a checkout session for subscription or one-time payment
      */
-    public function createCheckoutSession(Company $company, string $planType, string $email, string $successUrl, string $cancelUrl): Session
+    public function createCheckoutSession(Company $company, string $planType, string $email, string $successUrl, string $cancelUrl, string $billingInterval = 'month'): Session
     {
         $customer = $this->createOrGetCustomer($company, $email);
         $plan = config("stripe.plans.{$planType}");
 
-        if (!$plan || !$plan['stripe_price_id']) {
+        if (!$plan) {
             throw new \InvalidArgumentException("Invalid plan type: {$planType}");
+        }
+
+        // Check if this is a lifetime deal (one-time payment)
+        $isLifetime = $plan['is_lifetime'] ?? false;
+        
+        // Determine which price ID to use
+        $priceId = null;
+        if ($isLifetime) {
+            $priceId = $plan['stripe_price_id'] ?? null;
+        } else {
+            // For recurring subscriptions, check if yearly or monthly
+            if ($billingInterval === 'year' && isset($plan['stripe_price_id_yearly'])) {
+                $priceId = $plan['stripe_price_id_yearly'];
+            } else {
+                $priceId = $plan['stripe_price_id'] ?? null;
+            }
+        }
+
+        if (!$priceId) {
+            throw new \InvalidArgumentException("No Stripe price ID found for plan type: {$planType} with interval: {$billingInterval}");
         }
 
         \Log::info('Creating Stripe checkout session', [
             'company_id' => $company->id,
             'plan_type' => $planType,
-            'price_id' => $plan['stripe_price_id'],
+            'price_id' => $priceId,
+            'billing_interval' => $billingInterval,
+            'is_lifetime' => $isLifetime,
             'customer_id' => $customer->id,
             'email' => $email
         ]);
 
         try {
-            $session = Session::create([
+            $sessionParams = [
                 'customer' => $customer->id,
                 'payment_method_types' => ['card'],
                 'line_items' => [
                     [
-                        'price' => $plan['stripe_price_id'],
+                        'price' => $priceId,
                         'quantity' => 1,
                     ]
                 ],
-                'mode' => 'subscription',
                 'success_url' => $successUrl,
                 'cancel_url' => $cancelUrl,
                 'billing_address_collection' => 'required',
@@ -106,15 +127,27 @@ class StripeService
                 'metadata' => [
                     'company_id' => $company->id,
                     'plan_type' => $planType,
+                    'billing_interval' => $billingInterval,
+                    'is_lifetime' => $isLifetime ? 'true' : 'false',
                 ],
-                'subscription_data' => [
+                'payment_method_collection' => 'always'
+            ];
+
+            // Set mode based on whether it's a subscription or one-time payment
+            if ($isLifetime) {
+                $sessionParams['mode'] = 'payment';
+            } else {
+                $sessionParams['mode'] = 'subscription';
+                $sessionParams['subscription_data'] = [
                     'metadata' => [
                         'company_id' => $company->id,
                         'plan_type' => $planType,
+                        'billing_interval' => $billingInterval,
                     ]
-                ],
-                'payment_method_collection' => 'always'
-            ]);
+                ];
+            }
+
+            $session = Session::create($sessionParams);
 
             \Log::info('Stripe checkout session created successfully', [
                 'session_id' => $session->id,
@@ -248,6 +281,8 @@ class StripeService
                 continue; // Skip FREE plan as it doesn't need Stripe
             }
 
+            $isLifetime = $planData['is_lifetime'] ?? false;
+
             // Create product
             $product = Product::create([
                 'name' => $planData['name'],
@@ -257,23 +292,57 @@ class StripeService
                 ]
             ]);
 
-            // Create price
-            $price = Price::create([
-                'product' => $product->id,
-                'unit_amount' => $planData['price'],
-                'currency' => $planData['currency'],
-                'recurring' => [
-                    'interval' => 'month'
-                ],
-                'metadata' => [
-                    'plan_type' => $planType
-                ]
-            ]);
-
-            $results[$planType] = [
+            $planResults = [
                 'product_id' => $product->id,
-                'price_id' => $price->id
             ];
+
+            if ($isLifetime) {
+                // Create one-time payment price for lifetime deals
+                $price = Price::create([
+                    'product' => $product->id,
+                    'unit_amount' => $planData['price'],
+                    'currency' => $planData['currency'],
+                    'metadata' => [
+                        'plan_type' => $planType,
+                        'is_lifetime' => 'true'
+                    ]
+                ]);
+                $planResults['price_id'] = $price->id;
+            } else {
+                // Create monthly recurring price
+                $monthlyPrice = Price::create([
+                    'product' => $product->id,
+                    'unit_amount' => $planData['price'],
+                    'currency' => $planData['currency'],
+                    'recurring' => [
+                        'interval' => 'month'
+                    ],
+                    'metadata' => [
+                        'plan_type' => $planType,
+                        'billing_interval' => 'month'
+                    ]
+                ]);
+                $planResults['price_id'] = $monthlyPrice->id;
+
+                // Create yearly recurring price if it exists
+                if (isset($planData['price_yearly'])) {
+                    $yearlyPrice = Price::create([
+                        'product' => $product->id,
+                        'unit_amount' => $planData['price_yearly'],
+                        'currency' => $planData['currency'],
+                        'recurring' => [
+                            'interval' => 'year'
+                        ],
+                        'metadata' => [
+                            'plan_type' => $planType,
+                            'billing_interval' => 'year'
+                        ]
+                    ]);
+                    $planResults['price_id_yearly'] = $yearlyPrice->id;
+                }
+            }
+
+            $results[$planType] = $planResults;
         }
 
         return $results;

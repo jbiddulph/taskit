@@ -315,37 +315,36 @@ onMounted(() => {
                 <!-- FREE Plan -->
                 <div class="relative bg-white dark:bg-[#161615] rounded-lg p-8 shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-[#e3e3e0] dark:border-[#3E3E3A] hover:shadow-[0_8px_30px_rgba(0,0,0,0.15)] transition-shadow duration-300">
                     <div class="text-center mb-6">
-                        <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">FREE</h3>
+                        <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">⭐ FREE</h3>
                         <div class="text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1">£0</div>
                         <div class="text-sm text-[#4a4a45] dark:text-[#D0D0CB]">Forever free</div>
                     </div>
                     
                     <div class="space-y-4 mb-8">
-                        <div class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-3">Perfect for:</div>
                         <div class="space-y-2 text-sm text-[#4a4a45] dark:text-[#D0D0CB]">
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span>Individuals - unlimited projects & todos</span>
+                                <span>1 user</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span>Small companies - up to 5 members</span>
+                                <span>3 projects</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span>Up to 10 projects</span>
+                                <span>200 todos</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span>Unlimited todos</span>
+                                <span>Basic features</span>
                             </div>
                         </div>
                     </div>
@@ -362,19 +361,19 @@ onMounted(() => {
                 <div class="relative bg-white dark:bg-[#161615] rounded-lg p-8 shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-[#e3e3e0] dark:border-[#3E3E3A] hover:shadow-[0_8px_30px_rgba(0,0,0,0.15)] transition-shadow duration-300">
                     
                     <div class="text-center mb-6">
-                        <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">MIDI</h3>
+                        <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">⭐ MIDI</h3>
                         <div class="text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1">£6</div>
                         <div class="text-sm text-[#4a4a45] dark:text-[#D0D0CB]">per month</div>
+                        <div class="text-xs text-green-600 dark:text-green-400 mt-1">or £60/year (save £12)</div>
                     </div>
                     
                     <div class="space-y-4 mb-8">
-                        <div class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-3">Perfect for:</div>
                         <div class="space-y-2 text-sm text-[#4a4a45] dark:text-[#D0D0CB]">
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span>Small-medium companies - up to 10 members</span>
+                                <span>Up to 5 members</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -387,12 +386,6 @@ onMounted(() => {
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
                                 <span>Unlimited todos</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span>Custom logo upload</span>
                             </div>
                         </div>
                     </div>
@@ -411,25 +404,25 @@ onMounted(() => {
                         <span class="bg-amber-400 text-[#1b1b18] px-4 py-1 rounded-full text-sm font-medium">Best Value</span>
                     </div>
                     <div class="text-center mb-6">
-                        <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">MAXI</h3>
-                        <div class="text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1">£9</div>
+                        <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">⭐ MAXI</h3>
+                        <div class="text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1">£12</div>
                         <div class="text-sm text-[#4a4a45] dark:text-[#D0D0CB]">per month</div>
+                        <div class="text-xs text-green-600 dark:text-green-400 mt-1">or £120/year (save £24)</div>
                     </div>
                     
                     <div class="space-y-4 mb-8">
-                        <div class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC] mb-3">Perfect for:</div>
                         <div class="space-y-2 text-sm text-[#4a4a45] dark:text-[#D0D0CB]">
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span>Medium-large companies - unlimited members</span>
+                                <span>Up to 20 members</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span>Unlimited projects</span>
+                                <span>Up to 100 projects</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -441,13 +434,19 @@ onMounted(() => {
                                 <svg class="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span>Custom logo upload</span>
+                                <span>Integrations</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span>Custom color themes</span>
+                                <span>Automations</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span>Priority support</span>
                             </div>
                         </div>
                     </div>
