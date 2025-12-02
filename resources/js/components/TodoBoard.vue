@@ -2385,6 +2385,10 @@ const loadTodos = async () => {
     todos.value = allTodos;
     console.log('📋 Final todos array:', todos.value.length);
     
+    // Notify other components (like sidebar) that todos have been loaded
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('todosLoaded'));
+    }
 
   } catch (error) {
     console.error('❌ Error loading todos:', error);

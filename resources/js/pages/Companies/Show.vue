@@ -95,28 +95,6 @@ const cancelEditName = () => {
 const selectedClientFilter = ref<string>('all');
 const selectedClientName = ref<string>('');
 
-const handleClientFilterChange = (event: Event) => {
-    const target = event.target as HTMLSelectElement;
-    const value = target.value;
-    selectedClientFilter.value = value;
-
-    const clientId = value === 'all' ? null : Number(value);
-    const clientName =
-        value === 'all'
-            ? ''
-            : props.clients.find((c) => c.id === clientId)?.name ?? '';
-
-    selectedClientName.value = clientName;
-
-    if (typeof window !== 'undefined') {
-        window.dispatchEvent(
-            new CustomEvent('clientFilterChanged', {
-                detail: { clientId, clientName },
-            })
-        );
-    }
-};
-
 const updateProjectClient = async (projectId: number, event: Event) => {
     const target = event.target as HTMLSelectElement;
     const value = target.value;
@@ -142,7 +120,7 @@ const updateProjectClient = async (projectId: number, event: Event) => {
 </script>
 
 <template>
-    <AppSidebarLayout :company="company">
+    <AppSidebarLayout :company="company" :clients="clients">
         <div class="space-y-6 p-6">
             <!-- Header -->
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

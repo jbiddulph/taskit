@@ -15,13 +15,19 @@ interface Props {
         id: number;
         name: string;
         code: string;
+        subscription_type?: string;
     } | null;
+    clients?: Array<{
+        id: number;
+        name: string;
+    }>;
     projectColor?: string | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     breadcrumbs: () => [],
     company: null,
+    clients: () => [],
 });
 
 // Initialize real-time service
@@ -80,7 +86,7 @@ onUnmounted(() => {
     <AppShell variant="sidebar">
         <AppSidebar />
         <AppContent variant="sidebar" class="overflow-x-hidden" :project-color="projectColor">
-            <AppSidebarHeader :breadcrumbs="breadcrumbs" :company="company">
+            <AppSidebarHeader :breadcrumbs="breadcrumbs" :company="company" :clients="clients">
                 <template #dashboardActions>
                     <slot name="dashboardActions" />
                 </template>

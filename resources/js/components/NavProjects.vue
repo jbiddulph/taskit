@@ -10,6 +10,7 @@ const { t } = useI18n();
 const projects = ref<Project[]>([]);
 const groupedProjects = ref<any>(null);
 const activeClientId = ref<number | null>(null);
+const todosLoaded = ref(false);
 const currentProject = ref<Project | null>(null);
 const loading = ref(false);
 const isUpdatingProject = ref(false); // Flag to prevent circular events
@@ -19,6 +20,11 @@ let unsubscribeFromProjects: (() => void) | null = null;
 // Check if we're on the subscription page
 const isOnSubscriptionPage = computed(() => {
   return window.location.pathname === '/subscription';
+});
+
+// Check if we're on the main dashboard
+const isOnDashboard = computed(() => {
+  return window.location.pathname === '/dashboard';
 });
 
 // Load projects on mount
@@ -97,6 +103,11 @@ onMounted(async () => {
   window.addEventListener('subscription-downgrade', async (e: any) => {
     console.log('Subscription downgrade detected, reloading projects:', e.detail);
     await loadProjects();
+  });
+  
+  // Listen for todos fully loaded (from TodoBoard)
+  window.addEventListener('todosLoaded', () => {
+    todosLoaded.value = true;
   });
 });
 
@@ -483,7 +494,7 @@ const isClientCollapsed = (clientName: string) => {
     <SidebarGroupLabel>Projects</SidebarGroupLabel>
     <SidebarMenu>
       <!-- Create Project Button -->
-      <SidebarMenuItem v-if="!loading">
+      <SidebarMenuItem v-if="!loading && isOnDashboard && todosLoaded">
         <SidebarMenuButton 
           @click="createProject" 
           :tooltip="isOnSubscriptionPage ? 'Complete subscription upgrade to create projects' : 'Create New Project'"
