@@ -111,6 +111,13 @@ onMounted(async () => {
   window.addEventListener('todosLoaded', () => {
     todosLoaded.value = true;
   });
+
+  // Listen for client filter changes from TodoBoard
+  window.addEventListener('clientFilterChanged', (e: any) => {
+    if (e.detail && e.detail.clientId !== undefined) {
+      activeClientId.value = e.detail.clientId;
+    }
+  });
 });
 
 // Cleanup on unmount
@@ -502,6 +509,9 @@ const isClientCollapsed = (clientName: string) => {
           const target = event.target as HTMLSelectElement;
           const value = target.value;
           activeClientId.value = value === 'all' ? null : Number(value);
+          window.dispatchEvent(new CustomEvent('clientFilterChanged', {
+            detail: { clientId: activeClientId.value }
+          }));
         }"
       >
         <option value="all">All</option>

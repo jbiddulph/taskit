@@ -187,13 +187,29 @@
         <div class="flex flex-col gap-3 md:flex-row md:items-center md:gap-3">
           <!-- Project Select Dropdown - Full width on mobile -->
           <div class="relative flex items-center gap-2">
-            <!-- Project Color Indicator -->
-            <div 
-              v-if="currentProject"
-              class="w-4 h-4 rounded-full flex-shrink-0"
-              :style="{ backgroundColor: currentProject.color }"
-            ></div>
-            <div v-else class="w-4 h-4 rounded-full flex-shrink-0 bg-gray-300"></div>
+            <!-- Client Select Dropdown -->
+            <div class="relative flex items-center">
+              <select
+                v-model="selectedClientId"
+                class="w-4 h-4 opacity-0 absolute inset-0 cursor-pointer z-10"
+                title="Filter by Client"
+              >
+                <option :value="null">All Clients</option>
+                <option 
+                  v-for="client in clients" 
+                  :key="client.id" 
+                  :value="client.id"
+                >
+                  {{ client.name }}
+                </option>
+              </select>
+              <div 
+                v-if="currentProject"
+                class="w-4 h-4 rounded-full flex-shrink-0"
+                :style="{ backgroundColor: currentProject.color }"
+              ></div>
+              <div v-else class="w-4 h-4 rounded-full flex-shrink-0 bg-gray-300"></div>
+            </div>
             
             <!-- HTML Select Dropdown -->
             <select
@@ -203,7 +219,7 @@
               :style="currentProject ? { borderLeftColor: currentProject.color, borderLeftWidth: '4px' } : {}"
             >
               <option 
-                v-for="project in safeProjects" 
+                v-for="project in filteredProjects" 
                 :key="project.id" 
                 :value="project.id"
               >
@@ -883,6 +899,16 @@ const currentProject = ref<Project | null>(null);
 watch(currentProject, (newProject) => {
   emit('project-changed', newProject);
 }, { immediate: true });
+
+const selectedClientId = ref<number | null>(null);
+
+// Watch for client selection changes and dispatch event
+watch(selectedClientId, (newValue) => {
+  window.dispatchEvent(new CustomEvent('clientFilterChanged', {
+    detail: { clientId: newValue }
+  }));
+});
+
 const selectedProjectId = ref<string>('');
 const editingTodo = ref<Todo | null>(null);
 const editingProjectName = ref('');
@@ -1026,6 +1052,14 @@ const hasActiveFilters = computed(() => {
 // Safe projects array to prevent undefined errors
 const safeProjects = computed(() => {
   return projects.value || [];
+});
+
+// Filtered projects based on selected client
+const filteredProjects = computed(() => {
+  if (!selectedClientId.value) {
+    return safeProjects.value;
+  }
+  return safeProjects.value.filter(p => p.client_id === selectedClientId.value);
 });
 
 // Methods
@@ -2825,6 +2859,16 @@ onMounted(async () => {
     }
   };
   window.addEventListener('openTodoById', handleOpenTodoById);
+
+  // Listen for client filter changes from sidebar
+  window.addEventListener('clientFilterChanged', (e: any) => {
+    if (e.detail && e.detail.clientId !== undefined) {
+      // Only update if different to avoid loops (though watch handles this mostly)
+      if (selectedClientId.value !== e.detail.clientId) {
+        selectedClientId.value = e.detail.clientId;
+      }
+    }
+  });
 });
 
 // Cleanup on unmount
