@@ -251,7 +251,7 @@ const cancelEditName = () => {
                                     project.color ? '' : 'border-l-blue-500'
                                 ]"
                                 :style="project.color ? { borderLeftColor: project.color } : undefined"
-                                @click="$inertia.visit(`/projects/${project.id}`)"
+                                @click="router.visit(`/projects/${project.id}`)"
                             >
                                 <div>
                                     <p class="font-medium flex items-center gap-2">
