@@ -282,25 +282,22 @@ const updateProjectClient = async (projectId: number, event: Event) => {
                 </CardHeader>
                 <CardContent>
                     <div class="overflow-hidden">
-                        <div class="space-y-3">
+                        <!-- 4-column grid on desktop, stacks on smaller screens -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                             <div 
                                 v-for="project in projects" 
                                 :key="project.id"
                                 :class="[
-                                    'flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-[6px] cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors',
+                                    'p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-[6px] cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors',
                                     project.color ? '' : 'border-l-blue-500'
                                 ]"
                                 :style="project.color ? { borderLeftColor: project.color } : undefined"
                                 @click="() => {
-                                    if (typeof window !== 'undefined') {
-                                        window.localStorage.setItem('currentProjectId', project.id.toString());
-                                        window.location.href = '/dashboard';
-                                    } else {
-                                        router.visit('/dashboard');
-                                    }
+                                    localStorage.setItem('currentProjectId', project.id.toString());
+                                    router.visit('/dashboard');
                                 }"
                             >
-                                <div class="space-y-1">
+                                <div class="space-y-2">
                                     <p class="font-medium flex items-center gap-2">
                                         {{ project.name }}
                                         <span class="inline-flex items-center rounded-full bg-gray-200 dark:bg-gray-600 px-2 py-0.5 text-xs text-gray-700 dark:text-gray-200">
@@ -329,10 +326,6 @@ const updateProjectClient = async (projectId: number, event: Event) => {
                                             </option>
                                         </select>
                                     </div>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-sm text-gray-500">Owner: {{ project.owner.name }}</p>
-                                    <p class="text-sm text-gray-500">{{ formatDate(project.created_at) }}</p>
                                 </div>
                             </div>
                         </div>
