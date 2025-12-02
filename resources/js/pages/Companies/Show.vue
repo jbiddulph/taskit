@@ -95,7 +95,7 @@ const cancelEditName = () => {
             <!-- Header -->
             <div class="flex items-center gap-2">
                 <div v-if="!editingName" class="flex items-center gap-2">
-                    <Heading>{{ company.name }}</Heading>
+                    <Heading :title="company.name">{{ company.name }}</Heading>
                     <button
                         @click="startEditName"
                         class="p-1 text-gray-400 hover:text-blue-500 transition-colors"
@@ -251,7 +251,7 @@ const cancelEditName = () => {
                                     project.color ? '' : 'border-l-blue-500'
                                 ]"
                                 :style="project.color ? { borderLeftColor: project.color } : undefined"
-                                @click="router.visit(`/projects/${project.id}`)"
+                                @click="$inertia.visit(`/projects/${project.id}`)"
                             >
                                 <div>
                                     <p class="font-medium flex items-center gap-2">
