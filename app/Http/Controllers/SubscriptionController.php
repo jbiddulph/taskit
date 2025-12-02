@@ -104,6 +104,7 @@ class SubscriptionController extends Controller
             // Get company info from session metadata
             $companyId = $session->metadata->company_id ?? null;
             $planType = $session->metadata->plan_type ?? null;
+            $isLifetime = ($session->metadata->is_lifetime ?? 'false') === 'true';
 
             if (!$companyId || !$planType) {
                 \Log::error('Missing metadata in checkout session', ['session_id' => $sessionId]);
@@ -128,8 +129,17 @@ class SubscriptionController extends Controller
                 'subscription_status' => 'active',
             ];
 
-            // If there's a subscription ID, save it
-            if ($session->subscription) {
+            // For lifetime deals (one-time payments), don't set subscription_id
+            // For recurring subscriptions, set subscription_id and end date
+            if ($isLifetime) {
+                // Lifetime deals don't have subscriptions or end dates
+                \Log::info('Lifetime deal payment successful', [
+                    'company_id' => $company->id,
+                    'plan_type' => $planType,
+                    'session_id' => $sessionId
+                ]);
+            } elseif ($session->subscription) {
+                // Recurring subscription - set subscription_id and end date
                 $updateData['stripe_subscription_id'] = $session->subscription;
                 
                 // Get subscription details for end date
@@ -148,7 +158,9 @@ class SubscriptionController extends Controller
                 }
             }
 
-            $company->update($updateData);
+            // Use save() instead of update() to ensure model events fire (which might trigger Supabase sync)
+            $company->fill($updateData);
+            $company->save();
 
             \Log::info('Subscription activated via success callback', [
                 'company_id' => $company->id,
@@ -332,7 +344,8 @@ public function cancelSubscription()
                     $message = "Your subscription will be downgraded to FREE on {$periodEnd->format('F j, Y')}. You'll keep your current {$company->subscription_type} plan benefits until then.";
                 } else {
                     // No active subscription, downgrade immediately
-                    $company->update(['subscription_type' => 'FREE']);
+                    $company->subscription_type = 'FREE';
+                    $company->save();
                     $message = 'Downgraded to FREE plan successfully';
                 }
 
@@ -403,7 +416,8 @@ public function cancelSubscription()
                 } else {
                     // Immediate upgrade or same-tier change
                     $this->stripeService->updateSubscription($company->stripe_subscription_id, $request->plan);
-                    $company->update(['subscription_type' => $request->plan]);
+                    $company->subscription_type = $request->plan;
+                    $company->save();
                     
                     \Log::info('Immediately updated subscription', [
                         'company_id' => $company->id,
@@ -509,10 +523,9 @@ public function cancelSubscription()
             $subscription = $this->stripeService->reactivateSubscription($company->stripe_subscription_id);
 
             // Clear the scheduled change in our database
-            $company->update([
-                'scheduled_subscription_type' => null,
-                'scheduled_change_date' => null,
-            ]);
+            $company->scheduled_subscription_type = null;
+            $company->scheduled_change_date = null;
+            $company->save();
 
             \Log::info('Subscription reactivated successfully', [
                 'company_id' => $company->id,

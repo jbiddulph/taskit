@@ -54,7 +54,7 @@ class RegisteredUserController extends Controller
             'company_type' => 'required|in:create,join,individual',
             'company_name' => 'required_if:company_type,create|string|max:255',
             'company_code' => 'required_if:company_type,join|string|size:8|exists:taskit_companies,code',
-            'subscription_type' => 'required|in:FREE,MIDI,MAXI',
+            'subscription_type' => 'required|in:FREE,MIDI,MAXI,BUSINESS,LTD_SOLO,LTD_TEAM,LTD_AGENCY,LTD_BUSINESS',
         ]);
 
         $companyId = null;

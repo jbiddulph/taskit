@@ -42,6 +42,11 @@ class StripeWebhookController extends Controller
                 $this->handleCheckoutSessionCompleted($event->data->object);
                 break;
                 
+            case 'payment_intent.succeeded':
+                // Handle one-time payments (lifetime deals) that might not trigger checkout.session.completed immediately
+                $this->handlePaymentIntentSucceeded($event->data->object);
+                break;
+                
             case 'customer.subscription.created':
                 $this->handleSubscriptionCreated($event->data->object);
                 break;
@@ -122,13 +127,75 @@ class StripeWebhookController extends Controller
             }
         }
 
-        $company->update($updateData);
+        // Use save() instead of update() to ensure model events fire (which might trigger Supabase sync)
+        $company->fill($updateData);
+        $company->save();
 
         Log::info('Checkout session completed', [
             'company_id' => $companyId,
             'plan_type' => $planType,
             'is_lifetime' => $isLifetime,
             'session_id' => $session->id
+        ]);
+    }
+
+    /**
+     * Handle payment_intent.succeeded for one-time payments (lifetime deals)
+     * This ensures one-time payments are processed even if checkout.session.completed doesn't fire
+     * Note: Payment intents from checkout sessions may not have metadata, so we try to get it from the session
+     */
+    private function handlePaymentIntentSucceeded($paymentIntent): void
+    {
+        // Try to get metadata from payment intent first
+        $companyId = $paymentIntent->metadata->company_id ?? null;
+        $planType = $paymentIntent->metadata->plan_type ?? null;
+        $isLifetime = ($paymentIntent->metadata->is_lifetime ?? 'false') === 'true';
+
+        // If metadata not on payment intent, try to get from checkout session
+        if (!$companyId && isset($paymentIntent->metadata->checkout_session_id)) {
+            try {
+                $session = \Stripe\Checkout\Session::retrieve($paymentIntent->metadata->checkout_session_id);
+                $companyId = $session->metadata->company_id ?? null;
+                $planType = $session->metadata->plan_type ?? null;
+                $isLifetime = ($session->metadata->is_lifetime ?? 'false') === 'true';
+            } catch (\Exception $e) {
+                Log::warning('Could not retrieve checkout session from payment intent', [
+                    'payment_intent_id' => $paymentIntent->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        // Only process if this is from a checkout session (has metadata)
+        if (!$companyId || !$planType) {
+            return; // Not a subscription-related payment
+        }
+
+        // Only handle lifetime deals here (subscriptions are handled via subscription events)
+        if (!$isLifetime) {
+            return;
+        }
+
+        $company = Company::find($companyId);
+        if (!$company) {
+            Log::error('Company not found for payment intent', ['company_id' => $companyId]);
+            return;
+        }
+
+        // Update company for lifetime deal - ensure subscription_type and subscription_status are set
+        $company->fill([
+            'stripe_customer_id' => $paymentIntent->customer ?? $company->stripe_customer_id,
+            'subscription_type' => $planType, // This is critical - sets LTD_SOLO, LTD_TEAM, etc.
+            'subscription_status' => 'active', // Active status for lifetime deals
+        ]);
+        $company->save();
+
+        Log::info('Payment intent succeeded for lifetime deal', [
+            'company_id' => $companyId,
+            'plan_type' => $planType,
+            'payment_intent_id' => $paymentIntent->id,
+            'subscription_type_set' => $company->subscription_type,
+            'subscription_status_set' => $company->subscription_status
         ]);
     }
 
@@ -162,12 +229,14 @@ class StripeWebhookController extends Controller
             ]);
         }
 
-        $company->update([
+        // Use save() instead of update() to ensure model events fire
+        $company->fill([
             'stripe_subscription_id' => $subscription->id,
             'subscription_type' => $planType ?? $company->subscription_type,
             'subscription_status' => $subscription->status,
             'subscription_ends_at' => $subscriptionEndsAt,
         ]);
+        $company->save();
 
         Log::info('Subscription created', [
             'company_id' => $companyId,
@@ -250,7 +319,9 @@ class StripeWebhookController extends Controller
             }
         }
 
-        $company->update($updateData);
+        // Use save() instead of update() to ensure model events fire
+        $company->fill($updateData);
+        $company->save();
 
         Log::info('Subscription updated via webhook', [
             'company_id' => $company->id,
