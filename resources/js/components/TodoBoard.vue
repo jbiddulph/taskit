@@ -216,9 +216,9 @@
               v-if="!props.isReadOnly"
               @click="handleShowForm"
               :disabled="!currentProject"
-              class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
-                     bg-black text-white hover:bg-gray-900 focus:ring-gray-900
-                     dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:focus:ring-gray-300"
+              class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                     bg-black text-white hover:bg-gray-900 hover:border-gray-900 focus:ring-gray-900
+                     dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 dark:focus:ring-gray-300"
             >
               <Icon name="Plus" class="w-4 h-4" />
               <span class="hidden sm:inline">{{ t('dashboard.add') }}</span>
@@ -230,9 +230,9 @@
               v-if="!props.isReadOnly"
               @click="startBulkMode"
               :disabled="!currentProject"
-              class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
-                     bg-black text-white hover:bg-gray-900 focus:ring-gray-900
-                     dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:focus:ring-gray-300"
+              class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                     bg-black text-white hover:bg-gray-900 hover:border-gray-900 focus:ring-gray-900
+                     dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 dark:focus:ring-gray-300"
             >
               <Icon name="Plus" class="w-4 h-4" />
               <span class="hidden sm:inline">{{ t('dashboard.add_bulk') }}</span>
@@ -245,10 +245,10 @@
               @click="handleVoiceRecord"
               :disabled="!currentProject || isRecording || isPreRecording"
               :class="[
-                'flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+                'flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
                 (isRecording || isPreRecording)
-                  ? 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500' 
-                  : 'bg-black text-white hover:bg-gray-900 focus:ring-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:focus:ring-gray-300'
+                  ? 'bg-red-600 text-white hover:bg-red-700 border-red-700 focus:ring-red-500' 
+                  : 'bg-black text-white hover:bg-gray-900 hover:border-gray-900 focus:ring-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 dark:focus:ring-gray-300'
               ]"
               :title="(isRecording || isPreRecording) ? t('dashboard.stop_recording') : t('dashboard.voice_record')"
             >

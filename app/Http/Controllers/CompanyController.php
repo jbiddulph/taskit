@@ -6,6 +6,7 @@ use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use App\Models\Client;
 
 class CompanyController extends Controller
 {
@@ -45,6 +46,11 @@ class CompanyController extends Controller
                 ];
             });
 
+        // Load all clients for this company
+        $clients = Client::where('company_id', $company->id)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         return Inertia::render('Companies/Show', [
             'company' => [
                 'id' => $company->id,
@@ -60,6 +66,7 @@ class CompanyController extends Controller
             ],
             'members' => $company->users()->orderBy('created_at')->get(['id', 'name', 'email', 'created_at']),
             'projects' => $projects,
+            'clients' => $clients,
         ]);
     }
 

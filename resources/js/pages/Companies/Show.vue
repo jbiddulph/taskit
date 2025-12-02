@@ -25,6 +25,10 @@ interface Props {
         email: string;
         created_at: string;
     }>;
+    clients: Array<{
+        id: number;
+        name: string;
+    }>;
     projects: Array<{
         id: number;
         name: string;
@@ -86,6 +90,29 @@ const saveName = () => {
 const cancelEditName = () => {
     editingName.value = false;
     editingNameText.value = '';
+};
+
+const updateProjectClient = async (projectId: number, event: Event) => {
+    const target = event.target as HTMLSelectElement;
+    const value = target.value;
+    const clientId = value === '' ? null : Number(value);
+
+    try {
+        const tokenElement = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
+        const csrfToken = tokenElement?.content ?? '';
+
+        await fetch(`/api/projects/${projectId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
+            },
+            body: JSON.stringify({ client_id: clientId }),
+        });
+    } catch (e) {
+        console.error('Failed to update project client', e);
+    }
 };
 </script>
 
@@ -265,8 +292,12 @@ const cancelEditName = () => {
                                 ]"
                                 :style="project.color ? { borderLeftColor: project.color } : undefined"
                                 @click="() => {
-                                    localStorage.setItem('currentProjectId', project.id.toString());
-                                    router.visit('/dashboard');
+                                    if (typeof window !== 'undefined') {
+                                        window.localStorage.setItem('currentProjectId', project.id.toString());
+                                        window.location.href = '/dashboard';
+                                    } else {
+                                        router.visit('/dashboard');
+                                    }
                                 }"
                             >
                                 <div class="space-y-1">
@@ -286,14 +317,16 @@ const cancelEditName = () => {
                                         <select
                                             class="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-xs text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                             :value="project.client ? project.client.id : ''"
-                                            @change="(event) => {
-                                                const value = (event.target as HTMLSelectElement).value;
-                                                const clientId = value === '' ? null : Number(value);
-                                                // TODO: wire this up to an API endpoint to update the project's client_id
-                                            }"
+                                            @change="(event) => updateProjectClient(project.id, event)"
                                         >
                                             <option value="">No Client</option>
-                                            <!-- This will be wired to real clients once available in this view -->
+                                            <option
+                                                v-for="client in clients"
+                                                :key="client.id"
+                                                :value="client.id"
+                                            >
+                                                {{ client.name }}
+                                            </option>
                                         </select>
                                     </div>
                                 </div>
