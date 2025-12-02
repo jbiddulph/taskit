@@ -146,46 +146,71 @@ const updateProjectClient = async (projectId: number, event: Event) => {
         <div class="space-y-6 p-6">
             <!-- Header -->
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <!-- Company + optional client context -->
-                <div class="flex items-center gap-2">
-                <div v-if="!editingName" class="flex items-center gap-2">
-                    <Heading :title="company.name">{{ company.name }}</Heading>
-                    <button
-                        @click="startEditName"
-                        class="p-1 text-gray-400 hover:text-blue-500 transition-colors"
-                        title="Edit company name"
-                    >
-                        <Icon name="Edit3" class="w-5 h-5" />
-                    </button>
-                </div>
-                <div v-else class="flex items-center gap-2">
-                    <input
-                        v-model="editingNameText"
-                        @keydown.enter="saveName"
-                        @keydown.escape="cancelEditName"
-                        @blur="saveName"
-                        class="text-3xl font-bold text-gray-900 dark:text-gray-100 bg-transparent border-b-2 border-blue-500 focus:outline-none focus:border-blue-600"
-                        placeholder="Enter company name"
-                        ref="nameInput"
-                    />
-                    <button
-                        @click="saveName"
-                        class="p-1 text-green-500 hover:text-green-600 transition-colors"
-                        title="Save"
-                    >
-                        <Icon name="Check" class="w-5 h-5" />
-                    </button>
-                    <button
-                        @click="cancelEditName"
-                        class="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                        title="Cancel"
-                    >
-                        <Icon name="X" class="w-5 h-5" />
-                    </button>
+                <!-- Company name + code + inline project filter -->
+                <div class="flex flex-col gap-1">
+                    <div class="flex items-center gap-2">
+                        <div v-if="!editingName" class="flex items-center gap-2">
+                            <Heading :title="company.name">{{ company.name }}</Heading>
+                            <button
+                                @click="startEditName"
+                                class="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                                title="Edit company name"
+                            >
+                                <Icon name="Edit3" class="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div v-else class="flex items-center gap-2">
+                            <input
+                                v-model="editingNameText"
+                                @keydown.enter="saveName"
+                                @keydown.escape="cancelEditName"
+                                @blur="saveName"
+                                class="text-3xl font-bold text-gray-900 dark:text-gray-100 bg-transparent border-b-2 border-blue-500 focus:outline-none focus:border-blue-600"
+                                placeholder="Enter company name"
+                                ref="nameInput"
+                            />
+                            <button
+                                @click="saveName"
+                                class="p-1 text-green-500 hover:text-green-600 transition-colors"
+                                title="Save"
+                            >
+                                <Icon name="Check" class="w-5 h-5" />
+                            </button>
+                            <button
+                                @click="cancelEditName"
+                                class="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                title="Cancel"
+                            >
+                                <Icon name="X" class="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
+                        <span>
+                            Company Code: 
+                            <span class="font-mono font-semibold text-gray-900 dark:text-gray-100">{{ company.code }}</span>
+                        </span>
+                        <div class="flex items-center gap-2">
+                            <span>Project Filter:</span>
+                            <select
+                                class="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:focus:border-blue-400 dark:focus:ring-blue-400"
+                                :value="selectedClientFilter"
+                                @change="handleClientFilterChange"
+                            >
+                                <option value="all">All Projects</option>
+                                <option
+                                    v-for="client in clients"
+                                    :key="client.id"
+                                    :value="client.id"
+                                >
+                                    {{ client.name }}
+                                </option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Active client filter label (desktop) -->
+                <!-- Active client filter label (desktop, right side) -->
                 <div v-if="selectedClientName" class="text-sm text-gray-600 dark:text-gray-300">
                     Viewing projects for 
                     <span class="font-semibold">{{ selectedClientName }}</span>
@@ -206,28 +231,6 @@ const updateProjectClient = async (projectId: number, event: Event) => {
                         <div>
                             <label class="text-sm font-medium text-gray-500">Company Name</label>
                             <p class="text-lg font-semibold">{{ company.name }}</p>
-                        </div>
-                        <!-- Project filter: All projects or by client -->
-                        <div>
-                            <label class="text-sm font-medium text-gray-500">Project Filter</label>
-                            <select
-                                class="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:focus:border-blue-400 dark:focus:ring-blue-400"
-                                :value="selectedClientFilter"
-                                @change="handleClientFilterChange"
-                            >
-                                <option value="all">All Projects</option>
-                                <option
-                                    v-for="client in clients"
-                                    :key="client.id"
-                                    :value="client.id"
-                                >
-                                    {{ client.name }}
-                                </option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-sm font-medium text-gray-500">Company Code</label>
-                            <p class="text-lg font-mono">{{ company.code }}</p>
                         </div>
                         <div v-if="company.description">
                             <label class="text-sm font-medium text-gray-500">Description</label>
@@ -314,28 +317,10 @@ const updateProjectClient = async (projectId: number, event: Event) => {
             <!-- Projects List -->
             <Card>
                 <CardHeader>
-                    <div class="flex items-center justify-between gap-4">
-                        <CardTitle class="flex items-center gap-2">
-                            <Icon name="FolderOpen" class="w-5 h-5" />
-                            Projects ({{ projects.length }})
-                        </CardTitle>
-                        <!-- New Project Button -->
-                        <button
-                            type="button"
-                            @click="() => {
-                                if (typeof window !== 'undefined') {
-                                    window.dispatchEvent(new CustomEvent('openCreateProjectModal'));
-                                    router.visit('/dashboard');
-                                }
-                            }"
-                            class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors
-                                   bg-black text-white hover:bg-gray-900 hover:border-gray-900
-                                   dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300"
-                        >
-                            <Icon name="Plus" class="w-4 h-4" />
-                            <span>New Project</span>
-                        </button>
-                    </div>
+                    <CardTitle class="flex items-center gap-2">
+                        <Icon name="FolderOpen" class="w-5 h-5" />
+                        Projects ({{ projects.length }})
+                    </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div class="overflow-hidden">
