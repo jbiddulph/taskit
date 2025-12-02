@@ -18,15 +18,10 @@ const props = withDefaults(
             code: string;
             subscription_type: string;
         } | null;
-        clients?: Array<{
-            id: number;
-            name: string;
-        }>;
     }>(),
     {
         breadcrumbs: () => [],
         company: null,
-        clients: () => [],
     },
 );
 
@@ -39,25 +34,6 @@ const toggleMobileMenu = () => {
 
 const closeMobileMenu = () => {
     isMobileMenuOpen.value = false;
-};
-
-const handleClientFilterChange = (event: Event) => {
-    const target = event.target as HTMLSelectElement;
-    const value = target.value;
-
-    const clientId = value === 'all' ? null : Number(value);
-    const clientName =
-        value === 'all'
-            ? ''
-            : props.clients?.find((c) => c.id === clientId)?.name ?? '';
-
-    if (typeof window !== 'undefined') {
-        window.dispatchEvent(
-            new CustomEvent('clientFilterChanged', {
-                detail: { clientId, clientName },
-            }),
-        );
-    }
 };
 </script>
 
@@ -86,24 +62,6 @@ const handleClientFilterChange = (event: Event) => {
                     :company-name="company.name" 
                     :subscription-type="company.subscription_type"
                 />
-                
-                <!-- Project Filter controlling sidebar projects -->
-                <div v-if="clients && clients.length" class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                    <span>Projects:</span>
-                    <select
-                        class="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:focus:border-blue-400 dark:focus:ring-blue-400"
-                        @change="handleClientFilterChange"
-                    >
-                        <option value="all">All Projects</option>
-                        <option
-                            v-for="client in clients"
-                            :key="client.id"
-                            :value="client.id"
-                        >
-                            {{ client.name }}
-                        </option>
-                    </select>
-                </div>
                 
                 <!-- Company Info Link -->
                 <Link 

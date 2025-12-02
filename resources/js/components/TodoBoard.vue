@@ -172,7 +172,10 @@
             <div v-if="!currentProject && !props.isReadOnly" class="mt-4">
               <button
                 @click="showCreateProject = true"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer
+                       bg-black text-white hover:bg-gray-900 hover:border-gray-900
+                       dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300
+                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 dark:focus:ring-gray-300"
               >
                 <Icon name="Plus" class="w-4 h-4" />
                 {{ t('dashboard.create_project') }}

@@ -120,7 +120,7 @@ const updateProjectClient = async (projectId: number, event: Event) => {
 </script>
 
 <template>
-    <AppSidebarLayout :company="company" :clients="clients">
+    <AppSidebarLayout :company="company">
         <div class="space-y-6 p-6">
             <!-- Header -->
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -11,6 +11,14 @@ const projects = ref<Project[]>([]);
 const groupedProjects = ref<any>(null);
 const activeClientId = ref<number | null>(null);
 const todosLoaded = ref(false);
+
+const availableClients = computed(() => {
+  if (!groupedProjects.value || !groupedProjects.value.clients) return [];
+  return Object.values(groupedProjects.value.clients).map((c: any) => ({
+    id: c.id,
+    name: c.name,
+  }));
+});
 const currentProject = ref<Project | null>(null);
 const loading = ref(false);
 const isUpdatingProject = ref(false); // Flag to prevent circular events
@@ -91,12 +99,6 @@ onMounted(async () => {
         isUpdatingProject.value = false;
       }
     }
-  });
-  
-  // Listen for client filter changes (from Company page or other UIs)
-  window.addEventListener('clientFilterChanged', (e: any) => {
-    const clientId = e.detail?.clientId ?? null;
-    activeClientId.value = clientId;
   });
   
   // Listen for subscription downgrades to reload projects list
@@ -491,7 +493,28 @@ const isClientCollapsed = (clientName: string) => {
 
 <template>
   <SidebarGroup class="px-2 py-0">
+  <div class="flex items-center justify-between gap-2">
     <SidebarGroupLabel>Projects</SidebarGroupLabel>
+    <div v-if="availableClients.length" class="flex items-center gap-1 text-[11px] text-gray-600 dark:text-gray-300">
+      <select
+        class="rounded-md border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:focus:border-gray-100 dark:focus:ring-gray-100"
+        @change="(event: Event) => {
+          const target = event.target as HTMLSelectElement;
+          const value = target.value;
+          activeClientId.value = value === 'all' ? null : Number(value);
+        }"
+      >
+        <option value="all">All</option>
+        <option
+          v-for="client in availableClients"
+          :key="client.id"
+          :value="client.id"
+        >
+          {{ client.name }}
+        </option>
+      </select>
+    </div>
+  </div>
     <SidebarMenu>
       <!-- Create Project Button -->
       <SidebarMenuItem v-if="!loading && isOnDashboard && todosLoaded">
