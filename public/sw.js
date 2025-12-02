@@ -97,6 +97,9 @@ self.addEventListener('fetch', (event) => {
               caches.open(STATIC_CACHE)
                 .then((cache) => {
                   cache.put(request, responseToCache);
+                })
+                .catch(() => {
+                  // Silently fail if caching doesn't work
                 });
             } else if (isApiRequest(request)) {
               // Temporarily disable API caching to fix realtime issues
@@ -125,7 +128,6 @@ self.addEventListener('fetch', (event) => {
             return response;
           })
           .catch((error) => {
-            
             // Return offline page for navigation requests
             if (request.mode === 'navigate') {
               return caches.match('/offline.html') || new Response(
@@ -134,8 +136,22 @@ self.addEventListener('fetch', (event) => {
               );
             }
             
-            throw error;
+            // For non-navigation requests, return a basic error response
+            // This prevents unhandled promise rejections
+            return new Response('Network error', { 
+              status: 503, 
+              statusText: 'Service Unavailable' 
+            });
           });
+      })
+      .catch(() => {
+        // If cache match fails, just try to fetch normally
+        return fetch(request).catch(() => {
+          return new Response('Network error', { 
+            status: 503, 
+            statusText: 'Service Unavailable' 
+          });
+        });
       })
   );
 });

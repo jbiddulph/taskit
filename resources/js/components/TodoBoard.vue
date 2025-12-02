@@ -14,7 +14,48 @@
       </div>
     </div>
 
-    <!-- Voice recording overlay -->
+    <!-- Voice recording overlay - Pre-recording countdown (shows on top for 3 seconds) -->
+    <div
+      v-if="isPreRecording && isRecording"
+      class="fixed inset-0 z-[101] bg-black/40 backdrop-blur-sm flex items-center justify-center"
+    >
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl border-2 border-purple-500 p-8 max-w-md w-full mx-4">
+        <div class="flex flex-col items-center gap-4">
+          <!-- Countdown icon -->
+          <div class="relative">
+            <div class="absolute inset-0 bg-purple-500 rounded-full animate-ping opacity-75"></div>
+            <div class="relative bg-purple-600 rounded-full p-6">
+              <Icon name="Mic" class="w-12 h-12 text-white" />
+            </div>
+          </div>
+          
+          <!-- Countdown text -->
+          <div class="text-center">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              Recording started!
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              You have 10 seconds to record your task
+            </p>
+          </div>
+
+          <!-- Pre-recording countdown timer -->
+          <div class="text-6xl font-bold text-purple-600 dark:text-purple-400 font-mono">
+            {{ preRecordingCountdown }}
+          </div>
+
+          <!-- Cancel button -->
+          <button
+            @click="stopRecording"
+            class="mt-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors font-medium"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Voice recording overlay - Recording -->
     <div
       v-if="isRecording"
       class="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center"
@@ -39,10 +80,13 @@
             </p>
           </div>
 
-          <!-- Timer -->
+          <!-- Recording countdown timer (showing remaining time) -->
           <div class="text-4xl font-bold text-red-600 dark:text-red-400 font-mono">
-            {{ formatTimer(recordingTime) }}
+            {{ Math.max(0, recordingDurationLimit - recordingTime) }}
           </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            seconds remaining
+          </p>
 
           <!-- Stop button -->
           <button
@@ -183,17 +227,17 @@
             <button
               v-if="!props.isReadOnly"
               @click="handleVoiceRecord"
-              :disabled="!currentProject || isRecording"
+              :disabled="!currentProject || isRecording || isPreRecording"
               :class="[
                 'flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
-                isRecording 
+                (isRecording || isPreRecording)
                   ? 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500' 
                   : 'bg-purple-600 text-white hover:bg-purple-700 focus:ring-purple-500'
               ]"
-              :title="isRecording ? t('dashboard.stop_recording') : t('dashboard.voice_record')"
+              :title="(isRecording || isPreRecording) ? t('dashboard.stop_recording') : t('dashboard.voice_record')"
             >
               <Icon name="Mic" class="w-4 h-4" />
-              <span class="hidden sm:inline">{{ isRecording ? t('dashboard.recording') : t('dashboard.voice') }}</span>
+              <span class="hidden sm:inline">{{ (isRecording || isPreRecording) ? t('dashboard.recording') : t('dashboard.voice') }}</span>
             </button>
 
             <!-- Add Bulk Button -->
@@ -383,7 +427,6 @@
     <div v-if="props.showCalendar" class="mb-4">
       <CalendarView :todos="todos" :isReadOnly="props.isReadOnly" @edit-todo="handleEditTodoFromCalendar" @add-todo="handleAddTodoFromCalendar" />
     </div>
-    <TodoStats v-else :todos="todos" />
 
     <!-- Bulk Operations Bar -->
     <BulkOperationsBar
@@ -485,6 +528,11 @@
         @toggle-selection="toggleSelection"
         @todo-click="emit('todo-click', $event)"
       />
+    </div>
+
+    <!-- Statistics - Full Width Below Columns -->
+    <div v-if="!props.showCalendar" class="w-full mt-4">
+      <TodoStats :todos="todos" />
     </div>
 
     <!-- Todo Form Modal -->
@@ -1435,12 +1483,30 @@ const handleShowForm = () => {
 
 // Voice recording state
 const isRecording = ref(false);
+const isPreRecording = ref(false);
 const recognition = ref<any>(null);
 const recordingTime = ref(0);
 const recordingTimer = ref<number | null>(null);
+const preRecordingCountdown = ref(3);
+const preRecordingTimer = ref<number | null>(null);
+const recordingDurationLimit = 10; // 10 seconds
+const accumulatedTranscript = ref('');
 
 // Initialize voice recording
 const initVoiceRecording = () => {
+  // Check if we're in a secure context (HTTPS or localhost)
+  if (!window.isSecureContext) {
+    console.warn('Web Speech API requires a secure context (HTTPS or localhost)');
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: 'Secure Context Required',
+        message: 'Voice recording requires a secure connection. Please use HTTPS or localhost.'
+      });
+    }
+    return;
+  }
+  
   // Check if browser supports Web Speech API
   if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
     console.warn('Web Speech API not supported in this browser');
@@ -1450,41 +1516,120 @@ const initVoiceRecording = () => {
   const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
   recognition.value = new SpeechRecognition();
   
-  recognition.value.continuous = false;
-  recognition.value.interimResults = false;
+  recognition.value.continuous = true; // Keep recording until stopped
+  recognition.value.interimResults = true; // Show interim results
   recognition.value.lang = 'en-US';
 
   recognition.value.onresult = async (event: any) => {
-    const transcript = event.results[0][0].transcript;
-    console.log('Voice transcription:', transcript);
+    // Accumulate all results
+    let interimTranscript = '';
+    let finalTranscript = '';
     
-    // Create a new todo with the transcribed text as the title
-    if (transcript.trim()) {
-      const newTodo = {
-        id: 0,
-        user_id: 0,
-        project_id: currentProject.value!.id,
-        company_id: 0,
-        title: transcript.trim(),
-        description: '',
-        status: 'todo' as const,
-        priority: 'Medium' as const,
-        type: 'Task',
-        assignee: '',
-        due_date: '',
-        tags: [],
-        parent_task_id: null,
-        created_at: '',
-        updated_at: '',
-        project: currentProject.value,
-        comments: [],
-        attachments: [],
-        subtasks: []
-      };
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript + ' ';
+      } else {
+        interimTranscript += transcript;
+      }
+    }
+    
+    accumulatedTranscript.value = finalTranscript + interimTranscript;
+    console.log('Voice transcription (interim):', accumulatedTranscript.value);
+    
+    // Only create todo when we have final results and recording has stopped
+    // We'll handle this in onend to avoid creating multiple todos
+  };
+
+  recognition.value.onerror = (event: any) => {
+    console.error('❌ Speech recognition error:', event.error);
+    
+    let errorMessage = 'Failed to recognize speech.';
+    let errorTitle = 'Voice Recognition Error';
+    
+    if (event.error === 'not-allowed') {
+      errorTitle = 'Microphone Access Denied';
+      // Detect browser for specific instructions
+      const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+      const isSafari = /Safari/.test(navigator.userAgent) && /Apple Computer/.test(navigator.vendor);
+      const isFirefox = /Firefox/.test(navigator.userAgent);
+      
+      if (isChrome) {
+        errorMessage = 'Microphone access was denied. To enable:\n1. Click the lock icon (🔒) in the address bar\n2. Find "Microphone" in the permissions list\n3. Change it to "Allow"\n4. Refresh the page and try again.';
+      } else if (isSafari) {
+        errorMessage = 'Microphone access was denied. To enable:\n1. Go to Safari → Settings for This Website\n2. Find "Microphone" and set it to "Allow"\n3. Refresh the page and try again.';
+      } else if (isFirefox) {
+        errorMessage = 'Microphone access was denied. To enable:\n1. Click the lock icon (🔒) in the address bar\n2. Click "Permissions" → "Microphone"\n3. Select "Allow" and refresh the page.';
+      } else {
+        errorMessage = 'Microphone access was denied. Please allow microphone access in your browser settings (look for the lock icon in the address bar) and try again.';
+      }
+    } else if (event.error === 'no-speech') {
+      errorMessage = 'No speech detected. Please try speaking again or check that your microphone is working.';
+    } else if (event.error === 'audio-capture') {
+      errorMessage = 'No microphone found. Please connect a microphone and try again.';
+    } else if (event.error === 'network') {
+      errorMessage = 'Network error. Please check your internet connection and try again.';
+    } else if (event.error === 'aborted') {
+      // User stopped recording, don't show error
+      return;
+    } else {
+      errorMessage = `Speech recognition error: ${event.error}. Please try again.`;
+    }
+    
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: errorTitle,
+        message: errorMessage
+      });
+    }
+    isRecording.value = false;
+    stopTimer();
+    accumulatedTranscript.value = '';
+  };
+
+  recognition.value.onstart = () => {
+    console.log('🎤 Speech recognition started');
+  };
+
+  recognition.value.onend = async () => {
+    console.log('🛑 Speech recognition ended');
+    isRecording.value = false;
+    stopTimer();
+    
+    // Create todo from accumulated transcript when recording ends
+    if (accumulatedTranscript.value.trim() && currentProject.value) {
+      const transcript = accumulatedTranscript.value.trim();
+      console.log('Creating todo from voice transcription:', transcript);
       
       try {
-        await saveTodo(newTodo as Todo);
-        console.log('✅ Voice todo created successfully:', transcript);
+        const newTodo = await todoApi.createTodo({
+          project_id: currentProject.value.id,
+          title: transcript,
+          description: '',
+          status: 'todo',
+          priority: 'Medium',
+        });
+        
+        console.log('✅ Voice todo created successfully:', newTodo);
+        
+        // The realtime service should automatically add it to the list
+        // But we can also manually add it for immediate feedback
+        if (newTodo.project_id === currentProject.value.id) {
+          todos.value.push(newTodo);
+        }
+        
+        // Close any open modal/form
+        showForm.value = false;
+        editingTodo.value = null;
+        
+        if ((window as any).$notify) {
+          (window as any).$notify({
+            type: 'success',
+            title: 'Voice Todo Created',
+            message: `Created: "${transcript}"`
+          });
+        }
       } catch (error) {
         console.error('❌ Error creating voice todo:', error);
         if ((window as any).$notify) {
@@ -1495,34 +1640,10 @@ const initVoiceRecording = () => {
           });
         }
       }
+      
+      // Reset accumulated transcript
+      accumulatedTranscript.value = '';
     }
-    
-    // Don't set isRecording to false here - let onend handle it
-    // This is important for mobile browsers
-    console.log('✅ onresult completed, waiting for onend');
-  };
-
-  recognition.value.onerror = (event: any) => {
-    console.error('❌ Speech recognition error:', event.error);
-    if ((window as any).$notify) {
-      (window as any).$notify({
-        type: 'error',
-        title: 'Voice Recognition Error',
-        message: `Failed to recognize speech: ${event.error}`
-      });
-    }
-    isRecording.value = false;
-    stopTimer();
-  };
-
-  recognition.value.onstart = () => {
-    console.log('🎤 Speech recognition started');
-  };
-
-  recognition.value.onend = () => {
-    console.log('🛑 Speech recognition ended');
-    isRecording.value = false;
-    stopTimer();
   };
 };
 
@@ -1533,12 +1654,73 @@ const formatTimer = (seconds: number): string => {
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
-// Start timer
+// Start timer with 10 second limit
 const startTimer = () => {
   recordingTime.value = 0;
   recordingTimer.value = window.setInterval(() => {
     recordingTime.value++;
+    // Auto-stop after 10 seconds
+    if (recordingTime.value >= recordingDurationLimit) {
+      stopRecording();
+    }
   }, 1000);
+};
+
+// Start pre-recording countdown (recording already started)
+const startPreRecordingCountdown = () => {
+  isPreRecording.value = true;
+  preRecordingCountdown.value = 3;
+  preRecordingTimer.value = window.setInterval(() => {
+    preRecordingCountdown.value--;
+    if (preRecordingCountdown.value <= 0) {
+      stopPreRecordingCountdown();
+      // Start the 10-second timer now
+      startTimer();
+    }
+  }, 1000);
+};
+
+// Stop pre-recording countdown
+const stopPreRecordingCountdown = () => {
+  if (preRecordingTimer.value) {
+    clearInterval(preRecordingTimer.value);
+    preRecordingTimer.value = null;
+  }
+  isPreRecording.value = false;
+  preRecordingCountdown.value = 3;
+};
+
+// Start actual recording
+const startActualRecording = () => {
+  if (!recognition.value || !currentProject.value) {
+    return;
+  }
+  
+  console.log('🎤 Starting voice recording...');
+  try {
+    accumulatedTranscript.value = ''; // Reset transcript for new recording
+    recognition.value.start();
+    isRecording.value = true;
+    // Timer will start after 3-second countdown completes
+    console.log('✅ Recording started successfully');
+  } catch (error: any) {
+    console.error('❌ Failed to start speech recognition:', error);
+    isRecording.value = false;
+    stopTimer();
+    
+    let errorMessage = 'Failed to start voice recording. Please try again.';
+    if (error.message && error.message.includes('not-allowed')) {
+      errorMessage = 'Microphone access denied. Please allow microphone access in your browser settings.';
+    }
+    
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: 'Recording Failed',
+        message: errorMessage
+      });
+    }
+  }
 };
 
 // Stop timer
@@ -1552,11 +1734,17 @@ const stopTimer = () => {
 // Stop recording handler
 const stopRecording = () => {
   console.log('🔴 Stop recording called');
+  stopPreRecordingCountdown(); // Stop pre-recording if active
+  
   if (recognition.value && isRecording.value) {
     recognition.value.stop();
+    // onend will handle creating the todo and resetting the transcript
+  } else {
+    // If not recording, just reset state
+    isRecording.value = false;
+    stopTimer();
+    accumulatedTranscript.value = '';
   }
-  isRecording.value = false;
-  stopTimer();
 };
 
 const handleVoiceRecord = () => {
@@ -1586,23 +1774,15 @@ const handleVoiceRecord = () => {
     }
   }
 
-  if (isRecording.value) {
-    // Stop recording
-    console.log('🛑 Already recording, stopping...');
+  if (isRecording.value || isPreRecording.value) {
+    // Stop recording or pre-recording countdown
+    console.log('🛑 Already recording or counting down, stopping...');
     stopRecording();
   } else {
-    // Start recording
-    console.log('🎤 Starting voice recording...');
-    try {
-      recognition.value.start();
-      isRecording.value = true;
-      startTimer();
-      console.log('✅ Recording started successfully');
-    } catch (error) {
-      console.error('❌ Failed to start speech recognition:', error);
-      isRecording.value = false;
-      stopTimer();
-    }
+    // Start recording immediately, then show 3-second countdown overlay
+    console.log('🎤 Starting voice recording immediately...');
+    startActualRecording();
+    startPreRecordingCountdown();
   }
 };
 
@@ -2295,6 +2475,11 @@ onMounted(async () => {
   // Finally load todos for the current project
   await loadTodos();
   
+  // Initialize voice recording
+  if (!props.isReadOnly) {
+    initVoiceRecording();
+  }
+  
   // Subscribe to real-time todo updates (allow in read-only mode for viewing)
   // if (!props.isReadOnly) {
   
@@ -2307,18 +2492,59 @@ onMounted(async () => {
         // Add new todo to the list if it belongs to current project
         const newTodo = event.data;
         console.log('🔥 Processing todo_created:', newTodo);
+        console.log('🔥 New todo parent_task_id:', newTodo.parent_task_id);
+        
         if (!currentProject.value || newTodo.project_id === currentProject.value.id) {
-          if (!todos.value.find(t => t.id === newTodo.id)) {
-            // Ensure the new todo has the project relationship
-            const todoWithProject = {
-              ...newTodo,
-              project: currentProject.value
-            };
-            console.log('🔥 Adding new todo to list:', todoWithProject);
-            todos.value.push(todoWithProject);
-            console.log('🔥 Updated todos list:', todos.value.length, 'todos');
+          // Check if this is a subtask
+          if (newTodo.parent_task_id) {
+            // Find the parent todo and add this subtask to its subtasks array
+            const parentIndex = todos.value.findIndex(t => t.id === newTodo.parent_task_id);
+            if (parentIndex !== -1) {
+              const parentTodo = todos.value[parentIndex];
+              // Initialize subtasks array if it doesn't exist
+              if (!parentTodo.subtasks) {
+                parentTodo.subtasks = [];
+              }
+              
+              // Check if subtask already exists
+              const existingSubtaskIndex = parentTodo.subtasks.findIndex((st: any) => st.id === newTodo.id);
+              if (existingSubtaskIndex === -1) {
+                // Ensure the new subtask has the project relationship
+                const subtaskWithProject = {
+                  ...newTodo,
+                  project: currentProject.value
+                };
+                parentTodo.subtasks.push(subtaskWithProject);
+                console.log('🔥 Added subtask to parent:', parentTodo.title, 'Subtask:', newTodo.title);
+                // Force reactivity update
+                todos.value = [...todos.value];
+              } else {
+                console.log('🔥 Subtask already exists in parent, skipping');
+              }
+            } else {
+              console.log('🔥 Parent todo not found for subtask, adding to main list temporarily');
+              // Parent not found yet, add to main list (it will be moved when parent loads)
+              const todoWithProject = {
+                ...newTodo,
+                project: currentProject.value
+              };
+              todos.value.push(todoWithProject);
+            }
           } else {
-            console.log('🔥 Todo already exists, skipping');
+            // Regular todo (not a subtask)
+            if (!todos.value.find(t => t.id === newTodo.id)) {
+              // Ensure the new todo has the project relationship
+              const todoWithProject = {
+                ...newTodo,
+                project: currentProject.value,
+                subtasks: [] // Initialize subtasks array
+              };
+              console.log('🔥 Adding new todo to list:', todoWithProject);
+              todos.value.push(todoWithProject);
+              console.log('🔥 Updated todos list:', todos.value.length, 'todos');
+            } else {
+              console.log('🔥 Todo already exists, skipping');
+            }
           }
         } else {
           console.log('🔥 Todo not for current project, skipping');
@@ -2329,19 +2555,61 @@ onMounted(async () => {
         // Update existing todo in the list
         const updatedTodo = event.data;
         console.log('🔥 Processing todo_updated:', updatedTodo);
-        const updateIndex = todos.value.findIndex(t => t.id === updatedTodo.id);
-        if (updateIndex !== -1) {
-          // Preserve the project relationship from the existing todo
-          const existingTodo = todos.value[updateIndex];
-          const todoWithProject = {
-            ...updatedTodo,
-            project: existingTodo.project || currentProject.value
-          };
-          console.log('🔥 Updating todo at index:', updateIndex, todoWithProject);
-          todos.value[updateIndex] = todoWithProject;
-          console.log('🔥 Updated todos list:', todos.value.length, 'todos');
+        console.log('🔥 Updated todo parent_task_id:', updatedTodo.parent_task_id);
+        
+        // Check if this is a subtask
+        if (updatedTodo.parent_task_id) {
+          // Find the parent todo and update the subtask in its subtasks array
+          const parentIndex = todos.value.findIndex(t => t.id === updatedTodo.parent_task_id);
+          if (parentIndex !== -1) {
+            const parentTodo = todos.value[parentIndex];
+            if (parentTodo.subtasks) {
+              const subtaskIndex = parentTodo.subtasks.findIndex((st: any) => st.id === updatedTodo.id);
+              if (subtaskIndex !== -1) {
+                // Preserve the project relationship
+                const existingSubtask = parentTodo.subtasks[subtaskIndex];
+                const subtaskWithProject = {
+                  ...updatedTodo,
+                  project: existingSubtask.project || currentProject.value
+                };
+                parentTodo.subtasks[subtaskIndex] = subtaskWithProject;
+                console.log('🔥 Updated subtask in parent:', parentTodo.title, 'Subtask:', updatedTodo.title);
+                // Force reactivity update
+                todos.value = [...todos.value];
+              } else {
+                console.log('🔥 Subtask not found in parent for update, skipping');
+              }
+            }
+          } else {
+            console.log('🔥 Parent todo not found for subtask update, trying main list');
+            // Try to update in main list if parent not found
+            const updateIndex = todos.value.findIndex(t => t.id === updatedTodo.id);
+            if (updateIndex !== -1) {
+              const existingTodo = todos.value[updateIndex];
+              const todoWithProject = {
+                ...updatedTodo,
+                project: existingTodo.project || currentProject.value
+              };
+              todos.value[updateIndex] = todoWithProject;
+            }
+          }
         } else {
-          console.log('🔥 Todo not found for update, skipping');
+          // Regular todo (not a subtask)
+          const updateIndex = todos.value.findIndex(t => t.id === updatedTodo.id);
+          if (updateIndex !== -1) {
+            // Preserve the project relationship from the existing todo
+            const existingTodo = todos.value[updateIndex];
+            const todoWithProject = {
+              ...updatedTodo,
+              project: existingTodo.project || currentProject.value,
+              subtasks: existingTodo.subtasks || [] // Preserve subtasks
+            };
+            console.log('🔥 Updating todo at index:', updateIndex, todoWithProject);
+            todos.value[updateIndex] = todoWithProject;
+            console.log('🔥 Updated todos list:', todos.value.length, 'todos');
+          } else {
+            console.log('🔥 Todo not found for update, skipping');
+          }
         }
         break;
         
@@ -2349,18 +2617,53 @@ onMounted(async () => {
         // Remove todo from the list
         const deletedTodo = event.data;
         console.log('🔥 Processing todo_deleted:', deletedTodo);
-        const deleteIndex = todos.value.findIndex(t => t.id === deletedTodo.id);
-        if (deleteIndex !== -1) {
-          console.log('🔥 Removing todo at index:', deleteIndex);
-          todos.value.splice(deleteIndex, 1);
-          // Force reactivity update to ensure UI changes immediately
-          todos.value = [...todos.value];
-          console.log('🔥 Updated todos list:', todos.value.length, 'todos');
-          
-          // Dispatch event to refresh sidebar project stats
-          window.dispatchEvent(new CustomEvent('todoChanged'));
+        console.log('🔥 Deleted todo parent_task_id:', deletedTodo.parent_task_id);
+        
+        // Check if this is a subtask
+        if (deletedTodo.parent_task_id) {
+          // Find the parent todo and remove the subtask from its subtasks array
+          const parentIndex = todos.value.findIndex(t => t.id === deletedTodo.parent_task_id);
+          if (parentIndex !== -1) {
+            const parentTodo = todos.value[parentIndex];
+            if (parentTodo.subtasks) {
+              const subtaskIndex = parentTodo.subtasks.findIndex((st: any) => st.id === deletedTodo.id);
+              if (subtaskIndex !== -1) {
+                parentTodo.subtasks.splice(subtaskIndex, 1);
+                console.log('🔥 Removed subtask from parent:', parentTodo.title, 'Subtask ID:', deletedTodo.id);
+                // Force reactivity update
+                todos.value = [...todos.value];
+                
+                // Dispatch event to refresh sidebar project stats
+                window.dispatchEvent(new CustomEvent('todoChanged'));
+              } else {
+                console.log('🔥 Subtask not found in parent for deletion, skipping');
+              }
+            }
+          } else {
+            console.log('🔥 Parent todo not found for subtask deletion, trying main list');
+            // Try to delete from main list if parent not found
+            const deleteIndex = todos.value.findIndex(t => t.id === deletedTodo.id);
+            if (deleteIndex !== -1) {
+              todos.value.splice(deleteIndex, 1);
+              todos.value = [...todos.value];
+              window.dispatchEvent(new CustomEvent('todoChanged'));
+            }
+          }
         } else {
-          console.log('🔥 Todo not found for deletion, skipping');
+          // Regular todo (not a subtask)
+          const deleteIndex = todos.value.findIndex(t => t.id === deletedTodo.id);
+          if (deleteIndex !== -1) {
+            console.log('🔥 Removing todo at index:', deleteIndex);
+            todos.value.splice(deleteIndex, 1);
+            // Force reactivity update to ensure UI changes immediately
+            todos.value = [...todos.value];
+            console.log('🔥 Updated todos list:', todos.value.length, 'todos');
+            
+            // Dispatch event to refresh sidebar project stats
+            window.dispatchEvent(new CustomEvent('todoChanged'));
+          } else {
+            console.log('🔥 Todo not found for deletion, skipping');
+          }
         }
         break;
     }
@@ -2518,8 +2821,13 @@ onUnmounted(() => {
   if (unsubscribeFromTodos) {
     unsubscribeFromTodos();
   }
-  // Clean up voice recording timer
+  // Clean up voice recording timers
   stopTimer();
+  stopPreRecordingCountdown();
+  // Stop recording if active
+  if (recognition.value && isRecording.value) {
+    recognition.value.stop();
+  }
   // Remove listeners
   window.removeEventListener('openTodoById', (e: any) => {});
 });

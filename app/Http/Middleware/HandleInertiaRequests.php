@@ -16,6 +16,19 @@ class HandleInertiaRequests extends Middleware
      * @var string
      */
     protected $rootView = 'app';
+    
+    /**
+     * Skip Inertia for Filament admin routes
+     */
+    public function handle(Request $request, \Closure $next)
+    {
+        // Do not run Inertia middleware on Filament admin or Livewire routes
+        if ($request->is('admin*') || $request->is('livewire/*')) {
+            return $next($request);
+        }
+
+        return parent::handle($request, $next);
+    }
 
     /**
      * Determines the current asset version.

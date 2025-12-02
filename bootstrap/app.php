@@ -26,6 +26,11 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\TrustHosts::class,
             \App\Http\Middleware\SubdomainMiddleware::class,
         ]);
+        
+        // Exclude Filament admin routes from Inertia middleware
+        $middleware->web(append: [
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ]);
 
         $middleware->api(append: [
             \Illuminate\Cookie\Middleware\EncryptCookies::class,
@@ -46,8 +51,8 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->booted(function (Application $app) {
-        // Force HTTPS for all URL generation in production
-        if (config('app.force_https', true)) {
+        // Force HTTPS for all URL generation in production only
+        if (config('app.force_https', true) && !$app->environment('local')) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
     })->create();

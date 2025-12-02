@@ -15,6 +15,12 @@ class ForceHttps
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Force HTTPS for all URLs, but only in production
+        // Skip in local development
+        if (app()->environment('local')) {
+            return $next($request);
+        }
+        
         // Force HTTPS for all URLs, but only if we're not already on HTTPS
         // and if the request is coming from a non-secure connection
         if (config('app.force_https', true) && 
