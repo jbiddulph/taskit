@@ -216,14 +216,30 @@
               v-if="!props.isReadOnly"
               @click="handleShowForm"
               :disabled="!currentProject"
-              class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                     bg-black text-white hover:bg-gray-900 focus:ring-gray-900
+                     dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:focus:ring-gray-300"
             >
               <Icon name="Plus" class="w-4 h-4" />
               <span class="hidden sm:inline">{{ t('dashboard.add') }}</span>
               <span class="sm:hidden">{{ t('dashboard.add') }}</span>
             </button>
 
-            <!-- Voice Record Button -->
+            <!-- Add Bulk Button (center) -->
+            <button
+              v-if="!props.isReadOnly"
+              @click="startBulkMode"
+              :disabled="!currentProject"
+              class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                     bg-black text-white hover:bg-gray-900 focus:ring-gray-900
+                     dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:focus:ring-gray-300"
+            >
+              <Icon name="Plus" class="w-4 h-4" />
+              <span class="hidden sm:inline">{{ t('dashboard.add_bulk') }}</span>
+              <span class="sm:hidden">{{ t('dashboard.bulk') }}</span>
+            </button>
+
+            <!-- Voice Record Button (right) -->
             <button
               v-if="!props.isReadOnly"
               @click="handleVoiceRecord"
@@ -232,24 +248,12 @@
                 'flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
                 (isRecording || isPreRecording)
                   ? 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500' 
-                  : 'bg-purple-600 text-white hover:bg-purple-700 focus:ring-purple-500'
+                  : 'bg-black text-white hover:bg-gray-900 focus:ring-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:focus:ring-gray-300'
               ]"
               :title="(isRecording || isPreRecording) ? t('dashboard.stop_recording') : t('dashboard.voice_record')"
             >
               <Icon name="Mic" class="w-4 h-4" />
               <span class="hidden sm:inline">{{ (isRecording || isPreRecording) ? t('dashboard.recording') : t('dashboard.voice') }}</span>
-            </button>
-
-            <!-- Add Bulk Button -->
-            <button
-              v-if="!props.isReadOnly"
-              @click="startBulkMode"
-              :disabled="!currentProject"
-              class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Icon name="Plus" class="w-4 h-4" />
-              <span class="hidden sm:inline">{{ t('dashboard.add_bulk') }}</span>
-              <span class="sm:hidden">{{ t('dashboard.bulk') }}</span>
             </button>
 
             <!-- Filters Button -->
