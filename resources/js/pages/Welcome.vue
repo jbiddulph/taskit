@@ -300,168 +300,182 @@ onMounted(() => {
         </section>
         
         <!-- Pricing Section -->
-        <section id="pricing" class="w-full py-8 lg:py-12 mt-12" style="background-color: #E1E7FF;">
-            <div class="max-w-6xl mx-auto px-6">
-                <div class="text-center mb-12">
-                    <h2 class="text-3xl lg:text-4xl font-bold text-[#1b1b18] dark:text-[#A1A09A] mb-4">
+        <section id="pricing" class="w-full py-16 lg:py-24 mt-12 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-4xl lg:text-5xl font-bold text-[#1b1b18] dark:text-white mb-6">
                         Choose Your Plan
                     </h2>
-                    <p class="text-lg text-[#4a4a45] dark:text-[#D0D0CB] max-w-2xl mx-auto">
-                        Select the perfect plan for your team size and project needs
+                    <p class="text-xl text-[#4a4a45] dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                        Select the perfect plan for your team size and project needs. All plans include our core features with no hidden fees.
                     </p>
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                <!-- FREE Plan -->
-                <div class="relative bg-white dark:bg-[#161615] rounded-lg p-8 shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-[#e3e3e0] dark:border-[#3E3E3A] hover:shadow-[0_8px_30px_rgba(0,0,0,0.15)] transition-shadow duration-300">
-                    <div class="text-center mb-6">
-                        <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">⭐ FREE</h3>
-                        <div class="text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1">£0</div>
-                        <div class="text-sm text-[#4a4a45] dark:text-[#D0D0CB]">Forever free</div>
-                    </div>
-                    
-                    <div class="space-y-4 mb-8">
-                        <div class="space-y-2 text-sm text-[#4a4a45] dark:text-[#D0D0CB]">
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span>1 user</span>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    <!-- FREE Plan -->
+                    <div class="relative bg-white dark:bg-[#161615] rounded-2xl p-8 shadow-xl border-2 border-gray-200 dark:border-gray-700 hover:shadow-2xl hover:scale-105 transition-all duration-300 flex flex-col">
+                        <div class="text-center mb-6">
+                            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+                                <span class="text-2xl">⭐</span>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span>3 projects</span>
+                            <h3 class="text-3xl font-bold text-[#1b1b18] dark:text-white mb-3">FREE</h3>
+                            <div class="mb-2">
+                                <span class="text-5xl font-bold text-[#1b1b18] dark:text-white">£0</span>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <div class="text-sm text-[#4a4a45] dark:text-gray-400 font-medium">Forever free</div>
+                        </div>
+                        
+                        <div class="flex-grow space-y-3 mb-8">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span>200 todos</span>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">1 user</span>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span>Basic features</span>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">3 projects</span>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">200 todos</span>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Basic features</span>
                             </div>
                         </div>
+                        
+                        <Link
+                            :href="register({ query: { plan: 'FREE' } })"
+                            class="w-full inline-block text-center rounded-xl bg-gray-800 dark:bg-gray-700 px-6 py-4 text-base font-semibold text-white hover:bg-gray-900 dark:hover:bg-gray-600 transition-all duration-200 shadow-lg hover:shadow-xl"
+                        >
+                            Get Started Free
+                        </Link>
                     </div>
                     
-                    <Link
-                        :href="register({ query: { plan: 'FREE' } })"
-                        class="w-full inline-block text-center rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
-                    >
-                        Get Started Free
-                    </Link>
+                    <!-- MIDI Plan -->
+                    <div class="relative bg-white dark:bg-[#161615] rounded-2xl p-8 shadow-xl border-2 border-blue-300 dark:border-blue-600 hover:shadow-2xl hover:scale-105 transition-all duration-300 flex flex-col">
+                        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                            <span class="bg-blue-600 text-white px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-wide">Popular</span>
+                        </div>
+                        <div class="text-center mb-6">
+                            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 mb-4">
+                                <span class="text-2xl">⭐</span>
+                            </div>
+                            <h3 class="text-3xl font-bold text-[#1b1b18] dark:text-white mb-3">MIDI</h3>
+                            <div class="mb-2">
+                                <span class="text-5xl font-bold text-[#1b1b18] dark:text-white">£6</span>
+                                <span class="text-lg text-[#4a4a45] dark:text-gray-400">/mo</span>
+                            </div>
+                            <div class="text-xs text-green-600 dark:text-green-400 font-medium">or £60/year (save £12)</div>
+                        </div>
+                        
+                        <div class="flex-grow space-y-3 mb-8">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Up to 5 members</span>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Up to 20 projects</span>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300 font-semibold">Unlimited todos</span>
+                            </div>
+                        </div>
+                        
+                        <Link
+                            :href="register({ query: { plan: 'MIDI' } })"
+                            class="w-full inline-block text-center rounded-xl bg-blue-600 px-6 py-4 text-base font-semibold text-white hover:bg-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                        >
+                            Start MIDI Plan
+                        </Link>
+                    </div>
+                    
+                    <!-- MAXI Plan -->
+                    <div class="relative bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-2xl p-8 shadow-xl border-2 border-amber-400 dark:border-amber-600 hover:shadow-2xl hover:scale-105 transition-all duration-300 flex flex-col">
+                        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                            <span class="bg-gradient-to-r from-amber-400 to-yellow-400 text-[#1b1b18] px-5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-lg">Best Value</span>
+                        </div>
+                        <div class="text-center mb-6">
+                            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-amber-200 to-yellow-200 dark:from-amber-800 dark:to-yellow-800 mb-4">
+                                <span class="text-2xl">⭐</span>
+                            </div>
+                            <h3 class="text-3xl font-bold text-[#1b1b18] dark:text-white mb-3">MAXI</h3>
+                            <div class="mb-2">
+                                <span class="text-5xl font-bold text-[#1b1b18] dark:text-white">£12</span>
+                                <span class="text-lg text-[#4a4a45] dark:text-gray-400">/mo</span>
+                            </div>
+                            <div class="text-xs text-green-600 dark:text-green-400 font-medium">or £120/year (save £24)</div>
+                        </div>
+                        
+                        <div class="flex-grow space-y-3 mb-8">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Up to 20 members</span>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Up to 100 projects</span>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300 font-semibold">Unlimited todos</span>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Integrations</span>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Automations</span>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300 font-semibold">Priority support</span>
+                            </div>
+                        </div>
+                        
+                        <Link
+                            :href="register({ query: { plan: 'MAXI' } })"
+                            class="w-full inline-block text-center rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 px-6 py-4 text-base font-semibold text-[#1b1b18] hover:from-amber-600 hover:to-yellow-600 transition-all duration-200 shadow-lg hover:shadow-xl"
+                        >
+                            Start MAXI Plan
+                        </Link>
+                    </div>
                 </div>
                 
-                <!-- MIDI Plan -->
-                <div class="relative bg-white dark:bg-[#161615] rounded-lg p-8 shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-[#e3e3e0] dark:border-[#3E3E3A] hover:shadow-[0_8px_30px_rgba(0,0,0,0.15)] transition-shadow duration-300">
-                    
-                    <div class="text-center mb-6">
-                        <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">⭐ MIDI</h3>
-                        <div class="text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1">£6</div>
-                        <div class="text-sm text-[#4a4a45] dark:text-[#D0D0CB]">per month</div>
-                        <div class="text-xs text-green-600 dark:text-green-400 mt-1">or £60/year (save £12)</div>
-                    </div>
-                    
-                    <div class="space-y-4 mb-8">
-                        <div class="space-y-2 text-sm text-[#4a4a45] dark:text-[#D0D0CB]">
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span>Up to 5 members</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span>Up to 20 projects</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span>Unlimited todos</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <Link
-                        :href="register({ query: { plan: 'MIDI' } })"
-                        class="w-full inline-block text-center rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
-                    >
-                        Start MIDI Plan
-                    </Link>
-                </div>
-                
-                <!-- MAXI Plan -->
-                <div class="relative bg-white dark:bg-[#161615] rounded-lg p-8 shadow-[0_4px_20px_rgba(0,0,0,0.1)] border-2 border-amber-500 hover:shadow-[0_8px_30px_rgba(0,0,0,0.15)] transition-shadow duration-300">
-                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                        <span class="bg-amber-400 text-[#1b1b18] px-4 py-1 rounded-full text-sm font-medium">Best Value</span>
-                    </div>
-                    <div class="text-center mb-6">
-                        <h3 class="text-2xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">⭐ MAXI</h3>
-                        <div class="text-4xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-1">£12</div>
-                        <div class="text-sm text-[#4a4a45] dark:text-[#D0D0CB]">per month</div>
-                        <div class="text-xs text-green-600 dark:text-green-400 mt-1">or £120/year (save £24)</div>
-                    </div>
-                    
-                    <div class="space-y-4 mb-8">
-                        <div class="space-y-2 text-sm text-[#4a4a45] dark:text-[#D0D0CB]">
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span>Up to 20 members</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span>Up to 100 projects</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span>Unlimited todos</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span>Integrations</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span>Automations</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span>Priority support</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <Link
-                        :href="register({ query: { plan: 'MAXI' } })"
-                        class="w-full inline-block text-center rounded-lg bg-amber-500 px-6 py-3 text-sm font-medium text-[#1b1b18] hover:bg-amber-600 transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
-                    >
-                        Start MAXI Plan
-                    </Link>
-                </div>
-            </div>
-            
-                <div class="text-center mt-12 text-sm text-[#4a4a45] dark:text-[#D0D0CB]">
-                    <p>All plans include our core features: Kanban boards, real-time collaboration, file attachments, and email notifications.</p>
+                <div class="text-center mt-16">
+                    <p class="text-base text-[#4a4a45] dark:text-gray-400 max-w-2xl mx-auto">
+                        All plans include our core features: Kanban boards, real-time collaboration, file attachments, and email notifications. 
+                        <span class="font-semibold text-[#1b1b18] dark:text-white">No credit card required for FREE plan.</span>
+                    </p>
                 </div>
             </div>
         </section>

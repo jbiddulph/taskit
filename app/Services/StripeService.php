@@ -129,15 +129,17 @@ class StripeService
                     'plan_type' => $planType,
                     'billing_interval' => $billingInterval,
                     'is_lifetime' => $isLifetime ? 'true' : 'false',
-                ],
-                'payment_method_collection' => 'always'
+                ]
             ];
 
             // Set mode based on whether it's a subscription or one-time payment
             if ($isLifetime) {
                 $sessionParams['mode'] = 'payment';
+                // For one-time payments, don't set payment_method_collection
+                // It's only allowed for recurring subscriptions
             } else {
                 $sessionParams['mode'] = 'subscription';
+                $sessionParams['payment_method_collection'] = 'always';
                 $sessionParams['subscription_data'] = [
                     'metadata' => [
                         'company_id' => $company->id,

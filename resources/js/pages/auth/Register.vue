@@ -76,18 +76,21 @@ const showIndividualOption = computed(() => subscriptionType.value === 'FREE');
 
                 <!-- Subscription Type Selection -->
                 <div class="grid gap-2">
-                    <Label for="subscription_type">Subscription Plan</Label>
+                    <Label for="subscription_type">Choose Your Plan</Label>
                     <select
                         id="subscription_type"
                         name="subscription_type"
                         v-model="subscriptionType"
-                        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                         :tabindex="5"
                     >
-                        <option value="FREE">FREE - £0/month</option>
-                        <option value="MIDI">MIDI - £6/month</option>
-                        <option value="MAXI">MAXI - £12/month</option>
+                        <option value="FREE">⭐ FREE - £0/month (1 user, 3 projects, 200 todos)</option>
+                        <option value="MIDI">⭐ MIDI - £6/month (Up to 5 members, 20 projects, unlimited todos)</option>
+                        <option value="MAXI">⭐ MAXI - £12/month (Up to 20 members, 100 projects, integrations & automations)</option>
                     </select>
+                    <p class="text-xs text-muted-foreground mt-1">
+                        You can upgrade or change your plan anytime after registration.
+                    </p>
                     <InputError :message="errors.subscription_type" />
                 </div>
 
