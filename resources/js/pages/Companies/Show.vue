@@ -235,10 +235,23 @@ const cancelEditName = () => {
             <!-- Projects List -->
             <Card>
                 <CardHeader>
-                    <CardTitle class="flex items-center gap-2">
-                        <Icon name="FolderOpen" class="w-5 h-5" />
-                        Projects ({{ projects.length }})
-                    </CardTitle>
+                    <div class="flex items-center justify-between gap-4">
+                        <CardTitle class="flex items-center gap-2">
+                            <Icon name="FolderOpen" class="w-5 h-5" />
+                            Projects ({{ projects.length }})
+                        </CardTitle>
+                        <!-- New Project Button -->
+                        <button
+                            type="button"
+                            @click="router.visit('/dashboard')"
+                            class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors
+                                   bg-black text-white hover:bg-gray-900 hover:border-gray-900
+                                   dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300"
+                        >
+                            <Icon name="Plus" class="w-4 h-4" />
+                            <span>New Project</span>
+                        </button>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <div class="overflow-hidden">
@@ -251,9 +264,12 @@ const cancelEditName = () => {
                                     project.color ? '' : 'border-l-blue-500'
                                 ]"
                                 :style="project.color ? { borderLeftColor: project.color } : undefined"
-                                @click="$inertia.visit(`/projects/${project.id}`)"
+                                @click="() => {
+                                    localStorage.setItem('currentProjectId', project.id.toString());
+                                    router.visit('/dashboard');
+                                }"
                             >
-                                <div>
+                                <div class="space-y-1">
                                     <p class="font-medium flex items-center gap-2">
                                         {{ project.name }}
                                         <span class="inline-flex items-center rounded-full bg-gray-200 dark:bg-gray-600 px-2 py-0.5 text-xs text-gray-700 dark:text-gray-200">
@@ -262,6 +278,24 @@ const cancelEditName = () => {
                                     </p>
                                     <p class="text-sm text-gray-500">{{ project.key }}</p>
                                     <p v-if="project.client" class="text-sm text-blue-600">{{ project.client.name }}</p>
+                                    <!-- Optional Client selector (inline, non-blocking) -->
+                                    <div class="mt-2" @click.stop>
+                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+                                            Client (Optional)
+                                        </label>
+                                        <select
+                                            class="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-xs text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                            :value="project.client ? project.client.id : ''"
+                                            @change="(event) => {
+                                                const value = (event.target as HTMLSelectElement).value;
+                                                const clientId = value === '' ? null : Number(value);
+                                                // TODO: wire this up to an API endpoint to update the project's client_id
+                                            }"
+                                        >
+                                            <option value="">No Client</option>
+                                            <!-- This will be wired to real clients once available in this view -->
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="text-right">
                                     <p class="text-sm text-gray-500">Owner: {{ project.owner.name }}</p>

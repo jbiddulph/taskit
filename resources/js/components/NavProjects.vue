@@ -448,10 +448,17 @@ const isClientCollapsed = (clientName: string) => {
         <SidebarMenuButton 
           @click="createProject" 
           :tooltip="isOnSubscriptionPage ? 'Complete subscription upgrade to create projects' : 'Create New Project'"
-          :class="{ 'opacity-50 cursor-not-allowed': isOnSubscriptionPage }"
+          :class="[
+            'justify-between rounded-md border text-sm font-medium transition-colors',
+            'bg-black text-white hover:bg-gray-900 hover:border-gray-900',
+            'dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300',
+            { 'opacity-50 cursor-not-allowed': isOnSubscriptionPage }
+          ]"
         >
-          <Icon name="Plus" class="w-4 h-4" />
-          <span>New Project</span>
+          <div class="flex items-center gap-2">
+            <Icon name="Plus" class="w-4 h-4" />
+            <span>New Project</span>
+          </div>
         </SidebarMenuButton>
       </SidebarMenuItem>
       
