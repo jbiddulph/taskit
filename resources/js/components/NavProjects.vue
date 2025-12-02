@@ -188,6 +188,14 @@ const visibleGroupedProjects = computed(() => {
   };
 });
 
+// Computed filtered projects for flat list view
+const filteredProjects = computed(() => {
+  if (!selectedClientId.value) {
+    return projects.value;
+  }
+  return projects.value.filter(p => p.client_id === selectedClientId.value);
+});
+
 const selectProject = (project: Project) => {
   currentProject.value = project;
   localStorage.setItem('currentProjectId', project.id.toString());
@@ -662,10 +670,9 @@ const isClientCollapsed = (clientName: string) => {
         </template>
       </template>
       
-      <!-- Fallback: Flat Project List (when no grouping available) -->
       <template v-else>
         <SidebarMenuItem 
-          v-for="(project, index) in projects" 
+          v-for="(project, index) in filteredProjects" 
           :key="project.id"
           @dragover="handleDragOver($event, index)"
           @dragleave="handleDragLeave"
