@@ -188,28 +188,20 @@
           <!-- Project Select Dropdown - Full width on mobile -->
           <div class="relative flex items-center gap-2">
             <!-- Client Select Dropdown -->
-            <div class="relative flex items-center">
-              <select
-                v-model="selectedClientId"
-                class="w-4 h-4 opacity-0 absolute inset-0 cursor-pointer z-10"
-                title="Filter by Client"
+            <select
+              v-model="selectedClientId"
+              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-pointer"
+              title="Filter by Client"
+            >
+              <option :value="null">All Clients</option>
+              <option 
+                v-for="client in clients" 
+                :key="client.id" 
+                :value="client.id"
               >
-                <option :value="null">All Clients</option>
-                <option 
-                  v-for="client in clients" 
-                  :key="client.id" 
-                  :value="client.id"
-                >
-                  {{ client.name }}
-                </option>
-              </select>
-              <div 
-                v-if="currentProject"
-                class="w-4 h-4 rounded-full flex-shrink-0"
-                :style="{ backgroundColor: currentProject.color }"
-              ></div>
-              <div v-else class="w-4 h-4 rounded-full flex-shrink-0 bg-gray-300"></div>
-            </div>
+                {{ client.name }}
+              </option>
+            </select>
             
             <!-- HTML Select Dropdown -->
             <select
