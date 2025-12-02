@@ -3,13 +3,14 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { todoApi, type Project } from '@/services/todoApi';
 import { realtimeService } from '@/services/realtimeService';
+import { useClientStore } from '@/composables/useClientStore';
 import Icon from '@/components/Icon.vue';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 // import { usePage } from '@inertiajs/vue3';
 const projects = ref<Project[]>([]);
 const groupedProjects = ref<any>(null);
-const activeClientId = ref<number | null>(null);
+const { selectedClientId, setClientId } = useClientStore();
 const todosLoaded = ref(false);
 
 const availableClients = computed(() => {
@@ -111,13 +112,6 @@ onMounted(async () => {
   window.addEventListener('todosLoaded', () => {
     todosLoaded.value = true;
   });
-
-  // Listen for client filter changes from TodoBoard
-  window.addEventListener('clientFilterChanged', (e: any) => {
-    if (e.detail && e.detail.clientId !== undefined) {
-      activeClientId.value = e.detail.clientId;
-    }
-  });
 });
 
 // Cleanup on unmount
@@ -169,13 +163,13 @@ const visibleGroupedProjects = computed(() => {
   }
 
   // No active client filter → show all groups
-  if (!activeClientId.value) {
+  if (!selectedClientId.value) {
     return groupedProjects.value;
   }
 
   const clientsGroup = groupedProjects.value.clients || {};
   const target = Object.values(clientsGroup).find(
-    (c: any) => c.id === activeClientId.value
+    (c: any) => c.id === selectedClientId.value
   ) as any | undefined;
 
   if (!target) {
@@ -505,13 +499,11 @@ const isClientCollapsed = (clientName: string) => {
     <div v-if="availableClients.length" class="flex items-center gap-1 text-[11px] text-gray-600 dark:text-gray-300">
       <select
         class="rounded-md border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:focus:border-gray-100 dark:focus:ring-gray-100"
+        :value="selectedClientId || 'all'"
         @change="(event: Event) => {
           const target = event.target as HTMLSelectElement;
           const value = target.value;
-          activeClientId.value = value === 'all' ? null : Number(value);
-          window.dispatchEvent(new CustomEvent('clientFilterChanged', {
-            detail: { clientId: activeClientId.value }
-          }));
+          setClientId(value === 'all' ? null : Number(value));
         }"
       >
         <option value="all">All</option>

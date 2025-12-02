@@ -189,7 +189,7 @@
           <div class="relative flex items-center gap-2">
             <!-- Client Select Dropdown -->
             <select
-              v-model="selectedClientId"
+              v-model="selectedClientIdModel"
               class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-pointer"
               title="Filter by Client"
             >
@@ -809,6 +809,7 @@ import { deleteImagesInHtml } from '@/services/supabaseClient';
 import { useAnalytics } from '../composables/useAnalytics';
 import { useKeyboardShortcuts } from '../composables/useKeyboardShortcuts';
 import { useBulkOperations } from '../composables/useBulkOperations';
+import { useClientStore } from '../composables/useClientStore';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 // Define props
@@ -892,13 +893,37 @@ watch(currentProject, (newProject) => {
   emit('project-changed', newProject);
 }, { immediate: true });
 
-const selectedClientId = ref<number | null>(null);
+const { selectedClientId, setClientId } = useClientStore();
 
-// Watch for client selection changes and dispatch event
+// Computed property for v-model binding
+const selectedClientIdModel = computed({
+  get: () => selectedClientId.value,
+  set: (value: number | null) => setClientId(value)
+});
+
+// Watch for client selection changes to auto-select first project
 watch(selectedClientId, (newValue) => {
-  window.dispatchEvent(new CustomEvent('clientFilterChanged', {
-    detail: { clientId: newValue }
-  }));
+  // If we have filtered projects and the current project is not in the list (or no project selected),
+  // select the first one
+  if (filteredProjects.value.length > 0) {
+    const isCurrentProjectVisible = currentProject.value && filteredProjects.value.some(p => p.id === currentProject.value!.id);
+    
+    if (!isCurrentProjectVisible) {
+      const firstProject = filteredProjects.value[0];
+      onProjectChange(firstProject.id.toString());
+      // Also update the dropdown selection model locally to match
+      selectedProjectId.value = firstProject.id.toString();
+    }
+  } else if (newValue !== null) {
+    // If client selected but no projects, clear selection
+    currentProject.value = null;
+    selectedProjectId.value = '';
+    localStorage.removeItem('currentProjectId');
+    todos.value = [];
+    window.dispatchEvent(new CustomEvent('projectSelected', {
+      detail: { projectId: null }
+    }));
+  }
 });
 
 const selectedProjectId = ref<string>('');
@@ -2108,7 +2133,7 @@ const loadProjects = async () => {
 
 
 // Handle project selection change (keeping for backward compatibility)
-const onProjectChange = async () => {
+const onProjectChange = async (projectIdOrEvent?: Event | string) => {
   
   if (!selectedProjectId.value) {
     currentProject.value = null;
@@ -2125,7 +2150,8 @@ const onProjectChange = async () => {
   try {
     isUpdatingProject.value = true;
     
-    const projectId = parseInt(selectedProjectId.value);
+    // Allow passing ID directly or use the bound value
+    const projectId = typeof projectIdOrEvent === 'string' ? parseInt(projectIdOrEvent) : parseInt(selectedProjectId.value);
     
     // In read-only mode, find project from props
     if (props.isReadOnly && props.projects) {
@@ -2851,16 +2877,6 @@ onMounted(async () => {
     }
   };
   window.addEventListener('openTodoById', handleOpenTodoById);
-
-  // Listen for client filter changes from sidebar
-  window.addEventListener('clientFilterChanged', (e: any) => {
-    if (e.detail && e.detail.clientId !== undefined) {
-      // Only update if different to avoid loops (though watch handles this mostly)
-      if (selectedClientId.value !== e.detail.clientId) {
-        selectedClientId.value = e.detail.clientId;
-      }
-    }
-  });
 });
 
 // Cleanup on unmount
