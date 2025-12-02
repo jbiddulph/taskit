@@ -53,6 +53,18 @@ interface Props {
 
 const { client } = defineProps<Props>();
 
+// Project filter state (for future expansion if needed)
+// Currently this page already shows only this client's projects,
+// but we still dispatch a sidebar filter event on mount so the
+// left sidebar only shows this client's projects.
+if (typeof window !== 'undefined') {
+  window.dispatchEvent(
+    new CustomEvent('clientFilterChanged', {
+      detail: { clientId: client.id, clientName: client.name },
+    }),
+  );
+}
+
 const deleteForm = useForm({});
 
 const deleteClient = () => {
@@ -252,7 +264,26 @@ const toggleSelectMode = () => {
             <!-- Projects -->
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
               <div class="p-6">
-                <h2 class="text-lg font-semibold mb-4">Projects</h2>
+                <div class="flex items-center justify-between mb-4">
+                  <h2 class="text-lg font-semibold">Projects</h2>
+                  <!-- Project Filter aligned right (currently fixed to this client) -->
+                  <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <span>Project Filter:</span>
+                    <select
+                      class="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:focus:border-gray-100 dark:focus:ring-gray-100"
+                      :value="client.id"
+                      @change="() => {
+                        if (typeof window !== 'undefined') {
+                          window.dispatchEvent(new CustomEvent('clientFilterChanged', {
+                            detail: { clientId: client.id, clientName: client.name },
+                          }));
+                        }
+                      }"
+                    >
+                      <option :value="client.id">{{ client.name }}</option>
+                    </select>
+                  </div>
+                </div>
                 
                 <div v-if="client.projects.length > 0" class="space-y-3">
                   <div
