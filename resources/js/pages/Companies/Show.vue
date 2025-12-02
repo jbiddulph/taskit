@@ -29,6 +29,8 @@ interface Props {
         id: number;
         name: string;
         key: string;
+        color?: string | null;
+        total_todos?: number;
         client?: {
             id: number;
             name: string;
@@ -244,10 +246,20 @@ const cancelEditName = () => {
                             <div 
                                 v-for="project in projects" 
                                 :key="project.id"
-                                class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                                :class="[
+                                    'flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-[6px] cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors',
+                                    project.color ? '' : 'border-l-blue-500'
+                                ]"
+                                :style="project.color ? { borderLeftColor: project.color } : undefined"
+                                @click="$inertia.visit(`/projects/${project.id}`)"
                             >
                                 <div>
-                                    <p class="font-medium">{{ project.name }}</p>
+                                    <p class="font-medium flex items-center gap-2">
+                                        {{ project.name }}
+                                        <span class="inline-flex items-center rounded-full bg-gray-200 dark:bg-gray-600 px-2 py-0.5 text-xs text-gray-700 dark:text-gray-200">
+                                            {{ project.total_todos ?? 0 }} {{ (project.total_todos ?? 0) === 1 ? 'Todo' : 'Todos' }}
+                                        </span>
+                                    </p>
                                     <p class="text-sm text-gray-500">{{ project.key }}</p>
                                     <p v-if="project.client" class="text-sm text-blue-600">{{ project.client.name }}</p>
                                 </div>

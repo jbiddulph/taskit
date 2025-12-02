@@ -21,6 +21,30 @@ class CompanyController extends Controller
             abort(403, 'You can only view your own company.');
         }
 
+        $projects = $company->projects()
+            ->with(['client', 'owner'])
+            ->withCount('todos')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($project) {
+                return [
+                    'id' => $project->id,
+                    'name' => $project->name,
+                    'key' => $project->key,
+                    'color' => $project->color,
+                    'total_todos' => $project->todos_count,
+                    'client' => $project->client ? [
+                        'id' => $project->client->id,
+                        'name' => $project->client->name,
+                    ] : null,
+                    'owner' => $project->owner ? [
+                        'id' => $project->owner->id,
+                        'name' => $project->owner->name,
+                    ] : null,
+                    'created_at' => $project->created_at,
+                ];
+            });
+
         return Inertia::render('Companies/Show', [
             'company' => [
                 'id' => $company->id,
@@ -35,7 +59,7 @@ class CompanyController extends Controller
                 'project_limit' => $company->getProjectLimit(),
             ],
             'members' => $company->users()->orderBy('created_at')->get(['id', 'name', 'email', 'created_at']),
-            'projects' => $company->projects()->with('client', 'owner')->orderBy('created_at', 'desc')->get(),
+            'projects' => $projects,
         ]);
     }
 
