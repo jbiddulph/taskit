@@ -92,6 +92,31 @@ const cancelEditName = () => {
     editingNameText.value = '';
 };
 
+const selectedClientFilter = ref<string>('all');
+const selectedClientName = ref<string>('');
+
+const handleClientFilterChange = (event: Event) => {
+    const target = event.target as HTMLSelectElement;
+    const value = target.value;
+    selectedClientFilter.value = value;
+
+    const clientId = value === 'all' ? null : Number(value);
+    const clientName =
+        value === 'all'
+            ? ''
+            : props.clients.find((c) => c.id === clientId)?.name ?? '';
+
+    selectedClientName.value = clientName;
+
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+            new CustomEvent('clientFilterChanged', {
+                detail: { clientId, clientName },
+            })
+        );
+    }
+};
+
 const updateProjectClient = async (projectId: number, event: Event) => {
     const target = event.target as HTMLSelectElement;
     const value = target.value;
@@ -120,7 +145,9 @@ const updateProjectClient = async (projectId: number, event: Event) => {
     <AppSidebarLayout :company="company">
         <div class="space-y-6 p-6">
             <!-- Header -->
-            <div class="flex items-center gap-2">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <!-- Company + optional client context -->
+                <div class="flex items-center gap-2">
                 <div v-if="!editingName" class="flex items-center gap-2">
                     <Heading :title="company.name">{{ company.name }}</Heading>
                     <button
@@ -155,6 +182,13 @@ const updateProjectClient = async (projectId: number, event: Event) => {
                     >
                         <Icon name="X" class="w-5 h-5" />
                     </button>
+                    </div>
+                </div>
+
+                <!-- Active client filter label (desktop) -->
+                <div v-if="selectedClientName" class="text-sm text-gray-600 dark:text-gray-300">
+                    Viewing projects for 
+                    <span class="font-semibold">{{ selectedClientName }}</span>
                 </div>
             </div>
 
@@ -172,6 +206,24 @@ const updateProjectClient = async (projectId: number, event: Event) => {
                         <div>
                             <label class="text-sm font-medium text-gray-500">Company Name</label>
                             <p class="text-lg font-semibold">{{ company.name }}</p>
+                        </div>
+                        <!-- Project filter: All projects or by client -->
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Project Filter</label>
+                            <select
+                                class="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:focus:border-blue-400 dark:focus:ring-blue-400"
+                                :value="selectedClientFilter"
+                                @change="handleClientFilterChange"
+                            >
+                                <option value="all">All Projects</option>
+                                <option
+                                    v-for="client in clients"
+                                    :key="client.id"
+                                    :value="client.id"
+                                >
+                                    {{ client.name }}
+                                </option>
+                            </select>
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-500">Company Code</label>
@@ -270,7 +322,12 @@ const updateProjectClient = async (projectId: number, event: Event) => {
                         <!-- New Project Button -->
                         <button
                             type="button"
-                            @click="router.visit('/dashboard')"
+                            @click="() => {
+                                if (typeof window !== 'undefined') {
+                                    window.dispatchEvent(new CustomEvent('openCreateProjectModal'));
+                                    router.visit('/dashboard');
+                                }
+                            }"
                             class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors
                                    bg-black text-white hover:bg-gray-900 hover:border-gray-900
                                    dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300"
@@ -288,10 +345,19 @@ const updateProjectClient = async (projectId: number, event: Event) => {
                                 v-for="project in projects" 
                                 :key="project.id"
                                 :class="[
-                                    'p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-[6px] cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors',
+                                    'p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors',
                                     project.color ? '' : 'border-l-blue-500'
                                 ]"
-                                :style="project.color ? { borderLeftColor: project.color } : undefined"
+                                :style="project.color ? {
+                                    borderLeftColor: project.color,
+                                    borderTopColor: project.color,
+                                    borderRightColor: project.color,
+                                    borderBottomColor: project.color,
+                                    borderLeftWidth: '6px',
+                                    borderTopWidth: '1px',
+                                    borderRightWidth: '1px',
+                                    borderBottomWidth: '1px'
+                                } : {}"
                                 @click="() => {
                                     localStorage.setItem('currentProjectId', project.id.toString());
                                     router.visit('/dashboard');

@@ -9,6 +9,7 @@ const { t } = useI18n();
 // import { usePage } from '@inertiajs/vue3';
 const projects = ref<Project[]>([]);
 const groupedProjects = ref<any>(null);
+const activeClientId = ref<number | null>(null);
 const currentProject = ref<Project | null>(null);
 const loading = ref(false);
 const isUpdatingProject = ref(false); // Flag to prevent circular events
@@ -86,6 +87,12 @@ onMounted(async () => {
     }
   });
   
+  // Listen for client filter changes (from Company page or other UIs)
+  window.addEventListener('clientFilterChanged', (e: any) => {
+    const clientId = e.detail?.clientId ?? null;
+    activeClientId.value = clientId;
+  });
+  
   // Listen for subscription downgrades to reload projects list
   window.addEventListener('subscription-downgrade', async (e: any) => {
     console.log('Subscription downgrade detected, reloading projects:', e.detail);
@@ -134,6 +141,38 @@ const loadProjects = async () => {
     loading.value = false;
   }
 };
+
+// Computed grouped projects respecting active client filter
+const visibleGroupedProjects = computed(() => {
+  if (!groupedProjects.value) {
+    return null;
+  }
+
+  // No active client filter → show all groups
+  if (!activeClientId.value) {
+    return groupedProjects.value;
+  }
+
+  const clientsGroup = groupedProjects.value.clients || {};
+  const target = Object.values(clientsGroup).find(
+    (c: any) => c.id === activeClientId.value
+  ) as any | undefined;
+
+  if (!target) {
+    // No matching client; show no projects
+    return {
+      no_client: [],
+      clients: {},
+    };
+  }
+
+  return {
+    no_client: [],
+    clients: {
+      [target.id]: target,
+    },
+  };
+});
 
 const selectProject = (project: Project) => {
   currentProject.value = project;
@@ -444,7 +483,7 @@ const isClientCollapsed = (clientName: string) => {
     <SidebarGroupLabel>Projects</SidebarGroupLabel>
     <SidebarMenu>
       <!-- Create Project Button -->
-      <SidebarMenuItem>
+      <SidebarMenuItem v-if="!loading">
         <SidebarMenuButton 
           @click="createProject" 
           :tooltip="isOnSubscriptionPage ? 'Complete subscription upgrade to create projects' : 'Create New Project'"
@@ -463,14 +502,14 @@ const isClientCollapsed = (clientName: string) => {
       </SidebarMenuItem>
       
       <!-- Grouped Project List (with clients) -->
-      <template v-if="groupedProjects">
+      <template v-if="visibleGroupedProjects">
         <!-- Projects without clients -->
-        <template v-if="groupedProjects.no_client && groupedProjects.no_client.length > 0">
+        <template v-if="visibleGroupedProjects.no_client && visibleGroupedProjects.no_client.length > 0">
           <SidebarMenuItem>
             <div class="px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">No Client</div>
           </SidebarMenuItem>
-          <SidebarMenuItem 
-            v-for="(project, index) in groupedProjects.no_client" 
+            <SidebarMenuItem 
+            v-for="(project, index) in visibleGroupedProjects.no_client" 
             :key="`no-client-${project.id}`"
             @dragover="handleDragOver($event, index)"
             @dragleave="handleDragLeave"
@@ -519,7 +558,7 @@ const isClientCollapsed = (clientName: string) => {
         </template>
 
         <!-- Projects grouped by clients -->
-        <template v-for="client in Object.values(groupedProjects.clients)" :key="`client-${client.id}`">
+        <template v-for="client in Object.values(visibleGroupedProjects.clients)" :key="`client-${client.id}`">
           <SidebarMenuItem>
             <SidebarMenuButton 
               @click="toggleClientCollapse(client.name)"
