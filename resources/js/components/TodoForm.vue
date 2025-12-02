@@ -191,7 +191,7 @@
               <button
                 type="button"
                 @click="removeTag(tag)"
-                class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+                class="text-black hover:text-gray-900 dark:text-white dark:hover:text-gray-100"
               >
                 <Icon name="X" class="w-3 h-3" />
               </button>
@@ -206,13 +206,13 @@
             <button
               type="button"
               @click="$emit('close')"
-              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black/30 text-black dark:bg-white/30 dark:text-white"
             >
               {{ t('common.cancel') }}
             </button>
             <button
               type="submit"
-              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black text-white hover:bg-gray-900 hover:border-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300"
             >
               {{ isEditing ? t('common.update') : t('common.create') }}
             </button>

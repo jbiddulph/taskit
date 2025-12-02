@@ -8,9 +8,9 @@
       </div>
       <button
         @click="showInviteModal = true"
-        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black text-white hover:bg-gray-900 hover:border-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300"
       >
-        <Icon name="UserPlus" class="w-4 h-4 inline mr-2" />
+        <Icon name="UserPlus" class="w-4 h-4" />
         Invite Guest
       </button>
     </div>
@@ -213,14 +213,14 @@
         <div class="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
           <button
             @click="closeInviteModal"
-            class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black/30 text-black dark:bg-white/30 dark:text-white"
           >
             Cancel
           </button>
           <button
             @click="sendInvitation"
             :disabled="!inviteForm.email || inviteForm.projects.length === 0"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black text-white hover:bg-gray-900 hover:border-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Send Invitation
           </button>

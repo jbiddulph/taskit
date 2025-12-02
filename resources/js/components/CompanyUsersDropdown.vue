@@ -189,7 +189,7 @@ onUnmounted(() => {
               
               <button
                 @click="openChat(user)"
-                class="ml-3 flex-shrink-0 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors"
+                class="ml-3 flex-shrink-0 inline-flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium border transition-colors cursor-pointer bg-black text-white hover:bg-gray-900 hover:border-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300"
               >
                 <Icon name="MessageCircle" class="w-3 h-3 mr-1" />
                 Message

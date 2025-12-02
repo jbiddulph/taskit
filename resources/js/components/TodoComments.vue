@@ -15,7 +15,7 @@
         <button
           type="submit"
           :disabled="adding || !newComment.trim()"
-          class="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+          class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black text-white hover:bg-gray-900 hover:border-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {{ adding ? t('comments.adding') : t('comments.add_comment') }}
         </button>
@@ -49,8 +49,8 @@
                   type="text"
                   class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 />
-                <button @click="saveEdit(comment)" class="px-3 py-2 bg-green-600 text-white rounded-md">{{ t('common.save') }}</button>
-                <button @click="cancelEdit" class="px-3 py-2 bg-gray-300 text-gray-800 rounded-md">{{ t('common.cancel') }}</button>
+                <button @click="saveEdit(comment)" class="inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black text-white hover:bg-gray-900 hover:border-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300">{{ t('common.save') }}</button>
+                <button @click="cancelEdit" class="inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black/30 text-black dark:bg-white/30 dark:text-white">{{ t('common.cancel') }}</button>
               </div>
               <div v-else class="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-line">{{ comment.content }}</div>
             </div>

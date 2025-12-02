@@ -117,7 +117,7 @@ const updateCompany = () => {
                                 />
                                 <p class="mt-1 text-sm text-gray-500">
                                     To change your subscription plan, please visit the 
-                                    <Link href="/subscription" class="text-blue-600 hover:text-blue-800">subscription page</Link>
+                                    <Link href="/subscription" class="text-black hover:text-gray-900 dark:text-white dark:hover:text-gray-100">subscription page</Link>
                                 </p>
                             </div>
 
@@ -126,7 +126,7 @@ const updateCompany = () => {
                                 <button
                                     type="submit"
                                     :disabled="processing"
-                                    class="inline-flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    class="inline-flex items-center gap-2 rounded-md px-6 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black text-white hover:bg-gray-900 hover:border-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <Icon v-if="processing" name="Loader2" class="w-4 h-4 animate-spin" />
                                     <Icon v-else name="Save" class="w-4 h-4" />

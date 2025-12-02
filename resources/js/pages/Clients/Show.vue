@@ -163,7 +163,7 @@ const toggleSelectMode = () => {
             <div class="flex gap-3">
               <Link
                 :href="edit.url(client.id)"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black text-white hover:bg-gray-900 hover:border-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300"
               >
                 <Icon name="Edit" class="w-4 h-4" />
                 Edit
@@ -205,7 +205,7 @@ const toggleSelectMode = () => {
                       <div class="text-sm text-gray-500">Email</div>
                       <a 
                         :href="`mailto:${client.key_contact_email}`"
-                        class="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                        class="font-medium text-black hover:text-gray-900 dark:text-white dark:hover:text-gray-100"
                       >
                         {{ client.key_contact_email }}
                       </a>
@@ -218,7 +218,7 @@ const toggleSelectMode = () => {
                       <div class="text-sm text-gray-500">Phone</div>
                       <a 
                         :href="`tel:${client.key_contact_phone}`"
-                        class="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                        class="font-medium text-black hover:text-gray-900 dark:text-white dark:hover:text-gray-100"
                       >
                         {{ client.key_contact_phone }}
                       </a>
@@ -240,7 +240,7 @@ const toggleSelectMode = () => {
                       <a 
                         :href="client.website" 
                         target="_blank" 
-                        class="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                        class="font-medium text-black hover:text-gray-900 dark:text-white dark:hover:text-gray-100"
                       >
                         {{ client.website.replace(/^https?:\/\//, '') }}
                         <Icon name="ExternalLink" class="w-3 h-3 inline ml-1" />

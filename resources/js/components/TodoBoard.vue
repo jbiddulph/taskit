@@ -292,7 +292,7 @@
         </button>
         <button
           @click="onSubmitBulkTodos"
-          class="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          class="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-md border transition-colors cursor-pointer bg-black text-white hover:bg-gray-900 hover:border-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 disabled:opacity-50"
           :disabled="pendingBulkTodos.length === 0 || !currentProject"
         >
           <Icon name="Check" class="w-3 h-3" /> {{ t('dashboard.add_all') }}
@@ -381,7 +381,7 @@
           <button
             type="button"
             @click="showSaveViewModal = true"
-            class="flex-1 sm:flex-none px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black text-white hover:bg-gray-900 hover:border-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300"
             :title="t('dashboard.save_view_tooltip')"
           >
             <Icon name="Save" class="w-4 h-4 inline mr-2" />
@@ -422,7 +422,7 @@
         </div>
         <button
           @click="clearAllFilters"
-          class="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors"
+          class="flex items-center gap-1 text-sm text-black dark:text-white hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
         >
           <Icon name="X" class="w-4 h-4" />
           <span>{{ t('dashboard.clear_filters') }}</span>
@@ -643,14 +643,14 @@
             <div class="flex gap-3 pt-4">
               <button
                 type="submit"
-                class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                class="flex-1 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black text-white hover:bg-gray-900 hover:border-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300"
               >
                 {{ t('projects.create_project') }}
               </button>
               <button
                 type="button"
                 @click="showCreateProject = false"
-                class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                class="flex-1 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black/30 text-black dark:bg-white/30 dark:text-white"
               >
                 {{ t('common.cancel') }}
               </button>
@@ -710,14 +710,14 @@
             <div class="flex gap-3 pt-4">
               <button
                 type="submit"
-                class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                class="flex-1 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black text-white hover:bg-gray-900 hover:border-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300"
               >
                 {{ t('projects.save_changes') }}
               </button>
               <button
                 type="button"
                 @click="showEditProject = false"
-                class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                class="flex-1 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black/30 text-black dark:bg-white/30 dark:text-white"
               >
                 {{ t('common.cancel') }}
               </button>
@@ -759,14 +759,14 @@
               type="button"
               @click="saveCurrentAsView"
               :disabled="!newSavedViewName.trim()"
-              class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex-1 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black text-white hover:bg-gray-900 hover:border-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {{ t('dashboard.save_view') }}
             </button>
             <button
               type="button"
               @click="showSaveViewModal = false"
-              class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+              class="flex-1 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black/30 text-black dark:bg-white/30 dark:text-white"
             >
               {{ t('common.cancel') }}
             </button>
