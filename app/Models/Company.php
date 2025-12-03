@@ -79,6 +79,14 @@ class Company extends Model
     }
 
     /**
+     * Get clients for this company
+     */
+    public function clients(): HasMany
+    {
+        return $this->hasMany(Client::class);
+    }
+
+    /**
      * Get visible projects based on subscription tier
      */
     public function visibleProjects()
@@ -156,7 +164,7 @@ class Company extends Model
             'LTD_SOLO' => 10,
             'LTD_TEAM' => 20,
             'LTD_AGENCY' => 100,
-            'LTD_BUSINESS' => PHP_INT_MAX, // Unlimited
+            'LTD_BUSINESS' => PHP_INT_MAX, // Unlimited (per-company)
             default => 3
         };
     }
@@ -170,6 +178,33 @@ class Company extends Model
             'FREE' => 200,
             'MIDI', 'MAXI', 'BUSINESS', 'LTD_SOLO', 'LTD_TEAM', 'LTD_AGENCY', 'LTD_BUSINESS' => PHP_INT_MAX, // Unlimited
             default => 200
+        };
+    }
+
+    /**
+     * Get client limit based on subscription type
+     */
+    public function getClientLimit(): int
+    {
+        return match($this->subscription_type) {
+            // No explicit client limits for non-LTD tiers (for now)
+            'LTD_TEAM' => 10,
+            'LTD_AGENCY' => 30,
+            'LTD_BUSINESS' => 50,
+            default => PHP_INT_MAX,
+        };
+    }
+
+    /**
+     * Get per-client project limit based on subscription type
+     */
+    public function getProjectLimitPerClient(): int
+    {
+        return match($this->subscription_type) {
+            'LTD_TEAM' => 20,   // Up to 20 projects for each client
+            'LTD_AGENCY' => 40, // Up to 40 projects for each client
+            'LTD_BUSINESS' => 100, // Up to 100 projects for each client
+            default => PHP_INT_MAX,
         };
     }
 
@@ -216,6 +251,14 @@ class Company extends Model
     public function getCurrentProjectCount(): int
     {
         return $this->projects()->count();
+    }
+
+    /**
+     * Get current client count
+     */
+    public function getCurrentClientCount(): int
+    {
+        return $this->clients()->where('is_active', true)->count();
     }
 
     /**

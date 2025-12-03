@@ -84,6 +84,36 @@ class ClientController extends Controller
             abort(403, 'Access denied. Only company users can manage clients.');
         }
 
+        $company = $user->company;
+
+        // Enforce client limit based on subscription type (especially for LTD tiers)
+        if ($company) {
+            $currentClientCount = $company->getCurrentClientCount();
+            $clientLimit = $company->getClientLimit();
+
+            if ($clientLimit !== PHP_INT_MAX && $currentClientCount >= $clientLimit) {
+                $message = "Client limit reached ({$clientLimit} clients).";
+
+                // Custom messaging for LTD tiers
+                switch ($company->subscription_type) {
+                    case 'LTD_TEAM':
+                        $message = "Client limit reached ({$clientLimit} clients for your LTD Team plan).";
+                        break;
+                    case 'LTD_AGENCY':
+                        $message = "Client limit reached ({$clientLimit} clients for your LTD Agency plan).";
+                        break;
+                    case 'LTD_BUSINESS':
+                        $message = "Client limit reached ({$clientLimit} clients for your LTD Business plan).";
+                        break;
+                }
+
+                return redirect()
+                    .back()
+                    ->withErrors(['name' => $message])
+                    ->withInput();
+            }
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'key_contact_name' => 'nullable|string|max:255',

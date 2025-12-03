@@ -96,7 +96,7 @@ class ProjectController extends Controller
             }
         }
         
-        // Validate client ownership if client_id is provided
+        // Validate client ownership and enforce per-client project limits if client_id is provided
         if ($request->client_id && $user->company_id) {
             $client = \App\Models\Client::find($request->client_id);
             if (!$client || $client->company_id !== $user->company_id) {
@@ -104,6 +104,37 @@ class ProjectController extends Controller
                     'success' => false,
                     'message' => 'Invalid client selected.'
                 ], 403);
+            }
+
+            $company = $user->company;
+            if ($company) {
+                $perClientLimit = $company->getProjectLimitPerClient();
+
+                if ($perClientLimit !== PHP_INT_MAX) {
+                    $currentForClient = $client->activeProjects()->count();
+
+                    if ($currentForClient >= $perClientLimit) {
+                        $message = "Project limit per client reached ({$perClientLimit} projects for this client).";
+
+                        // Custom messaging for LTD tiers
+                        switch ($company->subscription_type) {
+                            case 'LTD_TEAM':
+                                $message = "Project limit per client reached ({$perClientLimit} projects per client on your LTD Team plan).";
+                                break;
+                            case 'LTD_AGENCY':
+                                $message = "Project limit per client reached ({$perClientLimit} projects per client on your LTD Agency plan).";
+                                break;
+                            case 'LTD_BUSINESS':
+                                $message = "Project limit per client reached ({$perClientLimit} projects per client on your LTD Business plan).";
+                                break;
+                        }
+
+                        return response()->json([
+                            'success' => false,
+                            'message' => $message,
+                        ], 403);
+                    }
+                }
             }
         }
         
