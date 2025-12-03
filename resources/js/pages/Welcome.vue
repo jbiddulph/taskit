@@ -215,13 +215,24 @@ onMounted(() => {
                             </div>
                         </div>
                     </div>
-                    <ul class="flex gap-3 text-sm leading-normal">
+                    <ul class="flex flex-wrap gap-3 text-sm leading-normal items-center">
                         <li>
                             <a
                                 href="/dashboard"
                                 class="inline-block rounded-sm border border-black bg-[#1b1b18] px-5 py-1.5 text-sm leading-normal text-white hover:border-black hover:bg-black dark:border-[#eeeeec] dark:bg-[#eeeeec] dark:text-[#1C1C1A] dark:hover:border-white dark:hover:bg-white"
                             >
                                 Get Started
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href="https://youtu.be/2wUYdllCOaQ"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex items-center gap-1 text-sm font-medium text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                            >
+                                Watch ZapTask Demo
+                                <span aria-hidden="true">↗</span>
                             </a>
                         </li>
                     </ul>
@@ -473,6 +484,25 @@ onMounted(() => {
                                 </svg>
                                 <span class="text-sm text-[#4a4a45] dark:text-gray-300">Basic features</span>
                             </div>
+                            <!-- Core FREE features -->
+                            <div class="mt-4 border-t border-gray-200 dark:border-gray-700 pt-3">
+                                <p class="text-xs font-semibold text-[#4a4a45] dark:text-gray-300 mb-2">
+                                    Included features:
+                                </p>
+                                <ul class="grid grid-cols-1 gap-1 text-xs text-[#4a4a45] dark:text-gray-300">
+                                    <li>• Bulk Add Tasks</li>
+                                    <li>• Multiple Update Tasks</li>
+                                    <li>• Activity Feed</li>
+                                    <li>• Save Filters</li>
+                                    <li>• Notifications</li>
+                                    <li>• Voice Add Tasks (10 second)</li>
+                                    <li>• Sub Tasks</li>
+                                    <li>• Task Images</li>
+                                    <li>• Calendar View</li>
+                                    <li>• Team @ mentions</li>
+                                    <li>• Team Chat</li>
+                                </ul>
+                            </div>
                         </div>
                         
                         <Link
@@ -535,6 +565,30 @@ onMounted(() => {
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
                                 <span class="text-sm text-[#4a4a45] dark:text-gray-300 font-semibold">Unlimited todos</span>
+                            </div>
+                            <!-- Core MIDI features -->
+                            <div class="mt-2 border-t border-gray-200 dark:border-gray-700 pt-3">
+                                <p class="text-xs font-semibold text-[#4a4a45] dark:text-gray-300 mb-2">
+                                    Includes all core features:
+                                </p>
+                                <ul class="grid grid-cols-1 gap-1 text-xs text-[#4a4a45] dark:text-gray-300">
+                                    <li>• Bulk Add Tasks</li>
+                                    <li>• Multiple Update Tasks</li>
+                                    <li>• Activity Feed</li>
+                                    <li>• Save Filters</li>
+                                    <li>• Notifications</li>
+                                    <li>• Voice Add Tasks (10 second)</li>
+                                    <li>• Sub Tasks</li>
+                                    <li>• Task Images</li>
+                                    <li>• Calendar View</li>
+                                    <li>• Client Project Filter</li>
+                                    <li>• Team @ mentions</li>
+                                    <li>• Team Chat</li>
+                                    <li>• Custom Logo</li>
+                                    <li>• Company Sub Domain</li>
+                                    <li>• Public Facing Dashboard</li>
+                                    <li>• Import/Export data</li>
+                                </ul>
                             </div>
                         </div>
                         
@@ -616,6 +670,30 @@ onMounted(() => {
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
                                 <span class="text-sm text-[#4a4a45] dark:text-gray-300 font-semibold">Priority support</span>
+                            </div>
+                            <!-- Core MAXI features -->
+                            <div class="mt-2 border-t border-gray-200 dark:border-gray-700 pt-3">
+                                <p class="text-xs font-semibold text-[#4a4a45] dark:text-gray-300 mb-2">
+                                    Includes all core features:
+                                </p>
+                                <ul class="grid grid-cols-1 gap-1 text-xs text-[#4a4a45] dark:text-gray-300">
+                                    <li>• Bulk Add Tasks</li>
+                                    <li>• Multiple Update Tasks</li>
+                                    <li>• Activity Feed</li>
+                                    <li>• Save Filters</li>
+                                    <li>• Notifications</li>
+                                    <li>• Voice Add Tasks (10 second)</li>
+                                    <li>• Sub Tasks</li>
+                                    <li>• Task Images</li>
+                                    <li>• Calendar View</li>
+                                    <li>• Client Project Filter</li>
+                                    <li>• Team @ mentions</li>
+                                    <li>• Team Chat</li>
+                                    <li>• Custom Logo</li>
+                                    <li>• Company Sub Domain</li>
+                                    <li>• Public Facing Dashboard</li>
+                                    <li>• Import/Export data</li>
+                                </ul>
                             </div>
                         </div>
                         

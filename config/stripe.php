@@ -32,7 +32,19 @@ return [
                 '1 user',
                 '3 projects',
                 '200 todos',
-                'Basic features'
+                'Basic features',
+                // Core FREE features
+                'Bulk Add Tasks',
+                'Multiple Update Tasks',
+                'Activity Feed',
+                'Save Filters',
+                'Notifications',
+                'Voice Add Tasks (10 second)',
+                'Sub Tasks',
+                'Task Images',
+                'Calendar View',
+                'Team @ mentions',
+                'Team Chat',
             ]
         ],
         'MIDI' => [
@@ -46,7 +58,24 @@ return [
                 'Up to 5 members',
                 'Up to 10 clients',
                 'Up to 20 projects per client',
-                'Unlimited todos'
+                'Unlimited todos',
+                // Core app features
+                'Bulk Add Tasks',
+                'Voice Add Tasks (10 second)',
+                'Multiple Update Tasks',
+                'Activity Feed',
+                'Save Filters',
+                'Notifications',
+                'Sub Tasks',
+                'Task Images',
+                'Calendar View',
+                'Client Project Filter',
+                'Team @ mentions',
+                'Team Chat',
+                'Custom Logo',
+                'Company Sub Domain',
+                'Public Facing Dashboard',
+                'Import/Export data',
             ]
         ],
         'MAXI' => [
@@ -63,7 +92,24 @@ return [
                 'Unlimited todos',
                 'Integrations',
                 'Automations',
-                'Priority support'
+                'Priority support',
+                // Core app features
+                'Bulk Add Tasks',
+                'Voice Add Tasks (10 second)',
+                'Multiple Update Tasks',
+                'Activity Feed',
+                'Save Filters',
+                'Notifications',
+                'Sub Tasks',
+                'Task Images',
+                'Calendar View',
+                'Client Project Filter',
+                'Team @ mentions',
+                'Team Chat',
+                'Custom Logo',
+                'Company Sub Domain',
+                'Public Facing Dashboard',
+                'Import/Export data',
             ]
         ],
         'BUSINESS' => [
@@ -76,7 +122,24 @@ return [
                 'Unlimited projects',
                 'Admin controls',
                 'SSO / audit logs',
-                'Support SLAs'
+                'Support SLAs',
+                // Core app features
+                'Bulk Add Tasks',
+                'Multiple Update Tasks',
+                'Activity Feed',
+                'Save Filters',
+                'Notifications',
+                'Voice Add Tasks (10 second)',
+                'Sub Tasks',
+                'Task Images',
+                'Calendar View',
+                'Client Project Filter',
+                'Team @ mentions',
+                'Team Chat',
+                'Custom Logo',
+                'Company Sub Domain',
+                'Public Facing Dashboard',
+                'Import/Export data',
             ]
         ],
         // Lifetime Deal (LTD) Plans - one-time payments
@@ -91,7 +154,17 @@ return [
                 '10 projects',
                 '0 clients (solo workspace only)',
                 'Unlimited todos',
-                'No team features'
+                'No team features',
+                // Core solo features (workspace-level)
+                'Bulk Add Tasks',
+                'Multiple Update Tasks',
+                'Activity Feed',
+                'Save Filters',
+                'Notifications',
+                'Voice Add Tasks (10 second)',
+                'Sub Tasks',
+                'Task Images',
+                'Calendar View',
             ]
         ],
         'LTD_TEAM' => [
@@ -105,7 +178,24 @@ return [
                 'Up to 10 clients',
                 'Up to 20 projects per client',
                 'Unlimited todos',
-                'All MIDI-level features'
+                'All MIDI-level features',
+                // Core app features
+                'Bulk Add Tasks',
+                'Multiple Update Tasks',
+                'Activity Feed',
+                'Save Filters',
+                'Notifications',
+                'Voice Add Tasks (10 second)',
+                'Sub Tasks',
+                'Task Images',
+                'Calendar View',
+                'Client Project Filter',
+                'Team @ mentions',
+                'Team Chat',
+                'Custom Logo',
+                'Company Sub Domain',
+                'Public Facing Dashboard',
+                'Import/Export data',
             ]
         ],
         'LTD_AGENCY' => [
@@ -119,7 +209,24 @@ return [
                 'Up to 30 clients',
                 'Up to 40 projects per client',
                 'Unlimited todos',
-                'Most features (except enterprise-level)'
+                'Most features (except enterprise-level)',
+                // Core app features
+                'Bulk Add Tasks',
+                'Multiple Update Tasks',
+                'Activity Feed',
+                'Save Filters',
+                'Notifications',
+                'Voice Add Tasks (10 second)',
+                'Sub Tasks',
+                'Task Images',
+                'Calendar View',
+                'Client Project Filter',
+                'Team @ mentions',
+                'Team Chat',
+                'Custom Logo',
+                'Company Sub Domain',
+                'Public Facing Dashboard',
+                'Import/Export data',
             ]
         ],
         'LTD_BUSINESS' => [
@@ -133,7 +240,24 @@ return [
                 'Up to 50 clients',
                 'Up to 100 projects per client',
                 'All current features',
-                'Priority support'
+                'Priority support',
+                // Core app features
+                'Bulk Add Tasks',
+                'Multiple Update Tasks',
+                'Activity Feed',
+                'Save Filters',
+                'Notifications',
+                'Voice Add Tasks (10 second)',
+                'Sub Tasks',
+                'Task Images',
+                'Calendar View',
+                'Client Project Filter',
+                'Team @ mentions',
+                'Team Chat',
+                'Custom Logo',
+                'Company Sub Domain',
+                'Public Facing Dashboard',
+                'Import/Export data',
             ]
         ]
     ]
