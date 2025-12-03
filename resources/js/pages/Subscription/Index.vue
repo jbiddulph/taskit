@@ -72,18 +72,20 @@ const pendingPlan = ref('');
 // Get error messages from the page
 const errors = computed(() => page.props.errors as Record<string, string> || {});
 
-// Filter out FREE plan for paid users - they can only upgrade or cancel
+// Filter out FREE / BUSINESS appropriately, and hide BUSINESS entirely from UI
 const availablePlans = computed(() => {
     const current = currentPlan.value;
-    
-    // If user is on FREE plan, show all plans
+
+    // Start from all plans but never show BUSINESS in the UI
+    const filtered: Partial<Plans> = { ...props.plans };
+    delete filtered.BUSINESS;
+
+    // If user is on FREE plan, show all non-BUSINESS plans
     if (current === 'FREE') {
-        return props.plans;
+        return filtered;
     }
-    
-    // If user is on paid plan (MIDI/MAXI), hide FREE plan
-    // They can only upgrade/downgrade between MIDI/MAXI or cancel subscription
-    const filtered = { ...props.plans };
+
+    // If user is on a paid plan, hide FREE (they can only upgrade/downgrade or cancel)
     delete filtered.FREE;
     return filtered;
 });

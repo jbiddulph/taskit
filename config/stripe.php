@@ -44,7 +44,8 @@ return [
             'stripe_price_id_yearly' => env('STRIPE_MIDI_PRICE_ID_YEARLY'),
             'features' => [
                 'Up to 5 members',
-                'Up to 20 projects',
+                'Up to 10 clients',
+                'Up to 20 projects per client',
                 'Unlimited todos'
             ]
         ],
@@ -57,7 +58,8 @@ return [
             'stripe_price_id_yearly' => env('STRIPE_MAXI_PRICE_ID_YEARLY'),
             'features' => [
                 'Up to 20 members',
-                'Up to 100 projects',
+                'Up to 30 clients',
+                'Up to 40 projects per client',
                 'Unlimited todos',
                 'Integrations',
                 'Automations',
@@ -108,7 +110,7 @@ return [
         ],
         'LTD_AGENCY' => [
             'name' => 'LTD Agency',
-            'price' => 14900, // £149.00 in pence (one-time)
+            'price' => 13900, // £139.00 in pence (one-time)
             'currency' => 'gbp',
             'stripe_price_id' => env('STRIPE_LTD_AGENCY_PRICE_ID'),
             'is_lifetime' => true,
@@ -122,7 +124,7 @@ return [
         ],
         'LTD_BUSINESS' => [
             'name' => 'LTD Business',
-            'price' => 24900, // £249.00 in pence (one-time)
+            'price' => 19900, // £199.00 in pence (one-time)
             'currency' => 'gbp',
             'stripe_price_id' => env('STRIPE_LTD_BUSINESS_PRICE_ID'),
             'is_lifetime' => true,

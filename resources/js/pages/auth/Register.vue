@@ -85,8 +85,8 @@ const showIndividualOption = computed(() => subscriptionType.value === 'FREE');
                         :tabindex="5"
                     >
                         <option value="FREE">⭐ FREE - £0/month (1 user, 3 projects, 200 todos)</option>
-                        <option value="MIDI">⭐ MIDI - £6/month (Up to 5 members, 20 projects, unlimited todos)</option>
-                        <option value="MAXI">⭐ MAXI - £12/month (Up to 20 members, 100 projects, integrations & automations)</option>
+                        <option value="MIDI">⭐ MIDI - £6/month (Up to 5 members, 10 clients, 20 projects per client, unlimited todos)</option>
+                        <option value="MAXI">⭐ MAXI - £12/month (Up to 20 members, 30 clients, 40 projects per client, unlimited todos)</option>
                     </select>
                     <p class="text-xs text-muted-foreground mt-1">
                         You can upgrade or change your plan anytime after registration.
