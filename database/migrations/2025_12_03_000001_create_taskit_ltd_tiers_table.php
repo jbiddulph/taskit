@@ -11,6 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // In production, this table may already exist (created manually in Supabase),
+        // so guard against duplicate-table errors during deploy.
+        if (Schema::hasTable('taskit_ltd_tiers')) {
+            return;
+        }
+
         Schema::create('taskit_ltd_tiers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
