@@ -28,6 +28,15 @@ Route::get('/terms', function () {
     return Inertia::render('Terms');
 })->name('terms');
 
+// Marketing pages
+Route::get('/competitors', function () {
+    return Inertia::render('Competitors');
+})->name('competitors');
+
+Route::get('/alternative-to', function () {
+    return Inertia::render('AlternativeTo');
+})->name('alternative-to');
+
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
