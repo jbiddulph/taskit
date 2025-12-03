@@ -442,7 +442,13 @@ const reactivateSubscription = async () => {
                         <div>
                             <p class="text-lg font-semibold">{{ plans[currentPlan].name }}</p>
                             <p class="text-gray-600 dark:text-gray-400">
-                                {{ currentPlan === 'FREE' ? 'Free forever' : `${formatPrice(plans[currentPlan].price)} per month` }}
+                                {{
+                                    currentPlan === 'FREE'
+                                        ? 'Free forever'
+                                        : isLifetimePlan(currentPlan)
+                                            ? `${formatPrice(plans[currentPlan].price)} one-time (lifetime access)`
+                                            : `${formatPrice(plans[currentPlan].price)} per month`
+                                }}
                             </p>
                             <div v-if="company?.subscription_ends_at" class="mt-2">
                                 <p class="text-sm text-gray-500">
