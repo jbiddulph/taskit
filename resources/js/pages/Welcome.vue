@@ -476,7 +476,7 @@ onMounted(() => {
                         </div>
                         
                         <Link
-                            :href="register({ query: { plan: 'FREE' } })"
+                            :href="register({ query: { plan: 'FREE', interval: homepageBillingInterval } })"
                             class="w-full inline-block text-center rounded-xl bg-gray-800 dark:bg-gray-700 px-6 py-4 text-base font-semibold text-white hover:bg-gray-900 dark:hover:bg-gray-600 transition-all duration-200 shadow-lg hover:shadow-xl"
                         >
                             Get Started Free
@@ -539,7 +539,7 @@ onMounted(() => {
                         </div>
                         
                         <Link
-                            :href="register({ query: { plan: 'MIDI' } })"
+                            :href="register({ query: { plan: 'MIDI', interval: homepageBillingInterval } })"
                             class="w-full inline-block text-center rounded-xl bg-blue-600 px-6 py-4 text-base font-semibold text-white hover:bg-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl"
                         >
                             Start MIDI Plan
@@ -620,7 +620,7 @@ onMounted(() => {
                         </div>
                         
                         <Link
-                            :href="register({ query: { plan: 'MAXI' } })"
+                            :href="register({ query: { plan: 'MAXI', interval: homepageBillingInterval } })"
                             class="w-full inline-block text-center rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 px-6 py-4 text-base font-semibold text-[#1b1b18] hover:from-amber-600 hover:to-yellow-600 transition-all duration-200 shadow-lg hover:shadow-xl"
                         >
                             Start MAXI Plan

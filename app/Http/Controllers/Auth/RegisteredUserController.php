@@ -29,14 +29,19 @@ class RegisteredUserController extends Controller
     public function create(Request $request): Response
     {
         $subscriptionType = $request->query('plan', 'FREE');
+        $billingInterval = $request->query('interval', 'month');
         
         // Validate subscription type
         if (!in_array($subscriptionType, ['FREE', 'MIDI', 'MAXI'])) {
             $subscriptionType = 'FREE';
         }
+        if (!in_array($billingInterval, ['month', 'year'])) {
+            $billingInterval = 'month';
+        }
         
         return Inertia::render('auth/Register', [
-            'subscriptionType' => $subscriptionType
+            'subscriptionType' => $subscriptionType,
+            'billingInterval' => $billingInterval,
         ]);
     }
 
@@ -55,6 +60,7 @@ class RegisteredUserController extends Controller
             'company_name' => 'required_if:company_type,create|string|max:255',
             'company_code' => 'required_if:company_type,join|string|size:8|exists:taskit_companies,code',
             'subscription_type' => 'required|in:FREE,MIDI,MAXI,BUSINESS,LTD_SOLO,LTD_TEAM,LTD_AGENCY,LTD_BUSINESS',
+            'billing_interval' => 'nullable|in:month,year',
         ]);
 
         $companyId = null;
@@ -142,12 +148,14 @@ class RegisteredUserController extends Controller
         if (in_array($request->subscription_type, ['MIDI', 'MAXI']) && $companyId && $request->company_type === 'create') {
             try {
                 $company = Company::find($companyId);
+                $billingInterval = $request->input('billing_interval', 'month');
                 $session = $this->stripeService->createCheckoutSession(
                     $company,
                     $request->subscription_type,
                     $user->email,
                     route('subscription.success') . '?session_id={CHECKOUT_SESSION_ID}',
-                    route('subscription.cancel')
+                    route('subscription.cancel'),
+                    $billingInterval
                 );
 
                 // Store the intended subscription type

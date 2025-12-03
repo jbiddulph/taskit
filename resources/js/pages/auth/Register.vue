@@ -13,18 +13,40 @@ import { ref, computed, watch } from 'vue';
 
 interface Props {
     subscriptionType?: string;
+    billingInterval?: 'month' | 'year';
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    subscriptionType: 'FREE'
+    subscriptionType: 'FREE',
+    billingInterval: 'month'
 });
 
 const companyType = ref('');
 const subscriptionType = ref(props.subscriptionType);
+const billingInterval = ref<Props['billingInterval']>(props.billingInterval);
+
+// Combined select value so we can distinguish monthly vs yearly options in the dropdown
+// Format: PLAN:INTERVAL, e.g. "MIDI:month", "MIDI:year"
+const subscriptionChoice = ref<string>(`${props.subscriptionType}:${props.billingInterval}`);
 
 // Watch for prop changes and update the reactive variable
 watch(() => props.subscriptionType, (newValue) => {
     subscriptionType.value = newValue;
+    subscriptionChoice.value = `${newValue}:${billingInterval.value}`;
+}, { immediate: true });
+
+watch(() => props.billingInterval, (newValue) => {
+    billingInterval.value = newValue;
+    subscriptionChoice.value = `${subscriptionType.value}:${newValue}`;
+}, { immediate: true });
+
+// When the user changes the dropdown, update both subscription type and billing interval
+watch(subscriptionChoice, (newValue) => {
+    const [type, interval] = newValue.split(':') as [string, 'month' | 'year'];
+
+    // Fallbacks for safety
+    subscriptionType.value = (['FREE', 'MIDI', 'MAXI'].includes(type) ? type : 'FREE') as typeof subscriptionType.value;
+    billingInterval.value = (interval === 'year' ? 'year' : 'month');
 }, { immediate: true });
 
 // Hide individual option for paid plans
@@ -77,16 +99,36 @@ const showIndividualOption = computed(() => subscriptionType.value === 'FREE');
                 <!-- Subscription Type Selection -->
                 <div class="grid gap-2">
                     <Label for="subscription_type">Choose Your Plan</Label>
+                    <!-- Hidden fields to pass clean values to backend -->
+                    <input type="hidden" name="subscription_type" :value="subscriptionType" />
+                    <input type="hidden" name="billing_interval" :value="billingInterval" />
                     <select
                         id="subscription_type"
-                        name="subscription_type"
-                        v-model="subscriptionType"
+                        name="subscription_choice"
+                        v-model="subscriptionChoice"
                         class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                         :tabindex="5"
                     >
-                        <option value="FREE">⭐ FREE - £0/month (1 user, 3 projects, 200 todos)</option>
-                        <option value="MIDI">⭐ MIDI - £6/month (Up to 5 members, 10 clients, 20 projects per client, unlimited todos)</option>
-                        <option value="MAXI">⭐ MAXI - £12/month (Up to 20 members, 30 clients, 40 projects per client, unlimited todos)</option>
+                        <!-- FREE (no yearly variant) -->
+                        <option value="FREE:month">
+                            ⭐ FREE - £0/month (1 user, 3 projects, 200 todos)
+                        </option>
+                        <!-- MIDI monthly -->
+                        <option value="MIDI:month">
+                            ⭐ MIDI - £6/month (Up to 5 members, 10 clients, 20 projects per client, unlimited todos)
+                        </option>
+                        <!-- MIDI yearly -->
+                        <option value="MIDI:year">
+                            ⭐ MIDI - £60/year (Up to 5 members, 10 clients, 20 projects per client, unlimited todos)
+                        </option>
+                        <!-- MAXI monthly -->
+                        <option value="MAXI:month">
+                            ⭐ MAXI - £12/month (Up to 20 members, 30 clients, 40 projects per client, unlimited todos)
+                        </option>
+                        <!-- MAXI yearly -->
+                        <option value="MAXI:year">
+                            ⭐ MAXI - £120/year (Up to 20 members, 30 clients, 40 projects per client, unlimited todos)
+                        </option>
                     </select>
                     <p class="text-xs text-muted-foreground mt-1">
                         You can upgrade or change your plan anytime after registration.

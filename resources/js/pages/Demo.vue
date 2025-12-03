@@ -329,7 +329,9 @@ defineOptions({
                                         </li>
                                         <li class="flex items-center gap-2">
                                             <span class="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
-                                            <strong>Plan limits:</strong> Remember your subscription limits (FREE: 5 members, MIDI: 10 members, MAXI: unlimited)
+                                            <strong>Plan limits:</strong>
+                                            Remember your subscription limits:
+                                            FREE: 1 member • MIDI: up to 5 members • MAXI: up to 20 members
                                         </li>
                                     </ul>
                                 </div>
@@ -433,18 +435,27 @@ defineOptions({
                                             </ul>
                                         </div>
                                         <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                                            <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">MIDI Plan - £6/month</h4>
+                                            <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-1">MIDI Plan - £6/month</h4>
+                                            <p class="text-[10px] text-[#4a4a45] dark:text-[#A1A09A] mb-1">
+                                                or £60/year (save £12)
+                                            </p>
                                             <ul class="text-xs text-[#706f6c] dark:text-[#A1A09A] space-y-1">
                                                 <li>• Up to 5 members</li>
-                                                <li>• Up to 20 projects</li>
+                                                <li>• Up to 10 clients</li>
+                                                <li>• Up to 20 projects per client</li>
                                                 <li>• Unlimited todos</li>
                                             </ul>
                                         </div>
                                         <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                                            <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">MAXI Plan - £12/month</h4>
+                                            <h4 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-1">MAXI Plan - £12/month</h4>
+                                            <p class="text-[10px] text-[#4a4a45] dark:text-[#A1A09A] mb-1">
+                                                or £120/year (save £24)
+                                            </p>
                                             <ul class="text-xs text-[#706f6c] dark:text-[#A1A09A] space-y-1">
                                                 <li>• Up to 20 members</li>
-                                                <li>• Up to 100 projects</li>
+                                                <li>• Up to 30 clients</li>
+                                                <li>• Up to 40 projects per client</li>
+                                                <li>• Unlimited todos</li>
                                                 <li>• Integrations & automations</li>
                                                 <li>• Priority support</li>
                                             </ul>
