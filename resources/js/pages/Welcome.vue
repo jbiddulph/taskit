@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { dashboard, login, register } from '@/routes';
 import { Head, Link } from '@inertiajs/vue3';
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import PublicNavigation from '@/components/PublicNavigation.vue';
+
+// Mobile menu state
+const mobileMenuOpen = ref(false);
 
 // Smooth scroll function
 const scrollToSection = (sectionId: string) => {
@@ -46,6 +49,7 @@ onMounted(() => {
                             <span class="text-xl font-bold text-gray-900 dark:text-white">ZapTask</span>
                         </Link>
                     </div>
+                    <!-- Desktop nav -->
                     <nav class="hidden md:flex items-center space-x-8">
                         <button @click="scrollToSection('features')" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer">
                             Features
@@ -69,7 +73,91 @@ onMounted(() => {
                             Contact
                         </a>
                     </nav>
-                    <PublicNavigation />
+                    <!-- Mobile hamburger + auth links -->
+                    <div class="flex items-center space-x-3 md:space-x-0">
+                        <!-- Hamburger (mobile only) -->
+                        <button
+                            type="button"
+                            class="inline-flex items-center justify-center rounded-md p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 md:hidden"
+                            @click="mobileMenuOpen = !mobileMenuOpen"
+                            aria-label="Toggle navigation"
+                        >
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path
+                                    v-if="!mobileMenuOpen"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M4 6h16M4 12h16M4 18h16"
+                                />
+                                <path
+                                    v-else
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"
+                                />
+                            </svg>
+                        </button>
+
+                        <!-- Existing auth nav (desktop + mobile) -->
+                        <PublicNavigation />
+                    </div>
+                </div>
+                <!-- Mobile dropdown menu -->
+                <div
+                    v-if="mobileMenuOpen"
+                    class="md:hidden pb-3 border-t border-gray-200 dark:border-gray-700"
+                >
+                    <nav class="flex flex-col space-y-1 pt-3">
+                        <button
+                            @click="scrollToSection('features'); mobileMenuOpen = false"
+                            class="text-left px-2 py-1 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                        >
+                            Features
+                        </button>
+                        <button
+                            @click="scrollToSection('pricing'); mobileMenuOpen = false"
+                            class="text-left px-2 py-1 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                        >
+                            Pricing
+                        </button>
+                        <a
+                            href="/competitors"
+                            class="px-2 py-1 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                            @click="mobileMenuOpen = false"
+                        >
+                            Competitors
+                        </a>
+                        <a
+                            href="/alternative-to"
+                            class="px-2 py-1 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                            @click="mobileMenuOpen = false"
+                        >
+                            Alternative To
+                        </a>
+                        <a
+                            href="/demo#guide"
+                            class="px-2 py-1 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                            @click="mobileMenuOpen = false"
+                        >
+                            Guide
+                        </a>
+                        <a
+                            href="/demo"
+                            class="px-2 py-1 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                            @click="mobileMenuOpen = false"
+                        >
+                            Demo
+                        </a>
+                        <a
+                            href="/contact"
+                            class="px-2 py-1 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                            @click="mobileMenuOpen = false"
+                        >
+                            Contact
+                        </a>
+                    </nav>
                 </div>
             </div>
         </header>
