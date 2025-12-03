@@ -7,6 +7,9 @@ import PublicNavigation from '@/components/PublicNavigation.vue';
 // Mobile menu state
 const mobileMenuOpen = ref(false);
 
+// Homepage billing interval (monthly / yearly) for pricing section
+const homepageBillingInterval = ref<'month' | 'year'>('month');
+
 // Smooth scroll function
 const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -396,13 +399,39 @@ onMounted(() => {
         <!-- Pricing Section -->
         <section id="pricing" class="w-full py-16 lg:py-24 mt-12 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
             <div class="max-w-7xl mx-auto px-6">
-                <div class="text-center mb-16">
-                    <h2 class="text-4xl lg:text-5xl font-bold text-[#1b1b18] dark:text-white mb-6">
+                <div class="text-center mb-8 lg:mb-10">
+                    <h2 class="text-4xl lg:text-5xl font-bold text-[#1b1b18] dark:text-white mb-4">
                         Choose Your Plan
                     </h2>
-                    <p class="text-xl text-[#4a4a45] dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                    <p class="text-xl text-[#4a4a45] dark:text-gray-300 max-w-3xl mx-auto leading-relaxed mb-6">
                         Select the perfect plan for your team size and project needs. All plans include our core features with no hidden fees.
                     </p>
+
+                    <!-- Billing interval toggle -->
+                    <div class="inline-flex rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-1">
+                        <button
+                            @click="homepageBillingInterval = 'month'"
+                            :class="[
+                                'px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                                homepageBillingInterval === 'month'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                            ]"
+                        >
+                            Monthly
+                        </button>
+                        <button
+                            @click="homepageBillingInterval = 'year'"
+                            :class="[
+                                'px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                                homepageBillingInterval === 'year'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                            ]"
+                        >
+                            Yearly
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -465,10 +494,21 @@ onMounted(() => {
                             </div>
                             <h3 class="text-3xl font-bold text-[#1b1b18] dark:text-white mb-3">MIDI</h3>
                             <div class="mb-2">
-                                <span class="text-5xl font-bold text-[#1b1b18] dark:text-white">£6</span>
-                                <span class="text-lg text-[#4a4a45] dark:text-gray-400">/mo</span>
+                                <span class="text-5xl font-bold text-[#1b1b18] dark:text-white">
+                                    {{ homepageBillingInterval === 'year' ? '£60' : '£6' }}
+                                </span>
+                                <span class="text-lg text-[#4a4a45] dark:text-gray-400">
+                                    {{ homepageBillingInterval === 'year' ? '/year' : '/mo' }}
+                                </span>
                             </div>
-                            <div class="text-xs text-green-600 dark:text-green-400 font-medium">or £60/year (save £12)</div>
+                            <div class="text-xs text-green-600 dark:text-green-400 font-medium">
+                                <template v-if="homepageBillingInterval === 'year'">
+                                    Save £12 compared to paying monthly
+                                </template>
+                                <template v-else>
+                                    or £60/year (save £12)
+                                </template>
+                            </div>
                         </div>
                         
                         <div class="flex-grow space-y-3 mb-8">
@@ -517,10 +557,21 @@ onMounted(() => {
                             </div>
                             <h3 class="text-3xl font-bold text-[#1b1b18] dark:text-white mb-3">MAXI</h3>
                             <div class="mb-2">
-                                <span class="text-5xl font-bold text-[#1b1b18] dark:text-white">£12</span>
-                                <span class="text-lg text-[#4a4a45] dark:text-gray-400">/mo</span>
+                                <span class="text-5xl font-bold text-[#1b1b18] dark:text-white">
+                                    {{ homepageBillingInterval === 'year' ? '£120' : '£12' }}
+                                </span>
+                                <span class="text-lg text-[#4a4a45] dark:text-gray-400">
+                                    {{ homepageBillingInterval === 'year' ? '/year' : '/mo' }}
+                                </span>
                             </div>
-                            <div class="text-xs text-green-600 dark:text-green-400 font-medium">or £120/year (save £24)</div>
+                            <div class="text-xs text-green-600 dark:text-green-400 font-medium">
+                                <template v-if="homepageBillingInterval === 'year'">
+                                    Save £24 compared to paying monthly
+                                </template>
+                                <template v-else>
+                                    or £120/year (save £24)
+                                </template>
+                            </div>
                         </div>
                         
                         <div class="flex-grow space-y-3 mb-8">
