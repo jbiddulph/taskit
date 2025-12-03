@@ -3,13 +3,14 @@
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\RedemptionController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SubdomainController;
 use App\Http\Middleware\SubdomainMiddleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Todo;
 
 Route::get('/', function () {
@@ -42,9 +43,10 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
-
-
-
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/ltd/redeem', [RedemptionController::class, 'show'])->name('ltd.redeem.show');
+    Route::post('/ltd/redeem', [RedemptionController::class, 'redeem'])->name('ltd.redeem');
+});
 
 Route::get('dashboard', function () {
     $user = Auth::user();

@@ -87,6 +87,7 @@ return [
             'features' => [
                 '1 user',
                 '10 projects',
+                '0 clients (solo workspace only)',
                 'Unlimited todos',
                 'No team features'
             ]
@@ -99,7 +100,8 @@ return [
             'is_lifetime' => true,
             'features' => [
                 'Up to 5 members',
-                'Up to 20 projects',
+                'Up to 10 clients',
+                'Up to 20 projects per client',
                 'Unlimited todos',
                 'All MIDI-level features'
             ]
@@ -112,7 +114,8 @@ return [
             'is_lifetime' => true,
             'features' => [
                 'Up to 20 members',
-                'Up to 100 projects',
+                'Up to 30 clients',
+                'Up to 40 projects per client',
                 'Unlimited todos',
                 'Most features (except enterprise-level)'
             ]
@@ -125,7 +128,8 @@ return [
             'is_lifetime' => true,
             'features' => [
                 'Up to 50 members',
-                'Unlimited projects',
+                'Up to 50 clients',
+                'Up to 100 projects per client',
                 'All current features',
                 'Priority support'
             ]
