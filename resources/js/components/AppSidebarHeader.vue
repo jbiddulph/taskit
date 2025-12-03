@@ -5,8 +5,8 @@ import NotificationBadge from '@/components/NotificationBadge.vue';
 import CompanyUsersDropdown from '@/components/CompanyUsersDropdown.vue';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { BreadcrumbItemType } from '@/types';
-import { Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
 import { HeartHandshake } from 'lucide-vue-next';
 
 const props = withDefaults(
@@ -35,6 +35,19 @@ const toggleMobileMenu = () => {
 const closeMobileMenu = () => {
     isMobileMenuOpen.value = false;
 };
+
+// Access user data to check if they have a company_id
+const page = usePage();
+const user = computed(() => {
+    const props: any = page.props;
+    return props.user ?? (props.auth as any)?.user ?? null;
+});
+
+// Show redemption code link only if user doesn't have a company_id
+const showRedemptionLink = computed(() => {
+    const u: any = user.value;
+    return u && (u.company_id === null || u.company_id === undefined);
+});
 </script>
 
 <template>
@@ -46,6 +59,21 @@ const closeMobileMenu = () => {
             <template v-if="breadcrumbs && breadcrumbs.length > 0">
                 <Breadcrumbs :breadcrumbs="breadcrumbs" />
             </template>
+        </div>
+        
+        <!-- Center: Redemption Code Link (only for users without company_id) -->
+        <div class="flex-1 flex justify-center">
+            <Link
+                v-if="showRedemptionLink"
+                href="/ltd/redeem"
+                class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
+                title="Apply Redemption Code"
+            >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                </svg>
+                <span>Apply Redemption Code</span>
+            </Link>
         </div>
         
         <!-- Company info, Clients Link, Team, and Notification Badge on the right -->
