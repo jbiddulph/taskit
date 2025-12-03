@@ -43,7 +43,7 @@ const page = usePage<{
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="company_name">Company name (for Team, Agency or Business codes)</Label>
+                    <Label for="company_name">Company name (required for Team, Agency or Business)</Label>
                     <Input
                         id="company_name"
                         name="company_name"
@@ -52,8 +52,8 @@ const page = usePage<{
                         placeholder="Your company name"
                     />
                     <p class="text-xs text-muted-foreground">
-                        If you’re redeeming a Team, Agency or Business LTD, we’ll use this to create your company
-                        if you don’t already have one.
+                        If you’re redeeming a Team, Agency or Business LTD and you don’t already have a
+                        company, we’ll create one using this name.
                     </p>
                     <InputError :message="errors.company_name" />
                 </div>

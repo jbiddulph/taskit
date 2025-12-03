@@ -36,9 +36,14 @@ interface Props {
 const props = defineProps<Props>();
 const page = usePage();
 
-// Check if user has access to company features (paid plans only)
+// Check if user has access to company features (paid SaaS + eligible LTD plans)
 const hasAccess = computed(() => {
-    return props.company && ['MIDI', 'MAXI'].includes(props.company.subscription_type);
+    return (
+        props.company &&
+        ['MIDI', 'MAXI', 'BUSINESS', 'LTD_TEAM', 'LTD_AGENCY', 'LTD_BUSINESS'].includes(
+            props.company.subscription_type
+        )
+    );
 });
 
 // Form for logo removal
@@ -341,7 +346,9 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
                             <AlertCircle class="w-5 h-5 flex-shrink-0" />
                             <div>
                                 <p class="font-medium">Upgrade Required</p>
-                                <p class="text-sm">Company features are available for MIDI and MAXI plans only.</p>
+                                <p class="text-sm">
+                                    Company features are available on MIDI, MAXI, BUSINESS and LTD Team, LTD Agency, LTD Business plans.
+                                </p>
                             </div>
                         </div>
                     </CardContent>

@@ -43,7 +43,8 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+// LTD redemption: available as soon as the user has an account (no email verification required)
+Route::middleware(['auth'])->group(function () {
     Route::get('/ltd/redeem', [RedemptionController::class, 'show'])->name('ltd.redeem.show');
     Route::post('/ltd/redeem', [RedemptionController::class, 'redeem'])->name('ltd.redeem');
 });

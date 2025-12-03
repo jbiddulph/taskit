@@ -14,7 +14,23 @@ const logout = () => {
 </script>
 
 <template>
-  <div class="flex items-center space-x-4">
+  <div class="flex items-center space-x-6">
+    <!-- Marketing links always visible on the public navbar -->
+    <div class="hidden md:flex items-center space-x-4">
+      <Link
+        href="/alternative-to"
+        class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors text-sm"
+      >
+        Alternative To
+      </Link>
+      <Link
+        href="/competitors"
+        class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors text-sm"
+      >
+        Competitors
+      </Link>
+    </div>
+
     <template v-if="user">
       <Link
         href="/dashboard"

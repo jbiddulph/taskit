@@ -49,9 +49,21 @@ class RedemptionController extends Controller
             ])->withInput();
         }
 
-        DB::transaction(function () use ($code, $user, $data) {
-            $subscriptionType = $code->tier->subscription_type;
+        $subscriptionType = $code->tier->subscription_type;
 
+        // If this is a Team/Agency/Business LTD and the user has no company yet,
+        // require a company name so we can set them up cleanly.
+        if (
+            $subscriptionType !== 'LTD_SOLO'
+            && ! $user->company
+            && empty($data['company_name'])
+        ) {
+            return back()->withErrors([
+                'company_name' => 'Please enter your company name to complete redemption for this plan.',
+            ])->withInput();
+        }
+
+        DB::transaction(function () use ($code, $user, $data, $subscriptionType) {
             // Ensure the user has a company for non-solo LTD tiers.
             if ($subscriptionType !== 'LTD_SOLO') {
                 $company = $user->company;
