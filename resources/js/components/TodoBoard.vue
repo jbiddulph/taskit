@@ -3,6 +3,20 @@
     class="h-full flex flex-col"
     :class="{ 'pb-24': props.isSelectMode && hasSelection }"
   >
+    <!-- Project limit notice for FREE plan (shown at the top when limit reached) -->
+    <div v-if="!props.isReadOnly && isAtFreeProjectLimit" class="mb-4">
+      <div class="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+        <p class="font-medium mb-1">Project Limit Reached</p>
+        <p class="text-xs">
+          You have reached the FREE plan project limit (3 projects). 
+          <a href="/subscription" class="underline font-medium hover:text-amber-900 dark:hover:text-amber-100">
+            Upgrade to MIDI (£6/month) or MAXI (£12/month)
+          </a>
+          to create more projects.
+        </p>
+      </div>
+    </div>
+
     <!-- Bulk submit overlay -->
     <div
       v-if="isSubmittingBulk"
@@ -168,19 +182,19 @@
             </div>
           </div>
           
-                      <!-- Create Project Button (only shown when no project is selected) -->
-            <div v-if="!currentProject && !props.isReadOnly" class="mt-4">
-              <button
-                @click="showCreateProject = true"
-                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer
-                       bg-black text-white hover:bg-gray-900 hover:border-gray-900
-                       dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300
-                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 dark:focus:ring-gray-300"
-              >
-                <Icon name="Plus" class="w-4 h-4" />
-                {{ t('dashboard.create_project') }}
-              </button>
-            </div>
+          <!-- Create Project Button (only shown when no project is selected and not at FREE limit) -->
+          <div v-if="!currentProject && !props.isReadOnly && !isAtFreeProjectLimit" class="mt-4">
+            <button
+              @click="showCreateProject = true"
+              class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer
+                     bg-black text-white hover:bg-gray-900 hover:border-gray-900
+                     dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300
+                     focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 dark:focus:ring-gray-300"
+            >
+              <Icon name="Plus" class="w-4 h-4" />
+              {{ t('dashboard.create_project') }}
+            </button>
+          </div>
         </div>
         
         <!-- Mobile Layout: Stacked rows -->
@@ -811,7 +825,9 @@ import { useKeyboardShortcuts } from '../composables/useKeyboardShortcuts';
 import { useBulkOperations } from '../composables/useBulkOperations';
 import { useClientStore } from '../composables/useClientStore';
 import { useI18n } from 'vue-i18n';
+import { usePage } from '@inertiajs/vue3';
 const { t } = useI18n();
+const page = usePage();
 // Define props
 const props = defineProps<{
   showActivityFeed?: boolean;
@@ -856,6 +872,7 @@ const removePending = (idx: number) => {
   pendingBulkTodos.value.splice(idx, 1);
 };
 const projects = ref<Project[]>([]);
+const projectsLoaded = ref(false); // Track when projects have been loaded at least once
 const showForm = ref(false);
 const showCreateProject = ref(false);
 const showEditProject = ref(false);
@@ -894,6 +911,52 @@ watch(currentProject, (newProject) => {
 }, { immediate: true });
 
 const { selectedClientId, setClientId } = useClientStore();
+
+// Access user and company data from page props
+const user = computed(() => {
+  const props: any = page.props;
+  return props.user ?? (props.auth as any)?.user ?? null;
+});
+
+const company = computed(() => {
+  const props: any = page.props;
+  return props.company ?? (props.auth as any)?.user?.company ?? null;
+});
+
+// Check if FREE plan user has reached project limit (3 projects)
+// FREE plan users don't have a company (company_id === null)
+// Use a computed property that's stable and only evaluates when needed
+const isAtFreeProjectLimit = computed(() => {
+  // Don't evaluate until projects have been loaded at least once
+  if (!projectsLoaded.value) {
+    return false;
+  }
+
+  const u: any = user.value;
+  if (!u || !u.id) return false;
+
+  // If user has a company_id, they're not on FREE plan
+  if (u.company_id !== null && u.company_id !== undefined) {
+    return false;
+  }
+
+  // FREE plan user: count projects owned by this user (owner_id === user.id)
+  // Ensure projects array is available
+  if (!projects.value || !Array.isArray(projects.value)) {
+    return false;
+  }
+
+  // Count only projects owned by this user
+  const userProjects = projects.value.filter((p: any) => {
+    return p && p.owner_id === u.id;
+  });
+  
+  const currentCount = userProjects.length;
+  const freeLimit = 3;
+
+  // Show message when user has 3 or more projects (reached the limit)
+  return currentCount >= freeLimit;
+});
 
 // Computed property for v-model binding
 const selectedClientIdModel = computed({
@@ -2113,6 +2176,9 @@ const loadProjects = async () => {
         projects.value = [];
       }
     }
+    
+    // Mark projects as loaded
+    projectsLoaded.value = true;
     
     // Set selected project ID if current project exists
     if (currentProject.value) {

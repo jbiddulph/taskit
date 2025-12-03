@@ -82,17 +82,23 @@ class ProjectController extends Controller
                 $currentCount = $company->getCurrentProjectCount();
                 $limit = $company->getProjectLimit();
                 
-                if ($company->subscription_type === 'FREE') {
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Project limit reached ({$limit} projects). Upgrade to MIDI (£6/month) or MAXI (£12/month) to create more projects."
-                    ], 403);
-                } elseif ($company->subscription_type === 'MIDI') {
+                if ($company->subscription_type === 'MIDI') {
                     return response()->json([
                         'success' => false,
                         'message' => "Project limit reached ({$limit} projects). Upgrade to MAXI (£12/month) to create more projects."
                     ], 403);
                 }
+            }
+        } else {
+            // Individual FREE users (no company) are limited to 3 projects total
+            $userProjectCount = Project::where('owner_id', $user->id)->count();
+            $freeLimit = 3;
+
+            if ($userProjectCount >= $freeLimit) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Project limit reached ({$freeLimit} projects) on the FREE plan. Upgrade to MIDI (£6/month) or MAXI (£12/month) to create more projects."
+                ], 403);
             }
         }
         

@@ -14,6 +14,12 @@ const { selectedClientId, setClientId } = useClientStore();
 const todosLoaded = ref(false);
 const page = usePage();
 
+// Access user and company data from page props
+const user = computed(() => {
+  const props: any = page.props;
+  return props.user ?? (props.auth as any)?.user ?? null;
+});
+
 const company = computed(() => {
   // On dashboard we get a top-level company prop; fall back to auth.user.company if needed
   const props: any = page.props;
@@ -21,13 +27,30 @@ const company = computed(() => {
 });
 
 const isAtFreeProjectLimit = computed(() => {
-  const c: any = company.value;
-  if (!c) return false;
-  // Use backend-provided counts/limits when available
-  if (typeof c.current_project_count === 'number' && typeof c.project_limit === 'number') {
-    return c.subscription_type === 'FREE' && c.current_project_count >= c.project_limit;
+  const u: any = user.value;
+  if (!u || !u.id) return false;
+
+  // If user has a company_id, they're not on FREE plan
+  if (u.company_id !== null && u.company_id !== undefined) {
+    return false;
   }
-  return false;
+
+  // FREE plan user: count projects owned by this user (owner_id === user.id)
+  // Ensure projects array is available
+  if (!projects.value || !Array.isArray(projects.value)) {
+    return false;
+  }
+
+  // Count only projects owned by this user
+  const userProjects = projects.value.filter((p: any) => {
+    return p && p.owner_id === u.id;
+  });
+  
+  const currentCount = userProjects.length;
+  const freeLimit = 3;
+
+  // Show message when user has 3 or more projects (reached the limit)
+  return currentCount >= freeLimit;
 });
 
 const projectLimitMessage = computed(() => {
@@ -526,7 +549,7 @@ const isClientCollapsed = (clientName: string) => {
   <SidebarGroup class="px-2 py-0">
   <div class="flex items-center justify-between gap-2">
     <SidebarGroupLabel>Projects</SidebarGroupLabel>
-    <div v-if="availableClients.length" class="flex items-center gap-1 text-[11px] text-gray-600 dark:text-gray-300">
+    <div v-if="user && user.company_id !== null && user.company_id !== undefined && availableClients.length" class="flex items-center gap-1 text-[11px] text-gray-600 dark:text-gray-300">
       <select
         class="rounded-md border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:focus:border-gray-100 dark:focus:ring-gray-100"
         :value="selectedClientId || 'all'"
@@ -548,12 +571,12 @@ const isClientCollapsed = (clientName: string) => {
     </div>
   </div>
     <!-- Project limit notice (e.g. FREE plan reached 3 projects) -->
-    <div
+    <!-- <div
       v-if="projectLimitMessage"
       class="mx-2 mb-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200"
     >
       {{ projectLimitMessage }}
-    </div>
+    </div> -->
 
     <SidebarMenu>
       <!-- Create Project Button -->
