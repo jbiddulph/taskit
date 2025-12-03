@@ -36,11 +36,16 @@ const sidebarNavItems = computed(() => {
         },
     ];
 
-    // Add Company settings for paid plans only
+    // Add Company settings for eligible paid / LTD plans
     const user = (page.props.auth as any)?.user;
     const company = user?.company;
     
-    if (company && ['MIDI', 'MAXI'].includes(company.subscription_type)) {
+    if (
+        company &&
+        ['MIDI', 'MAXI', 'BUSINESS', 'LTD_TEAM', 'LTD_AGENCY', 'LTD_BUSINESS'].includes(
+            company.subscription_type
+        )
+    ) {
         items.push({
             title: 'Company',
             href: '/settings/company',
