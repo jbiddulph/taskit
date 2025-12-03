@@ -189,12 +189,15 @@ class Company extends Model
     public function getClientLimit(): int
     {
         return match($this->subscription_type) {
-            'LTD_SOLO'    => 0,   // SOLO has no company / no clients
-            'LTD_TEAM'     => 10,
-            'LTD_AGENCY'   => 30,
-            'LTD_BUSINESS' => 50,
-            // No explicit client limits for non-LTD tiers (currently unlimited)
-            default        => PHP_INT_MAX,
+            'LTD_SOLO'           => 0,   // SOLO has no company / no clients
+            'FREE'               => 0,   // FREE plan has no clients
+            'MIDI',
+            'LTD_TEAM'           => 10,  // Up to 10 clients
+            'MAXI',
+            'LTD_AGENCY'         => 30,  // Up to 30 clients
+            'LTD_BUSINESS'       => 50,  // Up to 50 clients
+            // BUSINESS and other plans currently have no explicit client limit
+            default              => PHP_INT_MAX,
         };
     }
 
@@ -204,9 +207,11 @@ class Company extends Model
     public function getProjectLimitPerClient(): int
     {
         return match($this->subscription_type) {
-            'LTD_TEAM' => 20,   // Up to 20 projects for each client
-            'LTD_AGENCY' => 40, // Up to 40 projects for each client
-            'LTD_BUSINESS' => 100, // Up to 100 projects for each client
+            'MIDI',
+            'LTD_TEAM'     => 20,   // Up to 20 projects for each client
+            'MAXI',
+            'LTD_AGENCY'   => 40,   // Up to 40 projects for each client
+            'LTD_BUSINESS' => 100,  // Up to 100 projects for each client
             default => PHP_INT_MAX,
         };
     }

@@ -7,11 +7,33 @@ import { useClientStore } from '@/composables/useClientStore';
 import Icon from '@/components/Icon.vue';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
-// import { usePage } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
 const projects = ref<Project[]>([]);
 const groupedProjects = ref<any>(null);
 const { selectedClientId, setClientId } = useClientStore();
 const todosLoaded = ref(false);
+const page = usePage();
+
+const company = computed(() => {
+  // On dashboard we get a top-level company prop; fall back to auth.user.company if needed
+  const props: any = page.props;
+  return props.company ?? (props.auth as any)?.user?.company ?? null;
+});
+
+const isAtFreeProjectLimit = computed(() => {
+  const c: any = company.value;
+  if (!c) return false;
+  // Use backend-provided counts/limits when available
+  if (typeof c.current_project_count === 'number' && typeof c.project_limit === 'number') {
+    return c.subscription_type === 'FREE' && c.current_project_count >= c.project_limit;
+  }
+  return false;
+});
+
+const projectLimitMessage = computed(() => {
+  if (!isAtFreeProjectLimit.value) return '';
+  return 'You have reached the FREE plan project limit (3 projects). To add more projects, please upgrade your subscription.';
+});
 
 const availableClients = computed(() => {
   if (!groupedProjects.value || !groupedProjects.value.clients) return [];
@@ -525,9 +547,17 @@ const isClientCollapsed = (clientName: string) => {
       </select>
     </div>
   </div>
+    <!-- Project limit notice (e.g. FREE plan reached 3 projects) -->
+    <div
+      v-if="projectLimitMessage"
+      class="mx-2 mb-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200"
+    >
+      {{ projectLimitMessage }}
+    </div>
+
     <SidebarMenu>
       <!-- Create Project Button -->
-      <SidebarMenuItem v-if="!loading && isOnDashboard && todosLoaded">
+      <SidebarMenuItem v-if="!loading && isOnDashboard && todosLoaded && !isAtFreeProjectLimit">
         <SidebarMenuButton 
           @click="createProject" 
           :tooltip="isOnSubscriptionPage ? 'Complete subscription upgrade to create projects' : 'Create New Project'"

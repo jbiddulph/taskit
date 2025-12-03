@@ -90,9 +90,6 @@ return [
                 'Up to 30 clients',
                 'Up to 40 projects per client',
                 'Unlimited todos',
-                'Integrations',
-                'Automations',
-                'Priority support',
                 // Core app features
                 'Bulk Add Tasks',
                 'Voice Add Tasks (10 second)',
