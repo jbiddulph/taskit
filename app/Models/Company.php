@@ -160,12 +160,14 @@ class Company extends Model
             'FREE' => 3,
             'MIDI' => 20,
             'MAXI' => 100,
-            'BUSINESS' => PHP_INT_MAX, // Unlimited
-            'LTD_SOLO' => 10,
-            'LTD_TEAM' => 20,
-            'LTD_AGENCY' => 100,
-            'LTD_BUSINESS' => PHP_INT_MAX, // Unlimited (per-company)
-            default => 3
+            'BUSINESS' => PHP_INT_MAX, // Unlimited per company
+            'LTD_SOLO' => 10,          // 10 total projects (no clients)
+            // For LTD TEAM / AGENCY / BUSINESS we enforce per-client limits instead,
+            // so we do not cap total projects at the company level.
+            'LTD_TEAM',
+            'LTD_AGENCY',
+            'LTD_BUSINESS' => PHP_INT_MAX,
+            default => 3,
         };
     }
 
@@ -187,11 +189,12 @@ class Company extends Model
     public function getClientLimit(): int
     {
         return match($this->subscription_type) {
-            // No explicit client limits for non-LTD tiers (for now)
-            'LTD_TEAM' => 10,
-            'LTD_AGENCY' => 30,
+            'LTD_SOLO'    => 0,   // SOLO has no company / no clients
+            'LTD_TEAM'     => 10,
+            'LTD_AGENCY'   => 30,
             'LTD_BUSINESS' => 50,
-            default => PHP_INT_MAX,
+            // No explicit client limits for non-LTD tiers (currently unlimited)
+            default        => PHP_INT_MAX,
         };
     }
 
