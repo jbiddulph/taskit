@@ -2,18 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\LtdRedemptionCodeMail;
-use App\Models\Company;
-use App\Models\LtdTier;
-use App\Models\RedemptionCode;
+use App\Mail\SubscriptionChangedMail;
 use App\Services\StripeService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -169,23 +164,17 @@ class SubscriptionController extends Controller
             $company->fill($updateData);
             $company->save();
 
-            // For LTD_* lifetime deals, also generate and email a redemption code here
-            if ($isLifetime && is_string($planType) && str_starts_with($planType, 'LTD_')) {
-                Log::info('Generating LTD redemption code from SubscriptionController::success', [
-                    'company_id' => $company->id,
-                    'plan_type' => $planType,
-                    'session_id' => $sessionId,
-                ]);
-
-                $this->generateLtdRedemptionCodeAndNotifyUser($company, $planType, $user, $session);
-            }
-
             \Log::info('Subscription activated via success callback', [
                 'company_id' => $company->id,
                 'session_id' => $sessionId,
                 'subscription_id' => $session->subscription ?? 'none',
                 'plan_type' => $planType
             ]);
+
+            // Send a confirmation email to the user about their current plan
+            Mail::to($user->email)->send(
+                new SubscriptionChangedMail($user->name, $planType)
+            );
 
             return redirect()->route('dashboard')->with('success', 'Subscription activated successfully!');
         } catch (\Exception $e) {
@@ -194,109 +183,6 @@ class SubscriptionController extends Controller
                 'error' => $e->getMessage()
             ]);
             return redirect()->route('dashboard')->with('error', 'Error activating subscription. Please contact support.');
-        }
-    }
-
-    /**
-     * Generate an LTD redemption code and email it to the purchasing user.
-     * This is a parallel path to the webhook logic so that LTD codes are created
-     * even if webhooks are misconfigured in some environments.
-     */
-    protected function generateLtdRedemptionCodeAndNotifyUser(Company $company, string $planType, $user, $session): void
-    {
-        try {
-            if (!str_starts_with($planType, 'LTD_')) {
-                Log::info('Plan type is not LTD_, skipping LTD code generation in SubscriptionController', [
-                    'company_id' => $company->id,
-                    'plan_type' => $planType,
-                ]);
-                return;
-            }
-
-            $tier = LtdTier::where('subscription_type', $planType)->first();
-            if (!$tier) {
-                Log::error('No LTD tier found for plan type in SubscriptionController::generateLtdRedemptionCodeAndNotifyUser', [
-                    'company_id' => $company->id,
-                    'plan_type' => $planType,
-                ]);
-                return;
-            }
-
-            // Generate a unique code like LTD_TEAM-[timestamp]-[UUID]
-            $code = null;
-            for ($i = 0; $i < 5; $i++) {
-                $candidate = sprintf(
-                    '%s-%s-%s',
-                    $planType,
-                    now()->timestamp,
-                    Str::uuid()->toString()
-                );
-
-                if (!RedemptionCode::where('code', $candidate)->exists()) {
-                    $code = $candidate;
-                    break;
-                }
-            }
-
-            if (!$code) {
-                Log::error('Failed to generate unique LTD redemption code in SubscriptionController after multiple attempts', [
-                    'company_id' => $company->id,
-                    'plan_type' => $planType,
-                ]);
-                return;
-            }
-
-            $redemption = RedemptionCode::create([
-                'code' => $code,
-                'ltd_tier_id' => $tier->id,
-                'redeemed' => false,
-                'user_id' => null,
-                'redeemed_at' => null,
-            ]);
-
-            Log::info('LTD redemption code row created from SubscriptionController', [
-                'company_id' => $company->id,
-                'plan_type' => $planType,
-                'code_id' => $redemption->id,
-                'code' => $redemption->code,
-            ]);
-
-            // Prefer the authenticated user's email/name
-            $recipientEmail = $user?->email;
-            $recipientName = $user?->name ?? 'there';
-
-            // Fallback to Stripe session customer details if needed
-            if (!$recipientEmail) {
-                $recipientEmail = $session->customer_details->email ?? null;
-                $recipientName = $session->customer_details->name ?? $recipientName;
-            }
-
-            if (!$recipientEmail) {
-                Log::warning('Could not determine recipient email for LTD redemption code in SubscriptionController', [
-                    'company_id' => $company->id,
-                    'plan_type' => $planType,
-                    'code_id' => $redemption->id,
-                ]);
-                return;
-            }
-
-            Log::info('Sending LTD redemption code email from SubscriptionController', [
-                'company_id' => $company->id,
-                'plan_type' => $planType,
-                'code' => $redemption->code,
-                'recipient_email' => $recipientEmail,
-                'recipient_name' => $recipientName,
-            ]);
-
-            Mail::to($recipientEmail)->send(
-                new LtdRedemptionCodeMail($recipientName, $company, $planType, $redemption)
-            );
-        } catch (\Throwable $e) {
-            Log::error('Failed to generate or send LTD redemption code from SubscriptionController', [
-                'company_id' => $company->id,
-                'plan_type' => $planType,
-                'error' => $e->getMessage(),
-            ]);
         }
     }
 
@@ -537,16 +423,23 @@ public function cancelSubscription()
                     $message = "Your subscription will be downgraded to MIDI on {$periodEnd->format('F j, Y')}. You'll keep your current MAXI plan benefits until then.";
                 } else {
                     // Immediate upgrade or same-tier change
+                    $previousPlan = $company->subscription_type;
+
                     $this->stripeService->updateSubscription($company->stripe_subscription_id, $request->plan);
                     $company->subscription_type = $request->plan;
                     $company->save();
                     
                     \Log::info('Immediately updated subscription', [
                         'company_id' => $company->id,
-                        'old_plan' => $company->subscription_type,
+                        'old_plan' => $previousPlan,
                         'new_plan' => $request->plan,
                         'subscription_id' => $company->stripe_subscription_id
                     ]);
+
+                    // Email user about subscription change
+                    Mail::to($user->email)->send(
+                        new SubscriptionChangedMail($user->name, $request->plan)
+                    );
                     
                     $message = $isDowngrade ? 'Subscription downgraded successfully' : 'Subscription upgraded successfully';
                 }
