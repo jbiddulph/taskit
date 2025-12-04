@@ -111,9 +111,6 @@ class StripeWebhookController extends Controller
                 'plan_type' => $planType,
                 'session_id' => $session->id,
             ]);
-
-            // For LTD_* lifetime deals, generate and email a redemption code
-            $this->generateRedemptionCodeAndNotifyUser($company, $planType, $session);
         } else {
             // For subscriptions, the subscription will be created via subscription.created event
             // But we can set the subscription_id if it's available
@@ -145,6 +142,12 @@ class StripeWebhookController extends Controller
             'is_lifetime' => $isLifetime,
             'session_id' => $session->id
         ]);
+
+        // For LTD_* plans, always attempt to generate and email a redemption code,
+        // regardless of the is_lifetime flag value
+        if (is_string($planType) && str_starts_with($planType, 'LTD_')) {
+            $this->generateRedemptionCodeAndNotifyUser($company, $planType, $session);
+        }
     }
 
     /**
