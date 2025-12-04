@@ -470,12 +470,12 @@ const handleTemplateSelected = (todos: any[]) => {
   // In a real app, you might want to create multiple todos
   if (todos.length > 0) {
     const templateTodo = todos[0];
-    form.title = templateTodo.title;
-    form.description = templateTodo.description;
-    form.priority = templateTodo.priority;
-    form.type = templateTodo.type;
-    form.assignee = templateTodo.assignee;
-    form.tags = templateTodo.tags;
+    form.value.title = templateTodo.title;
+    form.value.description = templateTodo.description;
+    form.value.priority = templateTodo.priority;
+    form.value.type = templateTodo.type;
+    form.value.assignee = templateTodo.assignee;
+    form.value.tags = templateTodo.tags;
   }
 };
 
