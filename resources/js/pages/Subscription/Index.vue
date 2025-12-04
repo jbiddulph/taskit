@@ -11,6 +11,7 @@ interface User {
     id: number;
     name: string;
     email: string;
+    company_id?: number | null;
 }
 
 interface Company {
@@ -61,6 +62,10 @@ const props = defineProps<Props>();
 const page = usePage();
 
 const loading = ref(false);
+const redeemLoading = ref(false);
+const redemptionCode = ref('');
+const redemptionError = ref<string | null>(null);
+const redemptionSuccess = ref<string | null>(null);
 const currentPlan = computed(() => props.company?.effective_subscription_type || props.company?.subscription_type || 'FREE');
 const isActive = computed(() => props.company?.subscription_status === 'active');
 const hasPendingChange = computed(() => !!props.company?.pending_change);
@@ -72,6 +77,11 @@ const pendingPlan = ref('');
 
 // Get error messages from the page
 const errors = computed(() => page.props.errors as Record<string, string> || {});
+
+// Show redemption code box only if user has a company_id
+const canShowRedemptionBox = computed(() => {
+    return props.user && props.user.company_id !== null && props.user.company_id !== undefined;
+});
 
 // Filter out FREE / BUSINESS appropriately, and hide BUSINESS entirely from UI
 const availablePlans = computed(() => {
@@ -195,6 +205,41 @@ const getYearlyPrice = (planType: string): string | null => {
 const isLifetimePlan = (planType: string): boolean => {
     const plan = props.plans[planType as keyof Plans];
     return (plan as any)?.is_lifetime || false;
+};
+
+const redeemLifetimeCode = () => {
+    if (!redemptionCode.value.trim() || redeemLoading.value) {
+        return;
+    }
+
+    redeemLoading.value = true;
+    redemptionError.value = null;
+    redemptionSuccess.value = null;
+
+    router.post(
+        '/ltd/redeem',
+        { code: redemptionCode.value.trim() },
+        {
+            onError: (formErrors) => {
+                // Show first error for code if present
+                if ((formErrors as any).code) {
+                    redemptionError.value = (formErrors as any).code;
+                } else if ((formErrors as any).message) {
+                    redemptionError.value = (formErrors as any).message;
+                } else {
+                    redemptionError.value = 'There was a problem redeeming your code. Please try again.';
+                }
+            },
+            onSuccess: () => {
+                redemptionSuccess.value = 'Your redemption code was applied successfully.';
+                redemptionCode.value = '';
+                // Let server-side redirect or flash messages handle final state
+            },
+            onFinish: () => {
+                redeemLoading.value = false;
+            },
+        },
+    );
 };
 
 const changePlan = async (planType: string, interval: 'month' | 'year' = 'month') => {
@@ -477,6 +522,44 @@ const reactivateSubscription = async () => {
                     </div>
                 </CardContent>
             </Card>
+
+            <!-- LTD Redemption Code (only for users with a company) -->
+            <div v-if="canShowRedemptionBox" class="mb-8">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Redeem Lifetime Deal</CardTitle>
+                        <CardDescription>
+                            Got a redemption code? Enter it here to apply your lifetime ZapTask plan.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div class="space-y-3">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Redemption Code
+                            </label>
+                            <input
+                                v-model="redemptionCode"
+                                type="text"
+                                placeholder="Enter your lifetime deal redemption code"
+                                class="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 dark:focus:border-blue-400 dark:focus:ring-blue-400"
+                            />
+                            <div v-if="redemptionError" class="text-xs text-red-600">
+                                {{ redemptionError }}
+                            </div>
+                            <div v-if="redemptionSuccess" class="text-xs text-green-600">
+                                {{ redemptionSuccess }}
+                            </div>
+                            <Button
+                                class="mt-2"
+                                :disabled="redeemLoading || !redemptionCode.trim()"
+                                @click="redeemLifetimeCode"
+                            >
+                                {{ redeemLoading ? 'Redeeming...' : 'Apply Redemption Code' }}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
 
             <!-- Pending Subscription Change -->
             <Card v-if="hasPendingChange" class="mb-8 border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20">

@@ -3,9 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Models\LtdTier;
+use App\Models\RedemptionCode;
+use App\Mail\LtdRedemptionCodeMail;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Stripe\Stripe;
 use Stripe\Webhook;
 use Stripe\Exception\SignatureVerificationException;
@@ -197,6 +202,101 @@ class StripeWebhookController extends Controller
             'subscription_type_set' => $company->subscription_type,
             'subscription_status_set' => $company->subscription_status
         ]);
+
+        // For LTD plans, generate a redemption code and email it to the purchaser
+        $this->generateRedemptionCodeAndNotifyUser($company, $planType, $paymentIntent);
+    }
+
+    /**
+     * Generate a unique LTD redemption code and email it to the purchasing user.
+     *
+     * This is only triggered for LTD_* lifetime deals.
+     */
+    private function generateRedemptionCodeAndNotifyUser(Company $company, string $planType, $paymentIntentOrSession): void
+    {
+        if (!str_starts_with($planType, 'LTD_')) {
+            return;
+        }
+
+        try {
+            $tier = LtdTier::where('subscription_type', $planType)->first();
+            if (!$tier) {
+                Log::error('No LTD tier found for plan type when generating redemption code', [
+                    'company_id' => $company->id,
+                    'plan_type' => $planType,
+                ]);
+                return;
+            }
+
+            // Generate a unique code like LTD_TEAM-[timestamp]-[UUID]
+            $code = null;
+            for ($i = 0; $i < 5; $i++) {
+                $candidate = sprintf(
+                    '%s-%s-%s',
+                    $planType,
+                    now()->timestamp,
+                    Str::uuid()->toString()
+                );
+
+                if (!RedemptionCode::where('code', $candidate)->exists()) {
+                    $code = $candidate;
+                    break;
+                }
+            }
+
+            if (!$code) {
+                Log::error('Failed to generate unique LTD redemption code after multiple attempts', [
+                    'company_id' => $company->id,
+                    'plan_type' => $planType,
+                ]);
+                return;
+            }
+
+            $redemption = RedemptionCode::create([
+                'code' => $code,
+                'ltd_tier_id' => $tier->id,
+                'redeemed' => false,
+                'user_id' => null,
+                'redeemed_at' => null,
+            ]);
+
+            // Determine recipient email:
+            // 1. Try Stripe payment/checkout email
+            // 2. Fallback to the first user in the company
+            $stripeEmail = $paymentIntentOrSession->receipt_email
+                ?? $paymentIntentOrSession->customer_details->email
+                ?? null;
+
+            $user = $company->users()->orderBy('created_at')->first();
+            $recipientEmail = $stripeEmail ?: ($user?->email);
+            $recipientName = $user?->name ?? ($paymentIntentOrSession->customer_name ?? null);
+
+            if (!$recipientEmail) {
+                Log::warning('Could not determine recipient email for LTD redemption code', [
+                    'company_id' => $company->id,
+                    'plan_type' => $planType,
+                    'code_id' => $redemption->id,
+                ]);
+                return;
+            }
+
+            Mail::to($recipientEmail)->send(
+                new LtdRedemptionCodeMail($recipientName, $company, $planType, $redemption)
+            );
+
+            Log::info('LTD redemption code generated and emailed', [
+                'company_id' => $company->id,
+                'plan_type' => $planType,
+                'code' => $redemption->code,
+                'recipient_email' => $recipientEmail,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to generate or send LTD redemption code', [
+                'company_id' => $company->id,
+                'plan_type' => $planType,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function handleSubscriptionCreated($subscription): void
