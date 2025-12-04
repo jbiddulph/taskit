@@ -38,11 +38,11 @@ return new class extends Migration
                 $table->string('subscription_type', 50)->default('FREE')->change();
             });
             
-            // Add new check constraint with all plan types (including LTD_JB)
+            // Add new check constraint with all plan types
             DB::statement("
                 ALTER TABLE taskit_companies 
                 ADD CONSTRAINT taskit_companies_subscription_type_check 
-                CHECK (subscription_type IN ('FREE', 'MIDI', 'MAXI', 'BUSINESS', 'LTD_SOLO', 'LTD_TEAM', 'LTD_AGENCY', 'LTD_BUSINESS', 'LTD_JB'))
+                CHECK (subscription_type IN ('FREE', 'MIDI', 'MAXI', 'BUSINESS', 'LTD_SOLO', 'LTD_TEAM', 'LTD_AGENCY', 'LTD_BUSINESS'))
             ");
         } elseif ($driver === 'mysql' || $driver === 'mariadb') {
             // MySQL doesn't support modifying enum directly, so we need to:
@@ -52,8 +52,8 @@ return new class extends Migration
                 $table->string('subscription_type', 50)->default('FREE')->change();
             });
             
-            // Now change back to enum with all plan types (including LTD_JB)
-            DB::statement("ALTER TABLE taskit_companies MODIFY subscription_type ENUM('FREE', 'MIDI', 'MAXI', 'BUSINESS', 'LTD_SOLO', 'LTD_TEAM', 'LTD_AGENCY', 'LTD_BUSINESS', 'LTD_JB') DEFAULT 'FREE'");
+            // Now change back to enum with all plan types
+            DB::statement("ALTER TABLE taskit_companies MODIFY subscription_type ENUM('FREE', 'MIDI', 'MAXI', 'BUSINESS', 'LTD_SOLO', 'LTD_TEAM', 'LTD_AGENCY', 'LTD_BUSINESS') DEFAULT 'FREE'");
         } else {
             // For SQLite, enums are stored as strings
             // Just ensure the column can handle longer values

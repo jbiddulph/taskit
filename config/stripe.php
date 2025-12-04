@@ -139,17 +139,6 @@ return [
                 'Import/Export data',
             ]
         ],
-        // Lifetime Deal (LTD) Plans - one-time payments
-        'LTD_JB' => [
-            'name' => 'LTD JB',
-            'price' => 100, // £1.00 in pence (one-time)
-            'currency' => 'gbp',
-            'stripe_price_id' => env('STRIPE_LTD_JB_PRICE_ID'),
-            'is_lifetime' => true,
-            'features' => [
-                'All the features'
-            ]
-        ],
         'LTD_SOLO' => [
             'name' => 'LTD Solo',
             'price' => 3900, // £39.00 in pence (one-time)

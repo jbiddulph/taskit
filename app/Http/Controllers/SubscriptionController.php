@@ -47,7 +47,7 @@ class SubscriptionController extends Controller
     public function checkout(Request $request): JsonResponse
     {
         $request->validate([
-            'plan' => 'required|in:MIDI,MAXI,BUSINESS,LTD_SOLO,LTD_TEAM,LTD_AGENCY,LTD_BUSINESS,LTD_JB',
+            'plan' => 'required|in:MIDI,MAXI,BUSINESS,LTD_SOLO,LTD_TEAM,LTD_AGENCY,LTD_BUSINESS',
             'billing_interval' => 'nullable|in:month,year',
         ]);
 
@@ -281,7 +281,7 @@ public function cancelSubscription()
         ]);
 
         $request->validate([
-            'plan' => 'required|in:FREE,MIDI,MAXI,BUSINESS,LTD_SOLO,LTD_TEAM,LTD_AGENCY,LTD_BUSINESS,LTD_JB',
+            'plan' => 'required|in:FREE,MIDI,MAXI,BUSINESS,LTD_SOLO,LTD_TEAM,LTD_AGENCY,LTD_BUSINESS',
         ]);
 
         $user = Auth::user();
@@ -370,7 +370,6 @@ public function cancelSubscription()
                     'MAXI' => 2, 
                     'BUSINESS' => 3,
                     'LTD_SOLO' => 1.5,
-                    'LTD_JB' => 1.5,
                     'LTD_TEAM' => 2.5,
                     'LTD_AGENCY' => 3.5,
                     'LTD_BUSINESS' => 4.5
@@ -565,7 +564,7 @@ public function cancelSubscription()
     {
         $request->validate([
             'company_name' => 'required|string|max:255',
-            'target_plan' => 'required|in:MIDI,MAXI,BUSINESS,LTD_SOLO,LTD_TEAM,LTD_AGENCY,LTD_BUSINESS,LTD_JB',
+            'target_plan' => 'required|in:MIDI,MAXI,BUSINESS,LTD_SOLO,LTD_TEAM,LTD_AGENCY,LTD_BUSINESS',
         ]);
 
         $user = Auth::user();

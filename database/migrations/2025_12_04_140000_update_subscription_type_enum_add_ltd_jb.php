@@ -15,7 +15,7 @@ return new class extends Migration
         $driver = DB::getDriverName();
 
         if ($driver === 'pgsql') {
-            // PostgreSQL: drop and recreate the check constraint to include LTD_JB
+            // PostgreSQL: drop and recreate the check constraint
             DB::statement("
                 DO \$\$
                 BEGIN
@@ -39,17 +39,17 @@ return new class extends Migration
             DB::statement("
                 ALTER TABLE taskit_companies
                 ADD CONSTRAINT taskit_companies_subscription_type_check
-                CHECK (subscription_type IN ('FREE', 'MIDI', 'MAXI', 'BUSINESS', 'LTD_SOLO', 'LTD_TEAM', 'LTD_AGENCY', 'LTD_BUSINESS', 'LTD_JB'))
+                CHECK (subscription_type IN ('FREE', 'MIDI', 'MAXI', 'BUSINESS', 'LTD_SOLO', 'LTD_TEAM', 'LTD_AGENCY', 'LTD_BUSINESS'))
             ");
         } elseif ($driver === 'mysql' || $driver === 'mariadb') {
-            // MySQL / MariaDB: update enum definition to include LTD_JB
+            // MySQL / MariaDB: update enum definition
             Schema::table('taskit_companies', function (Blueprint $table) {
                 $table->string('subscription_type', 50)->default('FREE')->change();
             });
 
             DB::statement("
                 ALTER TABLE taskit_companies
-                MODIFY subscription_type ENUM('FREE', 'MIDI', 'MAXI', 'BUSINESS', 'LTD_SOLO', 'LTD_TEAM', 'LTD_AGENCY', 'LTD_BUSINESS', 'LTD_JB') DEFAULT 'FREE'
+                MODIFY subscription_type ENUM('FREE', 'MIDI', 'MAXI', 'BUSINESS', 'LTD_SOLO', 'LTD_TEAM', 'LTD_AGENCY', 'LTD_BUSINESS') DEFAULT 'FREE'
             ");
         } else {
             // SQLite / others: just ensure string width (no strict enum/check)
@@ -67,7 +67,7 @@ return new class extends Migration
         $driver = DB::getDriverName();
 
         if ($driver === 'pgsql') {
-            // Best-effort: revert to constraint without LTD_JB
+            // Best-effort: revert to constraint
             DB::statement("
                 DO \$\$
                 BEGIN

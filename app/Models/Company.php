@@ -144,7 +144,6 @@ class Company extends Model
             'MAXI' => 20,
             'BUSINESS' => PHP_INT_MAX, // Unlimited
             'LTD_SOLO',
-            'LTD_JB' => 1,
             'LTD_TEAM' => 5,
             'LTD_AGENCY' => 20,
             'LTD_BUSINESS' => 50,
@@ -163,7 +162,6 @@ class Company extends Model
             'MAXI' => 100,
             'BUSINESS' => PHP_INT_MAX, // Unlimited per company
             'LTD_SOLO',
-            'LTD_JB' => 10,          // 10 total projects (no clients)
             // For LTD TEAM / AGENCY / BUSINESS we enforce per-client limits instead,
             // so we do not cap total projects at the company level.
             'LTD_TEAM',
@@ -184,7 +182,6 @@ class Company extends Model
             'MAXI',
             'BUSINESS',
             'LTD_SOLO',
-            'LTD_JB',
             'LTD_TEAM',
             'LTD_AGENCY',
             'LTD_BUSINESS' => PHP_INT_MAX, // Unlimited
@@ -199,7 +196,6 @@ class Company extends Model
     {
         return match($this->subscription_type) {
             'LTD_SOLO',
-            'LTD_JB'             => 0,   // SOLO / LTD_JB have no company / no clients
             'FREE'               => 0,   // FREE plan has no clients
             'MIDI',
             'LTD_TEAM'           => 10,  // Up to 10 clients
