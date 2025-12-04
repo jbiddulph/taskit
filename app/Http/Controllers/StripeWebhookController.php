@@ -86,7 +86,10 @@ class StripeWebhookController extends Controller
         $isLifetime = ($session->metadata->is_lifetime ?? 'false') === 'true';
 
         if (!$companyId || !$planType) {
-            Log::error('Missing metadata in checkout session', ['session_id' => $session->id]);
+            Log::error('Missing metadata in checkout session', [
+                'session_id' => $session->id,
+                'metadata' => $session->metadata ?? null,
+            ]);
             return;
         }
 
@@ -146,6 +149,11 @@ class StripeWebhookController extends Controller
         // For LTD_* plans, always attempt to generate and email a redemption code,
         // regardless of the is_lifetime flag value
         if (is_string($planType) && str_starts_with($planType, 'LTD_')) {
+            Log::info('Attempting to generate LTD redemption code from checkout.session.completed', [
+                'company_id' => $companyId,
+                'plan_type' => $planType,
+                'session_id' => $session->id,
+            ]);
             $this->generateRedemptionCodeAndNotifyUser($company, $planType, $session);
         }
     }
@@ -217,7 +225,17 @@ class StripeWebhookController extends Controller
      */
     private function generateRedemptionCodeAndNotifyUser(Company $company, string $planType, $paymentIntentOrSession): void
     {
+        Log::info('generateRedemptionCodeAndNotifyUser called', [
+            'company_id' => $company->id,
+            'plan_type' => $planType,
+            'source_class' => is_object($paymentIntentOrSession) ? get_class($paymentIntentOrSession) : gettype($paymentIntentOrSession),
+        ]);
+
         if (!str_starts_with($planType, 'LTD_')) {
+            Log::info('Plan type is not LTD_, skipping redemption code generation', [
+                'company_id' => $company->id,
+                'plan_type' => $planType,
+            ]);
             return;
         }
 
@@ -263,6 +281,13 @@ class StripeWebhookController extends Controller
                 'redeemed_at' => null,
             ]);
 
+            Log::info('LTD redemption code row created', [
+                'company_id' => $company->id,
+                'plan_type' => $planType,
+                'code_id' => $redemption->id,
+                'code' => $redemption->code,
+            ]);
+
             // Determine recipient email:
             // 1. Try Stripe payment/checkout email
             // 2. Fallback to the first user in the company
@@ -283,6 +308,14 @@ class StripeWebhookController extends Controller
                 return;
             }
 
+            Log::info('Sending LTD redemption code email', [
+                'company_id' => $company->id,
+                'plan_type' => $planType,
+                'code' => $redemption->code,
+                'recipient_email' => $recipientEmail,
+                'recipient_name' => $recipientName,
+            ]);
+
             Mail::to($recipientEmail)->send(
                 new LtdRedemptionCodeMail($recipientName, $company, $planType, $redemption)
             );
@@ -298,6 +331,7 @@ class StripeWebhookController extends Controller
                 'company_id' => $company->id,
                 'plan_type' => $planType,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
