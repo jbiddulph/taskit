@@ -109,8 +109,11 @@ class StripeWebhookController extends Controller
             Log::info('Lifetime deal checkout completed', [
                 'company_id' => $companyId,
                 'plan_type' => $planType,
-                'session_id' => $session->id
+                'session_id' => $session->id,
             ]);
+
+            // For LTD_* lifetime deals, generate and email a redemption code
+            $this->generateRedemptionCodeAndNotifyUser($company, $planType, $session);
         } else {
             // For subscriptions, the subscription will be created via subscription.created event
             // But we can set the subscription_id if it's available
@@ -200,11 +203,8 @@ class StripeWebhookController extends Controller
             'plan_type' => $planType,
             'payment_intent_id' => $paymentIntent->id,
             'subscription_type_set' => $company->subscription_type,
-            'subscription_status_set' => $company->subscription_status
+            'subscription_status_set' => $company->subscription_status,
         ]);
-
-        // For LTD plans, generate a redemption code and email it to the purchaser
-        $this->generateRedemptionCodeAndNotifyUser($company, $planType, $paymentIntent);
     }
 
     /**
