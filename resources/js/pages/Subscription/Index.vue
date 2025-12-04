@@ -43,6 +43,7 @@ interface Plans {
     MIDI: Plan;
     MAXI: Plan;
     BUSINESS?: Plan;
+    LTD_JB?: Plan;
     LTD_SOLO?: Plan;
     LTD_TEAM?: Plan;
     LTD_AGENCY?: Plan;
@@ -141,6 +142,7 @@ const getButtonText = (planType: string): string => {
         'MAXI': 2, 
         'BUSINESS': 3,
         'LTD_SOLO': 1.5, // Lifetime deals are between FREE and MIDI
+        'LTD_JB': 1.5,
         'LTD_TEAM': 2.5,
         'LTD_AGENCY': 3.5,
         'LTD_BUSINESS': 4.5

@@ -17,11 +17,11 @@ $planType = $argv[2] ?? null;
 if (!$companyId || !$planType) {
     echo "Usage: php update_company_plan.php <company_id> <plan_type>\n";
     echo "Example: php update_company_plan.php 1 LTD_AGENCY\n";
-    echo "\nValid plan types: FREE, MIDI, MAXI, BUSINESS, LTD_SOLO, LTD_TEAM, LTD_AGENCY, LTD_BUSINESS\n";
+    echo "\nValid plan types: FREE, MIDI, MAXI, BUSINESS, LTD_SOLO, LTD_TEAM, LTD_AGENCY, LTD_BUSINESS, LTD_JB\n";
     exit(1);
 }
 
-$validPlans = ['FREE', 'MIDI', 'MAXI', 'BUSINESS', 'LTD_SOLO', 'LTD_TEAM', 'LTD_AGENCY', 'LTD_BUSINESS'];
+$validPlans = ['FREE', 'MIDI', 'MAXI', 'BUSINESS', 'LTD_SOLO', 'LTD_TEAM', 'LTD_AGENCY', 'LTD_BUSINESS', 'LTD_JB'];
 
 if (!in_array($planType, $validPlans)) {
     echo "Error: Invalid plan type. Must be one of: " . implode(', ', $validPlans) . "\n";
