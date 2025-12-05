@@ -1295,7 +1295,26 @@ const saveTodo = async (todo: Todo) => {
         });
         console.log('🎯 Created subtask:', newTodo);
         
-        // Real-time updates will handle adding the subtask to the list
+        // Add subtask immediately to parent todo's subtasks array
+        const parentIndex = todos.value.findIndex(t => t.id === todo.parent_task_id);
+        if (parentIndex !== -1) {
+          const parentTodo = todos.value[parentIndex];
+          if (!parentTodo.subtasks) {
+            parentTodo.subtasks = [];
+          }
+          // Check if subtask already exists (from realtime event)
+          const existingSubtaskIndex = parentTodo.subtasks.findIndex((st: any) => st.id === newTodo.id);
+          if (existingSubtaskIndex === -1) {
+            const subtaskWithProject = {
+              ...newTodo,
+              project: currentProject.value
+            };
+            parentTodo.subtasks.push(subtaskWithProject);
+            // Force reactivity update
+            todos.value = [...todos.value];
+            console.log('✅ Added subtask immediately to parent:', parentTodo.title, 'Subtask:', newTodo.title);
+          }
+        }
       } else {
         // Create regular todo
         newTodo = await todoApi.createTodo({
@@ -1303,7 +1322,19 @@ const saveTodo = async (todo: Todo) => {
           project_id: currentProject.value.id
         });
         
-        // Real-time updates will handle adding the todo to the list
+        // Add todo immediately to the list (realtime will handle updates/conflicts)
+        if (currentProject.value && newTodo.project_id === currentProject.value.id) {
+          // Check if todo already exists (from realtime event)
+          if (!todos.value.find(t => t.id === newTodo.id)) {
+            const todoWithProject = {
+              ...newTodo,
+              project: currentProject.value,
+              subtasks: newTodo.subtasks || [] // Initialize subtasks array
+            };
+            todos.value.push(todoWithProject);
+            console.log('✅ Added todo immediately to list:', todoWithProject.title);
+          }
+        }
       }
       
       if ((window as any).$notify) {
@@ -1734,10 +1765,18 @@ const initVoiceRecording = () => {
         
         console.log('✅ Voice todo created successfully:', newTodo);
         
-        // The realtime service should automatically add it to the list
-        // But we can also manually add it for immediate feedback
+        // Add todo immediately to the list (realtime will handle updates/conflicts)
         if (newTodo.project_id === currentProject.value.id) {
-          todos.value.push(newTodo);
+          // Check if todo already exists (from realtime event)
+          if (!todos.value.find(t => t.id === newTodo.id)) {
+            const todoWithProject = {
+              ...newTodo,
+              project: currentProject.value,
+              subtasks: newTodo.subtasks || [] // Initialize subtasks array
+            };
+            todos.value.push(todoWithProject);
+            console.log('✅ Added voice todo immediately to list:', todoWithProject.title);
+          }
         }
         
         // Close any open modal/form
