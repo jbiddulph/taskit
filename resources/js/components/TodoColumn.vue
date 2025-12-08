@@ -14,7 +14,7 @@
           @click="$emit('add')"
           class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
         >
-          <Icon name="Plus" class="w-3 h-3" />
+          <Icon name="Plus" class="w-3 h-3" aria-hidden="true" />
         </button>
         <div v-if="subtaskCount > 0" class="text-xs text-gray-500 dark:text-gray-400 px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">
           ({{ subtaskCount }})
@@ -25,10 +25,12 @@
     <!-- Column Content -->
     <div
       ref="dropZone"
+      :data-column-status="props.status"
+      data-drop-zone="true"
       class="flex-1 p-1 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 min-h-[400px] max-h-[calc(100vh-200px)] overflow-y-auto transition-colors relative"
       :class="{
-        'border-blue-300 bg-blue-50 dark:bg-blue-900/20': isDragOver,
-        'border-gray-200 dark:border-gray-700': !isDragOver
+        'border-blue-300 bg-blue-50 dark:bg-blue-900/20': isDragOver || (isTouchDragging && isDraggingWithinColumn),
+        'border-gray-200 dark:border-gray-700': !isDragOver && !(isTouchDragging && isDraggingWithinColumn)
       }"
       @dragover.prevent="handleDragOver"
       @dragleave="handleDragLeave"
@@ -71,20 +73,25 @@
           
           <!-- Todo Card Container -->
           <div
-            :draggable="canDragTodo(todo)"
+            :draggable="canDragTodo(todo) && !isTouchDevice"
             @dragstart="handleDragStart($event, todo)"
             @dragend="handleDragEnd"
             @dragover="handleTodoDragOver($event, index)"
             @dragenter="handleTodoDragEnter($event, index)"
             @dragleave="handleTodoDragLeave"
             @drop="handleTodoDrop($event, index)"
-            class="relative transition-all duration-200"
+            @touchstart="handleTouchStart($event, todo, $event.currentTarget as HTMLElement)"
+            @touchmove="handleTouchMove($event)"
+            @touchend="handleTouchEnd($event, todo, index)"
+            data-drop-zone="true"
+            class="relative transition-all duration-200 touch-manipulation"
             :class="{
-              'hover:scale-[1.01] cursor-grab': canDragTodo(todo) && !draggedTodo,
-              'cursor-grabbing': canDragTodo(todo) && draggedTodo?.id === todo.id,
+              'hover:scale-[1.01] cursor-grab': canDragTodo(todo) && !draggedTodo && !isTouchDevice,
+              'cursor-grabbing': canDragTodo(todo) && draggedTodo?.id === todo.id && !isTouchDevice,
               'opacity-60 cursor-not-allowed': !canDragTodo(todo),
               'opacity-40 scale-95': draggedTodo?.id === todo.id,
-              'hover:shadow-md': canDragTodo(todo) && !draggedTodo
+              'hover:shadow-md': canDragTodo(todo) && !draggedTodo && !isTouchDevice,
+              'touch-dragging': isTouchDragging && draggedTodo?.id === todo.id
             }"
           >
             <TodoCard
@@ -124,6 +131,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import Icon from '@/components/Icon.vue';
 import TodoCard from './TodoCard.vue';
 import { useI18n } from 'vue-i18n';
+import { useTouchDragAndDrop } from '@/composables/useTouchDragAndDrop';
 
 import type { Todo } from '@/services/todoApi';
 
@@ -175,6 +183,15 @@ const dropIndicatorIndex = ref<number | null>(null);
 const dropPosition = ref<'before' | 'after'>('before');
 const isDraggingWithinColumn = ref(false);
 const dragLeaveTimeout = ref<number | null>(null);
+
+// Touch device detection
+const isTouchDevice = ref(false);
+const isTouchDragging = ref(false);
+const touchStartY = ref(0);
+const touchStartIndex = ref<number | null>(null);
+
+// Touch drag and drop composable
+const { handleTouchStart: touchStart, handleTouchMove: touchMove, handleTouchEnd: touchEnd } = useTouchDragAndDrop();
 
 // Check if a todo can be dragged (belongs to current project)
 const canDragTodo = (todo: Todo): boolean => {
@@ -365,7 +382,109 @@ const handleGlobalDragEnd = () => {
   }
 };
 
+// Touch event handlers for mobile drag and drop
+const handleTouchStart = (event: TouchEvent, todo: Todo, element: HTMLElement) => {
+  if (!canDragTodo(todo) || event.touches.length !== 1) return;
+  
+  const touch = event.touches[0];
+  touchStartY.value = touch.clientY;
+  touchStartIndex.value = props.todos.findIndex(t => t.id === todo.id);
+  isTouchDragging.value = false;
+  
+  // Store the todo for touch drag
+  draggedTodo.value = todo;
+  isDraggingWithinColumn.value = todo.status === props.status;
+  
+  // Prevent default to avoid scrolling
+  element.style.touchAction = 'none';
+};
+
+const handleTouchMove = (event: TouchEvent) => {
+  if (!draggedTodo.value || touchStartIndex.value === null || event.touches.length !== 1) return;
+  
+  const touch = event.touches[0];
+  const deltaY = touch.clientY - touchStartY.value;
+  
+  // Start dragging after 10px movement
+  if (Math.abs(deltaY) > 10 && !isTouchDragging.value) {
+    isTouchDragging.value = true;
+    event.preventDefault();
+  }
+  
+  if (isTouchDragging.value && isDraggingWithinColumn.value) {
+    // Find which todo we're over
+    const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
+    const todoCard = elements.find(el => el.closest('[data-todo-id]'));
+    
+    if (todoCard) {
+      const todoId = todoCard.getAttribute('data-todo-id');
+      const targetIndex = props.todos.findIndex(t => String(t.id) === String(todoId));
+      
+      if (targetIndex !== -1 && targetIndex !== touchStartIndex.value) {
+        const targetTodo = props.todos[targetIndex];
+        const rect = todoCard.getBoundingClientRect();
+        const y = touch.clientY - rect.top;
+        const height = rect.height;
+        
+        dropIndicatorIndex.value = targetIndex;
+        dropPosition.value = y < height * 0.5 ? 'before' : 'after';
+      }
+    }
+    
+    event.preventDefault();
+  }
+};
+
+const handleTouchEnd = (event: TouchEvent, todo: Todo, index: number) => {
+  if (!isTouchDragging.value || !draggedTodo.value) {
+    // Reset
+    isTouchDragging.value = false;
+    touchStartIndex.value = null;
+    draggedTodo.value = null;
+    dropIndicatorIndex.value = null;
+    return;
+  }
+  
+  const touch = event.changedTouches[0];
+  const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
+  
+  // Check if dropped in a different column
+  const dropZoneElement = elements.find(el => el.hasAttribute('data-drop-zone') && el !== event.currentTarget);
+  
+  if (dropZoneElement) {
+    // Find the column status from the drop zone
+    const columnElement = dropZoneElement.closest('[data-column-status]');
+    if (columnElement) {
+      const newStatus = columnElement.getAttribute('data-column-status');
+      if (newStatus && newStatus !== props.status) {
+        emit('drop', todo, newStatus as any);
+      }
+    }
+  } else if (isDraggingWithinColumn.value && dropIndicatorIndex.value !== null && touchStartIndex.value !== null) {
+    // Reorder within column
+    const targetTodo = props.todos[dropIndicatorIndex.value];
+    if (targetTodo && targetTodo.id !== todo.id) {
+      emit('reorder', todo, targetTodo, dropPosition.value);
+    }
+  }
+  
+  // Reset
+  isTouchDragging.value = false;
+  touchStartIndex.value = null;
+  draggedTodo.value = null;
+  dropIndicatorIndex.value = null;
+  
+  // Reset touch action
+  const target = event.target as HTMLElement;
+  if (target) {
+    target.style.touchAction = '';
+  }
+};
+
 onMounted(() => {
+  // Detect touch device
+  isTouchDevice.value = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
   document.addEventListener('dragend', handleGlobalDragEnd);
 });
 

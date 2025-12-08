@@ -1,7 +1,8 @@
 <template>
   <div
+    :data-todo-id="todo.id"
     :class="[
-      'group relative rounded-lg border p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer',
+      'group relative rounded-lg border p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer touch-manipulation',
       isOverdueAndNotDone 
         ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-700' 
         : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700',
@@ -11,13 +12,14 @@
     @click="handleClick"
   >
     <!-- Selection checkbox (only in select mode) -->
-    <div v-if="isSelectMode" class="absolute top-2 left-2 z-10">
+    <div v-if="isSelectMode" class="absolute top-2 left-2 z-10 min-w-[44px] min-h-[44px] flex items-center justify-center -m-2">
       <input
         type="checkbox"
         :checked="isSelected"
         @change="$emit('toggle-selection', todo)"
         @click.stop
-        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+        :aria-label="`Select todo: ${todo.title}`"
+        class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
       />
     </div>
 
@@ -55,7 +57,7 @@
           @keydown.enter.stop="$emit('delete', String(todo.id))"
           @keydown.space.stop.prevent="$emit('delete', String(todo.id))"
           :aria-label="`Delete todo: ${todo.title}`"
-          class="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-red-500 focus:text-red-500 transition-opacity focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded p-1"
+          class="opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-red-500 focus:text-red-500 transition-opacity focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded min-w-[44px] min-h-[44px] flex items-center justify-center p-2"
         >
           <Icon name="Trash2" class="w-4 h-4" aria-hidden="true" />
         </button>
@@ -82,10 +84,10 @@
           @keydown.enter.stop="startEditTitle"
           @keydown.space.stop.prevent="startEditTitle"
           :aria-label="`Edit title of todo: ${todo.title}`"
-          class="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-blue-500 focus:text-blue-500 transition-opacity p-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
+          class="opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-blue-500 focus:text-blue-500 transition-opacity p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded min-w-[44px] min-h-[44px] flex items-center justify-center"
           title="Edit title"
         >
-          <Icon name="Edit3" class="w-3 h-3" aria-hidden="true" />
+          <Icon name="Edit3" class="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
       <div v-else class="flex items-center gap-2">
@@ -103,14 +105,17 @@
           @keydown.enter.stop="saveTitle"
           @keydown.space.stop.prevent="saveTitle"
           aria-label="Save title"
-          class="p-1 text-green-500 hover:text-green-600 focus:text-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 rounded"
+          class="p-2 text-green-500 hover:text-green-600 focus:text-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 rounded min-w-[44px] min-h-[44px] flex items-center justify-center"
           title="Save"
         >
-          <Icon name="Check" class="w-3 h-3" aria-hidden="true" />
+          <Icon name="Check" class="w-4 h-4" aria-hidden="true" />
         </button>
         <button
           @click.stop="cancelEditTitle"
-          class="p-1 text-gray-400 hover:text-red-500 transition-colors"
+          @keydown.enter.stop="cancelEditTitle"
+          @keydown.space.stop.prevent="cancelEditTitle"
+          aria-label="Cancel editing title"
+          class="p-2 text-gray-400 hover:text-red-500 focus:text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded min-w-[44px] min-h-[44px] flex items-center justify-center"
           title="Cancel"
         >
           <Icon name="X" class="w-3 h-3" />

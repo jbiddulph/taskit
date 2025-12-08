@@ -299,6 +299,10 @@
             <button
               v-if="!props.isReadOnly"
               @click="showFilters = !showFilters"
+              @keydown.enter="showFilters = !showFilters"
+              @keydown.space.prevent="showFilters = !showFilters"
+              :aria-label="showFilters ? t('dashboard.hide_filters') : t('dashboard.show_filters')"
+              :aria-pressed="showFilters"
               :title="showFilters ? t('dashboard.hide_filters') : t('dashboard.show_filters')"
               :class="[
                 'inline-flex items-center justify-center w-10 h-10 rounded-lg border transition-colors',
@@ -307,7 +311,7 @@
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
               ]"
             >
-              <Icon name="Filter" class="w-4 h-4" />
+              <Icon name="Filter" class="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>
