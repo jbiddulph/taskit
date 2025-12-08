@@ -51,10 +51,13 @@
         </button> -->
         <button
           v-if="!isReadOnly"
-          @click.stop="$emit('delete', todo.id)"
-          class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
+          @click.stop="$emit('delete', String(todo.id))"
+          @keydown.enter.stop="$emit('delete', String(todo.id))"
+          @keydown.space.stop.prevent="$emit('delete', String(todo.id))"
+          :aria-label="`Delete todo: ${todo.title}`"
+          class="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-red-500 focus:text-red-500 transition-opacity focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded p-1"
         >
-          <Icon name="Trash2" class="w-4 h-4" />
+          <Icon name="Trash2" class="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
     </div>
@@ -76,10 +79,13 @@
         <button
           v-if="!isReadOnly"
           @click.stop="startEditTitle"
-          class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-500 transition-opacity p-1"
+          @keydown.enter.stop="startEditTitle"
+          @keydown.space.stop.prevent="startEditTitle"
+          :aria-label="`Edit title of todo: ${todo.title}`"
+          class="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-blue-500 focus:text-blue-500 transition-opacity p-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
           title="Edit title"
         >
-          <Icon name="Edit3" class="w-3 h-3" />
+          <Icon name="Edit3" class="w-3 h-3" aria-hidden="true" />
         </button>
       </div>
       <div v-else class="flex items-center gap-2">
@@ -94,10 +100,13 @@
         />
         <button
           @click.stop="saveTitle"
-          class="p-1 text-green-500 hover:text-green-600 transition-colors"
+          @keydown.enter.stop="saveTitle"
+          @keydown.space.stop.prevent="saveTitle"
+          aria-label="Save title"
+          class="p-1 text-green-500 hover:text-green-600 focus:text-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 rounded"
           title="Save"
         >
-          <Icon name="Check" class="w-3 h-3" />
+          <Icon name="Check" class="w-3 h-3" aria-hidden="true" />
         </button>
         <button
           @click.stop="cancelEditTitle"

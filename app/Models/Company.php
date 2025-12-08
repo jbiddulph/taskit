@@ -143,7 +143,7 @@ class Company extends Model
             'MIDI' => 5,
             'MAXI' => 20,
             'BUSINESS' => PHP_INT_MAX, // Unlimited
-            'LTD_SOLO',
+            'LTD_SOLO' => 1,
             'LTD_TEAM' => 5,
             'LTD_AGENCY' => 20,
             'LTD_BUSINESS' => 50,
@@ -161,7 +161,7 @@ class Company extends Model
             'MIDI' => 20,
             'MAXI' => 100,
             'BUSINESS' => PHP_INT_MAX, // Unlimited per company
-            'LTD_SOLO',
+            'LTD_SOLO' => 10, // 10 projects total for solo plan
             // For LTD TEAM / AGENCY / BUSINESS we enforce per-client limits instead,
             // so we do not cap total projects at the company level.
             'LTD_TEAM',

@@ -2,43 +2,61 @@
   <div class="relative">
     <button
       @click="toggleNotifications"
-      class="relative p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors"
+      @keydown.enter="toggleNotifications"
+      @keydown.space.prevent="toggleNotifications"
+      :aria-label="`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`"
+      :aria-expanded="showNotifications"
+      aria-haspopup="true"
+      class="relative p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md"
     >
-      <Icon name="Bell" class="w-5 h-5" />
+      <Icon name="Bell" class="w-5 h-5" aria-hidden="true" />
       
       <!-- Notification Badge -->
       <span
         v-if="unreadCount > 0"
         class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium animate-pulse"
+        aria-hidden="true"
       >
         {{ unreadCount > 99 ? '99+' : unreadCount }}
       </span>
+      <span v-if="unreadCount > 0" class="sr-only">{{ unreadCount }} unread notifications</span>
     </button>
 
     <!-- Notification Dropdown -->
     <div
       v-if="showNotifications"
+      role="dialog"
+      aria-modal="false"
+      aria-label="Notifications"
+      aria-labelledby="notifications-heading"
       class="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
     >
       <!-- Header -->
       <div class="p-4 border-b border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h3 id="notifications-heading" class="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Notifications
           </h3>
           <div class="flex items-center gap-2">
             <button
               v-if="unreadCount > 0"
               @click="markAllAsRead"
-              class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+              @keydown.enter="markAllAsRead"
+              @keydown.space.prevent="markAllAsRead"
+              aria-label="Mark all notifications as read"
+              class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-1"
             >
               Mark all read
             </button>
             <button
               @click="showNotifications = false"
-              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              @keydown.enter="showNotifications = false"
+              @keydown.space.prevent="showNotifications = false"
+              @keydown.escape="showNotifications = false"
+              aria-label="Close notifications"
+              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded p-1"
             >
-              <Icon name="X" class="w-4 h-4" />
+              <Icon name="X" class="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>

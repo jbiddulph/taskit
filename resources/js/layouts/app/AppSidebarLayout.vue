@@ -4,6 +4,7 @@ import AppShell from '@/components/AppShell.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import ChatWindow from '@/components/ChatWindow.vue';
+import SkipToMain from '@/components/SkipToMain.vue';
 import { realtimeService } from '@/services/realtimeService';
 import { usePage } from '@inertiajs/vue3';
 import { onMounted, onUnmounted } from 'vue';
@@ -53,7 +54,7 @@ onMounted(() => {
       console.log('Testing activity real-time...');
       console.log('Current company ID:', props.company?.id);
       console.log('Current user ID:', currentUser?.id);
-      console.log('Activity callbacks:', realtimeService.activityCallbacks?.size || 0);
+      // Note: activityCallbacks is private, access via public methods if needed
     };
     (window as any).testActivitySubscription = () => {
       console.log('Testing activity subscription...');
@@ -78,10 +79,14 @@ onUnmounted(() => {
 </script>
 
 <template>
+    <SkipToMain />
     <AppShell variant="sidebar">
         <AppSidebar />
         <AppContent variant="sidebar" class="overflow-x-hidden" :project-color="projectColor">
-            <AppSidebarHeader :breadcrumbs="breadcrumbs" :company="company">
+            <AppSidebarHeader 
+              :breadcrumbs="breadcrumbs" 
+              :company="company ? { ...company, subscription_type: company.subscription_type || 'FREE' } : null"
+            >
                 <template #dashboardActions>
                     <slot name="dashboardActions" />
                 </template>

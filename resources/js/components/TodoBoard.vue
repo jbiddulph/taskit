@@ -1,7 +1,10 @@
 <template>
   <div 
+    id="main-content"
     class="h-full flex flex-col"
     :class="{ 'pb-24': props.isSelectMode && hasSelection }"
+    role="main"
+    tabindex="-1"
   >
     <!-- Project limit notice for FREE plan (shown at the top when limit reached) -->
     <div v-if="!props.isReadOnly && isAtFreeProjectLimit" class="mb-4">
@@ -241,12 +244,15 @@
             <button
               v-if="!props.isReadOnly"
               @click="handleShowForm"
+              @keydown.enter="handleShowForm"
+              @keydown.space.prevent="handleShowForm"
               :disabled="!currentProject"
+              :aria-label="currentProject ? t('dashboard.add') : t('dashboard.add') + ' (Select a project first)'"
               class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
                      bg-black text-white hover:bg-gray-900 hover:border-gray-900 focus:ring-gray-900
                      dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 dark:focus:ring-gray-300"
             >
-              <Icon name="Plus" class="w-4 h-4" />
+              <Icon name="Plus" class="w-4 h-4" aria-hidden="true" />
               <span class="hidden sm:inline">{{ t('dashboard.add') }}</span>
               <span class="sm:hidden">{{ t('dashboard.add') }}</span>
             </button>
@@ -255,12 +261,15 @@
             <button
               v-if="!props.isReadOnly"
               @click="startBulkMode"
+              @keydown.enter="startBulkMode"
+              @keydown.space.prevent="startBulkMode"
               :disabled="!currentProject"
+              :aria-label="currentProject ? t('dashboard.add_bulk') : t('dashboard.add_bulk') + ' (Select a project first)'"
               class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
                      bg-black text-white hover:bg-gray-900 hover:border-gray-900 focus:ring-gray-900
                      dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 dark:focus:ring-gray-300"
             >
-              <Icon name="Plus" class="w-4 h-4" />
+              <Icon name="Plus" class="w-4 h-4" aria-hidden="true" />
               <span class="hidden sm:inline">{{ t('dashboard.add_bulk') }}</span>
               <span class="sm:hidden">{{ t('dashboard.bulk') }}</span>
             </button>
@@ -269,7 +278,11 @@
             <button
               v-if="!props.isReadOnly"
               @click="handleVoiceRecord"
+              @keydown.enter="handleVoiceRecord"
+              @keydown.space.prevent="handleVoiceRecord"
               :disabled="!currentProject || isRecording || isPreRecording"
+              :aria-label="(isRecording || isPreRecording) ? t('dashboard.stop_recording') : t('dashboard.voice_record')"
+              :aria-pressed="isRecording || isPreRecording"
               :class="[
                 'flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
                 (isRecording || isPreRecording)
@@ -278,7 +291,7 @@
               ]"
               :title="(isRecording || isPreRecording) ? t('dashboard.stop_recording') : t('dashboard.voice_record')"
             >
-              <Icon name="Mic" class="w-4 h-4" />
+              <Icon name="Mic" class="w-4 h-4" aria-hidden="true" />
               <span class="hidden sm:inline">{{ (isRecording || isPreRecording) ? t('dashboard.recording') : t('dashboard.voice') }}</span>
             </button>
 
