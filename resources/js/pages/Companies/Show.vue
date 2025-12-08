@@ -168,7 +168,7 @@ const updateProjectClient = async (projectId: number, event: Event) => {
                             Company Code: 
                             <span class="font-mono font-semibold text-gray-900 dark:text-gray-100">{{ company.code }}</span>
                         </span>
-                        <div class="flex items-center gap-2">
+                        <div v-if="clients.length > 0" class="flex items-center gap-2">
                             <span>Project Filter:</span>
                             <select
                                 class="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:focus:border-blue-400 dark:focus:ring-blue-400"
@@ -342,7 +342,7 @@ const updateProjectClient = async (projectId: number, event: Event) => {
                                     <p class="text-sm text-gray-500">{{ project.key }}</p>
                                     <p v-if="project.client" class="text-sm text-blue-600">{{ project.client.name }}</p>
                                     <!-- Optional Client selector (inline, non-blocking) -->
-                                    <div class="mt-2" @click.stop>
+                                    <div v-if="clients.length > 0" class="mt-2" @click.stop>
                                         <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
                                             Client (Optional)
                                         </label>
