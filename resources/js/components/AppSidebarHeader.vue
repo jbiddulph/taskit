@@ -137,18 +137,22 @@ const showRedemptionLink = computed(() => {
             class="fixed inset-0 z-50 md:hidden"
             @click="closeMobileMenu"
         >
-            <!-- Backdrop -->
-            <div class="fixed inset-0 bg-black bg-opacity-50"></div>
+            <!-- Backdrop - 50% opacity -->
+            <div class="fixed inset-0 bg-black/50"></div>
             
-            <!-- Menu Panel -->
-            <div class="fixed top-0 right-0 h-full w-80 bg-white dark:bg-gray-800 shadow-xl transform transition-transform duration-300 ease-in-out">
+            <!-- Menu Panel - No animation, full width on mobile -->
+            <div 
+                class="fixed top-0 right-0 h-full w-full sm:w-80 bg-white dark:bg-gray-800 shadow-xl"
+                @click.stop
+            >
                 <div class="flex flex-col h-full">
                     <!-- Header -->
                     <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Company Menu</h2>
                         <button
                             @click="closeMobileMenu"
-                            class="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                            class="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                            aria-label="Close menu"
                         >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -156,42 +160,57 @@ const showRedemptionLink = computed(() => {
                         </button>
                     </div>
                     
-                    <!-- Menu Items -->
-                    <div class="flex-1 p-4 space-y-4">
-                        <!-- Company Code -->
-                        <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                            <CompanyCodeDisplay 
-                                :company-code="company.code" 
-                                :company-name="company.name" 
-                                :subscription-type="company.subscription_type"
-                            />
-                        </div>
-                        
-                        <!-- Company Info Link -->
-                        <Link 
-                            :href="`/companies/${company.id}`" 
-                            @click="closeMobileMenu"
-                            class="flex items-center gap-3 p-3 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                            </svg>
-                            <span class="font-medium">Company Information</span>
-                        </Link>
-                        
-                        <!-- Clients Link -->
-                        <Link 
-                            href="/clients" 
-                            @click="closeMobileMenu"
-                            class="flex items-center gap-3 p-3 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:text-gray-700 rounded-lg transition-colors"
-                        >
-                            <HeartHandshake class="w-5 h-5" />
-                            <span class="font-medium">Clients</span>
-                        </Link>
-                        
-                        <!-- Team Dropdown -->
-                        <div class="p-3">
-                            <CompanyUsersDropdown />
+                    <!-- Menu Items - Single column layout -->
+                    <div class="flex-1 overflow-y-auto p-4">
+                        <div class="flex flex-col gap-4">
+                            <!-- Company Code -->
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <CompanyCodeDisplay 
+                                    :company-code="company.code" 
+                                    :company-name="company.name" 
+                                    :subscription-type="company.subscription_type"
+                                />
+                            </div>
+                            
+                            <!-- Company Plan Display -->
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Plan</span>
+                                </div>
+                                <div class="text-base font-semibold text-gray-900 dark:text-white">
+                                    {{ company.subscription_type }}
+                                </div>
+                            </div>
+                            
+                            <!-- Company Info Link -->
+                            <Link 
+                                :href="`/companies/${company.id}`" 
+                                @click="closeMobileMenu"
+                                class="flex items-center gap-3 p-4 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600 min-h-[44px]"
+                            >
+                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                </svg>
+                                <span class="font-medium">Company Information</span>
+                            </Link>
+                            
+                            <!-- Clients Link -->
+                            <Link 
+                                href="/clients" 
+                                @click="closeMobileMenu"
+                                class="flex items-center gap-3 p-4 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600 min-h-[44px]"
+                            >
+                                <HeartHandshake class="w-5 h-5 flex-shrink-0" />
+                                <span class="font-medium">Clients</span>
+                            </Link>
+                            
+                            <!-- Team Dropdown -->
+                            <div class="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                                <div class="mb-2">
+                                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Team</span>
+                                </div>
+                                <CompanyUsersDropdown />
+                            </div>
                         </div>
                     </div>
                 </div>

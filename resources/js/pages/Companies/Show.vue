@@ -331,8 +331,20 @@ const updateProjectClient = async (projectId: number, event: Event) => {
                                     borderBottomWidth: '1px'
                                 } : {}"
                                 @click="() => {
+                                    // Set project in localStorage
                                     localStorage.setItem('currentProjectId', project.id.toString());
-                                    router.visit('/dashboard');
+                                    
+                                    // Dispatch custom event for TodoBoard to listen to
+                                    window.dispatchEvent(new CustomEvent('projectSelected', {
+                                        detail: { projectId: project.id }
+                                    }));
+                                    
+                                    // Navigate to dashboard
+                                    router.visit('/dashboard', {
+                                        preserveState: false,
+                                        preserveScroll: false,
+                                        only: []
+                                    });
                                 }"
                             >
                                 <div class="space-y-2">

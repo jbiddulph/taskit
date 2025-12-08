@@ -248,13 +248,16 @@
               @keydown.space.prevent="handleShowForm"
               :disabled="!currentProject"
               :aria-label="currentProject ? t('dashboard.add') : t('dashboard.add') + ' (Select a project first)'"
-              class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
-                     bg-black text-white hover:bg-gray-900 hover:border-gray-900 focus:ring-gray-900
-                     dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 dark:focus:ring-gray-300"
+              :class="[
+                'flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+                'bg-black text-white hover:bg-gray-900 hover:border-gray-900 focus:ring-gray-900',
+                'dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 dark:focus:ring-gray-300',
+                props.showActivityFeed ? 'lg:px-2 lg:gap-0' : ''
+              ]"
             >
               <Icon name="Plus" class="w-4 h-4" aria-hidden="true" />
-              <span class="hidden sm:inline">{{ t('dashboard.add') }}</span>
-              <span class="sm:hidden">{{ t('dashboard.add') }}</span>
+              <span :class="props.showActivityFeed ? 'lg:hidden' : 'hidden sm:inline'">{{ t('dashboard.add') }}</span>
+              <span v-if="!props.showActivityFeed" class="sm:hidden">{{ t('dashboard.add') }}</span>
             </button>
 
             <!-- Add Bulk Button (center) -->
@@ -265,13 +268,16 @@
               @keydown.space.prevent="startBulkMode"
               :disabled="!currentProject"
               :aria-label="currentProject ? t('dashboard.add_bulk') : t('dashboard.add_bulk') + ' (Select a project first)'"
-              class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
-                     bg-black text-white hover:bg-gray-900 hover:border-gray-900 focus:ring-gray-900
-                     dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 dark:focus:ring-gray-300"
+              :class="[
+                'flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+                'bg-black text-white hover:bg-gray-900 hover:border-gray-900 focus:ring-gray-900',
+                'dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 dark:focus:ring-gray-300',
+                props.showActivityFeed ? 'lg:px-2 lg:gap-0' : ''
+              ]"
             >
-              <Icon name="Plus" class="w-4 h-4" aria-hidden="true" />
-              <span class="hidden sm:inline">{{ t('dashboard.add_bulk') }}</span>
-              <span class="sm:hidden">{{ t('dashboard.bulk') }}</span>
+              <Icon :name="props.showActivityFeed ? 'CopyPlus' : 'Plus'" class="w-4 h-4" aria-hidden="true" />
+              <span :class="props.showActivityFeed ? 'lg:hidden' : 'hidden sm:inline'">{{ t('dashboard.add_bulk') }}</span>
+              <span v-if="!props.showActivityFeed" class="sm:hidden">{{ t('dashboard.bulk') }}</span>
             </button>
 
             <!-- Voice Record Button (right) -->
@@ -287,12 +293,13 @@
                 'flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
                 (isRecording || isPreRecording)
                   ? 'bg-red-600 text-white hover:bg-red-700 border-red-700 focus:ring-red-500' 
-                  : 'bg-black text-white hover:bg-gray-900 hover:border-gray-900 focus:ring-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 dark:focus:ring-gray-300'
+                  : 'bg-black text-white hover:bg-gray-900 hover:border-gray-900 focus:ring-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 dark:focus:ring-gray-300',
+                props.showActivityFeed ? 'lg:px-2 lg:gap-0' : ''
               ]"
               :title="(isRecording || isPreRecording) ? t('dashboard.stop_recording') : t('dashboard.voice_record')"
             >
               <Icon name="Mic" class="w-4 h-4" aria-hidden="true" />
-              <span class="hidden sm:inline">{{ (isRecording || isPreRecording) ? t('dashboard.recording') : t('dashboard.voice') }}</span>
+              <span :class="props.showActivityFeed ? 'lg:hidden' : 'hidden sm:inline'">{{ (isRecording || isPreRecording) ? t('dashboard.recording') : t('dashboard.voice') }}</span>
             </button>
 
             <!-- Filters Button -->
