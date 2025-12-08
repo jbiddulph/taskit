@@ -48,9 +48,8 @@ class TodoController extends Controller
             'per_page' => $request->get('per_page', 20)
         ];
 
-        // Temporarily disable caching to debug the issue
-        // $todos = CacheService::cacheUserTodos($user->id, $filters, function () use ($user, $request) {
-        $todos = (function () use ($user, $request) {
+        // Cache user todos with proper invalidation support
+        $todos = CacheService::cacheUserTodos($user->id, $filters, function () use ($user, $request) {
             if ($user->company_id) {
                 // Show all todos from the same company
                 $query = Todo::forCompany($user->company_id)
@@ -137,7 +136,7 @@ class TodoController extends Controller
             $explicitSubtasks = $subtasksQuery->get();
 
             return $parents->concat($explicitSubtasks);
-        })();
+        });
 
         // Determine which todos are newly assigned to the current user (and not created by them)
         // Use Postgres JSON extraction to safely pluck todo IDs from notification data
@@ -305,9 +304,10 @@ class TodoController extends Controller
         $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
 
         // Invalidate caches
-        CacheService::invalidateUserCaches(Auth::id());
+        $user = Auth::user();
+        CacheService::invalidateUserCaches($user->id, $user->company_id);
         if ($todo->project_id) {
-            CacheService::invalidateProjectCaches($todo->project_id);
+            CacheService::invalidateProjectCaches($todo->project_id, $user->company_id);
         }
 
         // Send real-time notification

@@ -304,7 +304,10 @@ const getNotificationIcon = (type: string): string => {
     'info': 'Info',
     'warning': 'AlertTriangle',
     'error': 'XCircle',
-    'success': 'CheckCircle'
+    'success': 'CheckCircle',
+    'mention': 'AtSign',
+    'comment': 'MessageSquare',
+    'assignment': 'UserCheck'
   };
   return iconMap[type] || 'Bell';
 };
@@ -314,7 +317,10 @@ const getNotificationIconClass = (type: string): string => {
     'info': 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400',
     'warning': 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-400',
     'error': 'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400',
-    'success': 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400'
+    'success': 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400',
+    'mention': 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400',
+    'comment': 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-400',
+    'assignment': 'bg-cyan-100 text-cyan-600 dark:bg-cyan-900 dark:text-cyan-400'
   };
   return classMap[type] || 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400';
 };

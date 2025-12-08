@@ -44,6 +44,24 @@ class CacheService
         $filterHash = md5(serialize($filters));
         $key = self::USER_TODOS_KEY . $userId . ':' . $filterHash;
         
+        // Use cache tags if Redis is available for better invalidation
+        if (config('cache.default') === 'redis' && method_exists(Cache::store(), 'tags')) {
+            $companyId = $filters['company_id'] ?? null;
+            $tags = ['user:' . $userId];
+            if ($companyId) {
+                $tags[] = 'company:' . $companyId;
+            }
+            if (isset($filters['project_id'])) {
+                $tags[] = 'project:' . $filters['project_id'];
+            }
+            
+            return Cache::tags($tags)->remember(
+                self::CACHE_PREFIX . $key,
+                self::DEFAULT_TTL,
+                $callback
+            );
+        }
+        
         return self::remember($key, self::DEFAULT_TTL, $callback);
     }
 
@@ -100,25 +118,127 @@ class CacheService
     /**
      * Invalidate user-related caches
      */
-    public static function invalidateUserCaches(int $userId)
+    public static function invalidateUserCaches(int $userId, ?int $companyId = null)
     {
-        // For database cache driver, we need to flush all caches since pattern matching isn't supported
-        // This is less efficient but ensures cache consistency
-        Cache::flush();
-
-        Log::info('Invalidated user caches', ['user_id' => $userId]);
+        try {
+            if (config('cache.default') === 'redis') {
+                // Use Redis pattern matching for efficient cache invalidation
+                $patterns = [
+                    self::CACHE_PREFIX . self::USER_TODOS_KEY . $userId . '*',
+                    self::CACHE_PREFIX . self::USER_PROJECTS_KEY . $userId,
+                    self::CACHE_PREFIX . self::USER_NOTIFICATIONS_KEY . $userId . '*',
+                    self::CACHE_PREFIX . self::USER_UNREAD_COUNT_KEY . $userId,
+                ];
+                
+                // Also invalidate company-wide caches if company_id is provided
+                if ($companyId) {
+                    $patterns[] = self::CACHE_PREFIX . self::PROJECT_TODOS_KEY . '*';
+                    $patterns[] = self::CACHE_PREFIX . self::PROJECT_STATS_KEY . '*';
+                }
+                
+                foreach ($patterns as $pattern) {
+                    self::deleteByPattern($pattern);
+                }
+                
+                Log::info('Invalidated user caches (Redis)', ['user_id' => $userId, 'company_id' => $companyId]);
+            } else {
+                // For non-Redis drivers, use cache tags if supported
+                if (method_exists(Cache::store(), 'tags')) {
+                    Cache::tags(['user:' . $userId])->flush();
+                    if ($companyId) {
+                        Cache::tags(['company:' . $companyId])->flush();
+                    }
+                    Log::info('Invalidated user caches (tags)', ['user_id' => $userId, 'company_id' => $companyId]);
+                } else {
+                    // Last resort: flush all (less efficient but ensures consistency)
+                    Cache::flush();
+                    Log::warning('Invalidated all caches (no Redis/tags support)', ['user_id' => $userId]);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to invalidate user caches', [
+                'user_id' => $userId,
+                'error' => $e->getMessage()
+            ]);
+            // Fallback to flush all on error
+            Cache::flush();
+        }
     }
 
     /**
      * Invalidate project-related caches
      */
-    public static function invalidateProjectCaches(int $projectId)
+    public static function invalidateProjectCaches(int $projectId, ?int $companyId = null)
     {
-        // For database cache driver, we need to flush all caches since pattern matching isn't supported
-        // This is less efficient but ensures cache consistency
-        Cache::flush();
+        try {
+            if (config('cache.default') === 'redis') {
+                // Use Redis pattern matching
+                $patterns = [
+                    self::CACHE_PREFIX . self::PROJECT_TODOS_KEY . $projectId,
+                    self::CACHE_PREFIX . self::PROJECT_STATS_KEY . $projectId,
+                    // Also invalidate user todo caches that might include this project
+                    self::CACHE_PREFIX . self::USER_TODOS_KEY . '*',
+                ];
+                
+                foreach ($patterns as $pattern) {
+                    self::deleteByPattern($pattern);
+                }
+                
+                Log::info('Invalidated project caches (Redis)', ['project_id' => $projectId, 'company_id' => $companyId]);
+            } else {
+                // For non-Redis drivers, use cache tags if supported
+                if (method_exists(Cache::store(), 'tags')) {
+                    Cache::tags(['project:' . $projectId])->flush();
+                    if ($companyId) {
+                        Cache::tags(['company:' . $companyId])->flush();
+                    }
+                    Log::info('Invalidated project caches (tags)', ['project_id' => $projectId, 'company_id' => $companyId]);
+                } else {
+                    // Last resort: flush all
+                    Cache::flush();
+                    Log::warning('Invalidated all caches (no Redis/tags support)', ['project_id' => $projectId]);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to invalidate project caches', [
+                'project_id' => $projectId,
+                'error' => $e->getMessage()
+            ]);
+            // Fallback to flush all on error
+            Cache::flush();
+        }
+    }
 
-        Log::info('Invalidated project caches', ['project_id' => $projectId]);
+    /**
+     * Invalidate notification caches for a user
+     */
+    public static function invalidateNotificationCaches(int $userId)
+    {
+        try {
+            if (config('cache.default') === 'redis') {
+                $patterns = [
+                    self::CACHE_PREFIX . self::USER_NOTIFICATIONS_KEY . $userId . '*',
+                    self::CACHE_PREFIX . self::USER_UNREAD_COUNT_KEY . $userId,
+                ];
+                
+                foreach ($patterns as $pattern) {
+                    self::deleteByPattern($pattern);
+                }
+                
+                Log::info('Invalidated notification caches (Redis)', ['user_id' => $userId]);
+            } else {
+                if (method_exists(Cache::store(), 'tags')) {
+                    Cache::tags(['notifications:' . $userId])->flush();
+                } else {
+                    Cache::flush();
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to invalidate notification caches', [
+                'user_id' => $userId,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**

@@ -27,6 +27,8 @@ class Notification extends Model
         'data' => 'array',
         'is_read' => 'boolean',
         'read_at' => 'datetime',
+        'user_id' => 'integer',
+        'mentioned_user_id' => 'integer',
     ];
 
     /**
@@ -43,13 +45,26 @@ class Notification extends Model
             }
         });
 
-        // Ensure created_at is set for Supabase realtime
+        // Ensure user_id is always an integer before saving (for Supabase Realtime filtering)
+        static::creating(function ($notification) {
+            if (isset($notification->user_id)) {
+                $notification->user_id = (int) $notification->user_id;
+            }
+            if (isset($notification->mentioned_user_id)) {
+                $notification->mentioned_user_id = (int) $notification->mentioned_user_id;
+            }
+        });
+
+        // Log notification creation for debugging
         static::created(function ($notification) {
             \Log::info('Notification created successfully', [
                 'id' => $notification->id,
                 'user_id' => $notification->user_id,
+                'user_id_type' => gettype($notification->user_id),
                 'type' => $notification->type,
-                'title' => $notification->title
+                'title' => $notification->title,
+                'mentioned_user_id' => $notification->mentioned_user_id ?? null,
+                'created_at' => $notification->created_at?->toIso8601String(),
             ]);
         });
     }

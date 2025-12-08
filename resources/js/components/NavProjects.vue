@@ -549,7 +549,7 @@ const isClientCollapsed = (clientName: string) => {
   <SidebarGroup class="px-2 py-0">
   <div class="flex items-center justify-between gap-2">
     <SidebarGroupLabel>Projects</SidebarGroupLabel>
-    <div v-if="user && user.company_id !== null && user.company_id !== undefined && availableClients.length" class="flex items-center gap-1 text-[11px] text-gray-600 dark:text-gray-300">
+    <div v-if="user?.company_id != null && availableClients.length > 0" class="flex items-center gap-1 text-[11px] text-gray-600 dark:text-gray-300">
       <select
         class="rounded-md border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:focus:border-gray-100 dark:focus:ring-gray-100"
         :value="selectedClientId || 'all'"

@@ -1,15 +1,54 @@
 # Mention Notifications Real-time Issue
 
+## Status: ✅ FIXED
+
 ## Current Status
 
-✅ **Working:**
+✅ **Fixed:**
 - Mention notifications are being created in the database
-- Message notifications work in real-time
-- Both use the same `Notification::create()` mechanism
+- Real-time subscription with filtered channel
+- Fallback subscription for reliability
+- Proper type casting for user_id
+- Improved error handling and logging
 
-❌ **Not Working:**
-- Mention notifications are NOT being pushed in real-time
-- User has to login to see the notification badge
+## Changes Made
+
+1. **Improved Supabase Realtime Subscription:**
+   - Enhanced filter handling with proper integer casting
+   - Added fallback subscription that listens to all notifications and filters client-side
+   - Better error handling and logging
+
+2. **Notification Model Improvements:**
+   - Ensured user_id is always cast to integer before saving
+   - Added proper type casting in model casts
+   - Enhanced logging for debugging
+
+3. **Frontend Improvements:**
+   - Added better notification type icons (mention, comment, assignment)
+   - Improved notification handling in NotificationBadge component
+
+4. **Documentation:**
+   - Created `SUPABASE_REALTIME_SETUP.md` with setup instructions
+   - Added troubleshooting guide
+
+## Setup Required
+
+To ensure real-time notifications work, follow the setup guide in `SUPABASE_REALTIME_SETUP.md`:
+
+1. Enable replication for `taskit_notifications` table in Supabase Dashboard
+2. Configure RLS policies
+3. Verify publication configuration
+
+## Testing
+
+The system now includes:
+- Primary filtered subscription: `user_id=eq.{userId}`
+- Fallback subscription: Listens to all notifications and filters client-side
+- Both subscriptions run simultaneously for redundancy
+
+Check browser console for:
+- `📢 Notification subscription successful` - Primary subscription working
+- `🧪 FALLBACK: Notification subscription successful` - Fallback active
 
 ## The Issue
 

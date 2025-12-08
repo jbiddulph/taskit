@@ -135,6 +135,7 @@ class RealtimeService {
 
     const channelName = `user_notifications_${this.currentUserId}`;
     console.log('📢 Subscribing to notifications channel:', channelName);
+    console.log('📢 Current user ID:', this.currentUserId, 'Type:', typeof this.currentUserId);
     
     // Remove existing channel if it exists
     if (this.channels.has(channelName)) {
@@ -143,6 +144,10 @@ class RealtimeService {
       this.channels.delete(channelName);
     }
 
+    // Ensure user_id is an integer for proper filtering
+    const userId = parseInt(String(this.currentUserId), 10);
+    
+    // Primary subscription with filtered channel
     const channel = supabase
       .channel(channelName)
       .on(
@@ -151,10 +156,10 @@ class RealtimeService {
           event: 'INSERT',
           schema: 'public',
           table: 'taskit_notifications',
-          filter: `user_id=eq.${this.currentUserId}`
+          filter: `user_id=eq.${userId}`
         },
         (payload) => {
-          console.log('📢 Notification INSERT event received:', payload);
+          console.log('📢 Notification INSERT event received (filtered):', payload);
           console.log('📢 Payload.new:', payload.new);
           this.handleNewNotification(payload.new as any);
         }
@@ -162,39 +167,79 @@ class RealtimeService {
       .subscribe((status) => {
         console.log('📢 Notification real-time subscription status:', status);
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Notification subscription successful');
-          console.log('🔍 Testing notification subscription...');
-          
-          // Test if the subscription is working by listening to all postgres_changes
-          supabase
-            .channel('test_notifications')
-            .on(
-              'postgres_changes',
-              {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'taskit_notifications'
-              },
-              (payload) => {
-                console.log('🧪 TEST: Received notification INSERT:', payload);
-                console.log('🧪 TEST: New record:', payload.new);
-                console.log('🧪 TEST: Current user ID:', this.currentUserId);
-                console.log('🧪 TEST: Should handle?', (payload.new as any).user_id === this.currentUserId);
-              }
-            )
-            .subscribe((testStatus) => {
-              console.log('🧪 TEST subscription status:', testStatus);
-            });
+          console.log('✅ Notification subscription successful (filtered channel)');
         } else if (status === 'CHANNEL_ERROR') {
           console.error('❌ Notification subscription error');
+          // Fallback: try unfiltered subscription with client-side filtering
+          this.setupFallbackNotificationSubscription(userId);
         } else if (status === 'TIMED_OUT') {
           console.error('⏰ Notification subscription timed out');
+          this.setupFallbackNotificationSubscription(userId);
         } else if (status === 'CLOSED') {
           console.warn('🔒 Notification subscription closed');
         }
       });
 
     this.channels.set(channelName, channel);
+    
+    // Also set up a fallback subscription that listens to all notifications
+    // and filters on the client side. This helps debug and provides redundancy.
+    // Note: This should be removed in production if the filtered subscription works reliably.
+    this.setupFallbackNotificationSubscription(userId);
+  }
+
+  /**
+   * Fallback notification subscription that listens to all notifications
+   * and filters on the client side. Useful when the filtered subscription fails.
+   */
+  private setupFallbackNotificationSubscription(userId: number) {
+    const fallbackChannelName = `user_notifications_fallback_${userId}`;
+    
+    // Don't create duplicate fallback channels
+    if (this.channels.has(fallbackChannelName)) {
+      return;
+    }
+
+    console.log('🔄 Setting up fallback notification subscription (unfiltered)');
+    
+    const fallbackChannel = supabase
+      .channel(fallbackChannelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'taskit_notifications'
+          // No filter - we'll filter on client side
+        },
+        (payload) => {
+          const notification = payload.new as any;
+          const notificationUserId = parseInt(String(notification.user_id || notification.userId || 0), 10);
+          
+          console.log('🧪 FALLBACK: Received notification INSERT:', payload);
+          console.log('🧪 FALLBACK: Notification user_id:', notificationUserId, 'Type:', typeof notificationUserId);
+          console.log('🧪 FALLBACK: Current user ID:', userId, 'Type:', typeof userId);
+          console.log('🧪 FALLBACK: Match?', notificationUserId === userId);
+          
+          // Filter on client side - only process if it matches current user
+          if (notificationUserId === userId) {
+            console.log('✅ FALLBACK: Notification matches current user, processing...');
+            this.handleNewNotification(notification);
+          } else {
+            console.log('⏭️ FALLBACK: Notification is for different user, skipping');
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('🧪 FALLBACK: Notification subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ FALLBACK: Notification subscription successful (will filter client-side)');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ FALLBACK: Notification subscription error');
+        }
+      });
+
+    this.channels.set(fallbackChannelName, fallbackChannel);
   }
 
   /**
