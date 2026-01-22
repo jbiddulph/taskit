@@ -14,16 +14,10 @@ const { selectedClientId, setClientId } = useClientStore();
 const todosLoaded = ref(false);
 const page = usePage();
 
-// Access user and company data from page props
+// Access user data from page props
 const user = computed(() => {
   const props: any = page.props;
   return props.user ?? (props.auth as any)?.user ?? null;
-});
-
-const company = computed(() => {
-  // On dashboard we get a top-level company prop; fall back to auth.user.company if needed
-  const props: any = page.props;
-  return props.company ?? (props.auth as any)?.user?.company ?? null;
 });
 
 const isAtFreeProjectLimit = computed(() => {
@@ -53,10 +47,6 @@ const isAtFreeProjectLimit = computed(() => {
   return currentCount >= freeLimit;
 });
 
-const projectLimitMessage = computed(() => {
-  if (!isAtFreeProjectLimit.value) return '';
-  return 'You have reached the FREE plan project limit (3 projects). To add more projects, please upgrade your subscription.';
-});
 
 const availableClients = computed(() => {
   if (!groupedProjects.value || !groupedProjects.value.clients) return [];

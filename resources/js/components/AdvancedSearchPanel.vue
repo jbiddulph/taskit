@@ -261,7 +261,6 @@ const {
   hasActiveSearch,
   addFilter,
   removeFilter,
-  updateFilter,
   clearSearch,
   saveSearch,
   loadSavedSearch,

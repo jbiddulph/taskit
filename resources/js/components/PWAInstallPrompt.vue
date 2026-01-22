@@ -1,5 +1,5 @@
 <template>
-  <div v-if="canInstall && !isInstalled" class="pwa-install-prompt">
+  <div v-if="shouldShowPrompt" class="pwa-install-prompt">
     <div class="install-content">
       <div class="install-icon">
         <Icon name="Download" class="w-8 h-8 text-blue-600" />
@@ -60,7 +60,6 @@ const emit = defineEmits<{
 
 const {
   isInstalled,
-  isInstallable,
   isStandalone,
   canInstall,
   installPWA: installPWAComposable,

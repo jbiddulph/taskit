@@ -9,7 +9,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { HeartHandshake } from 'lucide-vue-next';
 
-const props = withDefaults(
+withDefaults(
     defineProps<{
         breadcrumbs?: BreadcrumbItemType[];
         company?: {

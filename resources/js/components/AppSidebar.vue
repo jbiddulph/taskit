@@ -3,12 +3,8 @@ import NavProjects from '@/components/NavProjects.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuItem } from '@/components/ui/sidebar';
 // import { dashboard } from '@/routes';
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import AppLogo from './AppLogo.vue';
-
-// Get company info from page props
-const page = usePage();
-const company = (page.props as any).company;
 </script>
 
 <template>

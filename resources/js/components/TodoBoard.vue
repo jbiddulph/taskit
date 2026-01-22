@@ -479,7 +479,7 @@
 
     <!-- Statistics / Calendar -->
     <div v-if="props.showCalendar" class="mb-4">
-      <CalendarView :todos="todos" :isReadOnly="props.isReadOnly" @edit-todo="handleEditTodoFromCalendar" @add-todo="handleAddTodoFromCalendar" />
+      <CalendarView :todos="todosState" :isReadOnly="props.isReadOnly" @edit-todo="handleEditTodoFromCalendar" @add-todo="handleAddTodoFromCalendar" />
     </div>
 
     <!-- Bulk Operations Bar -->
@@ -586,7 +586,7 @@
 
     <!-- Statistics - Full Width Below Columns -->
     <div v-if="!props.showCalendar" class="w-full mt-4">
-      <TodoStats :todos="todos" />
+      <TodoStats :todos="todosState" />
     </div>
 
     <!-- Todo Form Modal -->
@@ -859,8 +859,8 @@ const props = defineProps<{
   showCalendar?: boolean;
   isSelectMode?: boolean;
   isReadOnly?: boolean;
-  todos?: any[];
-  projects?: any[];
+  todosState?: any[];
+  projectsState?: any[];
   selectedProject?: any;
 }>();
 
@@ -873,7 +873,7 @@ const emit = defineEmits<{
   'todo-click': [todo: any];
 }>();
 
-const todos = ref<Todo[]>([]);
+const todosState = ref<Todo[]>([]);
 const isBulkMode = ref(false);
 const isSubmittingBulk = ref(false);
 type PendingTodo = {
@@ -896,8 +896,8 @@ const startBulkMode = () => {
 const removePending = (idx: number) => {
   pendingBulkTodos.value.splice(idx, 1);
 };
-const projects = ref<Project[]>([]);
-const projectsLoaded = ref(false); // Track when projects have been loaded at least once
+const projectsState = ref<Project[]>([]);
+const projectsLoaded = ref(false); // Track when projectsState have been loaded at least once
 const showForm = ref(false);
 const showCreateProject = ref(false);
 const showEditProject = ref(false);
@@ -948,11 +948,11 @@ const company = computed(() => {
   return props.company ?? (props.auth as any)?.user?.company ?? null;
 });
 
-// Check if FREE plan user has reached project limit (3 projects)
+// Check if FREE plan user has reached project limit (3 projectsState)
 // FREE plan users don't have a company (company_id === null)
 // Use a computed property that's stable and only evaluates when needed
 const isAtFreeProjectLimit = computed(() => {
-  // Don't evaluate until projects have been loaded at least once
+  // Don't evaluate until projectsState have been loaded at least once
   if (!projectsLoaded.value) {
     return false;
   }
@@ -965,21 +965,21 @@ const isAtFreeProjectLimit = computed(() => {
     return false;
   }
 
-  // FREE plan user: count projects owned by this user (owner_id === user.id)
-  // Ensure projects array is available
-  if (!projects.value || !Array.isArray(projects.value)) {
+  // FREE plan user: count projectsState owned by this user (owner_id === user.id)
+  // Ensure projectsState array is available
+  if (!projectsState.value || !Array.isArray(projectsState.value)) {
     return false;
   }
 
-  // Count only projects owned by this user
-  const userProjects = projects.value.filter((p: any) => {
+  // Count only projectsState owned by this user
+  const userProjects = projectsState.value.filter((p: any) => {
     return p && p.owner_id === u.id;
   });
   
   const currentCount = userProjects.length;
   const freeLimit = 3;
 
-  // Show message when user has 3 or more projects (reached the limit)
+  // Show message when user has 3 or more projectsState (reached the limit)
   return currentCount >= freeLimit;
 });
 
@@ -991,7 +991,7 @@ const selectedClientIdModel = computed({
 
 // Watch for client selection changes to auto-select first project
 watch(selectedClientId, (newValue) => {
-  // If we have filtered projects and the current project is not in the list (or no project selected),
+  // If we have filtered projectsState and the current project is not in the list (or no project selected),
   // select the first one
   if (filteredProjects.value.length > 0) {
     const isCurrentProjectVisible = currentProject.value && filteredProjects.value.some(p => p.id === currentProject.value!.id);
@@ -1003,11 +1003,11 @@ watch(selectedClientId, (newValue) => {
       selectedProjectId.value = firstProject.id.toString();
     }
   } else if (newValue !== null) {
-    // If client selected but no projects, clear selection
+    // If client selected but no projectsState, clear selection
     currentProject.value = null;
     selectedProjectId.value = '';
     localStorage.removeItem('currentProjectId');
-    todos.value = [];
+    todosState.value = [];
     window.dispatchEvent(new CustomEvent('projectSelected', {
       detail: { projectId: null }
     }));
@@ -1113,7 +1113,7 @@ let unsubscribeFromTodos: (() => void) | null = null;
 
 // Computed properties
 const filteredTodos = computed(() => {
-  const filtered = todos.value.filter(todo => {
+  const filtered = todosState.value.filter(todo => {
     // Exclude subtasks from the filtered list (they're attached to parents)
     if (todo.parent_task_id !== null) {
       return false;
@@ -1140,7 +1140,7 @@ const filteredTodos = computed(() => {
 });
 
 const uniqueAssignees = computed(() => {
-  const assignees = todos.value
+  const assignees = todosState.value
     .map(todo => todo.assignee)
     .filter(Boolean) as string[];
   return [...new Set(assignees)];
@@ -1154,12 +1154,12 @@ const hasActiveFilters = computed(() => {
          assigneeFilter.value !== '';
 });
 
-// Safe projects array to prevent undefined errors
+// Safe projectsState array to prevent undefined errors
 const safeProjects = computed(() => {
-  return projects.value || [];
+  return projectsState.value || [];
 });
 
-// Filtered projects based on selected client
+// Filtered projectsState based on selected client
 const filteredProjects = computed(() => {
   if (!selectedClientId.value) {
     return safeProjects.value;
@@ -1174,8 +1174,8 @@ const editTodo = async (todo: Todo) => {
     if (todo.is_new_assigned) {
       await todoApi.getTodo(todo.id);
       // Optimistically clear flag locally
-      const idx = todos.value.findIndex(t => t.id === todo.id);
-      if (idx !== -1) todos.value[idx].is_new_assigned = false;
+      const idx = todosState.value.findIndex(t => t.id === todo.id);
+      if (idx !== -1) todosState.value[idx].is_new_assigned = false;
     }
   } catch {}
   editingTodo.value = { ...todo };
@@ -1260,22 +1260,22 @@ const saveTodo = async (todo: Todo) => {
     if (editingTodo.value && editingTodo.value.id > 0) {
       // Update existing todo
       const updatedTodo = await todoApi.updateTodo(todo.id, todo);
-      const index = todos.value.findIndex(t => t.id === todo.id);
+      const index = todosState.value.findIndex(t => t.id === todo.id);
       if (index !== -1) {
-        todos.value[index] = updatedTodo;
+        todosState.value[index] = updatedTodo;
         
         // Force reactivity update to ensure UI changes immediately
-        todos.value = [...todos.value];
+        todosState.value = [...todosState.value];
       } else {
         // Check if it's a subtask - find the parent and update the subtask
-        for (let i = 0; i < todos.value.length; i++) {
-          if (todos.value[i].subtasks) {
-            const subtaskIndex = todos.value[i].subtasks!.findIndex(subtask => subtask.id === todo.id);
+        for (let i = 0; i < todosState.value.length; i++) {
+          if (todosState.value[i].subtasks) {
+            const subtaskIndex = todosState.value[i].subtasks!.findIndex(subtask => subtask.id === todo.id);
             if (subtaskIndex !== -1) {
-              todos.value[i].subtasks![subtaskIndex] = updatedTodo;
+              todosState.value[i].subtasks![subtaskIndex] = updatedTodo;
               
               // Force reactivity update
-              todos.value = [...todos.value];
+              todosState.value = [...todosState.value];
               break;
             }
           }
@@ -1321,9 +1321,9 @@ const saveTodo = async (todo: Todo) => {
         console.log('🎯 Created subtask:', newTodo);
         
         // Add subtask immediately to parent todo's subtasks array
-        const parentIndex = todos.value.findIndex(t => t.id === todo.parent_task_id);
+        const parentIndex = todosState.value.findIndex(t => t.id === todo.parent_task_id);
         if (parentIndex !== -1) {
-          const parentTodo = todos.value[parentIndex];
+          const parentTodo = todosState.value[parentIndex];
           if (!parentTodo.subtasks) {
             parentTodo.subtasks = [];
           }
@@ -1336,7 +1336,7 @@ const saveTodo = async (todo: Todo) => {
             };
             parentTodo.subtasks.push(subtaskWithProject);
             // Force reactivity update
-            todos.value = [...todos.value];
+            todosState.value = [...todosState.value];
             console.log('✅ Added subtask immediately to parent:', parentTodo.title, 'Subtask:', newTodo.title);
           }
         }
@@ -1350,13 +1350,13 @@ const saveTodo = async (todo: Todo) => {
         // Add todo immediately to the list (realtime will handle updates/conflicts)
         if (currentProject.value && newTodo.project_id === currentProject.value.id) {
           // Check if todo already exists (from realtime event)
-          if (!todos.value.find(t => t.id === newTodo.id)) {
+          if (!todosState.value.find(t => t.id === newTodo.id)) {
             const todoWithProject = {
               ...newTodo,
               project: currentProject.value,
               subtasks: newTodo.subtasks || [] // Initialize subtasks array
             };
-            todos.value.push(todoWithProject);
+            todosState.value.push(todoWithProject);
             console.log('✅ Added todo immediately to list:', todoWithProject.title);
           }
         }
@@ -1372,7 +1372,7 @@ const saveTodo = async (todo: Todo) => {
     }
     showForm.value = false;
     
-    // Dispatch event to refresh sidebar projects
+    // Dispatch event to refresh sidebar projectsState
     window.dispatchEvent(new CustomEvent('projectCreated'));
     
     // Dispatch event to refresh sidebar project stats
@@ -1390,7 +1390,7 @@ const saveTodo = async (todo: Todo) => {
 
 const deleteTodo = async (id: number | string) => {
   const todoId = typeof id === 'string' ? parseInt(id) : id;
-  const todo = todos.value.find(t => t.id === todoId);
+  const todo = todosState.value.find(t => t.id === todoId);
   if (!todo) return;
   
   if (!confirm(`Are you sure you want to delete "${todo.title}"?\n\nThis action cannot be undone.`)) {
@@ -1398,11 +1398,11 @@ const deleteTodo = async (id: number | string) => {
   }
   
   try {
-    const toDelete = todos.value.find(t => t.id === todoId);
+    const toDelete = todosState.value.find(t => t.id === todoId);
     await todoApi.deleteTodo(todoId);
     
     // Remove from local state
-    todos.value = todos.value.filter(t => t.id !== todoId);
+    todosState.value = todosState.value.filter(t => t.id !== todoId);
     
     // Track todo deletion event
     trackTodoEvent('deleted', {
@@ -1450,7 +1450,7 @@ const handleDrop = async (todo: Todo, newStatus: string) => {
       (window as any).$notify({
         type: 'error',
         title: 'Project Required',
-        message: 'Please select a project before moving todos.'
+        message: 'Please select a project before moving todosState.'
       });
     }
     return;
@@ -1482,13 +1482,13 @@ const handleDrop = async (todo: Todo, newStatus: string) => {
     });
     
     // Find the todo by ID, ensuring type consistency
-    const index = todos.value.findIndex(t => String(t.id) === String(todo.id));
+    const index = todosState.value.findIndex(t => String(t.id) === String(todo.id));
     
     if (index !== -1) {
-      todos.value[index] = updatedTodo;
+      todosState.value[index] = updatedTodo;
       
       // Force reactivity update
-      todos.value = [...todos.value];
+      todosState.value = [...todosState.value];
       
       // Dispatch event to refresh sidebar project stats
       window.dispatchEvent(new CustomEvent('todoChanged'));
@@ -1501,7 +1501,7 @@ const handleDrop = async (todo: Todo, newStatus: string) => {
         });
       }
     } else {
-      // Reload todos from API as fallback
+      // Reload todosState from API as fallback
       await loadTodos();
     }
   } catch (error) {
@@ -1517,13 +1517,13 @@ const handleDrop = async (todo: Todo, newStatus: string) => {
 
 const handleReorder = async (draggedTodo: Todo, targetTodo: Todo, position: 'before' | 'after') => {
   
-  // Validate that both todos belong to the current project
+  // Validate that both todosState belong to the current project
   if (!currentProject.value) {
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
         title: 'Project Required',
-        message: 'Please select a project before reordering todos.'
+        message: 'Please select a project before reordering todosState.'
       });
     }
     return;
@@ -1534,15 +1534,15 @@ const handleReorder = async (draggedTodo: Todo, targetTodo: Todo, position: 'bef
       (window as any).$notify({
         type: 'error',
         title: 'Invalid Reorder',
-        message: 'Cannot reorder todos from different projects.'
+        message: 'Cannot reorder todosState from different projectsState.'
       });
     }
     return;
   }
   
   try {
-    // Get the todos for the same status and project
-    const statusTodos = todos.value
+    // Get the todosState for the same status and project
+    const statusTodos = todosState.value
       .filter(t => t.status === draggedTodo.status && t.project_id === currentProject.value.id)
       .sort((a, b) => (a.order || 0) - (b.order || 0));
     
@@ -1604,9 +1604,9 @@ const handleReorder = async (draggedTodo: Todo, targetTodo: Todo, position: 'bef
       
       // Update local state
       todoOrders.forEach(({ id, order }) => {
-        const index = todos.value.findIndex(t => String(t.id) === String(id));
+        const index = todosState.value.findIndex(t => String(t.id) === String(id));
         if (index !== -1) {
-          todos.value[index].order = order;
+          todosState.value[index].order = order;
         }
       });
     } else {
@@ -1614,9 +1614,9 @@ const handleReorder = async (draggedTodo: Todo, targetTodo: Todo, position: 'bef
       await todoApi.updateTodoOrder([{ id: draggedTodo.id, order: newOrder }]);
       
       // Update local state
-      const index = todos.value.findIndex(t => String(t.id) === String(draggedTodo.id));
+      const index = todosState.value.findIndex(t => String(t.id) === String(draggedTodo.id));
       if (index !== -1) {
-        todos.value[index].order = newOrder;
+        todosState.value[index].order = newOrder;
       }
     }
     
@@ -1715,7 +1715,7 @@ const initVoiceRecording = () => {
     console.log('Voice transcription (interim):', accumulatedTranscript.value);
     
     // Only create todo when we have final results and recording has stopped
-    // We'll handle this in onend to avoid creating multiple todos
+    // We'll handle this in onend to avoid creating multiple todosState
   };
 
   recognition.value.onerror = (event: any) => {
@@ -1793,13 +1793,13 @@ const initVoiceRecording = () => {
         // Add todo immediately to the list (realtime will handle updates/conflicts)
         if (newTodo.project_id === currentProject.value.id) {
           // Check if todo already exists (from realtime event)
-          if (!todos.value.find(t => t.id === newTodo.id)) {
+          if (!todosState.value.find(t => t.id === newTodo.id)) {
             const todoWithProject = {
               ...newTodo,
               project: currentProject.value,
               subtasks: newTodo.subtasks || [] // Initialize subtasks array
             };
-            todos.value.push(todoWithProject);
+            todosState.value.push(todoWithProject);
             console.log('✅ Added voice todo immediately to list:', todoWithProject.title);
           }
         }
@@ -2004,7 +2004,7 @@ const saveEditProject = async () => {
     editingProjectName.value = '';
     editingProjectClientId.value = null;
     
-    // Dispatch event to refresh sidebar projects
+    // Dispatch event to refresh sidebar projectsState
     window.dispatchEvent(new CustomEvent('todoChanged'));
     
   } catch (error) {
@@ -2050,7 +2050,7 @@ const saveProjectDescription = async () => {
     editingProjectDescription.value = false;
     editingProjectDescriptionText.value = '';
     
-    // Dispatch event to refresh sidebar projects
+    // Dispatch event to refresh sidebar projectsState
     window.dispatchEvent(new CustomEvent('todoChanged'));
     
   } catch (error) {
@@ -2073,37 +2073,37 @@ const cancelEditProjectDescription = () => {
 
 const updateTodo = (updatedTodo: Todo) => {
   // Update the todo in the local array
-  const index = todos.value.findIndex(todo => todo.id === updatedTodo.id);
+  const index = todosState.value.findIndex(todo => todo.id === updatedTodo.id);
   if (index !== -1) {
     // Preserve the project relationship from the existing todo
-    const existingTodo = todos.value[index];
+    const existingTodo = todosState.value[index];
     const todoWithProject = {
       ...updatedTodo,
       project: existingTodo.project || currentProject.value
     };
-    todos.value[index] = todoWithProject;
+    todosState.value[index] = todoWithProject;
     
     // Force reactivity update to ensure UI changes immediately
-    todos.value = [...todos.value];
+    todosState.value = [...todosState.value];
     
     // Dispatch event to refresh sidebar project stats
     window.dispatchEvent(new CustomEvent('todoChanged'));
   } else {
     // Check if it's a subtask - find the parent and update the subtask
-    for (let i = 0; i < todos.value.length; i++) {
-      if (todos.value[i].subtasks) {
-        const subtaskIndex = todos.value[i].subtasks!.findIndex(subtask => subtask.id === updatedTodo.id);
+    for (let i = 0; i < todosState.value.length; i++) {
+      if (todosState.value[i].subtasks) {
+        const subtaskIndex = todosState.value[i].subtasks!.findIndex(subtask => subtask.id === updatedTodo.id);
         if (subtaskIndex !== -1) {
           // Preserve the project relationship for subtasks too
-          const existingSubtask = todos.value[i].subtasks![subtaskIndex];
+          const existingSubtask = todosState.value[i].subtasks![subtaskIndex];
           const subtaskWithProject = {
             ...updatedTodo,
             project: existingSubtask.project || currentProject.value
           };
-          todos.value[i].subtasks![subtaskIndex] = subtaskWithProject;
+          todosState.value[i].subtasks![subtaskIndex] = subtaskWithProject;
           
           // Force reactivity update
-          todos.value = [...todos.value];
+          todosState.value = [...todosState.value];
           
           // Dispatch event to refresh sidebar project stats
           window.dispatchEvent(new CustomEvent('todoChanged'));
@@ -2180,13 +2180,13 @@ const createProject = async () => {
     showCreateProject.value = false;
     resetNewProject();
     
-    // Refresh projects list to include the new project
+    // Refresh projectsState list to include the new project
     await loadProjects();
     
-    // Refresh todos
+    // Refresh todosState
     await loadTodos();
     
-    // Dispatch event to refresh sidebar projects
+    // Dispatch event to refresh sidebar projectsState
     window.dispatchEvent(new CustomEvent('projectCreated'));
     
     // Dispatch event to refresh sidebar project stats
@@ -2211,19 +2211,19 @@ const createProject = async () => {
   }
 };
 
-// Load projects from API
+// Load projectsState from API
 const loadProjects = async () => {
   try {
     
-    // Try to load projects with stats first
+    // Try to load projectsState with stats first
     try {
       const response = await todoApi.getProjectsWithStats();
       
       // Check if response has the expected structure
       if (response && Array.isArray(response)) {
-        projects.value = response;
+        projectsState.value = response;
       } else if (response && response.data && Array.isArray(response.data)) {
-        projects.value = response.data;
+        projectsState.value = response.data;
       } else {
         throw new Error('Invalid response structure');
       }
@@ -2233,30 +2233,30 @@ const loadProjects = async () => {
       const response = await todoApi.getProjects();
       
       if (response && Array.isArray(response)) {
-        projects.value = response;
+        projectsState.value = response;
       } else if (response && response.data && Array.isArray(response.data)) {
-        projects.value = response.data;
+        projectsState.value = response.data;
       } else {
-        projects.value = [];
+        projectsState.value = [];
       }
     }
     
-    // Mark projects as loaded
+    // Mark projectsState as loaded
     projectsLoaded.value = true;
     
     // Set selected project ID if current project exists
     if (currentProject.value) {
       selectedProjectId.value = currentProject.value.id.toString();
-    } else if (projects.value.length > 0 && !localStorage.getItem('currentProjectId')) {
-      // If no current project is set and projects are available, auto-select the first one
-      const firstProject = projects.value[0];
+    } else if (projectsState.value.length > 0 && !localStorage.getItem('currentProjectId')) {
+      // If no current project is set and projectsState are available, auto-select the first one
+      const firstProject = projectsState.value[0];
       currentProject.value = firstProject;
       selectedProjectId.value = firstProject.id.toString();
       localStorage.setItem('currentProjectId', firstProject.id.toString());
       
     }
   } catch (error) {
-    projects.value = [];
+    projectsState.value = [];
   }
 };
 
@@ -2268,7 +2268,7 @@ const onProjectChange = async (projectIdOrEvent?: Event | string) => {
   if (!selectedProjectId.value) {
     currentProject.value = null;
     localStorage.removeItem('currentProjectId');
-    todos.value = [];
+    todosState.value = [];
     return;
   }
   
@@ -2288,9 +2288,9 @@ const onProjectChange = async (projectIdOrEvent?: Event | string) => {
       const project = props.projects.find(p => p.id === projectId);
       if (project) {
         currentProject.value = project;
-        // Filter todos for the selected project
+        // Filter todosState for the selected project
         if (props.todos) {
-          todos.value = props.todos.filter(todo => todo.project_id === projectId);
+          todosState.value = props.todos.filter(todo => todo.project_id === projectId);
         }
         return;
       }
@@ -2306,7 +2306,7 @@ const onProjectChange = async (projectIdOrEvent?: Event | string) => {
       detail: { projectId: projectId }
     }));
     
-    // Load todos for the selected project
+    // Load todosState for the selected project
     await loadTodos();
     
     if ((window as any).$notify) {
@@ -2491,9 +2491,9 @@ const loadCurrentProject = async () => {
       
       // Don't dispatch event here to prevent circular loop
       // The sidebar will be updated when the component mounts
-    } else if (projects.value.length > 0) {
-      // If no project is selected and projects are available, select the first one
-      const firstProject = projects.value[0];
+    } else if (projectsState.value.length > 0) {
+      // If no project is selected and projectsState are available, select the first one
+      const firstProject = projectsState.value[0];
       currentProject.value = firstProject;
       selectedProjectId.value = firstProject.id.toString();
       localStorage.setItem('currentProjectId', firstProject.id.toString());
@@ -2502,9 +2502,9 @@ const loadCurrentProject = async () => {
   } catch (error) {
     localStorage.removeItem('currentProjectId');
     
-    // If there was an error but projects are available, try to select the first one
-    if (projects.value.length > 0) {
-      const firstProject = projects.value[0];
+    // If there was an error but projectsState are available, try to select the first one
+    if (projectsState.value.length > 0) {
+      const firstProject = projectsState.value[0];
       currentProject.value = firstProject;
       selectedProjectId.value = firstProject.id.toString();
       localStorage.setItem('currentProjectId', firstProject.id.toString());
@@ -2513,14 +2513,14 @@ const loadCurrentProject = async () => {
   }
 };
 
-// Load todos from API
+// Load todosState from API
 const loadTodos = async () => {
   console.log('🚀 loadTodos called');
   try {
     const filters: any = {};
     if (currentProject.value) {
       filters.project_id = currentProject.value.id;
-      console.log('🚀 Loading todos for project:', currentProject.value.id);
+      console.log('🚀 Loading todosState for project:', currentProject.value.id);
     } else {
       console.log('🚀 No current project set');
     }
@@ -2531,14 +2531,14 @@ const loadTodos = async () => {
     console.log('🚀 response.data[\'qa-testing\']:', response.data['qa-testing']);
     console.log('🚀 response.data.done:', response.data.done);
     
-    // Check specific todos
+    // Check specific todosState
     const allTodos = response.data.todo.concat(response.data['in-progress']).concat(response.data['qa-testing']).concat(response.data.done);
-    console.log('🚀 All todos from API:', allTodos.map(t => ({ id: t.id, title: t.title, parent_task_id: t.parent_task_id })));
+    console.log('🚀 All todosState from API:', allTodos.map(t => ({ id: t.id, title: t.title, parent_task_id: t.parent_task_id })));
     const subtasks = allTodos.filter(t => t.parent_task_id !== null);
     console.log('🚀 Filtered subtasks:', subtasks.map(s => ({ id: s.id, title: s.title, parent_task_id: s.parent_task_id })));
     const parentTasks = allTodos.filter(t => t.parent_task_id === null);
     
-    console.log('📋 Loaded todos - Total:', allTodos.length, 'Subtasks:', subtasks.length, 'Parents:', parentTasks.length);
+    console.log('📋 Loaded todosState - Total:', allTodos.length, 'Subtasks:', subtasks.length, 'Parents:', parentTasks.length);
     
     // Attach subtasks to their parent tasks
     allTodos.forEach(todo => {
@@ -2563,26 +2563,26 @@ const loadTodos = async () => {
       }
     });
     
-    // Debug: Check if we have any todos with subtasks attached
+    // Debug: Check if we have any todosState with subtasks attached
     const todosWithSubtasks = allTodos.filter(t => t.subtasks && t.subtasks.length > 0);
     console.log(`📊 Todos with subtasks attached: ${todosWithSubtasks.length}`);
     
-    todos.value = allTodos;
-    console.log('📋 Final todos array:', todos.value.length);
+    todosState.value = allTodos;
+    console.log('📋 Final todosState array:', todosState.value.length);
     
-    // Notify other components (like sidebar) that todos have been loaded
+    // Notify other components (like sidebar) that todosState have been loaded
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('todosLoaded'));
     }
 
   } catch (error) {
-    console.error('❌ Error loading todos:', error);
+    console.error('❌ Error loading todosState:', error);
   }
 };
 
-// Watch for project changes and reload todos
+// Watch for project changes and reload todosState
 watch(currentProject, async (newProject, oldProject) => {
-  // Only reload todos if the project actually changed (not just set for the first time)
+  // Only reload todosState if the project actually changed (not just set for the first time)
   if (newProject && oldProject && newProject.id !== oldProject.id) {
     selectedProjectId.value = newProject.id.toString();
     await loadTodos();
@@ -2596,7 +2596,7 @@ watch(showCreateProject, (newValue) => {
   }
 });
 
-// Helper to submit all pending bulk todos (top-level so template can call)
+// Helper to submit all pending bulk todosState (top-level so template can call)
 async function onSubmitBulkTodos() {
   if (!currentProject.value) return;
   isSubmittingBulk.value = true;
@@ -2624,7 +2624,7 @@ async function onSubmitBulkTodos() {
     isBulkMode.value = false;
     await loadTodos();
     if ((window as any).$notify) {
-      (window as any).$notify({ type: 'success', title: 'Bulk Added', message: 'All pending todos created.' });
+      (window as any).$notify({ type: 'success', title: 'Bulk Added', message: 'All pending todosState created.' });
     }
   } finally {
     isSubmittingBulk.value = false;
@@ -2636,7 +2636,7 @@ onMounted(async () => {
   // In read-only mode, use passed data instead of making API calls
   if (props.isReadOnly) {
     if (props.projects && props.projects.length > 0) {
-      projects.value = props.projects;
+      projectsState.value = props.projects;
       if (props.selectedProject) {
         currentProject.value = props.selectedProject;
         selectedProjectId.value = props.selectedProject.id.toString();
@@ -2645,9 +2645,9 @@ onMounted(async () => {
         selectedProjectId.value = props.projects[0].id.toString();
       }
       
-      // Filter todos for the selected project
+      // Filter todosState for the selected project
       if (props.todos && props.todos.length > 0) {
-        todos.value = props.todos.filter(todo => todo.project_id === currentProject.value?.id);
+        todosState.value = props.todos.filter(todo => todo.project_id === currentProject.value?.id);
       }
     }
     return;
@@ -2656,7 +2656,7 @@ onMounted(async () => {
   // Register keyboard shortcuts
   registerKeyboardShortcuts();
   
-  // Load projects first (so dropdown has options)
+  // Load projectsState first (so dropdown has options)
   await loadProjects();
   
   // Load clients for project creation
@@ -2665,7 +2665,7 @@ onMounted(async () => {
   // Then load current project from localStorage
   await loadCurrentProject();
   
-  // Finally load todos for the current project
+  // Finally load todosState for the current project
   await loadTodos();
   
   // Initialize voice recording
@@ -2691,9 +2691,9 @@ onMounted(async () => {
           // Check if this is a subtask
           if (newTodo.parent_task_id) {
             // Find the parent todo and add this subtask to its subtasks array
-            const parentIndex = todos.value.findIndex(t => t.id === newTodo.parent_task_id);
+            const parentIndex = todosState.value.findIndex(t => t.id === newTodo.parent_task_id);
             if (parentIndex !== -1) {
-              const parentTodo = todos.value[parentIndex];
+              const parentTodo = todosState.value[parentIndex];
               // Initialize subtasks array if it doesn't exist
               if (!parentTodo.subtasks) {
                 parentTodo.subtasks = [];
@@ -2710,7 +2710,7 @@ onMounted(async () => {
                 parentTodo.subtasks.push(subtaskWithProject);
                 console.log('🔥 Added subtask to parent:', parentTodo.title, 'Subtask:', newTodo.title);
                 // Force reactivity update
-                todos.value = [...todos.value];
+                todosState.value = [...todosState.value];
               } else {
                 console.log('🔥 Subtask already exists in parent, skipping');
               }
@@ -2721,11 +2721,11 @@ onMounted(async () => {
                 ...newTodo,
                 project: currentProject.value
               };
-              todos.value.push(todoWithProject);
+              todosState.value.push(todoWithProject);
             }
           } else {
             // Regular todo (not a subtask)
-            if (!todos.value.find(t => t.id === newTodo.id)) {
+            if (!todosState.value.find(t => t.id === newTodo.id)) {
               // Ensure the new todo has the project relationship
               const todoWithProject = {
                 ...newTodo,
@@ -2733,8 +2733,8 @@ onMounted(async () => {
                 subtasks: [] // Initialize subtasks array
               };
               console.log('🔥 Adding new todo to list:', todoWithProject);
-              todos.value.push(todoWithProject);
-              console.log('🔥 Updated todos list:', todos.value.length, 'todos');
+              todosState.value.push(todoWithProject);
+              console.log('🔥 Updated todosState list:', todosState.value.length, 'todosState');
             } else {
               console.log('🔥 Todo already exists, skipping');
             }
@@ -2753,9 +2753,9 @@ onMounted(async () => {
         // Check if this is a subtask
         if (updatedTodo.parent_task_id) {
           // Find the parent todo and update the subtask in its subtasks array
-          const parentIndex = todos.value.findIndex(t => t.id === updatedTodo.parent_task_id);
+          const parentIndex = todosState.value.findIndex(t => t.id === updatedTodo.parent_task_id);
           if (parentIndex !== -1) {
-            const parentTodo = todos.value[parentIndex];
+            const parentTodo = todosState.value[parentIndex];
             if (parentTodo.subtasks) {
               const subtaskIndex = parentTodo.subtasks.findIndex((st: any) => st.id === updatedTodo.id);
               if (subtaskIndex !== -1) {
@@ -2768,7 +2768,7 @@ onMounted(async () => {
                 parentTodo.subtasks[subtaskIndex] = subtaskWithProject;
                 console.log('🔥 Updated subtask in parent:', parentTodo.title, 'Subtask:', updatedTodo.title);
                 // Force reactivity update
-                todos.value = [...todos.value];
+                todosState.value = [...todosState.value];
               } else {
                 console.log('🔥 Subtask not found in parent for update, skipping');
               }
@@ -2776,30 +2776,30 @@ onMounted(async () => {
           } else {
             console.log('🔥 Parent todo not found for subtask update, trying main list');
             // Try to update in main list if parent not found
-            const updateIndex = todos.value.findIndex(t => t.id === updatedTodo.id);
+            const updateIndex = todosState.value.findIndex(t => t.id === updatedTodo.id);
             if (updateIndex !== -1) {
-              const existingTodo = todos.value[updateIndex];
+              const existingTodo = todosState.value[updateIndex];
               const todoWithProject = {
                 ...updatedTodo,
                 project: existingTodo.project || currentProject.value
               };
-              todos.value[updateIndex] = todoWithProject;
+              todosState.value[updateIndex] = todoWithProject;
             }
           }
         } else {
           // Regular todo (not a subtask)
-          const updateIndex = todos.value.findIndex(t => t.id === updatedTodo.id);
+          const updateIndex = todosState.value.findIndex(t => t.id === updatedTodo.id);
           if (updateIndex !== -1) {
             // Preserve the project relationship from the existing todo
-            const existingTodo = todos.value[updateIndex];
+            const existingTodo = todosState.value[updateIndex];
             const todoWithProject = {
               ...updatedTodo,
               project: existingTodo.project || currentProject.value,
               subtasks: existingTodo.subtasks || [] // Preserve subtasks
             };
             console.log('🔥 Updating todo at index:', updateIndex, todoWithProject);
-            todos.value[updateIndex] = todoWithProject;
-            console.log('🔥 Updated todos list:', todos.value.length, 'todos');
+            todosState.value[updateIndex] = todoWithProject;
+            console.log('🔥 Updated todosState list:', todosState.value.length, 'todosState');
           } else {
             console.log('🔥 Todo not found for update, skipping');
           }
@@ -2815,16 +2815,16 @@ onMounted(async () => {
         // Check if this is a subtask
         if (deletedTodo.parent_task_id) {
           // Find the parent todo and remove the subtask from its subtasks array
-          const parentIndex = todos.value.findIndex(t => t.id === deletedTodo.parent_task_id);
+          const parentIndex = todosState.value.findIndex(t => t.id === deletedTodo.parent_task_id);
           if (parentIndex !== -1) {
-            const parentTodo = todos.value[parentIndex];
+            const parentTodo = todosState.value[parentIndex];
             if (parentTodo.subtasks) {
               const subtaskIndex = parentTodo.subtasks.findIndex((st: any) => st.id === deletedTodo.id);
               if (subtaskIndex !== -1) {
                 parentTodo.subtasks.splice(subtaskIndex, 1);
                 console.log('🔥 Removed subtask from parent:', parentTodo.title, 'Subtask ID:', deletedTodo.id);
                 // Force reactivity update
-                todos.value = [...todos.value];
+                todosState.value = [...todosState.value];
                 
                 // Dispatch event to refresh sidebar project stats
                 window.dispatchEvent(new CustomEvent('todoChanged'));
@@ -2835,22 +2835,22 @@ onMounted(async () => {
           } else {
             console.log('🔥 Parent todo not found for subtask deletion, trying main list');
             // Try to delete from main list if parent not found
-            const deleteIndex = todos.value.findIndex(t => t.id === deletedTodo.id);
+            const deleteIndex = todosState.value.findIndex(t => t.id === deletedTodo.id);
             if (deleteIndex !== -1) {
-              todos.value.splice(deleteIndex, 1);
-              todos.value = [...todos.value];
+              todosState.value.splice(deleteIndex, 1);
+              todosState.value = [...todosState.value];
               window.dispatchEvent(new CustomEvent('todoChanged'));
             }
           }
         } else {
           // Regular todo (not a subtask)
-          const deleteIndex = todos.value.findIndex(t => t.id === deletedTodo.id);
+          const deleteIndex = todosState.value.findIndex(t => t.id === deletedTodo.id);
           if (deleteIndex !== -1) {
             console.log('🔥 Removing todo at index:', deleteIndex);
-            todos.value.splice(deleteIndex, 1);
+            todosState.value.splice(deleteIndex, 1);
             // Force reactivity update to ensure UI changes immediately
-            todos.value = [...todos.value];
-            console.log('🔥 Updated todos list:', todos.value.length, 'todos');
+            todosState.value = [...todosState.value];
+            console.log('🔥 Updated todosState list:', todosState.value.length, 'todosState');
             
             // Dispatch event to refresh sidebar project stats
             window.dispatchEvent(new CustomEvent('todoChanged'));
@@ -2888,7 +2888,7 @@ onMounted(async () => {
           currentProject.value = null;
           selectedProjectId.value = '';
           localStorage.removeItem('currentProjectId');
-          todos.value = [];
+          todosState.value = [];
         }
       } finally {
         isUpdatingProject.value = false;
@@ -2908,16 +2908,16 @@ onMounted(async () => {
     
     // Check if current project still exists
     if (currentProject.value) {
-      const projectStillExists = projects.value.find(p => p.id === currentProject.value!.id);
+      const projectStillExists = projectsState.value.find(p => p.id === currentProject.value!.id);
       if (!projectStillExists) {
         currentProject.value = null;
         selectedProjectId.value = '';
         localStorage.removeItem('currentProjectId');
-        todos.value = [];
+        todosState.value = [];
         
         // Auto-select first available project if any
-        if (projects.value.length > 0) {
-          const firstProject = projects.value[0];
+        if (projectsState.value.length > 0) {
+          const firstProject = projectsState.value[0];
           currentProject.value = firstProject;
           selectedProjectId.value = firstProject.id.toString();
           localStorage.setItem('currentProjectId', firstProject.id.toString());
@@ -2935,7 +2935,7 @@ onMounted(async () => {
     const storedProjectId = localStorage.getItem('currentProjectId');
     
     if (storedProjectId) {
-      const projectExists = projects.value.find(p => p.id === parseInt(storedProjectId));
+      const projectExists = projectsState.value.find(p => p.id === parseInt(storedProjectId));
       if (projectExists) {
         currentProject.value = projectExists;
         selectedProjectId.value = storedProjectId;
@@ -2944,31 +2944,31 @@ onMounted(async () => {
         currentProject.value = null;
         selectedProjectId.value = '';
         localStorage.removeItem('currentProjectId');
-        todos.value = [];
+        todosState.value = [];
       }
     } else {
       currentProject.value = null;
       selectedProjectId.value = '';
-      todos.value = [];
+      todosState.value = [];
     }
   });
   
-  // Listen for subscription downgrades to reload projects and check current project access
+  // Listen for subscription downgrades to reload projectsState and check current project access
   window.addEventListener('subscription-downgrade', async (e: any) => {
     await loadProjects();
     
     // Check if current project is still accessible after downgrade
     if (currentProject.value) {
-      const projectStillAccessible = projects.value.find(p => p.id === currentProject.value!.id);
+      const projectStillAccessible = projectsState.value.find(p => p.id === currentProject.value!.id);
       if (!projectStillAccessible) {
         currentProject.value = null;
         selectedProjectId.value = '';
         localStorage.removeItem('currentProjectId');
-        todos.value = [];
+        todosState.value = [];
         
         // Auto-select first available project if any
-        if (projects.value.length > 0) {
-          const firstProject = projects.value[0];
+        if (projectsState.value.length > 0) {
+          const firstProject = projectsState.value[0];
           currentProject.value = firstProject;
           selectedProjectId.value = firstProject.id.toString();
           localStorage.setItem('currentProjectId', firstProject.id.toString());
@@ -2987,10 +2987,10 @@ onMounted(async () => {
     try {
       const id = e?.detail?.todoId;
       if (!id) return;
-      if (todos.value.length === 0) {
+      if (todosState.value.length === 0) {
         await loadTodos();
       }
-      let todo = todos.value.find(t => t.id === id) as unknown as Todo | undefined;
+      let todo = todosState.value.find(t => t.id === id) as unknown as Todo | undefined;
       if (!todo) {
         const fetched = await todoApi.getTodo(id);
         todo = fetched as unknown as Todo;

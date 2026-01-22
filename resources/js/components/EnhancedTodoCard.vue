@@ -148,7 +148,7 @@ const emit = defineEmits<{
   select: [todo: any];
 }>();
 
-const { isDragging, draggedItem } = useDragAndDrop();
+const { isDragging } = useDragAndDrop();
 
 const isOverdue = computed(() => {
   if (!props.todo.due_date) return false;

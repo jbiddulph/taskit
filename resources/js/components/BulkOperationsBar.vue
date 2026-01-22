@@ -147,7 +147,7 @@ interface Props {
   availableAssignees: string[];
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const emit = defineEmits<{
   refresh: [];
@@ -156,10 +156,7 @@ const emit = defineEmits<{
 
 const {
   selectedCount,
-  hasSelection,
-  isSelectMode,
   isProcessing,
-  clearSelection,
   toggleSelectMode: composableToggleSelectMode,
   getSelectedIds
 } = useBulkOperations();
