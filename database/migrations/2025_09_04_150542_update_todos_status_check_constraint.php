@@ -12,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         // Drop the existing check constraint
         DB::statement('ALTER TABLE taskit_todos DROP CONSTRAINT IF EXISTS taskit_todos_status_check');
         
@@ -24,6 +28,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         // Drop the new check constraint
         DB::statement('ALTER TABLE taskit_todos DROP CONSTRAINT IF EXISTS taskit_todos_status_check');
         
