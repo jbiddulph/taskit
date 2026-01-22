@@ -2964,7 +2964,7 @@ onMounted(async () => {
   });
   
   // Listen for subscription downgrades to reload projectsState and check current project access
-  window.addEventListener('subscription-downgrade', async (e: any) => {
+  window.addEventListener('subscription-downgrade', async () => {
     await loadProjects();
     
     // Check if current project is still accessible after downgrade
@@ -2993,29 +2993,6 @@ onMounted(async () => {
   loadSavedViews();
 
   // Listen for openTodoById dispatched by notifications
-  const handleOpenTodoById = async (e: any) => {
-    try {
-      const id = e?.detail?.todoId;
-      if (!id) return;
-      if (todosState.value.length === 0) {
-        await loadTodos();
-      }
-      let todo = todosState.value.find(t => t.id === id) as unknown as Todo | undefined;
-      if (!todo) {
-        const fetched = await todoApi.getTodo(id);
-        todo = fetched as unknown as Todo;
-      }
-      if (todo) {
-        await editTodo(todo as unknown as Todo);
-        const highlight = e?.detail?.highlight || null;
-        if (highlight) {
-          window.dispatchEvent(new CustomEvent('highlightComment', { detail: { commentId: highlight } }));
-        }
-      }
-    } catch (err) {
-      console.error('Failed to open todo by id:', err);
-    }
-  };
   window.addEventListener('openTodoById', handleOpenTodoById);
 });
 
@@ -3032,7 +3009,7 @@ onUnmounted(() => {
     recognition.value.stop();
   }
   // Remove listeners
-  window.removeEventListener('openTodoById', (e: any) => {});
+  window.removeEventListener('openTodoById', handleOpenTodoById);
 });
 
 </script>
