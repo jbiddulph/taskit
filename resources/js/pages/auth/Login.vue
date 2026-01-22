@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
 // import { dashboard, register } from '@/routes';
-import { request } from '@/routes/password';
+import { request } from '@/routes/password/index';
 import { Form } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
 import SeoHead from '@/components/SeoHead.vue';

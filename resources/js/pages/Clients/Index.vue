@@ -2,7 +2,7 @@
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
-import { create, show } from '@/routes/clients';
+import { create, show } from '@/routes/clients/index';
 import { ref } from 'vue';
 import SeoHead from '@/components/SeoHead.vue';
 

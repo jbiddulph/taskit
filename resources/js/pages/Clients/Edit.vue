@@ -2,7 +2,7 @@
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
-import { update, show } from '@/routes/clients';
+import { update, show } from '@/routes/clients/index';
 import { ref } from 'vue';
 import SeoHead from '@/components/SeoHead.vue';
 
