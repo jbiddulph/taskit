@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 // import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
+import SeoHead from '@/components/SeoHead.vue';
 import TodoBoard from '../components/TodoBoard.vue';
 import LimitWarnings from '../components/LimitWarnings.vue';
 import ActivityFeed from '../components/ActivityFeed.vue';
@@ -80,7 +80,11 @@ const toggleSelectMode = () => {
 </style>
 
 <template>
-    <Head :title="t('dashboard.title')" />
+    <SeoHead
+        :title="t('dashboard.title')"
+        description="Manage your projects, tasks, and activity feed from the ZapTask dashboard."
+        image="/zap_icon.png"
+    />
 
     <AppLayout :breadcrumbs="breadcrumbs" :company="company" :project-color="currentProjectColor">
         <template #dashboardActions>

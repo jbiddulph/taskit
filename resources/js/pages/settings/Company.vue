@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Head, useForm, usePage, router, Link } from '@inertiajs/vue3';
+import { useForm, usePage, router, Link } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import Icon from '@/components/Icon.vue';
 import { uploadLogoToTaskitBucket } from '@/services/supabaseClient';
+import SeoHead from '@/components/SeoHead.vue';
 
 interface User {
     id: number;
@@ -292,7 +293,11 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
 </script>
 
 <template>
-    <Head title="Company Settings" />
+    <SeoHead
+        title="Company settings"
+        description="Manage company details, branding, and public settings for your ZapTask workspace."
+        image="/zap_icon.png"
+    />
     
     <AppLayout>
         <SettingsLayout>

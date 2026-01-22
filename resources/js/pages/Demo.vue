@@ -2,6 +2,7 @@
 // import { dashboard, login, register } from '@/routes';
 import { Head, Link } from '@inertiajs/vue3';
 import PublicNavigation from '@/components/PublicNavigation.vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 // Navigate to homepage section function
 const scrollToSection = (sectionId: string) => {
@@ -15,7 +16,12 @@ defineOptions({
 </script>
 
 <template>
-    <Head title="Demo - ZapTask">
+    <SeoHead
+        title="Demo"
+        description="Explore the ZapTask demo and walkthrough to see how teams plan, track, and deliver work."
+        image="/images/calendar.png"
+    />
+    <Head>
         <link rel="preconnect" href="https://rsms.me/" />
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
     </Head>

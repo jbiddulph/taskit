@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import Icon from '@/components/Icon.vue';
 import { Link, router } from '@inertiajs/vue3';
 import { ref, nextTick } from 'vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 interface Props {
     company: {
@@ -121,6 +122,11 @@ const updateProjectClient = async (projectId: number, event: Event) => {
 
 <template>
     <AppSidebarLayout :company="company">
+        <SeoHead
+            :title="company.name"
+            :description="`Company overview, members, and projects for ${company.name}.`"
+            image="/zap_icon.png"
+        />
         <div class="space-y-6 p-6">
             <!-- Header -->
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

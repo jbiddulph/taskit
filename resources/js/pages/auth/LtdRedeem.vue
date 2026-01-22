@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
-import { Form, Head, usePage } from '@inertiajs/vue3';
+import { Form, usePage } from '@inertiajs/vue3';
+import SeoHead from '@/components/SeoHead.vue';
 
 const page = usePage<{
     flash?: { success?: string };
@@ -16,7 +17,11 @@ const page = usePage<{
         title="Redeem your Lifetime Deal"
         description="Enter your LTD redemption code to activate your lifetime plan."
     >
-        <Head title="Redeem Lifetime Deal" />
+        <SeoHead
+            title="Redeem lifetime deal"
+            description="Redeem your ZapTask lifetime deal code and activate your plan."
+            image="/zap_icon.png"
+        />
 
         <div v-if="page.props.flash?.success" class="mb-4 text-sm font-medium text-green-600">
             {{ page.props.flash.success }}
@@ -66,5 +71,4 @@ const page = usePage<{
         </Form>
     </AuthBase>
 </template>
-
 

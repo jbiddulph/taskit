@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check, CreditCard, AlertCircle, Crown } from 'lucide-vue-next';
 import CompanyCreationModal from '@/components/CompanyCreationModal.vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 interface User {
     id: number;
@@ -451,7 +452,11 @@ const reactivateSubscription = async () => {
 </script>
 
 <template>
-    <Head title="Subscription Management" />
+    <SeoHead
+        title="Subscription management"
+        description="Manage your ZapTask plan, billing details, and subscription status."
+        image="/zap_icon.png"
+    />
     
     <AppLayout>
         <div class="max-w-6xl mx-auto p-6">

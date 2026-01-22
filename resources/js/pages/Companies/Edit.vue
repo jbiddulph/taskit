@@ -8,6 +8,7 @@ import InputError from '@/components/InputError.vue';
 import Icon from '@/components/Icon.vue';
 import { Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 interface Props {
     company: {
@@ -42,6 +43,11 @@ const updateCompany = () => {
 
 <template>
     <AppSidebarLayout :company="company">
+        <SeoHead
+            :title="`Edit ${company.name}`"
+            :description="`Update company profile and details for ${company.name}.`"
+            image="/zap_icon.png"
+        />
         <div class="space-y-6 p-6">
             <!-- Header -->
             <div class="flex items-center justify-between">

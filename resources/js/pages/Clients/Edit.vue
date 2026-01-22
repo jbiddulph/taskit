@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
 import { update, show } from '@/routes/clients';
 import { ref } from 'vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 interface Client {
   id: number;
@@ -75,7 +76,11 @@ const toggleSelectMode = () => {
 </script>
 
 <template>
-  <Head :title="`Edit ${client.name}`" />
+  <SeoHead
+    :title="`Edit ${client.name}`"
+    :description="`Update details for ${client.name} in ZapTask.`"
+    image="/zap_icon.png"
+  />
 
   <AppLayout :company="company">
     <template #dashboardActions>

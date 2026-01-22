@@ -1,6 +1,10 @@
 <template>
     <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Head title="Alternative to... - ZapTask" />
+        <SeoHead
+            title="Alternative to project management tools"
+            description="Compare ZapTask with Trello, Asana, and Jira for a simpler, opinionated Kanban workflow."
+            image="/zap_icon.png"
+        />
         
         <!-- Fixed Header -->
         <header class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 shadow">
@@ -115,8 +119,9 @@
 </template>
 
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import PublicNavigation from '@/components/PublicNavigation.vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 // Navigate to homepage section function
 const scrollToSection = (sectionId: string) => {
@@ -124,5 +129,4 @@ const scrollToSection = (sectionId: string) => {
     window.location.href = `/#${sectionId}`;
 };
 </script>
-
 

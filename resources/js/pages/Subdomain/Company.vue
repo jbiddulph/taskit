@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import SeoHead from '@/components/SeoHead.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -200,7 +200,11 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head :title="`${company.name} - Company Portal`" />
+    <SeoHead
+        :title="`${company.name} - Company Portal`"
+        :description="`Access the ${company.name} company portal, tasks, and activity updates.`"
+        image="/zap_icon.png"
+    />
     
     <SubdomainLayout>
         <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">

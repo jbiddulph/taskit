@@ -1,5 +1,9 @@
 <template>
-    <Head :title="`${company.name} - Public Dashboard`" />
+    <SeoHead
+        :title="`${company.name} - Public Dashboard`"
+        :description="`View public project updates and tasks for ${company.name}.`"
+        image="/zap_icon.png"
+    />
     
     <SubdomainLayout>
         <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -198,11 +202,11 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Head } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Globe, FolderOpen, CheckSquare } from 'lucide-vue-next';
 import SubdomainLayout from '@/layouts/SubdomainLayout.vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 interface Project {
     id: number;

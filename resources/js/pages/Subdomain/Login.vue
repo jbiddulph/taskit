@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, Globe, Lock } from 'lucide-vue-next';
 import SubdomainLayout from '@/layouts/SubdomainLayout.vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 interface Company {
     id: number;
@@ -44,7 +45,11 @@ const submit = () => {
 </script>
 
 <template>
-    <Head :title="`Login - ${company.name}`" />
+    <SeoHead
+        :title="`Login - ${company.name}`"
+        :description="`Sign in to the ${company.name} employee portal on ZapTask.`"
+        image="/zap_icon.png"
+    />
     
     <SubdomainLayout>
         <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">

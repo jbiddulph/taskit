@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
 import { index, edit, destroy } from '@/routes/clients';
 import { ref } from 'vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 interface Client {
   id: number;
@@ -75,7 +76,11 @@ deleteForm.delete(destroy.url(client.id));
 </script>
 
 <template>
-  <Head :title="client.name" />
+  <SeoHead
+    :title="client.name"
+    :description="`View contact details, projects, and stats for ${client.name}.`"
+    image="/zap_icon.png"
+  />
 
   <AppLayout :company="company">
     <div class="py-12">

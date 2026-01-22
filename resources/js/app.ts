@@ -43,12 +43,13 @@ initializeTheme();
 declare global {
     interface Window {
         gtag: (...args: any[]) => void;
+        __analyticsConsent?: string | null;
     }
 }
 
 // Track page views on Inertia navigation
 router.on('navigate', () => {
-    if (typeof window !== 'undefined' && window.gtag) {
+    if (typeof window !== 'undefined' && window.gtag && window.__analyticsConsent === 'accepted') {
         window.gtag('config', window.gtag, {
             page_title: document.title,
             page_location: window.location.href,

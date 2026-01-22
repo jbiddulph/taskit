@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
 import { create, show } from '@/routes/clients';
 import { ref } from 'vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 interface Client {
   id: number;
@@ -38,7 +39,11 @@ defineProps<Props>();
 </script>
 
 <template>
-  <Head title="Clients" />
+  <SeoHead
+    title="Clients"
+    description="Manage your client list and access client project details in ZapTask."
+    image="/zap_icon.png"
+  />
 
   <AppLayout :company="company">
     <div class="py-12">

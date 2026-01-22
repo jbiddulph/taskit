@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import { update as dashboardSettingsUpdate } from '@/routes/dashboard/settings';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { AlertCircle, Info } from 'lucide-vue-next';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import GuestManagement from '@/components/GuestManagement.vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 interface User {
     id: number;
@@ -91,7 +92,11 @@ const successMessage = computed(() => page.props.flash?.success as string || '')
 </script>
 
 <template>
-    <Head title="Dashboard Settings" />
+    <SeoHead
+        title="Dashboard settings"
+        description="Configure how your ZapTask dashboard looks and behaves."
+        image="/zap_icon.png"
+    />
     
     <AppLayout>
         <SettingsLayout>

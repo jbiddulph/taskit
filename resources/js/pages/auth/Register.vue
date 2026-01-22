@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
 // import { login } from '@/routes';
-import { Form, Head, Link } from '@inertiajs/vue3';
+import { Form, Link } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
 import { ref, computed, watch } from 'vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 interface Props {
     subscriptionType?: string;
@@ -55,7 +56,11 @@ const showIndividualOption = computed(() => subscriptionType.value === 'FREE');
 
 <template>
     <AuthBase title="Create an account" description="Enter your details below to create your account">
-        <Head title="Register" />
+        <SeoHead
+            title="Create an account"
+            description="Sign up for ZapTask and start organizing your team's work."
+            image="/zap_icon.png"
+        />
 
         <Form
             v-bind="RegisteredUserController.store.form()"

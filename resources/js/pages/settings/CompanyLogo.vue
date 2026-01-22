@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Head, useForm, usePage, router } from '@inertiajs/vue3';
+import { useForm, usePage, router } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { AlertCircle, Info, Upload, Trash2, Image } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { uploadLogoToTaskitBucket } from '@/services/supabaseClient';
+import SeoHead from '@/components/SeoHead.vue';
 
 interface User {
     id: number;
@@ -113,7 +114,11 @@ const hasCustomLogo = computed(() => !!currentLogoUrl.value);
 </script>
 
 <template>
-    <Head title="Company Logo" />
+    <SeoHead
+        title="Company logo"
+        description="Upload and manage your ZapTask company logo."
+        image="/zap_icon.png"
+    />
     
     <AppLayout>
         <SettingsLayout>

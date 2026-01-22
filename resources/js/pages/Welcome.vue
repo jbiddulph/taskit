@@ -3,6 +3,7 @@ import { dashboard, login, register } from '@/routes';
 import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import PublicNavigation from '@/components/PublicNavigation.vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 // Mobile menu state
 const mobileMenuOpen = ref(false);
@@ -37,7 +38,12 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="Welcome">
+    <SeoHead
+        title="Welcome"
+        description="ZapTask helps teams manage work with a clear Kanban workflow, real-time collaboration, and powerful automation."
+        image="/images/activity-feed.png"
+    />
+    <Head>
         <link rel="preconnect" href="https://rsms.me/" />
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
     </Head>
@@ -48,7 +54,7 @@ onMounted(() => {
                 <div class="flex justify-between items-center py-4">
                     <div class="flex items-center">
                         <Link href="/" class="flex items-center space-x-2">
-                            <img src="/zap_icon.png" alt="" class="w-8 h-8 dark:bg-white dark:rounded-md dark:p-1" aria-hidden="true">
+                            <img src="/zap_icon.png" alt="ZapTask logo" class="w-8 h-8 dark:bg-white dark:rounded-md dark:p-1">
                             <span class="text-xl font-bold text-gray-900 dark:text-white">ZapTask</span>
                         </Link>
                     </div>
@@ -755,7 +761,7 @@ onMounted(() => {
                     <!-- Company Info -->
                     <div class="md:col-span-2">
                         <div class="flex items-center gap-2 mb-4">
-                            <img src="/zap_icon_white.svg" alt="" class="w-8 h-8" aria-hidden="true" />
+                            <img src="/zap_icon_white.svg" alt="ZapTask logo" class="w-8 h-8" />
                             <span class="text-xl font-bold text-white">ZapTask</span>
                         </div>
                         <p class="text-gray-300 text-sm mb-4 max-w-md">

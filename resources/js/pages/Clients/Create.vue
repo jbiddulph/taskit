@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Head, useForm, Link } from '@inertiajs/vue3';
+import { useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
 import { store, index } from '@/routes/clients';
 import { ref } from 'vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 interface Props {
   company?: {
@@ -41,7 +42,11 @@ const submit = () => {
 </script>
 
 <template>
-  <Head title="Add Client" />
+  <SeoHead
+    title="Add client"
+    description="Create a new client record and start tracking work in ZapTask."
+    image="/zap_icon.png"
+  />
 
   <AppLayout :company="company">
     <div class="py-12">

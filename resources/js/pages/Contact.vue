@@ -1,6 +1,10 @@
 <template>
     <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Head title="Contact Support" />
+        <SeoHead
+            title="Contact support"
+            description="Reach ZapTask support with questions about plans, billing, or product help."
+            image="/zap_icon.png"
+        />
         
         <!-- Fixed Header -->
         <header class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 shadow">
@@ -177,9 +181,10 @@
 
 <script setup lang="ts">
 import { dashboard, login, register } from '@/routes';
-import { Head, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import PublicNavigation from '@/components/PublicNavigation.vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 // Navigate to homepage section function
 const scrollToSection = (sectionId: string) => {

@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 // import { login } from '@/routes';
-import { Form, Head } from '@inertiajs/vue3';
+import { Form } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
+import SeoHead from '@/components/SeoHead.vue';
 
 defineProps<{
     status?: string;
@@ -17,7 +18,11 @@ defineProps<{
 
 <template>
     <AuthLayout title="Forgot password" description="Enter your email to receive a password reset link">
-        <Head title="Forgot password" />
+        <SeoHead
+            title="Forgot password"
+            description="Request a password reset link for your ZapTask account."
+            image="/zap_icon.png"
+        />
 
         <div v-if="status" class="mb-4 text-center text-sm font-medium text-green-600">
             {{ status }}

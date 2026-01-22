@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { AlertCircle, Download, Upload, Database, FileJson, Package, MessageSquare, FolderOpen } from 'lucide-vue-next';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 interface User {
     id: number;
@@ -153,7 +154,11 @@ const importTypeOptions = [
 </script>
 
 <template>
-    <Head title="Export & Import" />
+    <SeoHead
+        title="Export and import"
+        description="Export your ZapTask data or import projects and tasks from other tools."
+        image="/zap_icon.png"
+    />
     
     <AppLayout>
         <SettingsLayout>

@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
 // import { dashboard, register } from '@/routes';
 import { request } from '@/routes/password';
-import { Form, Head } from '@inertiajs/vue3';
+import { Form } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
+import SeoHead from '@/components/SeoHead.vue';
 
 defineProps<{
     status?: string;
@@ -19,7 +20,11 @@ defineProps<{
 
 <template>
     <AuthBase title="Log in to your account" description="Enter your email and password below to log in">
-        <Head title="Log in" />
+        <SeoHead
+            title="Log in"
+            description="Access your ZapTask account and continue managing your work."
+            image="/zap_icon.png"
+        />
 
         <div v-if="status" class="mb-4 text-center text-sm font-medium text-green-600">
             {{ status }}

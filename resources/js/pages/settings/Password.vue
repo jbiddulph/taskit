@@ -4,7 +4,7 @@ import InputError from '@/components/InputError.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { edit } from '@/routes/password';
-import { Form, Head } from '@inertiajs/vue3';
+import { Form } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 import HeadingSmall from '@/components/HeadingSmall.vue';
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { type BreadcrumbItem } from '@/types';
+import SeoHead from '@/components/SeoHead.vue';
 
 const breadcrumbItems: BreadcrumbItem[] = [
     {
@@ -26,7 +27,11 @@ const currentPasswordInput = ref<HTMLInputElement | null>(null);
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbItems">
-        <Head title="Password settings" />
+        <SeoHead
+            title="Password settings"
+            description="Update your ZapTask account password to keep your workspace secure."
+            image="/zap_icon.png"
+        />
 
         <SettingsLayout>
             <div class="space-y-6">

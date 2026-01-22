@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import SeoHead from '@/components/SeoHead.vue';
 
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
@@ -19,7 +19,11 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbItems">
-        <Head title="Appearance settings" />
+        <SeoHead
+            title="Appearance settings"
+            description="Customize the look and feel of your ZapTask workspace."
+            image="/zap_icon.png"
+        />
 
         <SettingsLayout>
             <div class="space-y-6">

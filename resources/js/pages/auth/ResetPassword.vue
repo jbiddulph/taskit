@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/AuthLayout.vue';
-import { Form, Head } from '@inertiajs/vue3';
+import { Form } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
 import { ref } from 'vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 const props = defineProps<{
     token: string;
@@ -19,7 +20,11 @@ const inputEmail = ref(props.email);
 
 <template>
     <AuthLayout title="Reset password" description="Please enter your new password below">
-        <Head title="Reset password" />
+        <SeoHead
+            title="Reset password"
+            description="Set a new password for your ZapTask account."
+            image="/zap_icon.png"
+        />
 
         <Form
             v-bind="NewPasswordController.store.form()"

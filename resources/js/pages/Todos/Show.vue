@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3'
+import SeoHead from '@/components/SeoHead.vue'
 import AppSidebarLayout from '@/layouts/app/AppSidebarLayout.vue'
 import TodoBoard from '@/components/TodoBoard.vue'
 import TodoComments from '@/components/TodoComments.vue'
@@ -29,7 +29,11 @@ onMounted(load)
 </script>
 
 <template>
-  <Head :title="todo ? todo.title : 'Task'" />
+  <SeoHead
+    :title="todo ? todo.title : 'Task'"
+    :description="todo?.description ? todo.description : 'Review task details, comments, and progress in ZapTask.'"
+    image="/zap_icon.png"
+  />
   <AppSidebarLayout>
     <div class="p-4 md:p-6 max-w-5xl mx-auto">
       <div v-if="loading" class="text-gray-500">Loading...</div>
@@ -49,5 +53,4 @@ onMounted(load)
   </AppSidebarLayout>
   
 </template>
-
 
