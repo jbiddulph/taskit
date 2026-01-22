@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
-import { update as dashboardSettingsUpdate } from '@/routes/dashboard/settings/index';
+import { update as dashboardSettingsUpdate } from '@/routes/dashboard/settings/index.ts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
