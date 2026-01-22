@@ -911,11 +911,9 @@ const { trackTodoEvent, trackProjectEvent } = useAnalytics();
 const { registerShortcut, getShortcutsByCategory } = useKeyboardShortcuts();
 const { 
   selectedItems, 
-  selectedCount, 
   hasSelection,
   clearSelection,
   toggleSelection: toggleSelectionById,
-  isSelected
 } = useBulkOperations();
 
 // Local toggle function that emits to parent
