@@ -794,6 +794,11 @@ onMounted(() => {
                                 </a>
                             </li>
                             <li>
+                                <Link href="/cookies" class="text-gray-300 hover:text-white transition-colors">
+                                    Cookie Policy
+                                </Link>
+                            </li>
+                            <li>
                                 <a href="/alternative-to" class="text-gray-300 hover:text-white transition-colors">
                                     Alternative to
                                 </a>

@@ -801,6 +801,11 @@ defineOptions({
                 <div class="text-gray-400 text-sm">
                     © 2025 ZapTask.co.uk. All rights reserved.
                 </div>
+                <div class="mt-2 text-sm">
+                    <Link href="/cookies" class="text-gray-400 hover:text-white transition-colors">
+                        Cookie Policy
+                    </Link>
+                </div>
             </div>
         </footer>
     </div>

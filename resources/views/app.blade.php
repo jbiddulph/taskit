@@ -247,7 +247,8 @@
             aria-label="Cookie consent"
         >
             <div class="cookie-consent__text">
-                We use cookies and analytics to understand usage and improve ZapTask. You can accept or decline.
+                We use cookies and analytics to understand usage and improve ZapTask. Read our
+                <a href="/cookies" class="underline font-medium">cookie policy</a> or choose your preference.
             </div>
             <div class="cookie-consent__actions">
                 <button id="cookie-consent-accept" class="cookie-consent__button cookie-consent__button--accept" type="button">
