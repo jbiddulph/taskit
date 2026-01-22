@@ -2634,7 +2634,7 @@ async function onSubmitBulkTodos() {
     isBulkMode.value = false;
     await loadTodos();
     if ((window as any).$notify) {
-      (window as any).$notify({ type: 'success', title: 'Bulk Added', message: 'All pending todosState created.' });
+      (window as any).$notify({ type: 'success', title: 'Bulk Added', message: 'All pending todos created.' });
     }
   } finally {
     isSubmittingBulk.value = false;

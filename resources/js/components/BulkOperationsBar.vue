@@ -135,7 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import Icon from '@/components/Icon.vue';
 import { useBulkOperations } from '@/composables/useBulkOperations';
 import { todoApi } from '@/services/todoApi';

@@ -2,8 +2,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "php artisan wayfinder:generate --with-form || true && vite build",
-        "build:ssr": "php artisan wayfinder:generate --with-form || true && vite build && vite build --ssr",
+        "build": "php -r \"if (!is_dir('database')) { mkdir('database', 0777, true); } if (!file_exists('database/database.sqlite')) { touch('database/database.sqlite'); }\" && php artisan wayfinder:generate --with-form || true && vite build",
+        "build:ssr": "php -r \"if (!is_dir('database')) { mkdir('database', 0777, true); } if (!file_exists('database/database.sqlite')) { touch('database/database.sqlite'); }\" && php artisan wayfinder:generate --with-form || true && vite build && vite build --ssr",
         "dev": "vite",
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
