@@ -102,7 +102,7 @@ const editContent = ref('');
 const highlightedCommentId = ref<number | null>(null);
 
 // Load company users for mentions
-const { users: availableUsers, loadUsers } = useCompanyUsers();
+const { users: availableUsers } = useCompanyUsers();
 
 // Update mention service when users are loaded
 watch(availableUsers, (users) => {
@@ -270,5 +270,4 @@ const formatDate = (dt: string) => {
 
 onMounted(load);
 </script>
-
 

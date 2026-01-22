@@ -242,7 +242,7 @@ interface Props {
     isGuest: boolean;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const selectedTodo = ref<Todo | null>(null);
 const showTodoModal = computed(() => selectedTodo.value !== null);

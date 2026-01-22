@@ -77,12 +77,12 @@
             @dragstart="handleDragStart($event, todo)"
             @dragend="handleDragEnd"
             @dragover="handleTodoDragOver($event, index)"
-            @dragenter="handleTodoDragEnter($event, index)"
+            @dragenter="handleTodoDragEnter($event)"
             @dragleave="handleTodoDragLeave"
             @drop="handleTodoDrop($event, index)"
             @touchstart="handleTouchStart($event, todo, $event.currentTarget as HTMLElement)"
             @touchmove="handleTouchMove($event)"
-            @touchend="handleTouchEnd($event, todo, index)"
+            @touchend="handleTouchEnd($event, todo)"
             data-drop-zone="true"
             class="relative transition-all duration-200 touch-manipulation"
             :class="{
@@ -131,7 +131,6 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import Icon from '@/components/Icon.vue';
 import TodoCard from './TodoCard.vue';
 import { useI18n } from 'vue-i18n';
-import { useTouchDragAndDrop } from '@/composables/useTouchDragAndDrop';
 
 import type { Todo } from '@/services/todoApi';
 
@@ -191,7 +190,6 @@ const touchStartY = ref(0);
 const touchStartIndex = ref<number | null>(null);
 
 // Touch drag and drop composable
-const { handleTouchStart: touchStart, handleTouchMove: touchMove, handleTouchEnd: touchEnd } = useTouchDragAndDrop();
 
 // Check if a todo can be dragged (belongs to current project)
 const canDragTodo = (todo: Todo): boolean => {
@@ -321,7 +319,7 @@ const handleTodoDragOver = (event: DragEvent, index: number) => {
   // In the middle 20%, keep current position to avoid flickering
 };
 
-const handleTodoDragEnter = (event: DragEvent, index: number) => {
+const handleTodoDragEnter = (event: DragEvent) => {
   if (!isDraggingWithinColumn.value || !draggedTodo.value) {
     return;
   }
@@ -421,7 +419,6 @@ const handleTouchMove = (event: TouchEvent) => {
       const targetIndex = props.todos.findIndex(t => String(t.id) === String(todoId));
       
       if (targetIndex !== -1 && targetIndex !== touchStartIndex.value) {
-        const targetTodo = props.todos[targetIndex];
         const rect = todoCard.getBoundingClientRect();
         const y = touch.clientY - rect.top;
         const height = rect.height;
@@ -435,7 +432,7 @@ const handleTouchMove = (event: TouchEvent) => {
   }
 };
 
-const handleTouchEnd = (event: TouchEvent, todo: Todo, index: number) => {
+const handleTouchEnd = (event: TouchEvent, todo: Todo) => {
   if (!isTouchDragging.value || !draggedTodo.value) {
     // Reset
     isTouchDragging.value = false;

@@ -859,8 +859,8 @@ const props = defineProps<{
   showCalendar?: boolean;
   isSelectMode?: boolean;
   isReadOnly?: boolean;
-  todosState?: any[];
-  projectsState?: any[];
+  todos?: any[];
+  projects?: any[];
   selectedProject?: any;
 }>();
 
@@ -939,11 +939,6 @@ const { selectedClientId, setClientId } = useClientStore();
 const user = computed(() => {
   const props: any = page.props;
   return props.user ?? (props.auth as any)?.user ?? null;
-});
-
-const company = computed(() => {
-  const props: any = page.props;
-  return props.company ?? (props.auth as any)?.user?.company ?? null;
 });
 
 // Check if FREE plan user has reached project limit (3 projectsState)
@@ -1048,6 +1043,30 @@ const loadSavedViews = () => {
 
 const persistSavedViews = () => {
   localStorage.setItem(SAVED_VIEWS_KEY, JSON.stringify(savedViews.value));
+};
+
+const handleOpenTodoById = async (e: any) => {
+  try {
+    const id = e?.detail?.todoId;
+    if (!id) return;
+    if (todosState.value.length === 0) {
+      await loadTodos();
+    }
+    let todo = todosState.value.find(t => t.id === id) as unknown as Todo | undefined;
+    if (!todo) {
+      const fetched = await todoApi.getTodo(id);
+      todo = fetched as unknown as Todo;
+    }
+    if (todo) {
+      await editTodo(todo as unknown as Todo);
+      const highlight = e?.detail?.highlight || null;
+      if (highlight) {
+        window.dispatchEvent(new CustomEvent('highlightComment', { detail: { commentId: highlight } }));
+      }
+    }
+  } catch (err) {
+    console.error('Failed to open todo by id:', err);
+  }
 };
 
 const getCurrentFilters = (): SavedView => ({
@@ -1375,7 +1394,7 @@ const saveTodo = async (todo: Todo) => {
     
     // Dispatch event to refresh sidebar project stats
     window.dispatchEvent(new CustomEvent('todoChanged'));
-  } catch (error) {
+  } catch {
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -1429,7 +1448,7 @@ const deleteTodo = async (id: number | string) => {
         message: `Todo "${todo.title}" has been deleted successfully.`
       });
     }
-  } catch (error) {
+  } catch {
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -1448,7 +1467,7 @@ const handleDrop = async (todo: Todo, newStatus: string) => {
       (window as any).$notify({
         type: 'error',
         title: 'Project Required',
-        message: 'Please select a project before moving todosState.'
+        message: 'Please select a project before moving todos.'
       });
     }
     return;
@@ -1502,7 +1521,7 @@ const handleDrop = async (todo: Todo, newStatus: string) => {
       // Reload todosState from API as fallback
       await loadTodos();
     }
-  } catch (error) {
+  } catch {
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -1521,7 +1540,7 @@ const handleReorder = async (draggedTodo: Todo, targetTodo: Todo, position: 'bef
       (window as any).$notify({
         type: 'error',
         title: 'Project Required',
-        message: 'Please select a project before reordering todosState.'
+        message: 'Please select a project before reordering todos.'
       });
     }
     return;
@@ -1532,7 +1551,7 @@ const handleReorder = async (draggedTodo: Todo, targetTodo: Todo, position: 'bef
       (window as any).$notify({
         type: 'error',
         title: 'Invalid Reorder',
-        message: 'Cannot reorder todosState from different projectsState.'
+        message: 'Cannot reorder todos from different projects.'
       });
     }
     return;
@@ -1626,7 +1645,7 @@ const handleReorder = async (draggedTodo: Todo, targetTodo: Todo, position: 'bef
       });
     }
     
-  } catch (error) {
+  } catch {
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -1813,7 +1832,7 @@ const initVoiceRecording = () => {
             message: `Created: "${transcript}"`
           });
         }
-      } catch (error) {
+      } catch {
         console.error('❌ Error creating voice todo:', error);
         if ((window as any).$notify) {
           (window as any).$notify({
@@ -1828,13 +1847,6 @@ const initVoiceRecording = () => {
       accumulatedTranscript.value = '';
     }
   };
-};
-
-// Timer formatting function
-const formatTimer = (seconds: number): string => {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
 // Start timer with 10 second limit
@@ -2005,7 +2017,7 @@ const saveEditProject = async () => {
     // Dispatch event to refresh sidebar projectsState
     window.dispatchEvent(new CustomEvent('todoChanged'));
     
-  } catch (error) {
+  } catch {
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -2051,7 +2063,7 @@ const saveProjectDescription = async () => {
     // Dispatch event to refresh sidebar projectsState
     window.dispatchEvent(new CustomEvent('todoChanged'));
     
-  } catch (error) {
+  } catch {
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -2143,7 +2155,7 @@ const loadClients = async () => {
       const data = await response.json();
       clients.value = data.data || [];
     }
-  } catch (error) {
+  } catch {
     clients.value = [];
   }
 };
@@ -2198,7 +2210,7 @@ const createProject = async () => {
       });
     }
     
-  } catch (error) {
+  } catch {
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -2225,7 +2237,7 @@ const loadProjects = async () => {
       } else {
         throw new Error('Invalid response structure');
       }
-    } catch (statsError) {
+    } catch {
       
       // Fallback to regular getProjects
       const response = await todoApi.getProjects();
@@ -2253,7 +2265,7 @@ const loadProjects = async () => {
       localStorage.setItem('currentProjectId', firstProject.id.toString());
       
     }
-  } catch (error) {
+  } catch {
     projectsState.value = [];
   }
 };
@@ -2314,7 +2326,7 @@ const onProjectChange = async (projectIdOrEvent?: Event | string) => {
         message: `Switched to project "${project.name}".`
       });
     }
-  } catch (error) {
+  } catch {
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -2410,7 +2422,7 @@ const handleBulkStatusChange = async (status: string) => {
     await todoApi.bulkUpdateStatus(selectedIds, status);
     await loadTodos();
     clearSelection();
-  } catch (error) {
+  } catch {
   }
 };
 
@@ -2420,7 +2432,7 @@ const handleBulkPriorityChange = async (priority: string) => {
     await todoApi.bulkUpdatePriority(selectedIds, priority);
     await loadTodos();
     clearSelection();
-  } catch (error) {
+  } catch {
   }
 };
 
@@ -2430,7 +2442,7 @@ const handleBulkAssigneeChange = async (assignee: string | null) => {
     await todoApi.bulkUpdateAssignee(selectedIds, assignee);
     await loadTodos();
     clearSelection();
-  } catch (error) {
+  } catch {
   }
 };
 
@@ -2440,7 +2452,7 @@ const handleBulkTypeChange = async (type: string) => {
     await todoApi.bulkUpdateType(selectedIds, type);
     await loadTodos();
     clearSelection();
-  } catch (error) {
+  } catch {
   }
 };
 
@@ -2450,7 +2462,7 @@ const handleBulkDueDateChange = async (dueDate: string) => {
     await todoApi.bulkUpdateDueDate(selectedIds, dueDate);
     await loadTodos();
     clearSelection();
-  } catch (error) {
+  } catch {
   }
 };
 
@@ -2460,7 +2472,7 @@ const handleBulkTagsChange = async (tags: string[]) => {
     await todoApi.bulkUpdateTags(selectedIds, tags);
     await loadTodos();
     clearSelection();
-  } catch (error) {
+  } catch {
   }
 };
 
@@ -2472,7 +2484,7 @@ const handleBulkDelete = async () => {
       await todoApi.bulkDelete(selectedIds);
       await loadTodos();
       clearSelection();
-    } catch (error) {
+    } catch {
     }
   }
 };
@@ -2497,7 +2509,7 @@ const loadCurrentProject = async () => {
       localStorage.setItem('currentProjectId', firstProject.id.toString());
       
     }
-  } catch (error) {
+  } catch {
     localStorage.removeItem('currentProjectId');
     
     // If there was an error but projectsState are available, try to select the first one
@@ -2573,7 +2585,7 @@ const loadTodos = async () => {
       window.dispatchEvent(new CustomEvent('todosLoaded'));
     }
 
-  } catch (error) {
+  } catch {
     console.error('❌ Error loading todosState:', error);
   }
 };
@@ -2614,7 +2626,7 @@ async function onSubmitBulkTodos() {
             status: 'todo',
           } as any);
         }
-      } catch (e) {
+      } catch {
         console.error('Failed to create in bulk', e);
       }
     }

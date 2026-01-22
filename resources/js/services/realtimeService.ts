@@ -1,10 +1,6 @@
 import { supabase } from '@/services/supabaseClient';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
-// Get Supabase configuration for debugging
-const supabaseUrl = (globalThis as any)?.VITE_SUPABASE_URL || (import.meta as any)?.env?.VITE_SUPABASE_URL;
-const supabaseAnonKey = (globalThis as any)?.VITE_SUPABASE_ANON_KEY || (import.meta as any)?.env?.VITE_SUPABASE_ANON_KEY;
-
 interface Message {
   id: number;
   sender_id: number;
@@ -445,7 +441,7 @@ class RealtimeService {
           this.handleActivityDelete(payload.old as any);
         }
       )
-      .subscribe((status) => {
+      .subscribe(() => {
         // Subscription status handled silently
       });
 
@@ -898,7 +894,7 @@ class RealtimeService {
       return;
     }
 
-    const testChannel = supabase
+    supabase
       .channel('database-test')
       .on(
         'postgres_changes',
@@ -963,7 +959,7 @@ class RealtimeService {
       return;
     }
 
-    const deleteTestChannel = supabase
+    supabase
       .channel('delete-test')
       .on(
         'postgres_changes',

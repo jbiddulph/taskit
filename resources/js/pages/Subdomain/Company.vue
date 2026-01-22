@@ -148,11 +148,6 @@ const openTodoModal = (todo: Todo) => {
     showTodoModal.value = true;
 };
 
-const closeTodoModal = () => {
-    showTodoModal.value = false;
-    selectedTodo.value = null;
-};
-
 // Format date helper function
 const formatDate = (dateString: string) => {
     const date = new Date(dateString);

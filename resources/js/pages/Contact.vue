@@ -249,7 +249,7 @@ const submitForm = async () => {
                 };
             }
         }
-    } catch (error) {
+    } catch {
         status.value = {
             type: 'error',
             message: 'An error occurred. Please try again.'

@@ -48,7 +48,6 @@ const showActivityFeed = ref(false);
 
 // Calendar and Filters state
 const showCalendar = ref(false);
-const showFilters = ref(false);
 
 // Bulk selection state
 const isSelectMode = ref(false);

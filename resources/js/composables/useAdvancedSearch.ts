@@ -198,7 +198,7 @@ export function useAdvancedSearch() {
           searchQuery.value = data.query || '';
           activeFilters.value = data.filters || [];
           resolve();
-        } catch (error) {
+        } catch {
           reject(new Error('Invalid search file'));
         }
       };

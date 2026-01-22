@@ -23,7 +23,7 @@ interface Props {
     isSubdomain: boolean;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const form = useForm({
     email: '',
