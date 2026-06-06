@@ -13,11 +13,24 @@ class TrustHosts extends Middleware
      */
     public function hosts(): array
     {
-        return [
+        $hosts = [
             $this->allSubdomainsOfApplicationUrl(),
             '.*\.zaptask\.co\.uk',
             'zaptask\.co\.uk',
             'www\.zaptask\.co\.uk',
+            // Heroku deployment URLs (e.g. task-it-9b20e77d6638.herokuapp.com)
+            '.*\.herokuapp\.com',
         ];
+
+        if ($extra = env('TRUSTED_HOSTS')) {
+            foreach (explode(',', $extra) as $pattern) {
+                $pattern = trim($pattern);
+                if ($pattern !== '') {
+                    $hosts[] = $pattern;
+                }
+            }
+        }
+
+        return array_values(array_filter($hosts));
     }
 }
