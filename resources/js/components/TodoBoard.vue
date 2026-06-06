@@ -724,6 +724,20 @@
           <form @submit.prevent="saveEditProject" class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {{ t('projects.color') }}
+              </label>
+              <div class="flex items-center gap-3">
+                <input
+                  v-model="editingProjectColor"
+                  type="color"
+                  class="w-12 h-10 border border-gray-300 dark:border-gray-600 rounded-md cursor-pointer"
+                />
+                <span class="text-sm text-gray-600 dark:text-gray-400 uppercase">{{ editingProjectColor }}</span>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {{ t('projects.project_name') }} *
               </label>
               <input
@@ -752,20 +766,6 @@
                   {{ client.name }}
                 </option>
               </select>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {{ t('projects.color') }}
-              </label>
-              <div class="flex items-center gap-3">
-                <input
-                  v-model="editingProjectColor"
-                  type="color"
-                  class="w-12 h-10 border border-gray-300 dark:border-gray-600 rounded-md cursor-pointer"
-                />
-                <span class="text-sm text-gray-600 dark:text-gray-400 uppercase">{{ editingProjectColor }}</span>
-              </div>
             </div>
             
             <div class="flex gap-3 pt-4">
