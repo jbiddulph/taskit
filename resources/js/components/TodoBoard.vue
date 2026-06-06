@@ -753,6 +753,20 @@
                 </option>
               </select>
             </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {{ t('projects.color') }}
+              </label>
+              <div class="flex items-center gap-3">
+                <input
+                  v-model="editingProjectColor"
+                  type="color"
+                  class="w-12 h-10 border border-gray-300 dark:border-gray-600 rounded-md cursor-pointer"
+                />
+                <span class="text-sm text-gray-600 dark:text-gray-400 uppercase">{{ editingProjectColor }}</span>
+              </div>
+            </div>
             
             <div class="flex gap-3 pt-4">
               <button
@@ -1011,6 +1025,7 @@ const selectedProjectId = ref<string>('');
 const editingTodo = ref<Todo | null>(null);
 const editingProjectName = ref('');
 const editingProjectClientId = ref<number | null>(null);
+const editingProjectColor = ref('#3B82F6');
 const editingProjectDescription = ref(false);
 const editingProjectDescriptionText = ref('');
 const projectDescriptionInput = ref<HTMLInputElement | null>(null);
@@ -1985,6 +2000,7 @@ const startEditProject = () => {
   if (!currentProject.value) return;
   editingProjectName.value = currentProject.value.name;
   editingProjectClientId.value = currentProject.value.client_id || null;
+  editingProjectColor.value = currentProject.value.color || '#3B82F6';
   showEditProject.value = true;
 };
 
@@ -1994,7 +2010,8 @@ const saveEditProject = async () => {
   try {
     const updatedProject = await todoApi.updateProject(currentProject.value.id, {
       name: editingProjectName.value.trim(),
-      client_id: editingProjectClientId.value
+      client_id: editingProjectClientId.value,
+      color: editingProjectColor.value
     });
     
     // Update current project
@@ -2013,6 +2030,7 @@ const saveEditProject = async () => {
     showEditProject.value = false;
     editingProjectName.value = '';
     editingProjectClientId.value = null;
+    editingProjectColor.value = '#3B82F6';
     
     // Dispatch event to refresh sidebar projectsState
     window.dispatchEvent(new CustomEvent('todoChanged'));
