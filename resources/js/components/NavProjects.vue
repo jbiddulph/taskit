@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
-import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
 import { todoApi, type Project } from '@/services/todoApi';
 import { realtimeService } from '@/services/realtimeService';
 import { useClientStore } from '@/composables/useClientStore';
 import Icon from '@/components/Icon.vue';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
-import { usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 const projects = ref<Project[]>([]);
 const groupedProjects = ref<any>(null);
 const { selectedClientId, setClientId } = useClientStore();
+const { isMobile, setOpenMobile } = useSidebar();
 const todosLoaded = ref(false);
 const page = usePage();
 
@@ -234,16 +235,22 @@ const filteredProjects = computed(() => {
 const selectProject = (project: Project) => {
   currentProject.value = project;
   localStorage.setItem('currentProjectId', project.id.toString());
+
+  if (isMobile.value) {
+    setOpenMobile(false);
+  }
   
   // Dispatch custom event for TodoBoard to listen to
   window.dispatchEvent(new CustomEvent('projectSelected', {
     detail: { projectId: project.id }
   }));
-  
 
-  
-  // Navigate to dashboard with project context
-  window.location.href = '/dashboard';
+  if (!isOnDashboard.value) {
+    router.visit('/dashboard', {
+      preserveScroll: false,
+      preserveState: false,
+    });
+  }
 };
 
 const deleteProject = async (project: Project, event: Event) => {
