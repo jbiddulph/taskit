@@ -7,6 +7,7 @@ import TodoBoard from '../components/TodoBoard.vue';
 import LimitWarnings from '../components/LimitWarnings.vue';
 import ActivityFeed from '../components/ActivityFeed.vue';
 import MeetingNotesRecorderButton from '../components/MeetingNotesRecorderButton.vue';
+import MeetingNotesGeneratingBanner from '../components/MeetingNotesGeneratingBanner.vue';
 import Icon from '../components/Icon.vue';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -135,6 +136,8 @@ const toggleSelectMode = () => {
         </template>
         <!-- Limit Warnings -->
         <LimitWarnings v-if="company" :company="company" />
+
+        <MeetingNotesGeneratingBanner />
         
         <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
             <div :class="[

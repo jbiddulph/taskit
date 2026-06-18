@@ -71,17 +71,6 @@ const openProposal = async (proposalId: number) => {
     }
 };
 
-const checkPendingOnLoad = async () => {
-    try {
-        const pending = await meetingNoteProposalApi.getPending();
-        if (pending.length > 0) {
-            await openProposal(pending[0].id);
-        }
-    } catch {
-        // ignore
-    }
-};
-
 const handleOpenEvent = (event: Event) => {
     const detail = (event as CustomEvent).detail;
     if (detail?.proposalId) {
@@ -158,7 +147,6 @@ watch(isOpen, (open) => {
 
 onMounted(() => {
     window.addEventListener('openMeetingNoteApproval', handleOpenEvent);
-    checkPendingOnLoad();
 });
 
 onUnmounted(() => {

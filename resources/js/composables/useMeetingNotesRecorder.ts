@@ -1,10 +1,26 @@
+import { meetingNoteProposalApi } from '@/services/meetingNoteProposalApi';
 import { submitMeetingNotes } from '@/services/meetingNotesApi';
-import { onUnmounted, ref } from 'vue';
+import { ref } from 'vue';
 
 const MAX_DURATION_SECONDS = 30 * 60;
+const POLL_INTERVAL_MS = 3000;
+const POLL_TIMEOUT_MS = 5 * 60 * 1000;
 
-export type RecordingState = 'idle' | 'recording' | 'processing';
+export type RecordingState = 'idle' | 'recording' | 'uploading' | 'generating';
 export type StoppedReason = 'manual' | 'timeout';
+
+const state = ref<RecordingState>('idle');
+const elapsedSeconds = ref(0);
+const errorMessage = ref<string | null>(null);
+
+let mediaRecorder: MediaRecorder | null = null;
+let mediaStream: MediaStream | null = null;
+let audioChunks: Blob[] = [];
+let timerInterval: number | null = null;
+let recordedAt: string | null = null;
+let stoppedReason: StoppedReason = 'manual';
+let pollTimeout: number | null = null;
+let pollInterval: number | null = null;
 
 function getPreferredMimeType(): string {
     const types = [
@@ -29,202 +45,257 @@ function formatElapsedTime(seconds: number): string {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
-export function useMeetingNotesRecorder() {
-    const state = ref<RecordingState>('idle');
-    const elapsedSeconds = ref(0);
-    const errorMessage = ref<string | null>(null);
+function notify(type: 'success' | 'error' | 'warning', title: string, message: string) {
+    if ((window as any).$notify) {
+        (window as any).$notify({ type, title, message });
+    }
+}
 
-    let mediaRecorder: MediaRecorder | null = null;
-    let mediaStream: MediaStream | null = null;
-    let audioChunks: Blob[] = [];
-    let timerInterval: number | null = null;
-    let recordedAt: string | null = null;
-    let stoppedReason: StoppedReason = 'manual';
+function clearTimer() {
+    if (timerInterval !== null) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
 
-    const notify = (type: 'success' | 'error' | 'warning', title: string, message: string) => {
-        if ((window as any).$notify) {
-            (window as any).$notify({ type, title, message });
-        }
-    };
+function cleanupStream() {
+    if (mediaStream) {
+        mediaStream.getTracks().forEach((track) => track.stop());
+        mediaStream = null;
+    }
+}
 
-    const clearTimer = () => {
-        if (timerInterval !== null) {
-            clearInterval(timerInterval);
-            timerInterval = null;
-        }
-    };
+function clearPollers() {
+    if (pollTimeout !== null) {
+        clearTimeout(pollTimeout);
+        pollTimeout = null;
+    }
+    if (pollInterval !== null) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+    }
+}
 
-    const cleanupStream = () => {
-        if (mediaStream) {
-            mediaStream.getTracks().forEach((track) => track.stop());
-            mediaStream = null;
-        }
-    };
+function waitForProposal(submittedRecordedAt: string): Promise<number | null> {
+    return new Promise((resolve) => {
+        const startedAt = Date.now();
+        let resolved = false;
 
-    const processRecording = async () => {
-        state.value = 'processing';
-
-        const mimeType = mediaRecorder?.mimeType || 'audio/webm';
-        const audioBlob = new Blob(audioChunks, { type: mimeType });
-        audioChunks = [];
-
-        if (audioBlob.size === 0) {
-            state.value = 'idle';
-            errorMessage.value = 'No audio was captured.';
-            notify('error', 'Recording Failed', errorMessage.value);
-            return;
-        }
-
-        try {
-            const response = await submitMeetingNotes({
-                audio: audioBlob,
-                durationSeconds: elapsedSeconds.value,
-                stoppedReason,
-                recordedAt: recordedAt || new Date().toISOString(),
-            });
-
-            if (response.success) {
-                notify(
-                    'success',
-                    'Meeting Notes Sent',
-                    'Your recording has been sent to n8n for transcription and processing.'
-                );
-            } else {
-                throw new Error(response.message || 'Failed to process meeting notes.');
-            }
-        } catch (error: any) {
-            const message =
-                error.response?.data?.message ||
-                error.message ||
-                'Failed to process meeting notes recording.';
-            errorMessage.value = message;
-            notify('error', 'Processing Failed', message);
-        } finally {
-            state.value = 'idle';
-            elapsedSeconds.value = 0;
-            recordedAt = null;
-            stoppedReason = 'manual';
-        }
-    };
-
-    const stopRecording = async (reason: StoppedReason = 'manual') => {
-        if (state.value !== 'recording' || !mediaRecorder) {
-            return;
-        }
-
-        stoppedReason = reason;
-        clearTimer();
-
-        await new Promise<void>((resolve) => {
-            if (!mediaRecorder) {
-                resolve();
+        const finish = (proposalId: number | null) => {
+            if (resolved) {
                 return;
             }
+            resolved = true;
+            clearPollers();
+            resolve(proposalId);
+        };
 
-            mediaRecorder.onstop = () => resolve();
-            mediaRecorder.stop();
+        const check = async () => {
+            try {
+                const pending = await meetingNoteProposalApi.getPending();
+                const match = pending.find(
+                    (proposal) => proposal.metadata?.recorded_at === submittedRecordedAt
+                );
+
+                if (match) {
+                    finish(match.id);
+                    return;
+                }
+
+                if (Date.now() - startedAt >= POLL_TIMEOUT_MS) {
+                    finish(null);
+                }
+            } catch {
+                if (Date.now() - startedAt >= POLL_TIMEOUT_MS) {
+                    finish(null);
+                }
+            }
+        };
+
+        void check();
+        pollInterval = window.setInterval(() => void check(), POLL_INTERVAL_MS);
+        pollTimeout = window.setTimeout(() => finish(null), POLL_TIMEOUT_MS);
+    });
+}
+
+async function processRecording() {
+    state.value = 'uploading';
+
+    const mimeType = mediaRecorder?.mimeType || 'audio/webm';
+    const audioBlob = new Blob(audioChunks, { type: mimeType });
+    audioChunks = [];
+
+    const submittedRecordedAt = recordedAt || new Date().toISOString();
+    const submittedDuration = elapsedSeconds.value;
+
+    if (audioBlob.size === 0) {
+        state.value = 'idle';
+        errorMessage.value = 'No audio was captured.';
+        notify('error', 'Recording Failed', errorMessage.value);
+        return;
+    }
+
+    try {
+        const response = await submitMeetingNotes({
+            audio: audioBlob,
+            durationSeconds: submittedDuration,
+            stoppedReason,
+            recordedAt: submittedRecordedAt,
         });
 
-        cleanupStream();
-        mediaRecorder = null;
-        await processRecording();
-    };
-
-    const startRecording = async () => {
-        if (state.value !== 'idle') {
-            return;
+        if (!response.success) {
+            throw new Error(response.message || 'Failed to process meeting notes.');
         }
 
-        errorMessage.value = null;
+        state.value = 'generating';
 
-        if (!window.isSecureContext) {
+        const proposalId = await waitForProposal(submittedRecordedAt);
+        clearPollers();
+
+        if (proposalId) {
+            window.dispatchEvent(new CustomEvent('openMeetingNoteApproval', {
+                detail: { proposalId },
+            }));
+        } else {
             notify(
-                'error',
-                'Secure Context Required',
-                'Meeting notes recording requires HTTPS or localhost.'
+                'warning',
+                'Still Processing',
+                'Meeting notes are taking longer than expected. Check your notifications shortly.'
             );
+        }
+    } catch (error: any) {
+        const message =
+            error.response?.data?.message ||
+            error.message ||
+            'Failed to process meeting notes recording.';
+        errorMessage.value = message;
+        notify('error', 'Processing Failed', message);
+    } finally {
+        clearPollers();
+        state.value = 'idle';
+        elapsedSeconds.value = 0;
+        recordedAt = null;
+        stoppedReason = 'manual';
+    }
+}
+
+async function stopRecording(reason: StoppedReason = 'manual') {
+    if (state.value !== 'recording' || !mediaRecorder) {
+        return;
+    }
+
+    stoppedReason = reason;
+    clearTimer();
+
+    await new Promise<void>((resolve) => {
+        if (!mediaRecorder) {
+            resolve();
             return;
         }
 
-        if (!navigator.mediaDevices?.getUserMedia) {
-            notify('error', 'Browser Not Supported', 'Your browser does not support audio recording.');
-            return;
-        }
+        mediaRecorder.onstop = () => resolve();
+        mediaRecorder.stop();
+    });
 
-        try {
-            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mimeType = getPreferredMimeType();
+    cleanupStream();
+    mediaRecorder = null;
+    await processRecording();
+}
 
-            mediaRecorder = mimeType
-                ? new MediaRecorder(mediaStream, { mimeType })
-                : new MediaRecorder(mediaStream);
+async function startRecording() {
+    if (state.value !== 'idle') {
+        return;
+    }
 
-            audioChunks = [];
-            recordedAt = new Date().toISOString();
-            elapsedSeconds.value = 0;
-            stoppedReason = 'manual';
+    errorMessage.value = null;
 
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    audioChunks.push(event.data);
-                }
-            };
+    if (!window.isSecureContext) {
+        notify(
+            'error',
+            'Secure Context Required',
+            'Meeting notes recording requires HTTPS or localhost.'
+        );
+        return;
+    }
 
-            mediaRecorder.onerror = () => {
-                errorMessage.value = 'An error occurred while recording.';
-                notify('error', 'Recording Error', errorMessage.value);
-                clearTimer();
-                cleanupStream();
-                mediaRecorder = null;
-                state.value = 'idle';
-                elapsedSeconds.value = 0;
-            };
+    if (!navigator.mediaDevices?.getUserMedia) {
+        notify('error', 'Browser Not Supported', 'Your browser does not support audio recording.');
+        return;
+    }
 
-            mediaRecorder.start(1000);
-            state.value = 'recording';
+    try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mimeType = getPreferredMimeType();
 
-            timerInterval = window.setInterval(() => {
-                elapsedSeconds.value++;
+        mediaRecorder = mimeType
+            ? new MediaRecorder(mediaStream, { mimeType })
+            : new MediaRecorder(mediaStream);
 
-                if (elapsedSeconds.value >= MAX_DURATION_SECONDS) {
-                    stopRecording('timeout');
-                }
-            }, 1000);
-        } catch (error: any) {
+        audioChunks = [];
+        recordedAt = new Date().toISOString();
+        elapsedSeconds.value = 0;
+        stoppedReason = 'manual';
+
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                audioChunks.push(event.data);
+            }
+        };
+
+        mediaRecorder.onerror = () => {
+            errorMessage.value = 'An error occurred while recording.';
+            notify('error', 'Recording Error', errorMessage.value);
+            clearTimer();
             cleanupStream();
             mediaRecorder = null;
             state.value = 'idle';
+            elapsedSeconds.value = 0;
+        };
 
-            let message = 'Failed to start recording. Please try again.';
-            if (error.name === 'NotAllowedError') {
-                message = 'Microphone access was denied. Please allow microphone access and try again.';
-            } else if (error.name === 'NotFoundError') {
-                message = 'No microphone found. Please connect a microphone and try again.';
+        mediaRecorder.start(1000);
+        state.value = 'recording';
+
+        timerInterval = window.setInterval(() => {
+            elapsedSeconds.value++;
+
+            if (elapsedSeconds.value >= MAX_DURATION_SECONDS) {
+                stopRecording('timeout');
             }
-
-            errorMessage.value = message;
-            notify('error', 'Recording Failed', message);
-        }
-    };
-
-    const toggleRecording = async () => {
-        if (state.value === 'recording') {
-            await stopRecording('manual');
-        } else if (state.value === 'idle') {
-            await startRecording();
-        }
-    };
-
-    const formattedElapsedTime = () => formatElapsedTime(elapsedSeconds.value);
-
-    onUnmounted(() => {
-        clearTimer();
-        if (mediaRecorder && state.value === 'recording') {
-            mediaRecorder.stop();
-        }
+        }, 1000);
+    } catch (error: any) {
         cleanupStream();
-    });
+        mediaRecorder = null;
+        state.value = 'idle';
 
+        let message = 'Failed to start recording. Please try again.';
+        if (error.name === 'NotAllowedError') {
+            message = 'Microphone access was denied. Please allow microphone access and try again.';
+        } else if (error.name === 'NotFoundError') {
+            message = 'No microphone found. Please connect a microphone and try again.';
+        }
+
+        errorMessage.value = message;
+        notify('error', 'Recording Failed', message);
+    }
+}
+
+async function toggleRecording() {
+    if (state.value === 'recording') {
+        await stopRecording('manual');
+    } else if (state.value === 'idle') {
+        await startRecording();
+    }
+}
+
+function isBusy() {
+    return state.value === 'uploading' || state.value === 'generating';
+}
+
+function formattedElapsedTime() {
+    return formatElapsedTime(elapsedSeconds.value);
+}
+
+export function useMeetingNotesRecorder() {
     return {
         state,
         elapsedSeconds,
@@ -232,5 +303,6 @@ export function useMeetingNotesRecorder() {
         toggleRecording,
         formattedElapsedTime,
         maxDurationMinutes: MAX_DURATION_SECONDS / 60,
+        isBusy,
     };
 }

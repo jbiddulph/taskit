@@ -168,33 +168,7 @@
         1800,
         300
       ],
-      "notes": "Replace YOUR-ZAPTASK-DOMAIN and YOUR_N8N_WEBHOOK_SECRET. User approves todos in ZapTask before they are created."
-    },
-    {
-      "parameters": {
-        "fromEmail": "noreply@yourdomain.com",
-        "toEmail": "={{ $('Structure Meeting Notes').item.json.user_email }}",
-        "subject": "=Meeting notes processed – {{ $('Structure Meeting Notes').item.json.recorded_at }}",
-        "emailFormat": "html",
-        "html": "=<h2>Meeting Notes Summary</h2>\n<p><strong>Recorded by:</strong> {{ $('Structure Meeting Notes').item.json.user_name }}<br>\n<strong>Duration:</strong> {{ Math.round(($('Structure Meeting Notes').item.json.duration_seconds || 0) / 60) }} minutes</p>\n<h3>Summary</h3>\n<p>{{ $('Structure Meeting Notes').item.json.meeting_summary }}</p>\n<h3>Transcript</h3>\n<p style=\"white-space:pre-wrap\">{{ $('Structure Meeting Notes').item.json.transcript }}</p>\n<h3>Key Decisions</h3>\n<ul>\n{{ ($('Structure Meeting Notes').item.json.key_decisions || []).map(d => '<li>' + d + '</li>').join('') }}\n</ul>\n<h3>Action Items ({{ $('Structure Meeting Notes').item.json.action_items_count }})</h3>\n<ul>\n{{ ($('Structure Meeting Notes').item.json.action_items || []).map(a => '<li><strong>' + a.title + '</strong>' + (a.assignee ? ' – ' + a.assignee : '') + '</li>').join('') }}\n</ul>",
-        "options": {}
-      },
-      "id": "a1b2c3d4-0009-4000-8000-000000000009",
-      "name": "Email – Send Summary",
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
-      "position": [
-        2060,
-        420
-      ],
-      "credentials": {
-        "smtp": {
-          "id": "REPLACE_WITH_YOUR_SMTP_CREDENTIAL_ID",
-          "name": "SMTP account"
-        }
-      },
-      "disabled": true,
-      "notes": "Enable after configuring SMTP credentials."
+      "notes": "Replace YOUR_N8N_WEBHOOK_SECRET with the same value as ZapTask N8N_WEBHOOK_SECRET on Heroku. This is the FINAL node — delete any old HTTP – Create Task node if still in your canvas."
     }
   ],
   "connections": {
