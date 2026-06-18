@@ -14,6 +14,7 @@ import {
     type ReviewActionItem,
 } from '@/services/meetingNoteProposalApi';
 import { todoApi, type Project } from '@/services/todoApi';
+import { matchProjectByName } from '@/utils/matchProject';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 
 const isOpen = ref(false);
@@ -24,6 +25,13 @@ const projects = ref<Project[]>([]);
 const selectedProjectId = ref<number | null>(null);
 const reviewItems = ref<ReviewActionItem[]>([]);
 const showTranscript = ref(false);
+
+const statusOptions = [
+    { value: 'todo', label: 'To Do' },
+    { value: 'in-progress', label: 'In Progress' },
+    { value: 'qa-testing', label: 'Q&A / Testing' },
+    { value: 'done', label: 'Done' },
+];
 
 const notify = (type: 'success' | 'error' | 'warning', title: string, message: string) => {
     if ((window as any).$notify) {
@@ -38,12 +46,30 @@ const resetState = () => {
     showTranscript.value = false;
 };
 
+const resolveSuggestedProjectId = (data: MeetingNoteProposal): number | null => {
+    const candidates = [
+        data.metadata?.suggested_project_name,
+        ...data.action_items.map((item) => item.project_name),
+    ];
+
+    for (const name of candidates) {
+        const matchedId = matchProjectByName(projects.value, name);
+        if (matchedId) {
+            return matchedId;
+        }
+    }
+
+    return null;
+};
+
 const buildReviewItems = (data: MeetingNoteProposal) => {
     reviewItems.value = data.action_items.map((item, index) => ({
         index,
         approved: true,
         title: item.title,
         priority: item.priority || 'Medium',
+        status: item.status || 'todo',
+        due_date: item.due_date || '',
         assignee: item.assignee || '',
         description: item.notes || '',
     }));
@@ -61,7 +87,8 @@ const openProposal = async (proposalId: number) => {
         const data = await meetingNoteProposalApi.getProposal(proposalId);
         proposal.value = data;
         buildReviewItems(data);
-        selectedProjectId.value = projects.value[0]?.id ?? null;
+        selectedProjectId.value =
+            resolveSuggestedProjectId(data) ?? projects.value[0]?.id ?? null;
     } catch (error: any) {
         const message = error.response?.data?.message || 'Could not load meeting note proposal.';
         notify('error', 'Load Failed', message);
@@ -122,6 +149,8 @@ const approveSelected = async () => {
                 approved: item.approved,
                 title: item.title.trim(),
                 priority: item.priority,
+                status: item.status,
+                due_date: item.due_date.trim() || null,
                 assignee: item.assignee.trim() || null,
                 description: item.description.trim() || null,
             }))
@@ -200,6 +229,12 @@ onUnmounted(() => {
                             {{ project.name }}
                         </option>
                     </select>
+                    <p
+                        v-if="proposal.metadata?.suggested_project_name"
+                        class="mt-1 text-xs text-muted-foreground"
+                    >
+                        AI suggested: {{ proposal.metadata.suggested_project_name }}
+                    </p>
                 </div>
 
                 <div v-if="reviewItems.length === 0" class="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
@@ -233,6 +268,25 @@ onUnmounted(() => {
                                 <option value="High">High</option>
                                 <option value="Critical">Critical</option>
                             </select>
+                            <select
+                                v-model="item.status"
+                                class="rounded-md border bg-background px-3 py-2 text-sm"
+                            >
+                                <option
+                                    v-for="option in statusOptions"
+                                    :key="option.value"
+                                    :value="option.value"
+                                >
+                                    {{ option.label }}
+                                </option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input
+                                v-model="item.due_date"
+                                type="date"
+                                class="rounded-md border bg-background px-3 py-2 text-sm"
+                            />
                             <input
                                 v-model="item.assignee"
                                 type="text"

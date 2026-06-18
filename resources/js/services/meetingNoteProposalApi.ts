@@ -4,7 +4,9 @@ export interface MeetingActionItem {
     title: string;
     assignee?: string | null;
     priority?: 'Low' | 'Medium' | 'High' | 'Critical';
+    status?: 'todo' | 'in-progress' | 'qa-testing' | 'done';
     due_date?: string | null;
+    project_name?: string | null;
     notes?: string | null;
 }
 
@@ -22,6 +24,7 @@ export interface MeetingNoteProposal {
         recorded_at?: string;
         key_decisions?: string[];
         follow_ups?: string[];
+        suggested_project_name?: string | null;
     } | null;
     project_id?: number | null;
     created_at: string;
@@ -32,6 +35,8 @@ export interface ReviewActionItem {
     approved: boolean;
     title: string;
     priority: string;
+    status: string;
+    due_date: string;
     assignee: string;
     description: string;
 }

@@ -13,6 +13,7 @@ export interface SubmitMeetingNotesParams {
     durationSeconds: number;
     stoppedReason: 'manual' | 'timeout';
     recordedAt: string;
+    availableProjects?: { id: number; name: string }[];
 }
 
 export async function submitMeetingNotes(params: SubmitMeetingNotesParams): Promise<MeetingNotesResponse> {
@@ -21,6 +22,9 @@ export async function submitMeetingNotes(params: SubmitMeetingNotesParams): Prom
     formData.append('duration_seconds', params.durationSeconds.toString());
     formData.append('stopped_reason', params.stoppedReason);
     formData.append('recorded_at', params.recordedAt);
+    if (params.availableProjects?.length) {
+        formData.append('available_projects', JSON.stringify(params.availableProjects));
+    }
 
     const response = await axios.post<MeetingNotesResponse>('/meeting-notes', formData, {
         headers: {

@@ -25,8 +25,13 @@ class MeetingNoteProposalService
             'company_id' => 'nullable|integer|exists:taskit_companies,id',
             'transcript' => 'nullable|string',
             'meeting_summary' => 'nullable|string',
+            'suggested_project_name' => 'nullable|string|max:255',
             'action_items' => 'present|array',
             'action_items.*.title' => 'required|string|max:255',
+            'action_items.*.priority' => 'nullable|in:Low,Medium,High,Critical',
+            'action_items.*.status' => 'nullable|in:todo,in-progress,qa-testing,done',
+            'action_items.*.due_date' => 'nullable|date_format:Y-m-d',
+            'action_items.*.project_name' => 'nullable|string|max:255',
             'duration_seconds' => 'nullable|integer',
             'stopped_reason' => 'nullable|string',
             'recorded_at' => 'nullable|string',
@@ -39,6 +44,15 @@ class MeetingNoteProposalService
         $user = User::findOrFail($payload['user_id']);
         $actionItems = collect($payload['action_items'])
             ->filter(fn ($item) => ! empty($item['title']))
+            ->map(fn ($item) => [
+                'title' => $item['title'],
+                'assignee' => $item['assignee'] ?? null,
+                'priority' => $item['priority'] ?? 'Medium',
+                'status' => $this->normalizeStatus($item['status'] ?? 'todo'),
+                'due_date' => $item['due_date'] ?? null,
+                'project_name' => $item['project_name'] ?? null,
+                'notes' => $item['notes'] ?? null,
+            ])
             ->values()
             ->all();
 
@@ -55,6 +69,7 @@ class MeetingNoteProposalService
                 'recorded_at' => $payload['recorded_at'] ?? null,
                 'key_decisions' => $payload['key_decisions'] ?? [],
                 'follow_ups' => $payload['follow_ups'] ?? [],
+                'suggested_project_name' => $payload['suggested_project_name'] ?? null,
             ],
         ]);
 
@@ -65,7 +80,7 @@ class MeetingNoteProposalService
             'type' => 'meeting_notes',
             'title' => 'Meeting notes ready for review',
             'message' => $itemCount > 0
-                ? "{$itemCount} proposed action ".($itemCount === 1 ? 'item' : 'items').' from your recording.'
+                ? "{$itemCount} proposed ".($itemCount === 1 ? 'item' : 'items').' from your recording.'
                 : 'Your meeting recording was processed. Review the summary.',
             'data' => [
                 'proposal_id' => $proposal->id,
@@ -90,6 +105,8 @@ class MeetingNoteProposalService
             'items.*.approved' => 'required|boolean',
             'items.*.title' => 'nullable|string|max:255',
             'items.*.priority' => 'nullable|in:Low,Medium,High,Critical',
+            'items.*.status' => 'nullable|in:todo,in-progress,qa-testing,done',
+            'items.*.due_date' => 'nullable|date_format:Y-m-d',
             'items.*.assignee' => 'nullable|string|max:255',
             'items.*.description' => 'nullable|string',
         ]);
@@ -141,8 +158,8 @@ class MeetingNoteProposalService
                     'description' => $description,
                     'priority' => $item['priority'] ?? $original['priority'] ?? 'Medium',
                     'assignee' => $item['assignee'] ?? $original['assignee'] ?? null,
-                    'due_date' => $original['due_date'] ?? null,
-                    'status' => 'todo',
+                    'due_date' => $item['due_date'] ?? $original['due_date'] ?? null,
+                    'status' => $this->normalizeStatus($item['status'] ?? $original['status'] ?? 'todo'),
                 ]);
 
                 $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
@@ -174,6 +191,18 @@ class MeetingNoteProposalService
             'status' => MeetingNoteProposal::STATUS_DISMISSED,
             'reviewed_at' => now(),
         ]);
+    }
+
+    private function normalizeStatus(?string $status): string
+    {
+        $normalized = strtolower(trim((string) $status));
+
+        return match ($normalized) {
+            'in progress', 'in-progress', 'in_progress', 'doing', 'active' => 'in-progress',
+            'qa', 'qa-testing', 'qa testing', 'testing', 'review' => 'qa-testing',
+            'done', 'complete', 'completed' => 'done',
+            default => 'todo',
+        };
     }
 
     private function assertUserOwnsPendingProposal(User $user, MeetingNoteProposal $proposal): void

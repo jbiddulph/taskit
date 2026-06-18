@@ -1,5 +1,6 @@
 import { meetingNoteProposalApi } from '@/services/meetingNoteProposalApi';
 import { submitMeetingNotes } from '@/services/meetingNotesApi';
+import { todoApi } from '@/services/todoApi';
 import { ref } from 'vue';
 
 const MAX_DURATION_SECONDS = 30 * 60;
@@ -136,11 +137,18 @@ async function processRecording() {
     }
 
     try {
+        const projects = await todoApi.getProjects();
+        const availableProjects = projects.map((project) => ({
+            id: project.id,
+            name: project.name,
+        }));
+
         const response = await submitMeetingNotes({
             audio: audioBlob,
             durationSeconds: submittedDuration,
             stoppedReason,
             recordedAt: submittedRecordedAt,
+            availableProjects,
         });
 
         if (!response.success) {
