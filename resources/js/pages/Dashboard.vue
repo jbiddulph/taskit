@@ -6,6 +6,7 @@ import SeoHead from '@/components/SeoHead.vue';
 import TodoBoard from '../components/TodoBoard.vue';
 import LimitWarnings from '../components/LimitWarnings.vue';
 import ActivityFeed from '../components/ActivityFeed.vue';
+import MeetingNotesRecorderButton from '../components/MeetingNotesRecorderButton.vue';
 import Icon from '../components/Icon.vue';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -87,6 +88,9 @@ const toggleSelectMode = () => {
 
     <AppLayout :breadcrumbs="breadcrumbs" :company="company" :project-color="currentProjectColor">
         <template #dashboardActions>
+            <!-- Meeting Notes Recorder -->
+            <MeetingNotesRecorderButton />
+
             <!-- Calendar Button -->
             <button
                 @click="showCalendar = !showCalendar"

@@ -1,0 +1,334 @@
+{
+  "name": "ZapTask – Meeting Notes",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ZapTask Meeting Notes\n\n**Setup after import:**\n1. Open **Webhook – Meeting Notes** → copy the **Production URL**\n2. Set it in ZapTask `.env` as `N8N_MEETING_NOTES_WEBHOOK_URL`\n3. Open **OpenAI – Summarize** → select your OpenAI credentials\n4. (Optional) **HTTP – Create Task** → point at your task webhook or ZapTask API\n5. (Optional) **Email – Send Summary** → configure SMTP credentials\n6. **Activate** this workflow (toggle top-right)\n\n**Incoming payload from ZapTask:**\n`transcript`, `user_id`, `user_name`, `user_email`, `company_id`, `duration_seconds`, `stopped_reason`, `recorded_at`",
+        "height": 420,
+        "width": 520,
+        "color": 5
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Setup Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "meeting-notes",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Webhook – Meeting Notes",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "zaptask-meeting-notes"
+    },
+    {
+      "parameters": {
+        "resource": "text",
+        "operation": "message",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are a professional meeting-notes assistant for ZapTask. Analyze the transcript and return ONLY valid JSON (no markdown fences) with this exact structure:\n\n{\n  \"summary\": \"2-4 paragraph executive summary\",\n  \"key_decisions\": [\"decision 1\", \"decision 2\"],\n  \"action_items\": [\n    {\n      \"title\": \"Clear actionable task title\",\n      \"assignee\": \"person name or null\",\n      \"priority\": \"Low|Medium|High|Critical\",\n      \"due_date\": \"YYYY-MM-DD or null\",\n      \"notes\": \"optional context\"\n    }\n  ],\n  \"participants_mentioned\": [\"name 1\", \"name 2\"],\n  \"follow_ups\": [\"follow-up item 1\"]\n}\n\nRules:\n- Extract every concrete action item; prefer specific titles over vague ones.\n- Use priority Medium when unclear.\n- If no action items exist, return an empty array.\n- Do not invent facts not supported by the transcript.",
+              "role": "system"
+            },
+            {
+              "content": "=Meeting recorded by: {{ $json.user_name }} ({{ $json.user_email }})\nCompany ID: {{ $json.company_id }}\nDuration: {{ Math.round(($json.duration_seconds || 0) / 60) }} minutes\nStopped: {{ $json.stopped_reason }}\nRecorded at: {{ $json.recorded_at }}\n\n--- TRANSCRIPT ---\n{{ $json.transcript }}",
+              "role": "user"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {
+          "maxTokens": 4096,
+          "temperature": 0.3
+        }
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "OpenAI – Summarize",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        500,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const webhook = $('Webhook – Meeting Notes').first().json;\nconst ai = $input.first().json;\n\nlet parsed = ai.message?.content ?? ai.content ?? ai;\n\nif (typeof parsed === 'string') {\n  try {\n    parsed = JSON.parse(parsed);\n  } catch (error) {\n    parsed = {\n      summary: parsed,\n      key_decisions: [],\n      action_items: [],\n      participants_mentioned: [],\n      follow_ups: [],\n    };\n  }\n}\n\nconst actionItems = Array.isArray(parsed.action_items) ? parsed.action_items : [];\n\nreturn [\n  {\n    json: {\n      transcript: webhook.transcript,\n      user_id: webhook.user_id,\n      user_name: webhook.user_name,\n      user_email: webhook.user_email,\n      company_id: webhook.company_id,\n      duration_seconds: webhook.duration_seconds,\n      stopped_reason: webhook.stopped_reason,\n      recorded_at: webhook.recorded_at,\n      meeting_summary: parsed.summary ?? '',\n      key_decisions: parsed.key_decisions ?? [],\n      action_items: actionItems,\n      action_items_count: actionItems.length,\n      participants_mentioned: parsed.participants_mentioned ?? [],\n      follow_ups: parsed.follow_ups ?? [],\n      processed_at: new Date().toISOString(),\n    },\n  },\n];"
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Structure Meeting Notes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "has-action-items",
+              "leftValue": "={{ $json.action_items_count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0005-4000-8000-000000000005",
+      "name": "Has Action Items?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1020,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "action_items",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0006-4000-8000-000000000006",
+      "name": "Split Action Items",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8n.neurohub.uk/webhook/new-task",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  title: $json.action_items.title || 'Meeting action item',\n  description: 'From meeting notes recorded by ' + ($('Structure Meeting Notes').item.json.user_name || 'unknown') + '. Summary: ' + ($('Structure Meeting Notes').item.json.meeting_summary || '').slice(0, 500),\n  priority: $json.action_items.priority || 'Medium',\n  assignee: $json.action_items.assignee || null,\n  assignee_email: null,\n  email_assignee: false,\n  project_id: null\n} }}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0007-4000-8000-000000000007",
+      "name": "HTTP – Create Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        180
+      ],
+      "notes": "Optional: change URL to your ZapTask API or another webhook. Disable this node if you only want summaries."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "status",
+              "name": "task_creation_status",
+              "value": "={{ $json.statusCode || 'sent' }}",
+              "type": "string"
+            },
+            {
+              "id": "task-title",
+              "name": "task_title",
+              "value": "={{ $('Split Action Items').item.json.action_items.title }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0008-4000-8000-000000000008",
+      "name": "Tag Task Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1800,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@yourdomain.com",
+        "toEmail": "={{ $('Structure Meeting Notes').item.json.user_email }}",
+        "subject": "=Meeting notes processed – {{ $('Structure Meeting Notes').item.json.recorded_at }}",
+        "emailFormat": "html",
+        "html": "=<h2>Meeting Notes Summary</h2>\n<p><strong>Recorded by:</strong> {{ $('Structure Meeting Notes').item.json.user_name }}<br>\n<strong>Duration:</strong> {{ Math.round(($('Structure Meeting Notes').item.json.duration_seconds || 0) / 60) }} minutes</p>\n<h3>Summary</h3>\n<p>{{ $('Structure Meeting Notes').item.json.meeting_summary }}</p>\n<h3>Key Decisions</h3>\n<ul>\n{{ ($('Structure Meeting Notes').item.json.key_decisions || []).map(d => '<li>' + d + '</li>').join('') }}\n</ul>\n<h3>Action Items ({{ $('Structure Meeting Notes').item.json.action_items_count }})</h3>\n<ul>\n{{ ($('Structure Meeting Notes').item.json.action_items || []).map(a => '<li><strong>' + a.title + '</strong>' + (a.assignee ? ' – ' + a.assignee : '') + '</li>').join('') }}\n</ul>\n<h3>Follow-ups</h3>\n<ul>\n{{ ($('Structure Meeting Notes').item.json.follow_ups || []).map(f => '<li>' + f + '</li>').join('') }}\n</ul>\n<hr>\n<p><em>Generated by ZapTask + n8n</em></p>",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0009-4000-8000-000000000009",
+      "name": "Email – Send Summary",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1280,
+        420
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "REPLACE_WITH_YOUR_SMTP_CREDENTIAL_ID",
+          "name": "SMTP account"
+        }
+      },
+      "disabled": true,
+      "notes": "Enable after configuring SMTP credentials, or replace with Slack/Discord node."
+    },
+    {
+      "parameters": {
+        "content": "## Optional branches\n\n**HTTP – Create Task** posts each action item to your existing `new-task` webhook (same pattern as ZapTask todo creation). Change the URL or disable if you handle tasks differently.\n\n**Email – Send Summary** is disabled by default. Enable it after adding SMTP credentials, or swap for Slack/Notion/Airtable.",
+        "height": 260,
+        "width": 420,
+        "color": 4
+      },
+      "id": "a1b2c3d4-000a-4000-8000-00000000000a",
+      "name": "Optional Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1480,
+        -40
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook – Meeting Notes": {
+      "main": [
+        [
+          {
+            "node": "OpenAI – Summarize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI – Summarize": {
+      "main": [
+        [
+          {
+            "node": "Structure Meeting Notes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structure Meeting Notes": {
+      "main": [
+        [
+          {
+            "node": "Has Action Items?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Action Items?": {
+      "main": [
+        [
+          {
+            "node": "Split Action Items",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email – Send Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Action Items": {
+      "main": [
+        [
+          {
+            "node": "HTTP – Create Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP – Create Task": {
+      "main": [
+        [
+          {
+            "node": "Tag Task Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Task Result": {
+      "main": [
+        [
+          {
+            "node": "Email – Send Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "ZapTask"
+    },
+    {
+      "name": "Meeting Notes"
+    }
+  ],
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "active": false
+}

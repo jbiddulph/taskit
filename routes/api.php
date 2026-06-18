@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\TodoAttachmentController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ActivityController;
+use App\Http\Controllers\Api\MeetingNotesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -79,6 +80,9 @@ Route::delete('projects/{project}/with-todos', [ProjectController::class, 'destr
     Route::patch('notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
     Route::patch('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
     
+    // Meeting notes
+    Route::post('meeting-notes', [MeetingNotesController::class, 'store']);
+
     // Activity routes
     Route::get('activities', [ActivityController::class, 'index']);
     Route::get('activities/recent', [ActivityController::class, 'recent']);
