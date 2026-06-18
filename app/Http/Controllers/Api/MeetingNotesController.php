@@ -32,23 +32,21 @@ class MeetingNotesController extends Controller
         }
 
         $user = Auth::user();
-        $audio = $request->file('audio');
 
         try {
-            $transcript = $this->meetingNotesService->transcribe($audio);
-
-            $this->meetingNotesService->sendToN8n($user, $transcript, [
-                'duration_seconds' => (int) $request->input('duration_seconds'),
-                'stopped_reason' => $request->input('stopped_reason'),
-                'recorded_at' => $request->input('recorded_at') ?? now()->toIso8601String(),
-            ]);
+            $this->meetingNotesService->sendToN8n(
+                $user,
+                $request->file('audio'),
+                [
+                    'duration_seconds' => (int) $request->input('duration_seconds'),
+                    'stopped_reason' => $request->input('stopped_reason'),
+                    'recorded_at' => $request->input('recorded_at') ?? now()->toIso8601String(),
+                ]
+            );
 
             return response()->json([
                 'success' => true,
-                'message' => 'Meeting notes recorded and sent successfully.',
-                'data' => [
-                    'transcript' => $transcript,
-                ],
+                'message' => 'Meeting notes sent for processing.',
             ]);
         } catch (\RuntimeException $e) {
             return response()->json([
@@ -63,7 +61,7 @@ class MeetingNotesController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to process meeting notes recording.',
+                'message' => 'Failed to send meeting notes recording.',
             ], 500);
         }
     }

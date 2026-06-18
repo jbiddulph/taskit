@@ -50,11 +50,6 @@ return [
         'app_name' => env('HEROKU_APP_NAME', 'taskit'),
     ],
 
-    'openai' => [
-        'api_key' => env('OPENAI_API_KEY'),
-        'whisper_model' => env('OPENAI_WHISPER_MODEL', 'whisper-1'),
-    ],
-
     'n8n' => [
         'meeting_notes_webhook_url' => env('N8N_MEETING_NOTES_WEBHOOK_URL'),
     ],

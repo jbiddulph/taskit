@@ -87,7 +87,7 @@ export function useMeetingNotesRecorder() {
                 notify(
                     'success',
                     'Meeting Notes Sent',
-                    'Your recording has been transcribed and sent for processing.'
+                    'Your recording has been sent to n8n for transcription and processing.'
                 );
             } else {
                 throw new Error(response.message || 'Failed to process meeting notes.');
