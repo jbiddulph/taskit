@@ -2,7 +2,7 @@
  * Touch-friendly drag and drop composable for mobile devices
  * Provides a better experience than HTML5 drag API on touch screens
  */
-import { ref, computed, onMounted, onUnmounted, type Ref } from 'vue';
+import { ref, computed } from 'vue';
 
 interface TouchDragState {
   isDragging: boolean;

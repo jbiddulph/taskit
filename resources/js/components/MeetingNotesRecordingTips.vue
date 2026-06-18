@@ -14,13 +14,15 @@ import { ref, watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
-const { state, elapsedSeconds, formattedElapsedTime } = useMeetingNotesRecorder();
+const { state, elapsedSeconds } = useMeetingNotesRecorder();
 
 const isOpen = ref(false);
 const dismissed = ref(false);
 const elapsedDisplay = computed(() => {
-    elapsedSeconds.value;
-    return formattedElapsedTime();
+    const seconds = elapsedSeconds.value;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 });
 
 watch(state, (newState) => {

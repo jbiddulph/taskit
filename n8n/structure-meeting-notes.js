@@ -9,7 +9,7 @@ let parsed = ai.message?.content ?? ai.content ?? ai;
 if (typeof parsed === 'string') {
   try {
     parsed = JSON.parse(parsed);
-  } catch (error) {
+  } catch {
     parsed = {
       summary: parsed,
       suggested_project_name: null,

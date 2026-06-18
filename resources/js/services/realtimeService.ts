@@ -566,6 +566,13 @@ class RealtimeService {
   }
 
   /**
+   * Emit todo_created locally (e.g. after meeting notes approval) without waiting for Supabase.
+   */
+  emitTodosCreated(todos: any[]) {
+    todos.forEach((todo) => this.handleNewTodo(todo));
+  }
+
+  /**
    * Handle new todo created
    */
   private handleNewTodo(todo: any) {

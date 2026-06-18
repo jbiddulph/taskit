@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Activity;
 use App\Models\MeetingNoteProposal;
 use App\Models\Notification;
 use App\Models\Project;
@@ -169,6 +170,7 @@ class MeetingNoteProposalService
 
                 $this->webSocketService->todoCreated($todo);
                 $this->assignmentNotificationService->sendNewTodoAssignmentNotification($todo);
+                Activity::createTodoActivity($todo, $user, 'todo_created');
 
                 $createdTodos[] = $todo;
             }

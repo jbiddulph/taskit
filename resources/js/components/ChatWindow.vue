@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import Icon from '@/components/Icon.vue';
 import { realtimeService } from '@/services/realtimeService';
 import axios from 'axios';

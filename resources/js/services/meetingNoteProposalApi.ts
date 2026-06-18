@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { Todo } from '@/services/todoApi';
 
 export interface MeetingActionItem {
     title: string;
@@ -52,12 +53,19 @@ class MeetingNoteProposalApiService {
         return response.data.data;
     }
 
-    async approve(proposalId: number, projectId: number, items: ReviewActionItem[]): Promise<{ created_count: number }> {
+    async approve(proposalId: number, projectId: number, items: ReviewActionItem[]): Promise<{
+        created_count: number;
+        project_id: number;
+        todos: Todo[];
+    }> {
         const response = await axios.post(`/meeting-notes/proposals/${proposalId}/approve`, {
             project_id: projectId,
             items,
         });
-        return response.data.data;
+        return {
+            ...response.data.data,
+            project_id: projectId,
+        };
     }
 
     async dismiss(proposalId: number): Promise<void> {

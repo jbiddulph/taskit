@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import SeoHead from '@/components/SeoHead.vue'
 import AppSidebarLayout from '@/layouts/app/AppSidebarLayout.vue'
-import TodoBoard from '@/components/TodoBoard.vue'
 import TodoComments from '@/components/TodoComments.vue'
 import { ref, onMounted } from 'vue'
 import { todoApi, type Todo } from '@/services/todoApi'

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { dashboard, login, register } from '@/routes';
+import { register } from '@/routes';
 import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import PublicNavigation from '@/components/PublicNavigation.vue';

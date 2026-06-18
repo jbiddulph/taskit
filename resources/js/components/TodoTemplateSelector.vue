@@ -156,7 +156,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import Icon from '@/components/Icon.vue';
 import { todoTemplateService, type TodoTemplate } from '@/services/todoTemplateService';
 

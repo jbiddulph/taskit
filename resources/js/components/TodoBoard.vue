@@ -2659,6 +2659,84 @@ async function onSubmitBulkTodos() {
   }
 }
 
+const ingestCreatedTodo = (newTodo: Todo): boolean => {
+  if (!currentProject.value || newTodo.project_id !== currentProject.value.id) {
+    return false;
+  }
+
+  if (newTodo.parent_task_id) {
+    const parentIndex = todosState.value.findIndex(t => t.id === newTodo.parent_task_id);
+    if (parentIndex === -1) {
+      return false;
+    }
+
+    const parentTodo = todosState.value[parentIndex];
+    if (!parentTodo.subtasks) {
+      parentTodo.subtasks = [];
+    }
+
+    if (parentTodo.subtasks.find((subtask: Todo) => subtask.id === newTodo.id)) {
+      return false;
+    }
+
+    parentTodo.subtasks.push({
+      ...newTodo,
+      project: currentProject.value,
+    });
+    todosState.value = [...todosState.value];
+    return true;
+  }
+
+  if (todosState.value.find(t => t.id === newTodo.id)) {
+    return false;
+  }
+
+  todosState.value.push({
+    ...newTodo,
+    project: currentProject.value,
+    subtasks: newTodo.subtasks || [],
+  });
+  todosState.value = [...todosState.value];
+  return true;
+};
+
+const ensureCurrentProjectForTodos = async (projectId: number) => {
+  if (currentProject.value?.id === projectId) {
+    return;
+  }
+
+  selectedProjectId.value = projectId.toString();
+  const project = projectsState.value.find(p => p.id === projectId)
+    ?? await todoApi.getProject(projectId);
+
+  currentProject.value = project;
+  localStorage.setItem('currentProjectId', projectId.toString());
+  window.dispatchEvent(new CustomEvent('projectSelected', {
+    detail: { projectId },
+  }));
+  todosState.value = [];
+};
+
+const handleMeetingNotesTodosCreated = async (event: Event) => {
+  const { todos, projectId } = (event as CustomEvent<{ todos: Todo[]; projectId: number }>).detail;
+  if (!todos?.length || !projectId) {
+    return;
+  }
+
+  await ensureCurrentProjectForTodos(projectId);
+
+  let added = false;
+  for (const todo of todos) {
+    if (ingestCreatedTodo(todo)) {
+      added = true;
+    }
+  }
+
+  if (added) {
+    window.dispatchEvent(new CustomEvent('todoChanged'));
+  }
+};
+
 // Single onMounted hook to handle all initialization
 onMounted(async () => {
   // In read-only mode, use passed data instead of making API calls
@@ -2716,57 +2794,7 @@ onMounted(async () => {
         console.log('🔥 New todo parent_task_id:', newTodo.parent_task_id);
         
         if (!currentProject.value || newTodo.project_id === currentProject.value.id) {
-          // Check if this is a subtask
-          if (newTodo.parent_task_id) {
-            // Find the parent todo and add this subtask to its subtasks array
-            const parentIndex = todosState.value.findIndex(t => t.id === newTodo.parent_task_id);
-            if (parentIndex !== -1) {
-              const parentTodo = todosState.value[parentIndex];
-              // Initialize subtasks array if it doesn't exist
-              if (!parentTodo.subtasks) {
-                parentTodo.subtasks = [];
-              }
-              
-              // Check if subtask already exists
-              const existingSubtaskIndex = parentTodo.subtasks.findIndex((st: any) => st.id === newTodo.id);
-              if (existingSubtaskIndex === -1) {
-                // Ensure the new subtask has the project relationship
-                const subtaskWithProject = {
-                  ...newTodo,
-                  project: currentProject.value
-                };
-                parentTodo.subtasks.push(subtaskWithProject);
-                console.log('🔥 Added subtask to parent:', parentTodo.title, 'Subtask:', newTodo.title);
-                // Force reactivity update
-                todosState.value = [...todosState.value];
-              } else {
-                console.log('🔥 Subtask already exists in parent, skipping');
-              }
-            } else {
-              console.log('🔥 Parent todo not found for subtask, adding to main list temporarily');
-              // Parent not found yet, add to main list (it will be moved when parent loads)
-              const todoWithProject = {
-                ...newTodo,
-                project: currentProject.value
-              };
-              todosState.value.push(todoWithProject);
-            }
-          } else {
-            // Regular todo (not a subtask)
-            if (!todosState.value.find(t => t.id === newTodo.id)) {
-              // Ensure the new todo has the project relationship
-              const todoWithProject = {
-                ...newTodo,
-                project: currentProject.value,
-                subtasks: [] // Initialize subtasks array
-              };
-              console.log('🔥 Adding new todo to list:', todoWithProject);
-              todosState.value.push(todoWithProject);
-              console.log('🔥 Updated todosState list:', todosState.value.length, 'todosState');
-            } else {
-              console.log('🔥 Todo already exists, skipping');
-            }
-          }
+          ingestCreatedTodo(newTodo);
         } else {
           console.log('🔥 Todo not for current project, skipping');
         }
@@ -3012,6 +3040,7 @@ onMounted(async () => {
 
   // Listen for openTodoById dispatched by notifications
   window.addEventListener('openTodoById', handleOpenTodoById);
+  window.addEventListener('meetingNotesTodosCreated', handleMeetingNotesTodosCreated);
 });
 
 // Cleanup on unmount
@@ -3028,6 +3057,7 @@ onUnmounted(() => {
   }
   // Remove listeners
   window.removeEventListener('openTodoById', handleOpenTodoById);
+  window.removeEventListener('meetingNotesTodosCreated', handleMeetingNotesTodosCreated);
 });
 
 </script>

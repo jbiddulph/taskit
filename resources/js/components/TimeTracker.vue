@@ -136,7 +136,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import Icon from '@/components/Icon.vue';
-import { timeTrackingService, type TimeEntry } from '@/services/timeTrackingService';
+import { timeTrackingService } from '@/services/timeTrackingService';
 
 interface Props {
   todoId: number;

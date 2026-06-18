@@ -161,6 +161,16 @@ const approveSelected = async () => {
             'Todos Created',
             `${result.created_count} todo(s) created from your meeting notes.`
         );
+
+        if (result.todos?.length) {
+            window.dispatchEvent(new CustomEvent('meetingNotesTodosCreated', {
+                detail: {
+                    todos: result.todos,
+                    projectId: result.project_id,
+                },
+            }));
+        }
+
         closeModal();
     } catch (error: any) {
         notify('error', 'Approval Failed', error.response?.data?.message || error.message);

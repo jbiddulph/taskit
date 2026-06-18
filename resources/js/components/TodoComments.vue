@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, nextTick } from 'vue';
+import { ref, onMounted, watch, nextTick } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { todoApi, type TodoComment } from '@/services/todoApi';
 import MentionInput from '@/components/MentionInput.vue';

@@ -3,7 +3,6 @@ import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
 import { index, edit, destroy } from '@/routes/clients/index.ts';
-import { ref } from 'vue';
 import SeoHead from '@/components/SeoHead.vue';
 
 interface Client {

@@ -281,7 +281,6 @@
 <script setup lang="ts">
 import { computed, ref, nextTick } from 'vue';
 import Icon from '@/components/Icon.vue';
-import TimeTracker from '@/components/TimeTracker.vue';
 import { todoApi } from '@/services/todoApi';
 
 import type { Todo } from '@/services/todoApi';

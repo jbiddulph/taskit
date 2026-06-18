@@ -142,7 +142,6 @@
 </template>
 
 <script setup lang="ts">
-import { dashboard, login, register } from '@/routes';
 import { Link } from '@inertiajs/vue3';
 import PublicNavigation from '@/components/PublicNavigation.vue';
 import SeoHead from '@/components/SeoHead.vue';

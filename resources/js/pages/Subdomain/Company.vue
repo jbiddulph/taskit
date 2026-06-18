@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Globe, Users, Calendar, CheckCircle, Plus, Filter, Bell, Settings, Lock, Eye, Activity } from 'lucide-vue-next';
+import { Globe, Users, Calendar, CheckCircle, Lock, Activity } from 'lucide-vue-next';
 import SubdomainLayout from '@/layouts/SubdomainLayout.vue';
 import TodoBoard from '@/components/TodoBoard.vue';
 import ActivityFeed from '@/components/ActivityFeed.vue';

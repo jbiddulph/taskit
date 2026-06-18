@@ -3,7 +3,7 @@ import AppSidebarLayout from '@/layouts/app/AppSidebarLayout.vue';
 import Heading from '@/components/Heading.vue';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import Icon from '@/components/Icon.vue';
-import { Link, router } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 import { ref, nextTick } from 'vue';
 import SeoHead from '@/components/SeoHead.vue';
 
