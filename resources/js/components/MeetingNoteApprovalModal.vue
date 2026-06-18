@@ -14,7 +14,7 @@ import {
     type ReviewActionItem,
 } from '@/services/meetingNoteProposalApi';
 import { todoApi, type Project } from '@/services/todoApi';
-import { matchProjectByName } from '@/utils/matchProject';
+import { matchProjectByName, matchProjectFromTranscript } from '@/utils/matchProject';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 
 const isOpen = ref(false);
@@ -59,7 +59,7 @@ const resolveSuggestedProjectId = (data: MeetingNoteProposal): number | null => 
         }
     }
 
-    return null;
+    return matchProjectFromTranscript(projects.value, data.transcript);
 };
 
 const buildReviewItems = (data: MeetingNoteProposal) => {

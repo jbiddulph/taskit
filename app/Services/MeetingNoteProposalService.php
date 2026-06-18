@@ -48,7 +48,7 @@ class MeetingNoteProposalService
                 'title' => $item['title'],
                 'assignee' => $item['assignee'] ?? null,
                 'priority' => $item['priority'] ?? 'Medium',
-                'status' => $this->normalizeStatus($item['status'] ?? 'todo'),
+                'status' => $this->normalizeStatus($item['status'] ?? 'todo', $item['notes'] ?? null),
                 'due_date' => $item['due_date'] ?? null,
                 'project_name' => $item['project_name'] ?? null,
                 'notes' => $item['notes'] ?? null,
@@ -159,7 +159,7 @@ class MeetingNoteProposalService
                     'priority' => $item['priority'] ?? $original['priority'] ?? 'Medium',
                     'assignee' => $item['assignee'] ?? $original['assignee'] ?? null,
                     'due_date' => $item['due_date'] ?? $original['due_date'] ?? null,
-                    'status' => $this->normalizeStatus($item['status'] ?? $original['status'] ?? 'todo'),
+                    'status' => $this->normalizeStatus($item['status'] ?? $original['status'] ?? 'todo', $item['description'] ?? $original['notes'] ?? null),
                 ]);
 
                 $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
@@ -193,14 +193,36 @@ class MeetingNoteProposalService
         ]);
     }
 
-    private function normalizeStatus(?string $status): string
+    private function normalizeStatus(?string $status, ?string $context = null): string
     {
+        $combined = strtolower(trim(implode(' ', array_filter([$status, $context]))));
+
+        if ($combined === '') {
+            return 'todo';
+        }
+
+        if (preg_match('/\b(in[\s-]?progress|progress\s+column|being\s+worked|working\s+on|under[\s-]?way|started|active|wip|doing|current\s+sprint)\b/', $combined)) {
+            return 'in-progress';
+        }
+
+        if (preg_match('/\b(q\s*&?\s*a|qa[\s-]?testing|testing\s+column|in\s+review|for\s+review|needs?\s+review|quality\s+assurance|testing)\b/', $combined)) {
+            return 'qa-testing';
+        }
+
+        if (preg_match('/\b(completed?|finished|shipped|closed|done\s+column)\b/', $combined)) {
+            return 'done';
+        }
+
+        if (preg_match('/\b(to[\s-]?do|todo\s+column|backlog|not\s+started|new\s+column|pending|icebox)\b/', $combined)) {
+            return 'todo';
+        }
+
         $normalized = strtolower(trim((string) $status));
 
         return match ($normalized) {
-            'in progress', 'in-progress', 'in_progress', 'doing', 'active' => 'in-progress',
+            'in progress', 'in-progress', 'in_progress', 'doing', 'active', 'progress' => 'in-progress',
             'qa', 'qa-testing', 'qa testing', 'testing', 'review' => 'qa-testing',
-            'done', 'complete', 'completed' => 'done',
+            'done', 'complete', 'completed', 'finished' => 'done',
             default => 'todo',
         };
     }
