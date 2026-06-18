@@ -62,8 +62,9 @@ const openProposal = async (proposalId: number) => {
         proposal.value = data;
         buildReviewItems(data);
         selectedProjectId.value = projects.value[0]?.id ?? null;
-    } catch {
-        notify('error', 'Load Failed', 'Could not load meeting note proposal.');
+    } catch (error: any) {
+        const message = error.response?.data?.message || 'Could not load meeting note proposal.';
+        notify('error', 'Load Failed', message);
         isOpen.value = false;
         resetState();
     } finally {

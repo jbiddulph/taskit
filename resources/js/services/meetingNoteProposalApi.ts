@@ -38,17 +38,17 @@ export interface ReviewActionItem {
 
 class MeetingNoteProposalApiService {
     async getPending(): Promise<MeetingNoteProposal[]> {
-        const response = await axios.get('/api/meeting-notes/proposals/pending');
+        const response = await axios.get('/meeting-notes/proposals/pending');
         return response.data.data;
     }
 
     async getProposal(id: number): Promise<MeetingNoteProposal> {
-        const response = await axios.get(`/api/meeting-notes/proposals/${id}`);
+        const response = await axios.get(`/meeting-notes/proposals/${id}`);
         return response.data.data;
     }
 
     async approve(proposalId: number, projectId: number, items: ReviewActionItem[]): Promise<{ created_count: number }> {
-        const response = await axios.post(`/api/meeting-notes/proposals/${proposalId}/approve`, {
+        const response = await axios.post(`/meeting-notes/proposals/${proposalId}/approve`, {
             project_id: projectId,
             items,
         });
@@ -56,7 +56,7 @@ class MeetingNoteProposalApiService {
     }
 
     async dismiss(proposalId: number): Promise<void> {
-        await axios.post(`/api/meeting-notes/proposals/${proposalId}/dismiss`);
+        await axios.post(`/meeting-notes/proposals/${proposalId}/dismiss`);
     }
 }
 

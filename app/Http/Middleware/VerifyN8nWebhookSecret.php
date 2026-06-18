@@ -24,7 +24,7 @@ class VerifyN8nWebhookSecret
         if (! is_string($provided) || ! hash_equals($secret, $provided)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized.',
+                'message' => 'Invalid N8N webhook secret. Ensure X-N8N-Webhook-Secret in the HTTP node matches N8N_WEBHOOK_SECRET on ZapTask/Heroku.',
             ], 401);
         }
 

@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## How this works\n\n1. **ZapTask** POSTs raw audio → this webhook\n2. **Whisper** transcribes → **GPT** summarizes + extracts action items\n3. **HTTP – Send Proposal to ZapTask** sends proposals for user approval\n4. User reviews in ZapTask dashboard → approves/edits → todos created\n\n## Setup\n\n1. Set **HTTP – Send Proposal to ZapTask** URL to your app:\n   `https://YOUR-APP-DOMAIN/api/n8n/meeting-notes/proposals`\n2. Set header **X-N8N-Webhook-Secret** (same as ZapTask `N8N_WEBHOOK_SECRET` on Heroku)\n3. OpenAI credentials on Transcribe + Summarize nodes\n4. Activate workflow\n\n## Debug\n\nCheck **Executions** if proposals don't appear in ZapTask.",
+        "content": "## How this works\n\n1. **ZapTask** POSTs raw audio → this webhook\n2. **Whisper** transcribes → **GPT** summarizes + extracts action items\n3. **HTTP – Send Proposal to ZapTask** sends proposals for user approval\n4. User reviews in ZapTask → approves → todos created\n\n## AUTH FIX (if final node says Authorization failed)\n\nThe header `X-N8N-Webhook-Secret` must EXACTLY match Heroku `N8N_WEBHOOK_SECRET`.\n\n1. Run: `heroku config:get N8N_WEBHOOK_SECRET -a task-it`\n2. Open **HTTP – Send Proposal to ZapTask** → Headers\n3. Replace `YOUR_N8N_WEBHOOK_SECRET` with that exact value\n4. Save + re-activate workflow\n\nIf Heroku has no secret yet:\n`heroku config:set N8N_WEBHOOK_SECRET=$(openssl rand -hex 32) -a task-it`\nThen paste the same value into the N8N header.",
         "height": 520,
         "width": 560,
         "color": 5
