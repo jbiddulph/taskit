@@ -22,7 +22,7 @@ export async function submitMeetingNotes(params: SubmitMeetingNotesParams): Prom
     formData.append('stopped_reason', params.stoppedReason);
     formData.append('recorded_at', params.recordedAt);
 
-    const response = await axios.post<MeetingNotesResponse>('/api/meeting-notes', formData, {
+    const response = await axios.post<MeetingNotesResponse>('/meeting-notes', formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
             'X-Requested-With': 'XMLHttpRequest',
