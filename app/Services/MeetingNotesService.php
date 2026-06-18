@@ -40,9 +40,10 @@ class MeetingNotesService
                     'user_id' => $user->id,
                     'status' => $response->status(),
                     'body' => $response->body(),
+                    'webhook_url' => $webhookUrl,
                 ]);
 
-                throw new \RuntimeException('Failed to send meeting notes for processing.');
+                throw new \RuntimeException($this->webhookErrorMessage($response->status(), $webhookUrl));
             }
         } catch (\RuntimeException $e) {
             throw $e;
@@ -50,9 +51,23 @@ class MeetingNotesService
             Log::warning('Failed to send meeting notes to n8n webhook', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
+                'webhook_url' => $webhookUrl,
             ]);
 
-            throw new \RuntimeException('Failed to send meeting notes for processing.');
+            throw new \RuntimeException('Failed to reach the N8N meeting notes webhook. Check N8N_MEETING_NOTES_WEBHOOK_URL and that n8n is reachable.');
         }
+    }
+
+    private function webhookErrorMessage(int $status, string $webhookUrl): string
+    {
+        if ($status === 404) {
+            if (str_contains($webhookUrl, '/webhook-test/')) {
+                return 'N8N webhook not found. You are using a test URL (/webhook-test/) — activate the workflow in N8N and set N8N_MEETING_NOTES_WEBHOOK_URL to the Production URL (/webhook/meeting-notes).';
+            }
+
+            return 'N8N meeting notes webhook not found (404). Import the workflow in N8N, activate it, and set N8N_MEETING_NOTES_WEBHOOK_URL to the Production URL from the Webhook node.';
+        }
+
+        return "Failed to send meeting notes for processing (N8N returned HTTP {$status}).";
     }
 }
