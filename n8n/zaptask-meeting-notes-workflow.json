@@ -3,18 +3,18 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## ZapTask Meeting Notes\n\n**Setup after import:**\n1. Open **Webhook – Meeting Notes** → copy the **Production URL**\n2. Set it in ZapTask `.env` as `N8N_MEETING_NOTES_WEBHOOK_URL`\n3. Open **OpenAI – Transcribe** and **OpenAI – Summarize** → select your OpenAI credentials\n4. (Optional) **HTTP – Create Task** → point at your task webhook\n5. (Optional) **Email – Send Summary** → configure SMTP credentials\n6. **Activate** this workflow\n\n**No OpenAI key needed in ZapTask** — audio is sent here and transcribed with Whisper in n8n.\n\n**Incoming from ZapTask (multipart):**\n- Binary field: `audio`\n- Fields: `user_id`, `user_name`, `user_email`, `company_id`, `duration_seconds`, `stopped_reason`, `recorded_at`",
-        "height": 460,
-        "width": 540,
+        "content": "## How this works\n\n1. **ZapTask** POSTs **raw audio** + metadata (multipart) to this webhook\n2. **OpenAI – Transcribe** converts audio → text (Whisper)\n3. **OpenAI – Summarize** extracts summary + action items\n4. Optional: email summary\n\n## Debug checklist\n\n- **ZapTask `{success: true}`** only means the webhook accepted the request (`Workflow was started`). Processing continues async in n8n.\n- Go to **Executions** (left sidebar) → filter **ZapTask – Meeting Notes** → open the latest run.\n- If it **failed on OpenAI – Transcribe**: check OpenAI credentials are selected (not placeholder).\n- Click **Webhook** output → **Binary** tab → confirm an `audio` file exists.\n- **HTTP – Create Task is DISABLED** — the `new-task` webhook is outbound from ZapTask (notifications only). It does NOT create todos in ZapTask.",
+        "height": 520,
+        "width": 560,
         "color": 5
       },
       "id": "a1b2c3d4-0001-4000-8000-000000000001",
-      "name": "Setup Instructions",
+      "name": "Setup & Debug",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -320,
-        80
+        -360,
+        40
       ]
     },
     {
@@ -36,6 +36,19 @@
     },
     {
       "parameters": {
+        "jsCode": "const item = $input.first();\nconst binary = { ...(item.binary || {}) };\nconst binaryKeys = Object.keys(binary);\n\nconst audioKey =\n  binaryKeys.find((key) => key === 'audio') ??\n  binaryKeys.find((key) => key.startsWith('audio')) ??\n  binaryKeys[0];\n\nif (!audioKey) {\n  throw new Error(\n    'No audio file received from ZapTask. Check ZapTask sent multipart field \"audio\". Binary keys: ' +\n      (binaryKeys.join(', ') || 'none'),\n  );\n}\n\nconst raw = item.json?.body ?? item.json ?? {};\nconst meta = raw.body ?? raw;\n\nreturn [\n  {\n    json: {\n      user_id: meta.user_id,\n      user_name: meta.user_name,\n      user_email: meta.user_email,\n      company_id: meta.company_id,\n      duration_seconds: meta.duration_seconds,\n      stopped_reason: meta.stopped_reason,\n      recorded_at: meta.recorded_at,\n      debug_binary_key_used: audioKey,\n    },\n    binary: audioKey === 'audio' ? binary : { audio: binary[audioKey] },\n  },\n];"
+      },
+      "id": "a1b2c3d4-000d-4000-8000-00000000000d",
+      "name": "Normalize Webhook Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
         "resource": "audio",
         "operation": "transcribe",
         "binaryPropertyName": "audio",
@@ -46,7 +59,7 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
       "position": [
-        500,
+        760,
         300
       ],
       "credentials": {
@@ -58,14 +71,14 @@
     },
     {
       "parameters": {
-        "jsCode": "const webhook = $('Webhook – Meeting Notes').first();\nconst meta = webhook.json.body ?? webhook.json;\nconst transcribe = $input.first().json;\n\nconst transcript = (transcribe.text ?? '').trim();\n\nif (!transcript) {\n  throw new Error('No speech was detected in the recording.');\n}\n\nreturn [\n  {\n    json: {\n      transcript,\n      user_id: meta.user_id,\n      user_name: meta.user_name,\n      user_email: meta.user_email,\n      company_id: meta.company_id,\n      duration_seconds: meta.duration_seconds,\n      stopped_reason: meta.stopped_reason,\n      recorded_at: meta.recorded_at,\n    },\n  },\n];"
+        "jsCode": "const meta = $('Normalize Webhook Input').first().json;\nconst transcribe = $input.first().json;\n\nconst transcript = (transcribe.text ?? '').trim();\n\nif (!transcript) {\n  throw new Error('No speech was detected in the recording.');\n}\n\nreturn [\n  {\n    json: {\n      transcript,\n      user_id: meta.user_id,\n      user_name: meta.user_name,\n      user_email: meta.user_email,\n      company_id: meta.company_id,\n      duration_seconds: meta.duration_seconds,\n      stopped_reason: meta.stopped_reason,\n      recorded_at: meta.recorded_at,\n    },\n  },\n];"
       },
       "id": "a1b2c3d4-000c-4000-8000-00000000000c",
       "name": "Prepare Meeting Context",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        760,
+        1020,
         300
       ]
     },
@@ -102,7 +115,7 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
       "position": [
-        1020,
+        1280,
         300
       ],
       "credentials": {
@@ -121,7 +134,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1280,
+        1540,
         300
       ]
     },
@@ -154,7 +167,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1540,
+        1800,
         300
       ]
     },
@@ -168,7 +181,7 @@
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        1800,
+        2060,
         180
       ]
     },
@@ -178,47 +191,19 @@
         "url": "https://n8n.neurohub.uk/webhook/new-task",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {\n  title: $json.action_items.title || 'Meeting action item',\n  description: 'From meeting notes recorded by ' + ($('Structure Meeting Notes').item.json.user_name || 'unknown') + '. Summary: ' + ($('Structure Meeting Notes').item.json.meeting_summary || '').slice(0, 500),\n  priority: $json.action_items.priority || 'Medium',\n  assignee: $json.action_items.assignee || null,\n  assignee_email: null,\n  email_assignee: false,\n  project_id: null\n} }}",
+        "jsonBody": "={{ {\n  title: $json.title || 'Meeting action item',\n  description: 'From meeting notes recorded by ' + ($('Structure Meeting Notes').item.json.user_name || 'unknown'),\n  priority: $json.priority || 'Medium',\n  assignee: $json.assignee || null,\n  project_id: null\n} }}",
         "options": {}
       },
       "id": "a1b2c3d4-0007-4000-8000-000000000007",
-      "name": "HTTP – Create Task",
+      "name": "HTTP – Create Task (disabled)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2060,
-        180
-      ],
-      "notes": "Optional: change URL to your ZapTask API or another webhook. Disable this node if you only want summaries."
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "status",
-              "name": "task_creation_status",
-              "value": "={{ $json.statusCode || 'sent' }}",
-              "type": "string"
-            },
-            {
-              "id": "task-title",
-              "name": "task_title",
-              "value": "={{ $('Split Action Items').item.json.action_items.title }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "a1b2c3d4-0008-4000-8000-000000000008",
-      "name": "Tag Task Result",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
         2320,
         180
-      ]
+      ],
+      "disabled": true,
+      "notes": "DISABLED: new-task is a ZapTask OUTBOUND notification webhook — it does not create todos in ZapTask. Ask to add a ZapTask inbound endpoint if you want auto-created todos."
     },
     {
       "parameters": {
@@ -226,7 +211,7 @@
         "toEmail": "={{ $('Structure Meeting Notes').item.json.user_email }}",
         "subject": "=Meeting notes processed – {{ $('Structure Meeting Notes').item.json.recorded_at }}",
         "emailFormat": "html",
-        "html": "=<h2>Meeting Notes Summary</h2>\n<p><strong>Recorded by:</strong> {{ $('Structure Meeting Notes').item.json.user_name }}<br>\n<strong>Duration:</strong> {{ Math.round(($('Structure Meeting Notes').item.json.duration_seconds || 0) / 60) }} minutes</p>\n<h3>Summary</h3>\n<p>{{ $('Structure Meeting Notes').item.json.meeting_summary }}</p>\n<h3>Key Decisions</h3>\n<ul>\n{{ ($('Structure Meeting Notes').item.json.key_decisions || []).map(d => '<li>' + d + '</li>').join('') }}\n</ul>\n<h3>Action Items ({{ $('Structure Meeting Notes').item.json.action_items_count }})</h3>\n<ul>\n{{ ($('Structure Meeting Notes').item.json.action_items || []).map(a => '<li><strong>' + a.title + '</strong>' + (a.assignee ? ' – ' + a.assignee : '') + '</li>').join('') }}\n</ul>\n<h3>Follow-ups</h3>\n<ul>\n{{ ($('Structure Meeting Notes').item.json.follow_ups || []).map(f => '<li>' + f + '</li>').join('') }}\n</ul>\n<hr>\n<p><em>Generated by ZapTask + n8n</em></p>",
+        "html": "=<h2>Meeting Notes Summary</h2>\n<p><strong>Recorded by:</strong> {{ $('Structure Meeting Notes').item.json.user_name }}<br>\n<strong>Duration:</strong> {{ Math.round(($('Structure Meeting Notes').item.json.duration_seconds || 0) / 60) }} minutes</p>\n<h3>Summary</h3>\n<p>{{ $('Structure Meeting Notes').item.json.meeting_summary }}</p>\n<h3>Transcript</h3>\n<p style=\"white-space:pre-wrap\">{{ $('Structure Meeting Notes').item.json.transcript }}</p>\n<h3>Key Decisions</h3>\n<ul>\n{{ ($('Structure Meeting Notes').item.json.key_decisions || []).map(d => '<li>' + d + '</li>').join('') }}\n</ul>\n<h3>Action Items ({{ $('Structure Meeting Notes').item.json.action_items_count }})</h3>\n<ul>\n{{ ($('Structure Meeting Notes').item.json.action_items || []).map(a => '<li><strong>' + a.title + '</strong>' + (a.assignee ? ' – ' + a.assignee : '') + '</li>').join('') }}\n</ul>",
         "options": {}
       },
       "id": "a1b2c3d4-0009-4000-8000-000000000009",
@@ -234,7 +219,7 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        1800,
+        2060,
         420
       ],
       "credentials": {
@@ -244,27 +229,22 @@
         }
       },
       "disabled": true,
-      "notes": "Enable after configuring SMTP credentials, or replace with Slack/Discord node."
-    },
-    {
-      "parameters": {
-        "content": "## Optional branches\n\n**HTTP – Create Task** posts each action item to your existing `new-task` webhook.\n\n**Email – Send Summary** is disabled by default.",
-        "height": 200,
-        "width": 420,
-        "color": 4
-      },
-      "id": "a1b2c3d4-000a-4000-8000-00000000000a",
-      "name": "Optional Notes",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        2000,
-        -40
-      ]
+      "notes": "Enable after configuring SMTP credentials."
     }
   ],
   "connections": {
     "Webhook – Meeting Notes": {
+      "main": [
+        [
+          {
+            "node": "Normalize Webhook Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Webhook Input": {
       "main": [
         [
           {
@@ -341,29 +321,7 @@
       "main": [
         [
           {
-            "node": "HTTP – Create Task",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP – Create Task": {
-      "main": [
-        [
-          {
-            "node": "Tag Task Result",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Tag Task Result": {
-      "main": [
-        [
-          {
-            "node": "Email – Send Summary",
+            "node": "HTTP – Create Task (disabled)",
             "type": "main",
             "index": 0
           }

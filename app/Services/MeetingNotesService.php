@@ -41,10 +41,19 @@ class MeetingNotesService
                     'status' => $response->status(),
                     'body' => $response->body(),
                     'webhook_url' => $webhookUrl,
+                    'audio_bytes' => $audio->getSize(),
                 ]);
 
                 throw new \RuntimeException($this->webhookErrorMessage($response->status(), $webhookUrl));
             }
+
+            Log::info('Meeting notes sent to N8N', [
+                'user_id' => $user->id,
+                'audio_bytes' => $audio->getSize(),
+                'duration_seconds' => $metadata['duration_seconds'] ?? null,
+                'n8n_status' => $response->status(),
+                'n8n_body' => $response->body(),
+            ]);
         } catch (\RuntimeException $e) {
             throw $e;
         } catch (\Throwable $e) {
