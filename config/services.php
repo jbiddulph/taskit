@@ -52,6 +52,7 @@ return [
 
     'n8n' => [
         'meeting_notes_webhook_url' => env('N8N_MEETING_NOTES_WEBHOOK_URL'),
+        'webhook_secret' => env('N8N_WEBHOOK_SECRET'),
     ],
 
 ];

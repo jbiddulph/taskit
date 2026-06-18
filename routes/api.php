@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\MeetingNotesController;
+use App\Http\Controllers\Api\MeetingNoteProposalController;
+use App\Http\Controllers\Api\N8nMeetingNotesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +26,10 @@ use App\Http\Controllers\Api\MeetingNotesController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
+});
+
+Route::middleware(['n8n.webhook', 'api.rate.limit:api,120,1'])->group(function () {
+    Route::post('n8n/meeting-notes/proposals', [N8nMeetingNotesController::class, 'store']);
 });
 
 // Todo routes
@@ -82,6 +88,10 @@ Route::delete('projects/{project}/with-todos', [ProjectController::class, 'destr
     
     // Meeting notes
     Route::post('meeting-notes', [MeetingNotesController::class, 'store']);
+    Route::get('meeting-notes/proposals/pending', [MeetingNoteProposalController::class, 'pending']);
+    Route::get('meeting-notes/proposals/{proposal}', [MeetingNoteProposalController::class, 'show']);
+    Route::post('meeting-notes/proposals/{proposal}/approve', [MeetingNoteProposalController::class, 'approve']);
+    Route::post('meeting-notes/proposals/{proposal}/dismiss', [MeetingNoteProposalController::class, 'dismiss']);
 
     // Activity routes
     Route::get('activities', [ActivityController::class, 'index']);

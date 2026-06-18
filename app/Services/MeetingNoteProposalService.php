@@ -1,0 +1,189 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\MeetingNoteProposal;
+use App\Models\Notification;
+use App\Models\Project;
+use App\Models\Todo;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+
+class MeetingNoteProposalService
+{
+    public function __construct(
+        protected TodoWebSocketService $webSocketService,
+        protected AssignmentNotificationService $assignmentNotificationService,
+    ) {}
+
+    public function createFromN8n(array $payload): MeetingNoteProposal
+    {
+        $validator = Validator::make($payload, [
+            'user_id' => 'required|integer|exists:taskit_users,id',
+            'company_id' => 'nullable|integer|exists:taskit_companies,id',
+            'transcript' => 'nullable|string',
+            'meeting_summary' => 'nullable|string',
+            'action_items' => 'present|array',
+            'action_items.*.title' => 'required|string|max:255',
+            'duration_seconds' => 'nullable|integer',
+            'stopped_reason' => 'nullable|string',
+            'recorded_at' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            throw ValidationException::withMessages($validator->errors()->toArray());
+        }
+
+        $user = User::findOrFail($payload['user_id']);
+        $actionItems = collect($payload['action_items'])
+            ->filter(fn ($item) => ! empty($item['title']))
+            ->values()
+            ->all();
+
+        $proposal = MeetingNoteProposal::create([
+            'user_id' => $user->id,
+            'company_id' => $payload['company_id'] ?? $user->company_id,
+            'status' => MeetingNoteProposal::STATUS_PENDING,
+            'meeting_summary' => $payload['meeting_summary'] ?? null,
+            'transcript' => $payload['transcript'] ?? null,
+            'action_items' => $actionItems,
+            'metadata' => [
+                'duration_seconds' => $payload['duration_seconds'] ?? null,
+                'stopped_reason' => $payload['stopped_reason'] ?? null,
+                'recorded_at' => $payload['recorded_at'] ?? null,
+                'key_decisions' => $payload['key_decisions'] ?? [],
+                'follow_ups' => $payload['follow_ups'] ?? [],
+            ],
+        ]);
+
+        $itemCount = count($actionItems);
+
+        Notification::create([
+            'user_id' => $user->id,
+            'type' => 'meeting_notes',
+            'title' => 'Meeting notes ready for review',
+            'message' => $itemCount > 0
+                ? "{$itemCount} proposed action ".($itemCount === 1 ? 'item' : 'items').' from your recording.'
+                : 'Your meeting recording was processed. Review the summary.',
+            'data' => [
+                'proposal_id' => $proposal->id,
+            ],
+        ]);
+
+        return $proposal;
+    }
+
+    public function approve(User $user, MeetingNoteProposal $proposal, int $projectId, array $items): array
+    {
+        $this->assertUserOwnsPendingProposal($user, $proposal);
+
+        $project = Project::query()
+            ->where('id', $projectId)
+            ->when($user->company_id, fn ($q) => $q->where('company_id', $user->company_id))
+            ->firstOrFail();
+
+        $validator = Validator::make(['items' => $items], [
+            'items' => 'required|array|min:1',
+            'items.*.index' => 'required|integer|min:0',
+            'items.*.approved' => 'required|boolean',
+            'items.*.title' => 'nullable|string|max:255',
+            'items.*.priority' => 'nullable|in:Low,Medium,High,Critical',
+            'items.*.assignee' => 'nullable|string|max:255',
+            'items.*.description' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            throw ValidationException::withMessages($validator->errors()->toArray());
+        }
+
+        $hasApprovedItem = collect($items)->contains(fn ($item) => ! empty($item['approved']));
+        if (! $hasApprovedItem) {
+            throw ValidationException::withMessages([
+                'items' => ['Select at least one action item to approve.'],
+            ]);
+        }
+
+        $createdTodos = [];
+
+        DB::transaction(function () use ($user, $proposal, $project, $items, &$createdTodos) {
+            foreach ($items as $item) {
+                if (empty($item['approved'])) {
+                    continue;
+                }
+
+                $original = $proposal->action_items[$item['index']] ?? null;
+                if (! $original) {
+                    continue;
+                }
+
+                $title = trim($item['title'] ?? $original['title'] ?? '');
+                if ($title === '') {
+                    continue;
+                }
+
+                $description = $item['description']
+                    ?? $original['notes']
+                    ?? null;
+
+                if ($proposal->meeting_summary && $description) {
+                    $description = trim($description."\n\nMeeting summary: ".mb_substr($proposal->meeting_summary, 0, 500));
+                } elseif ($proposal->meeting_summary && ! $description) {
+                    $description = 'From meeting notes: '.mb_substr($proposal->meeting_summary, 0, 500);
+                }
+
+                $todo = Todo::create([
+                    'user_id' => $user->id,
+                    'project_id' => $project->id,
+                    'company_id' => $user->company_id,
+                    'title' => $title,
+                    'description' => $description,
+                    'priority' => $item['priority'] ?? $original['priority'] ?? 'Medium',
+                    'assignee' => $item['assignee'] ?? $original['assignee'] ?? null,
+                    'due_date' => $original['due_date'] ?? null,
+                    'status' => 'todo',
+                ]);
+
+                $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
+
+                CacheService::invalidateUserCaches($user->id, $user->company_id);
+                CacheService::invalidateProjectCaches($project->id, $user->company_id);
+
+                $this->webSocketService->todoCreated($todo);
+                $this->assignmentNotificationService->sendNewTodoAssignmentNotification($todo);
+
+                $createdTodos[] = $todo;
+            }
+
+            $proposal->update([
+                'status' => MeetingNoteProposal::STATUS_APPROVED,
+                'project_id' => $project->id,
+                'reviewed_at' => now(),
+            ]);
+        });
+
+        return $createdTodos;
+    }
+
+    public function dismiss(User $user, MeetingNoteProposal $proposal): void
+    {
+        $this->assertUserOwnsPendingProposal($user, $proposal);
+
+        $proposal->update([
+            'status' => MeetingNoteProposal::STATUS_DISMISSED,
+            'reviewed_at' => now(),
+        ]);
+    }
+
+    private function assertUserOwnsPendingProposal(User $user, MeetingNoteProposal $proposal): void
+    {
+        if ($proposal->user_id !== $user->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        if (! $proposal->isPending()) {
+            abort(422, 'This meeting note proposal has already been reviewed.');
+        }
+    }
+}

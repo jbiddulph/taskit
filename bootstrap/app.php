@@ -39,11 +39,16 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
         ]);
 
+        $middleware->validateCsrfTokens(except: [
+            'api/n8n/*',
+        ]);
+
         // Register middleware aliases
         $middleware->alias([
             'subscription.access' => CheckSubscriptionAccess::class,
             'api.rate.limit' => \App\Http\Middleware\ApiRateLimit::class,
             'subdomain' => SubdomainMiddleware::class,
+            'n8n.webhook' => \App\Http\Middleware\VerifyN8nWebhookSecret::class,
         ]);
 
     })

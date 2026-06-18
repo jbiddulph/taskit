@@ -476,9 +476,8 @@ class RealtimeService {
         });
       });
 
-      // Show browser notification if chat message and chat is closed
+      // Show toast for chat messages and meeting notes
       if (isMessageNotification) {
-        // Show a toast notification
         if ((window as any).$notify) {
           (window as any).$notify({
             type: 'info',
@@ -487,6 +486,21 @@ class RealtimeService {
             duration: 5000
           });
         }
+      }
+
+      if (notification.type === 'meeting_notes' && notification.data?.proposal_id) {
+        if ((window as any).$notify) {
+          (window as any).$notify({
+            type: 'info',
+            title: notification.title,
+            message: notification.message,
+            duration: 8000
+          });
+        }
+
+        window.dispatchEvent(new CustomEvent('openMeetingNoteApproval', {
+          detail: { proposalId: notification.data.proposal_id }
+        }));
       }
     } else {
       console.log('Chat is open with sender, skipping notification');

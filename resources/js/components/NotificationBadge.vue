@@ -268,8 +268,16 @@ const handleNotificationClick = async (notification: Notification) => {
     await markAsRead(notification.id);
   }
 
-  // Handle different notification types
   const data = notification.data || {};
+
+  // Meeting notes - open approval modal
+  if (notification.type === 'meeting_notes' && data.proposal_id) {
+    showNotifications.value = false;
+    window.dispatchEvent(new CustomEvent('openMeetingNoteApproval', {
+      detail: { proposalId: data.proposal_id }
+    }));
+    return;
+  }
 
   // Mention notifications - navigate to the Todo
   if (notification.type === 'mention' && data.todo_id) {
@@ -325,7 +333,8 @@ const getNotificationIcon = (type: string): string => {
     'success': 'CheckCircle',
     'mention': 'AtSign',
     'comment': 'MessageSquare',
-    'assignment': 'UserCheck'
+    'assignment': 'UserCheck',
+    'meeting_notes': 'Mic'
   };
   return iconMap[type] || 'Bell';
 };
@@ -338,7 +347,8 @@ const getNotificationIconClass = (type: string): string => {
     'success': 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400',
     'mention': 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400',
     'comment': 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-400',
-    'assignment': 'bg-cyan-100 text-cyan-600 dark:bg-cyan-900 dark:text-cyan-400'
+    'assignment': 'bg-cyan-100 text-cyan-600 dark:bg-cyan-900 dark:text-cyan-400',
+    'meeting_notes': 'bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-400'
   };
   return classMap[type] || 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400';
 };

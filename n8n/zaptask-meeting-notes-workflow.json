@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## How this works\n\n1. **ZapTask** POSTs **raw audio** + metadata (multipart) to this webhook\n2. **OpenAI – Transcribe** converts audio → text (Whisper)\n3. **OpenAI – Summarize** extracts summary + action items\n4. Optional: email summary\n\n## Debug checklist\n\n- **ZapTask `{success: true}`** only means the webhook accepted the request (`Workflow was started`). Processing continues async in n8n.\n- Go to **Executions** (left sidebar) → filter **ZapTask – Meeting Notes** → open the latest run.\n- If it **failed on OpenAI – Transcribe**: check OpenAI credentials are selected (not placeholder).\n- Click **Webhook** output → **Binary** tab → confirm an `audio` file exists.\n- **HTTP – Create Task is DISABLED** — the `new-task` webhook is outbound from ZapTask (notifications only). It does NOT create todos in ZapTask.",
+        "content": "## How this works\n\n1. **ZapTask** POSTs raw audio → this webhook\n2. **Whisper** transcribes → **GPT** summarizes + extracts action items\n3. **HTTP – Send Proposal to ZapTask** sends proposals for user approval\n4. User reviews in ZapTask dashboard → approves/edits → todos created\n\n## Setup\n\n1. Set **HTTP – Send Proposal to ZapTask** URL to your app:\n   `https://YOUR-APP-DOMAIN/api/n8n/meeting-notes/proposals`\n2. Set header **X-N8N-Webhook-Secret** (same as ZapTask `N8N_WEBHOOK_SECRET` on Heroku)\n3. OpenAI credentials on Transcribe + Summarize nodes\n4. Activate workflow\n\n## Debug\n\nCheck **Executions** if proposals don't appear in ZapTask.",
         "height": 520,
         "width": 560,
         "color": 5
@@ -140,70 +140,35 @@
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "has-action-items",
-              "leftValue": "={{ $json.action_items_count }}",
-              "rightValue": 0,
-              "operator": {
-                "type": "number",
-                "operation": "gt"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "a1b2c3d4-0005-4000-8000-000000000005",
-      "name": "Has Action Items?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        1800,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "fieldToSplitOut": "action_items",
-        "options": {}
-      },
-      "id": "a1b2c3d4-0006-4000-8000-000000000006",
-      "name": "Split Action Items",
-      "type": "n8n-nodes-base.splitOut",
-      "typeVersion": 1,
-      "position": [
-        2060,
-        180
-      ]
-    },
-    {
-      "parameters": {
         "method": "POST",
-        "url": "https://n8n.neurohub.uk/webhook/new-task",
+        "url": "https://www.zaptask.co.uk/api/n8n/meeting-notes/proposals",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Webhook-Secret",
+              "value": "YOUR_N8N_WEBHOOK_SECRET"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {\n  title: $json.title || 'Meeting action item',\n  description: 'From meeting notes recorded by ' + ($('Structure Meeting Notes').item.json.user_name || 'unknown'),\n  priority: $json.priority || 'Medium',\n  assignee: $json.assignee || null,\n  project_id: null\n} }}",
+        "jsonBody": "={{ {\n  user_id: $json.user_id,\n  company_id: $json.company_id,\n  transcript: $json.transcript,\n  meeting_summary: $json.meeting_summary,\n  action_items: $json.action_items,\n  key_decisions: $json.key_decisions,\n  follow_ups: $json.follow_ups,\n  duration_seconds: $json.duration_seconds,\n  stopped_reason: $json.stopped_reason,\n  recorded_at: $json.recorded_at\n} }}",
         "options": {}
       },
-      "id": "a1b2c3d4-0007-4000-8000-000000000007",
-      "name": "HTTP – Create Task (disabled)",
+      "id": "a1b2c3d4-000e-4000-8000-00000000000e",
+      "name": "HTTP – Send Proposal to ZapTask",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2320,
-        180
+        1800,
+        300
       ],
-      "disabled": true,
-      "notes": "DISABLED: new-task is a ZapTask OUTBOUND notification webhook — it does not create todos in ZapTask. Ask to add a ZapTask inbound endpoint if you want auto-created todos."
+      "notes": "Replace YOUR-ZAPTASK-DOMAIN and YOUR_N8N_WEBHOOK_SECRET. User approves todos in ZapTask before they are created."
     },
     {
       "parameters": {
@@ -292,36 +257,7 @@
       "main": [
         [
           {
-            "node": "Has Action Items?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Has Action Items?": {
-      "main": [
-        [
-          {
-            "node": "Split Action Items",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Email – Send Summary",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Split Action Items": {
-      "main": [
-        [
-          {
-            "node": "HTTP – Create Task (disabled)",
+            "node": "HTTP – Send Proposal to ZapTask",
             "type": "main",
             "index": 0
           }
