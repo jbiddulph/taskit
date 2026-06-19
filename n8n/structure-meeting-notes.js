@@ -132,6 +132,89 @@ const inferGlobalStatus = () => {
   return inferStatusFromText(transcript);
 };
 
+const WORD_NUMBERS = {
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+  eleven: 11,
+  twelve: 12,
+};
+
+const ITEM_WORD_PATTERN = 'todos?|tasks?|notes?|action items?|reminders?|items?|things to do';
+
+const inferItemTypeLabel = (text) => {
+  const normalized = normalizeText(text);
+  if (/\bnotes?\b/.test(normalized)) return 'Note';
+  if (/\btasks?\b/.test(normalized)) return 'Task';
+  return 'Todo';
+};
+
+const inferRequestedItemCount = (text) => {
+  const normalized = normalizeText(text);
+  if (!normalized) return 0;
+
+  let maxCount = 0;
+
+  const patterns = [
+    new RegExp(
+      `(?:create|add|make|need|want|generate|give me|i need|i want|lets create|let us create)\\s+(\\d{1,2})\\s+(?:${ITEM_WORD_PATTERN})`,
+      'gi',
+    ),
+    new RegExp(`(\\d{1,2})\\s+(?:${ITEM_WORD_PATTERN})(?:\\s+to)?(?:\\s+create)?`, 'gi'),
+    new RegExp(`(?:create|add|make)\\s+(\\d{1,2})(?:\\s+(?:new|more))?`, 'gi'),
+  ];
+
+  for (const pattern of patterns) {
+    let match;
+    while ((match = pattern.exec(normalized)) !== null) {
+      const count = parseInt(match[1], 10);
+      if (!Number.isNaN(count) && count > maxCount && count <= 20) {
+        maxCount = count;
+      }
+    }
+  }
+
+  const wordPattern = new RegExp(
+    `(?:create|add|make|need|want|generate|give me|i need|i want)\\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\\s+(?:${ITEM_WORD_PATTERN})`,
+    'gi',
+  );
+
+  let wordMatch;
+  while ((wordMatch = wordPattern.exec(normalized)) !== null) {
+    const count = WORD_NUMBERS[wordMatch[1].toLowerCase()] || 0;
+    if (count > maxCount) {
+      maxCount = count;
+    }
+  }
+
+  return maxCount;
+};
+
+const padActionItemsToCount = (items, count, label, defaults) => {
+  const result = [...items];
+
+  while (result.length < count) {
+    result.push({
+      title: `${label} ${result.length + 1}`,
+      assignee: defaults.assignee ?? null,
+      priority: defaults.priority ?? 'Medium',
+      status: defaults.status ?? 'todo',
+      due_date: defaults.due_date ?? null,
+      project_name: defaults.project_name ?? null,
+      notes: defaults.notes ?? 'Requested in recording — edit title before approving.',
+    });
+  }
+
+  return result;
+};
+
 const globalStatus = inferGlobalStatus();
 const transcriptProject = findProjectInTranscript();
 let suggestedProject =
@@ -169,6 +252,18 @@ const actionItems = (Array.isArray(parsed.action_items) ? parsed.action_items : 
   };
 });
 
+const requestedCount = inferRequestedItemCount(transcript);
+const itemLabel = inferItemTypeLabel(transcript);
+const paddedActionItems =
+  requestedCount > 0 && actionItems.length < requestedCount
+    ? padActionItemsToCount(actionItems, requestedCount, itemLabel, {
+        priority: 'Medium',
+        status: globalStatus || 'todo',
+        project_name: suggestedProject,
+        notes: 'Requested in recording — edit title before approving.',
+      })
+    : actionItems;
+
 return [
   {
     json: {
@@ -183,8 +278,9 @@ return [
       meeting_summary: parsed.summary ?? '',
       suggested_project_name: suggestedProject,
       key_decisions: parsed.key_decisions ?? [],
-      action_items: actionItems,
-      action_items_count: actionItems.length,
+      action_items: paddedActionItems,
+      action_items_count: paddedActionItems.length,
+      requested_item_count: requestedCount,
       participants_mentioned: parsed.participants_mentioned ?? [],
       follow_ups: parsed.follow_ups ?? [],
       processed_at: new Date().toISOString(),

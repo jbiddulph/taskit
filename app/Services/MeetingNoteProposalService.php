@@ -57,6 +57,11 @@ class MeetingNoteProposalService
             ->values()
             ->all();
 
+        $actionItems = $this->enforceRequestedActionItemCount(
+            $actionItems,
+            $payload['transcript'] ?? null
+        );
+
         $proposal = MeetingNoteProposal::create([
             'user_id' => $user->id,
             'company_id' => $payload['company_id'] ?? $user->company_id,
@@ -238,5 +243,93 @@ class MeetingNoteProposalService
         if (! $proposal->isPending()) {
             abort(422, 'This meeting note proposal has already been reviewed.');
         }
+    }
+
+    private function enforceRequestedActionItemCount(array $actionItems, ?string $transcript): array
+    {
+        if (! $transcript) {
+            return $actionItems;
+        }
+
+        $requestedCount = $this->inferRequestedItemCount($transcript);
+        if ($requestedCount <= 0 || count($actionItems) >= $requestedCount) {
+            return $actionItems;
+        }
+
+        $label = $this->inferItemTypeLabel($transcript);
+        $defaultStatus = $this->normalizeStatus(null, $transcript);
+        $defaultProject = $actionItems[0]['project_name'] ?? null;
+
+        while (count($actionItems) < $requestedCount) {
+            $actionItems[] = [
+                'title' => $label.' '.(count($actionItems) + 1),
+                'assignee' => null,
+                'priority' => 'Medium',
+                'status' => $actionItems[0]['status'] ?? $defaultStatus,
+                'due_date' => null,
+                'project_name' => $defaultProject,
+                'notes' => 'Requested in recording — edit title before approving.',
+            ];
+        }
+
+        return $actionItems;
+    }
+
+    private function inferRequestedItemCount(string $transcript): int
+    {
+        $text = strtolower($transcript);
+        $max = 0;
+
+        $itemWords = 'todos?|tasks?|notes?|action\s+items?|reminders?|items?|things\s+to\s+do';
+
+        $patterns = [
+            '/(?:create|add|make|need|want|generate|give\s+me|i\s+need|i\s+want|let\'?s\s+create|let\s+us\s+create)\s+(\d{1,2})\s+(?:'.$itemWords.')/i',
+            '/(\d{1,2})\s+(?:'.$itemWords.')(?:\s+to)?(?:\s+create)?/i',
+            '/(?:create|add|make)\s+(\d{1,2})(?:\s+(?:new|more))?/i',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match_all($pattern, $text, $matches)) {
+                foreach ($matches[1] as $num) {
+                    $count = (int) $num;
+                    if ($count > $max && $count <= 20) {
+                        $max = $count;
+                    }
+                }
+            }
+        }
+
+        $wordMap = [
+            'one' => 1, 'two' => 2, 'three' => 3, 'four' => 4, 'five' => 5,
+            'six' => 6, 'seven' => 7, 'eight' => 8, 'nine' => 9, 'ten' => 10,
+            'eleven' => 11, 'twelve' => 12,
+        ];
+
+        $wordPattern = '/(?:create|add|make|need|want|generate|give\s+me|i\s+need|i\s+want)\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:'.$itemWords.')/i';
+        if (preg_match_all($wordPattern, $text, $matches)) {
+            foreach ($matches[1] as $word) {
+                $count = $wordMap[$word] ?? 0;
+                if ($count > $max) {
+                    $max = $count;
+                }
+            }
+        }
+
+        return $max;
+    }
+
+    private function inferItemTypeLabel(string $transcript): string
+    {
+        $text = strtolower($transcript);
+
+        if (preg_match('/\bnotes?\b/', $text)) {
+            return 'Note';
+        }
+
+        if (preg_match('/\btasks?\b/', $text)) {
+            return 'Task';
+        }
+
+        return 'Todo';
     }
 }

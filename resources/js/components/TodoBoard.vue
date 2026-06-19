@@ -1409,38 +1409,67 @@ const saveTodo = async (todo: Todo) => {
   }
 };
 
+const findTodoById = (id: number): { todo: Todo; parentIndex?: number; subtaskIndex?: number } | null => {
+  const topIndex = todosState.value.findIndex(t => t.id === id);
+  if (topIndex !== -1) {
+    return { todo: todosState.value[topIndex], parentIndex: topIndex };
+  }
+
+  for (let i = 0; i < todosState.value.length; i++) {
+    const subtasks = todosState.value[i].subtasks;
+    if (!subtasks) continue;
+    const subtaskIndex = subtasks.findIndex(subtask => subtask.id === id);
+    if (subtaskIndex !== -1) {
+      return { todo: subtasks[subtaskIndex], parentIndex: i, subtaskIndex };
+    }
+  }
+
+  return null;
+};
+
+const removeTodoFromState = (id: number): boolean => {
+  const found = findTodoById(id);
+  if (!found) return false;
+
+  if (found.subtaskIndex !== undefined && found.parentIndex !== undefined) {
+    todosState.value[found.parentIndex].subtasks!.splice(found.subtaskIndex, 1);
+    todosState.value = [...todosState.value];
+    return true;
+  }
+
+  todosState.value = todosState.value.filter(t => t.id !== id);
+  return true;
+};
+
 const deleteTodo = async (id: number | string) => {
   const todoId = typeof id === 'string' ? parseInt(id) : id;
-  const todo = todosState.value.find(t => t.id === todoId);
-  if (!todo) return;
+  const found = findTodoById(todoId);
+  if (!found) return;
+
+  const todo = found.todo;
   
   if (!confirm(`Are you sure you want to delete "${todo.title}"?\n\nThis action cannot be undone.`)) {
     return;
   }
   
   try {
-    const toDelete = todosState.value.find(t => t.id === todoId);
     await todoApi.deleteTodo(todoId);
-    
-    // Remove from local state
-    todosState.value = todosState.value.filter(t => t.id !== todoId);
+    removeTodoFromState(todoId);
     
     // Track todo deletion event
     trackTodoEvent('deleted', {
       todo_id: todoId,
       project_id: currentProject.value?.id,
       project_name: currentProject.value?.name,
-      priority: toDelete?.priority,
-      type: toDelete?.type,
-      status: toDelete?.status,
+      priority: todo.priority,
+      type: todo.type,
+      status: todo.status,
     });
     
     // Attempt to cleanup images from Supabase storage
-    if (toDelete?.description) {
-      deleteImagesInHtml(toDelete.description).catch(() => {});
+    if (todo.description) {
+      deleteImagesInHtml(todo.description).catch(() => {});
     }
-    
-    // Real-time updates will handle removing the todo from the list
     
     // Dispatch event to refresh sidebar project stats
     window.dispatchEvent(new CustomEvent('todoChanged'));
