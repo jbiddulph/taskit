@@ -1,34 +1,18 @@
 <template>
-  <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
-    <div class="inline-flex items-center gap-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-1.5 py-0.5">
-      <Icon name="List" class="w-3 h-3 text-blue-600 dark:text-blue-400" />
-      <span class="text-gray-600 dark:text-gray-400 hidden sm:inline">{{ t('dashboard.total_todos') }}</span>
-      <span class="font-semibold text-gray-900 dark:text-gray-100">{{ stats.total }}</span>
-    </div>
-
-    <div class="inline-flex items-center gap-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-1.5 py-0.5">
-      <Icon name="Clock" class="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
-      <span class="text-gray-600 dark:text-gray-400 hidden sm:inline">{{ t('dashboard.in_progress') }}</span>
-      <span class="font-semibold text-gray-900 dark:text-gray-100">{{ stats.inProgress }}</span>
-    </div>
-
-    <div class="inline-flex items-center gap-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-1.5 py-0.5">
-      <Icon name="CheckCircle" class="w-3 h-3 text-green-600 dark:text-green-400" />
-      <span class="text-gray-600 dark:text-gray-400 hidden sm:inline">{{ t('dashboard.completed') }}</span>
-      <span class="font-semibold text-gray-900 dark:text-gray-100">{{ stats.done }}</span>
-    </div>
-
-    <div class="inline-flex items-center gap-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-1.5 py-0.5">
-      <Icon name="AlertTriangle" class="w-3 h-3 text-red-600 dark:text-red-400" />
-      <span class="text-gray-600 dark:text-gray-400 hidden sm:inline">{{ t('dashboard.overdue') }}</span>
-      <span class="font-semibold text-gray-900 dark:text-gray-100">{{ stats.overdue }}</span>
+  <div class="flex w-full items-stretch gap-2 text-xs">
+    <div
+      v-for="item in statItems"
+      :key="item.key"
+      class="flex flex-1 min-w-0 items-center justify-between gap-2 rounded-md border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900"
+    >
+      <span class="truncate text-gray-600 dark:text-gray-400">{{ item.label }}</span>
+      <span class="shrink-0 font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ item.value }}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import Icon from '@/components/Icon.vue';
 import type { Todo, TodoStats } from '@/services/todoApi';
 import { useI18n } from 'vue-i18n';
 
@@ -63,4 +47,11 @@ const stats = computed<TodoStats>(() => {
     dueToday,
   };
 });
+
+const statItems = computed(() => [
+  { key: 'total', label: t('dashboard.total_todos'), value: stats.value.total },
+  { key: 'inProgress', label: t('dashboard.in_progress'), value: stats.value.inProgress },
+  { key: 'done', label: t('dashboard.completed'), value: stats.value.done },
+  { key: 'overdue', label: t('dashboard.overdue'), value: stats.value.overdue },
+]);
 </script>
