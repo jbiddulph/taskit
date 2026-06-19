@@ -1,33 +1,11 @@
 <template>
   <div class="flex flex-col h-full min-w-80 max-h-screen">
-    <!-- Column Header -->
-    <div class="sticky top-0 z-20 bg-white dark:bg-gray-800 flex items-center justify-between mb-2 px-2 py-1 border-b border-gray-200 dark:border-gray-700 shadow-sm">
-      <div class="flex items-center gap-2">
-        <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-sm">{{ title }}</h3>
-        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-600 text-xs font-medium text-gray-700 dark:text-gray-300">
-          {{ todos.length }}
-        </span>
-      </div>
-      <div class="flex items-center gap-1">
-        <button
-          v-if="showAddButton"
-          @click="$emit('add')"
-          class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-        >
-          <Icon name="Plus" class="w-3 h-3" aria-hidden="true" />
-        </button>
-        <div v-if="subtaskCount > 0" class="text-xs text-gray-500 dark:text-gray-400 px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">
-          ({{ subtaskCount }})
-        </div>
-      </div>
-    </div>
-
     <!-- Column Content -->
     <div
       ref="dropZone"
       :data-column-status="props.status"
       data-drop-zone="true"
-      class="flex-1 p-1 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 min-h-[400px] max-h-[calc(100vh-200px)] overflow-y-auto transition-colors relative"
+      class="flex flex-col flex-1 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 min-h-[400px] max-h-[calc(100vh-200px)] transition-colors relative overflow-hidden"
       :class="{
         'border-blue-300 bg-blue-50 dark:bg-blue-900/20': isDragOver || (isTouchDragging && isDraggingWithinColumn),
         'border-gray-200 dark:border-gray-700': !isDragOver && !(isTouchDragging && isDraggingWithinColumn)
@@ -37,10 +15,33 @@
       @drop="handleDrop"
       @dragenter.prevent
     >
+      <!-- Column Header -->
+      <div class="sticky top-0 z-20 flex items-center justify-between px-2 py-1.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <div class="flex items-center gap-2">
+          <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-sm">{{ title }}</h3>
+          <span class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full bg-gray-200 dark:bg-gray-600 text-xs font-medium text-gray-700 dark:text-gray-300">
+            {{ todos.length }}
+          </span>
+        </div>
+        <div class="flex items-center gap-1">
+          <button
+            v-if="showAddButton"
+            @click="$emit('add')"
+            class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors min-w-9 min-h-9 flex items-center justify-center"
+          >
+            <Icon name="Plus" class="w-3 h-3" aria-hidden="true" />
+          </button>
+          <div v-if="subtaskCount > 0" class="text-xs text-gray-500 dark:text-gray-400 px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">
+            ({{ subtaskCount }})
+          </div>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-1 min-h-0">
       <!-- Empty State -->
       <div
         v-if="todos.length === 0"
-        class="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400"
+        class="flex flex-col items-center justify-center h-full min-h-[320px] text-gray-500 dark:text-gray-400"
       >
         <Icon name="Inbox" class="w-12 h-12 mb-2 opacity-50" />
         <p class="text-sm text-center">{{ t('todos.no_todos_yet_short') }}</p>
@@ -62,7 +63,7 @@
         v-else
         name="todo-list"
         tag="div"
-        class="space-y-2"
+        class="space-y-1.5"
       >
         <template v-for="(todo, index) in todos" :key="todo.id">
           <!-- Drop Zone Before Todo -->
@@ -122,6 +123,7 @@
           class="h-3 border-2 border-dashed border-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded mx-2 my-1 transition-all duration-150 animate-pulse"
         />
       </TransitionGroup>
+      </div>
     </div>
   </div>
 </template>

@@ -2,7 +2,7 @@
   <div
     :data-todo-id="todo.id"
     :class="[
-      'group relative rounded-lg border p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer touch-manipulation',
+      'group relative rounded-lg border p-2.5 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer touch-manipulation',
       isOverdueAndNotDone 
         ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-700' 
         : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700',
@@ -12,7 +12,7 @@
     @click="handleClick"
   >
     <!-- Selection checkbox (only in select mode) -->
-    <div v-if="isSelectMode" class="absolute top-2 left-2 z-10 min-w-[44px] min-h-[44px] flex items-center justify-center -m-2">
+    <div v-if="isSelectMode" class="absolute top-1.5 left-1.5 z-10 min-w-9 min-h-9 flex items-center justify-center -m-1.5">
       <input
         type="checkbox"
         :checked="isSelected"
@@ -24,11 +24,11 @@
     </div>
 
     <!-- Priority indicator -->
-    <div class="flex items-start justify-between mb-2" :class="{ 'ml-6': isSelectMode }">
+    <div class="flex items-start justify-between" :class="{ 'ml-6': isSelectMode }">
       <div class="flex items-center gap-2">
         <span
           :class="[
-            'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium',
+            'inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium',
             priorityClasses[todo.priority]
           ]"
         >
@@ -36,7 +36,7 @@
         </span>
         <span
           v-if="todo.type"
-          class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+          class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
         >
           <Icon :name="getTypeIcon(todo.type)" class="w-3 h-3" />
           {{ todo.type }}
@@ -57,7 +57,7 @@
           @keydown.enter.stop="$emit('delete', String(todo.id))"
           @keydown.space.stop.prevent="$emit('delete', String(todo.id))"
           :aria-label="`Delete todo: ${todo.title}`"
-          class="opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-red-500 focus:text-red-500 transition-opacity focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded min-w-[44px] min-h-[44px] flex items-center justify-center p-2"
+          class="opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-red-500 focus:text-red-500 transition-opacity focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded min-w-9 min-h-9 flex items-center justify-center p-1"
         >
           <Icon name="Trash2" class="w-4 h-4" aria-hidden="true" />
         </button>
@@ -65,7 +65,7 @@
     </div>
 
     <!-- Title -->
-    <div class="mb-2">
+    <div class="mb-1">
       <div v-if="!editingTitle" class="flex items-center gap-2">
         <h3
           :class="[
@@ -84,7 +84,7 @@
           @keydown.enter.stop="startEditTitle"
           @keydown.space.stop.prevent="startEditTitle"
           :aria-label="`Edit title of todo: ${todo.title}`"
-          class="opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-blue-500 focus:text-blue-500 transition-opacity p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded min-w-[44px] min-h-[44px] flex items-center justify-center"
+          class="opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-blue-500 focus:text-blue-500 transition-opacity p-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded min-w-9 min-h-9 flex items-center justify-center"
           title="Edit title"
         >
           <Icon name="Edit3" class="w-4 h-4" aria-hidden="true" />
@@ -105,7 +105,7 @@
           @keydown.enter.stop="saveTitle"
           @keydown.space.stop.prevent="saveTitle"
           aria-label="Save title"
-          class="p-2 text-green-500 hover:text-green-600 focus:text-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 rounded min-w-[44px] min-h-[44px] flex items-center justify-center"
+          class="p-1 text-green-500 hover:text-green-600 focus:text-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 rounded min-w-9 min-h-9 flex items-center justify-center"
           title="Save"
         >
           <Icon name="Check" class="w-4 h-4" aria-hidden="true" />
@@ -115,7 +115,7 @@
           @keydown.enter.stop="cancelEditTitle"
           @keydown.space.stop.prevent="cancelEditTitle"
           aria-label="Cancel editing title"
-          class="p-2 text-gray-400 hover:text-red-500 focus:text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded min-w-[44px] min-h-[44px] flex items-center justify-center"
+          class="p-1 text-gray-400 hover:text-red-500 focus:text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded min-w-9 min-h-9 flex items-center justify-center"
           title="Cancel"
         >
           <Icon name="X" class="w-3 h-3" />
@@ -124,7 +124,7 @@
     </div>
 
     <!-- Description & first image preview -->
-    <div v-if="firstImageSrc || plainTextDescription" class="mb-3 flex items-start gap-3">
+    <div v-if="firstImageSrc || plainTextDescription" class="mb-2 flex items-start gap-2">
       <img
         v-if="firstImageSrc"
         :src="firstImageSrc"
@@ -143,7 +143,7 @@
     </div>
 
     <!-- Tags -->
-    <div v-if="todo.tags && todo.tags.length" class="flex flex-wrap gap-1 mb-3">
+    <div v-if="todo.tags && todo.tags.length" class="flex flex-wrap gap-1 mb-2">
       <span
         v-for="tag in todo.tags"
         :key="tag"
