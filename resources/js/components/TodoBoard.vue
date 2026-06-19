@@ -1,7 +1,7 @@
 <template>
   <div 
     id="main-content"
-    class="h-full flex flex-col"
+    class="h-full flex flex-col min-h-0"
     :class="{ 'pb-24': props.isSelectMode && hasSelection }"
     role="main"
     tabindex="-1"
@@ -121,94 +121,85 @@
 
     <!-- Header with Search and Filters -->
     <div 
-      class="mb-4 py-2 px-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 relative"
+      class="mb-1 py-1 px-2.5 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 relative shrink-0"
       :style="currentProject ? {
-        borderTop: `4px solid ${currentProject.color}`,
-        backgroundColor: `${currentProject.color}10`
+        borderTop: `3px solid ${currentProject.color}`,
+        backgroundColor: `${currentProject.color}08`
       } : {}"
     >
-      <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-        <div class="flex-1">
-          <div class="flex items-center gap-3 mb-2">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+      <div class="flex flex-col gap-1.5 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-2">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
               {{ currentProject ? currentProject.name : t('dashboard.todo_board') }}
             </h1>
             <button
               v-if="currentProject && !props.isReadOnly"
               @click="startEditProject"
-              class="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+              class="p-0.5 text-gray-400 hover:text-blue-500 transition-colors shrink-0"
               :title="t('dashboard.edit_project_name')"
             >
-<Icon name="Edit3" class="w-5 h-5" />
+              <Icon name="Edit3" class="w-4 h-4" />
             </button>
           </div>
-          <div class="text-gray-600 dark:text-gray-400">
+          <div class="text-xs text-gray-600 dark:text-gray-400 truncate">
             <span v-if="!currentProject">{{ t('dashboard.select_project') }}</span>
-            <div v-else class="flex items-center gap-2">
-              <span>{{ t('dashboard.project_label') }}: {{ currentProject.key }} - </span>
-              <div v-if="!editingProjectDescription" class="flex items-center gap-2">
-                <span>{{ currentProject.description || t('dashboard.no_description') }}</span>
+            <div v-else class="flex items-center gap-1.5 min-w-0">
+              <span class="shrink-0">{{ currentProject.key }}</span>
+              <span class="text-gray-400">·</span>
+              <div v-if="!editingProjectDescription" class="flex items-center gap-1 min-w-0">
+                <span class="truncate">{{ currentProject.description || t('dashboard.no_description') }}</span>
                 <button
                   v-if="!props.isReadOnly"
                   @click="startEditProjectDescription"
-                  class="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                  class="p-0.5 text-gray-400 hover:text-blue-500 transition-colors shrink-0"
                   :title="t('dashboard.edit_project_description')"
                 >
-                  <Icon name="Edit3" class="w-4 h-4" />
+                  <Icon name="Edit3" class="w-3 h-3" />
                 </button>
               </div>
-              <div v-else class="flex items-center gap-2">
+              <div v-else class="flex items-center gap-1 min-w-0 flex-1">
                 <input
                   v-model="editingProjectDescriptionText"
                   @keydown.enter="saveProjectDescription"
                   @keydown.escape="cancelEditProjectDescription"
                   @blur="saveProjectDescription"
-                  class="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  class="flex-1 min-w-0 px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   :placeholder="t('todos.enter_project_description')"
                   ref="projectDescriptionInput"
                 />
-                <button
-                  @click="saveProjectDescription"
-                  class="p-1 text-green-500 hover:text-green-600 transition-colors"
-                  :title="t('common.save')"
-                >
-                  <Icon name="Check" class="w-4 h-4" />
+                <button @click="saveProjectDescription" class="p-0.5 text-green-500 hover:text-green-600 shrink-0" :title="t('common.save')">
+                  <Icon name="Check" class="w-3 h-3" />
                 </button>
-                <button
-                  @click="cancelEditProjectDescription"
-                  class="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                  :title="t('common.cancel')"
-                >
-                  <Icon name="X" class="w-4 h-4" />
+                <button @click="cancelEditProjectDescription" class="p-0.5 text-gray-400 hover:text-red-500 shrink-0" :title="t('common.cancel')">
+                  <Icon name="X" class="w-3 h-3" />
                 </button>
               </div>
             </div>
           </div>
           
           <!-- Create Project Button (only shown when no project is selected and not at FREE limit) -->
-          <div v-if="!currentProject && !props.isReadOnly && !isAtFreeProjectLimit" class="mt-4">
+          <div v-if="!currentProject && !props.isReadOnly && !isAtFreeProjectLimit" class="mt-2">
             <button
               @click="showCreateProject = true"
-              class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer
+              class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md border cursor-pointer
                      bg-black text-white hover:bg-gray-900 hover:border-gray-900
                      dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300
                      focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 dark:focus:ring-gray-300"
             >
-              <Icon name="Plus" class="w-4 h-4" />
+              <Icon name="Plus" class="w-3.5 h-3.5" />
               {{ t('dashboard.create_project') }}
             </button>
           </div>
         </div>
         
-        <!-- Mobile Layout: Stacked rows -->
-        <div class="flex flex-col gap-3 md:flex-row md:items-center md:gap-3">
-          <!-- Project Select Dropdown - Full width on mobile -->
-          <div class="relative flex items-center gap-2">
-            <!-- Client Select Dropdown -->
+        <!-- Project select + action buttons -->
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+          <div class="relative flex items-center gap-1.5">
             <select
               v-if="clients.length > 0"
               v-model="selectedClientIdModel"
-              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-pointer"
+              class="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-pointer"
               title="Filter by Client"
             >
               <option :value="null">All Clients</option>
@@ -221,12 +212,11 @@
               </option>
             </select>
             
-            <!-- HTML Select Dropdown -->
             <select
               v-model="selectedProjectId"
               @change="onProjectChange"
-              class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 w-full md:min-w-[200px] cursor-pointer"
-              :style="currentProject ? { borderLeftColor: currentProject.color, borderLeftWidth: '4px' } : {}"
+              class="px-2.5 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 min-w-[10rem] md:min-w-[12rem] cursor-pointer"
+              :style="currentProject ? { borderLeftColor: currentProject.color, borderLeftWidth: '3px' } : {}"
             >
               <option 
                 v-for="project in filteredProjects" 
@@ -238,8 +228,7 @@
             </select>
           </div>
           
-          <!-- Action Buttons Row - Full width on mobile -->
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-1.5">
             <!-- Add Todo Button - Full width on mobile, auto width on desktop -->
             <button
               v-if="!props.isReadOnly"
@@ -249,7 +238,7 @@
               :disabled="!currentProject"
               :aria-label="currentProject ? t('dashboard.add') : t('dashboard.add') + ' (Select a project first)'"
               :class="[
-                'flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+                'inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
                 'bg-black text-white hover:bg-gray-900 hover:border-gray-900 focus:ring-gray-900',
                 'dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 dark:focus:ring-gray-300',
                 props.showActivityFeed ? 'lg:px-2 lg:gap-0' : ''
@@ -269,7 +258,7 @@
               :disabled="!currentProject"
               :aria-label="currentProject ? t('dashboard.add_bulk') : t('dashboard.add_bulk') + ' (Select a project first)'"
               :class="[
-                'flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+                'inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
                 'bg-black text-white hover:bg-gray-900 hover:border-gray-900 focus:ring-gray-900',
                 'dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 dark:focus:ring-gray-300',
                 props.showActivityFeed ? 'lg:px-2 lg:gap-0' : ''
@@ -290,7 +279,7 @@
               :aria-label="(isRecording || isPreRecording) ? t('dashboard.stop_recording') : t('dashboard.voice_record')"
               :aria-pressed="isRecording || isPreRecording"
               :class="[
-                'flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+                'inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
                 (isRecording || isPreRecording)
                   ? 'bg-red-600 text-white hover:bg-red-700 border-red-700 focus:ring-red-500' 
                   : 'bg-black text-white hover:bg-gray-900 hover:border-gray-900 focus:ring-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300 dark:focus:ring-gray-300',
@@ -312,7 +301,7 @@
               :aria-pressed="showFilters"
               :title="showFilters ? t('dashboard.hide_filters') : t('dashboard.show_filters')"
               :class="[
-                'inline-flex items-center justify-center w-10 h-10 rounded-lg border transition-colors',
+                'inline-flex items-center justify-center w-8 h-8 rounded-md border transition-colors',
                 showFilters 
                   ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-600' 
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -325,7 +314,7 @@
       </div>
 
   <!-- Bulk Pending - Mobile-friendly stacked cards -->
-  <div v-if="pendingBulkTodos.length > 0" class="mt-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+  <div v-if="pendingBulkTodos.length > 0" class="mt-2 p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
     <div class="flex items-center justify-between mb-3">
       <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">
         {{ t('dashboard.pending_todos_to_add') }} ({{ pendingBulkTodos.length }})
@@ -371,7 +360,7 @@
     </div>
   </div>
       <!-- Search and Filters -->
-      <div v-if="showFilters" class="mt-4 space-y-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+      <div v-if="showFilters" class="mt-2 space-y-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-2.5">
         <!-- Search Bar -->
         <div class="flex-1 relative">
           <Icon name="Search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -462,7 +451,7 @@
       </div>
       
       <!-- Filter Status Indicator -->
-      <div v-if="hasActiveFilters" class="mt-3 flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-2">
+      <div v-if="hasActiveFilters" class="mt-2 flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md px-3 py-1.5">
         <div class="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
           <Icon name="Filter" class="w-4 h-4" />
           <span>{{ t('dashboard.filters_applied') }}</span>
@@ -474,6 +463,11 @@
           <Icon name="X" class="w-4 h-4" />
           <span>{{ t('dashboard.clear_filters') }}</span>
         </button>
+      </div>
+
+      <!-- Compact stats inside header -->
+      <div v-if="!props.showCalendar" class="mt-1.5 pt-1.5 border-t border-gray-200 dark:border-gray-700">
+        <TodoStats :todos="todosState" />
       </div>
     </div>
 
@@ -500,7 +494,7 @@
     
 
     <!-- Kanban Board -->
-    <div class="flex-1 flex gap-3 overflow-x-auto pb-2">
+    <div class="flex-1 flex gap-2 overflow-x-auto pb-1 min-h-0">
       <TodoColumn
         :title="t('todos.to_do')"
         status="todo"
@@ -582,11 +576,6 @@
         @toggle-selection="toggleSelection"
         @todo-click="emit('todo-click', $event)"
       />
-    </div>
-
-    <!-- Statistics - Full Width Below Columns -->
-    <div v-if="!props.showCalendar" class="w-full mt-4">
-      <TodoStats :todos="todosState" />
     </div>
 
     <!-- Todo Form Modal -->

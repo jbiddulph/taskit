@@ -452,18 +452,26 @@ class TodoController extends Controller
             'todo_orders.*.order' => 'required|integer|min:1',
         ]);
 
+        $projectIds = collect();
+
         foreach ($request->todo_orders as $todoOrder) {
             $todo = Todo::find($todoOrder['id']);
-            
+
             // Check if user can access this todo
-            if (!$todo->canAccess($user)) {
+            if (!$todo || !$todo->canAccess($user)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized to reorder this todo'
                 ], 403);
             }
-            
+
             $todo->update(['order' => $todoOrder['order']]);
+            $projectIds->push($todo->project_id);
+        }
+
+        CacheService::invalidateUserCaches($user->id, $user->company_id);
+        foreach ($projectIds->filter()->unique() as $projectId) {
+            CacheService::invalidateProjectCaches($projectId, $user->company_id);
         }
 
         return response()->json([
@@ -533,8 +541,18 @@ class TodoController extends Controller
         // Load relationships to ensure complete data is returned
         $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
 
+        CacheService::invalidateUserCaches($user->id, $user->company_id);
+        if ($todo->project_id) {
+            CacheService::invalidateProjectCaches($todo->project_id, $user->company_id);
+        }
+
         // Send real-time notification
         $this->webSocketService->todoStatusChanged($todo, $oldStatus);
+
+        Activity::createTodoActivity($todo, $user, 'todo_status_changed', [
+            'old_status' => $oldStatus,
+            'new_status' => $todo->status,
+        ]);
 
         return response()->json([
             'success' => true,

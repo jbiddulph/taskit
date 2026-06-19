@@ -139,13 +139,13 @@ const toggleSelectMode = () => {
 
         <MeetingNotesGeneratingBanner />
         
-        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+        <div class="flex h-full flex-1 flex-col gap-2 overflow-x-auto rounded-xl p-2">
             <div :class="[
-                'grid gap-4 h-full',
+                'grid gap-2 h-full min-h-0',
                 showActivityFeed ? 'grid-cols-1 lg:grid-cols-4' : 'grid-cols-1'
             ]">
                 <!-- Main Todo Board -->
-                <div :class="showActivityFeed ? 'lg:col-span-3' : 'col-span-1'">
+                <div :class="[showActivityFeed ? 'lg:col-span-3' : 'col-span-1', 'h-full min-h-0']">
                     <TodoBoard 
                         @project-changed="handleProjectChange" 
                         :show-activity-feed="showActivityFeed"

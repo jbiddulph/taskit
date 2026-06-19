@@ -2,7 +2,7 @@
   <div
     :data-todo-id="todo.id"
     :class="[
-      'group relative rounded-lg border p-2.5 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer touch-manipulation',
+      'group relative rounded-md border p-2 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer touch-manipulation',
       isOverdueAndNotDone 
         ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-700' 
         : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700',
@@ -12,7 +12,7 @@
     @click="handleClick"
   >
     <!-- Selection checkbox (only in select mode) -->
-    <div v-if="isSelectMode" class="absolute top-1.5 left-1.5 z-10 min-w-9 min-h-9 flex items-center justify-center -m-1.5">
+    <div v-if="isSelectMode" class="absolute top-1 left-1 z-10 min-w-8 min-h-8 flex items-center justify-center -m-1">
       <input
         type="checkbox"
         :checked="isSelected"
@@ -24,11 +24,11 @@
     </div>
 
     <!-- Priority indicator -->
-    <div class="flex items-start justify-between" :class="{ 'ml-6': isSelectMode }">
-      <div class="flex items-center gap-2">
+    <div class="flex items-start justify-between gap-1" :class="{ 'ml-5': isSelectMode }">
+      <div class="flex items-center gap-1 flex-wrap">
         <span
           :class="[
-            'inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium',
+            'inline-flex items-center px-1.5 py-0.5 rounded-full text-[11px] font-medium leading-none',
             priorityClasses[todo.priority]
           ]"
         >
@@ -36,7 +36,7 @@
         </span>
         <span
           v-if="todo.type"
-          class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+          class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium leading-none bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
         >
           <Icon :name="getTypeIcon(todo.type)" class="w-3 h-3" />
           {{ todo.type }}
@@ -57,7 +57,7 @@
           @keydown.enter.stop="$emit('delete', String(todo.id))"
           @keydown.space.stop.prevent="$emit('delete', String(todo.id))"
           :aria-label="`Delete todo: ${todo.title}`"
-          class="opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-red-500 focus:text-red-500 transition-opacity focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded min-w-9 min-h-9 flex items-center justify-center p-1"
+          class="opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-red-500 focus:text-red-500 transition-opacity focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded min-w-8 min-h-8 flex items-center justify-center p-0.5"
         >
           <Icon name="Trash2" class="w-4 h-4" aria-hidden="true" />
         </button>
@@ -65,11 +65,11 @@
     </div>
 
     <!-- Title -->
-    <div class="mb-1">
-      <div v-if="!editingTitle" class="flex items-center gap-2">
+    <div>
+      <div v-if="!editingTitle" class="flex items-center gap-1">
         <h3
           :class="[
-            'font-medium text-gray-900 dark:text-gray-100 line-clamp-2 flex-1 transition-colors',
+            'text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2 flex-1 transition-colors leading-snug',
             { 'line-through opacity-60': todo.status === 'done' },
             { 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400': !isReadOnly }
           ]"
@@ -84,7 +84,7 @@
           @keydown.enter.stop="startEditTitle"
           @keydown.space.stop.prevent="startEditTitle"
           :aria-label="`Edit title of todo: ${todo.title}`"
-          class="opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-blue-500 focus:text-blue-500 transition-opacity p-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded min-w-9 min-h-9 flex items-center justify-center"
+          class="opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-blue-500 focus:text-blue-500 transition-opacity p-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded min-w-8 min-h-8 flex items-center justify-center"
           title="Edit title"
         >
           <Icon name="Edit3" class="w-4 h-4" aria-hidden="true" />
@@ -105,7 +105,7 @@
           @keydown.enter.stop="saveTitle"
           @keydown.space.stop.prevent="saveTitle"
           aria-label="Save title"
-          class="p-1 text-green-500 hover:text-green-600 focus:text-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 rounded min-w-9 min-h-9 flex items-center justify-center"
+          class="p-0.5 text-green-500 hover:text-green-600 focus:text-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 rounded min-w-8 min-h-8 flex items-center justify-center"
           title="Save"
         >
           <Icon name="Check" class="w-4 h-4" aria-hidden="true" />
@@ -115,7 +115,7 @@
           @keydown.enter.stop="cancelEditTitle"
           @keydown.space.stop.prevent="cancelEditTitle"
           aria-label="Cancel editing title"
-          class="p-1 text-gray-400 hover:text-red-500 focus:text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded min-w-9 min-h-9 flex items-center justify-center"
+          class="p-0.5 text-gray-400 hover:text-red-500 focus:text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded min-w-8 min-h-8 flex items-center justify-center"
           title="Cancel"
         >
           <Icon name="X" class="w-3 h-3" />
@@ -124,17 +124,17 @@
     </div>
 
     <!-- Description & first image preview -->
-    <div v-if="firstImageSrc || plainTextDescription" class="mb-2 flex items-start gap-2">
+    <div v-if="firstImageSrc || plainTextDescription" class="mt-1 mb-1 flex items-start gap-1.5">
       <img
         v-if="firstImageSrc"
         :src="firstImageSrc"
         alt="attachment"
-        class="w-14 h-14 object-cover rounded border border-gray-200 dark:border-gray-700 flex-shrink-0"
+        class="w-10 h-10 object-cover rounded border border-gray-200 dark:border-gray-700 flex-shrink-0"
       />
       <p
         v-if="plainTextDescription"
         :class="[
-          'text-sm text-gray-600 dark:text-gray-400 line-clamp-2',
+          'text-xs text-gray-600 dark:text-gray-400 line-clamp-1',
           { 'line-through opacity-60': todo.status === 'done' }
         ]"
       >
@@ -143,7 +143,7 @@
     </div>
 
     <!-- Tags -->
-    <div v-if="todo.tags && todo.tags.length" class="flex flex-wrap gap-1 mb-2">
+    <div v-if="todo.tags && todo.tags.length" class="flex flex-wrap gap-1 mb-1">
       <span
         v-for="tag in todo.tags"
         :key="tag"
@@ -157,21 +157,21 @@
     </div>
 
     <!-- Assignee and due date -->
-    <div class="flex items-center justify-between text-sm">
-      <div class="flex items-center gap-2">
+    <div class="flex items-center justify-between text-xs gap-1">
+      <div class="flex items-center gap-1.5 min-w-0">
         <div
           v-if="todo.assignee"
-          class="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-medium"
+          class="w-5 h-5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-[10px] font-medium shrink-0"
         >
           {{ todo.assignee.charAt(0).toUpperCase() }}
         </div>
-        <span v-else class="text-gray-400">Unassigned</span>
+        <span v-else class="text-gray-400 text-[11px]">Unassigned</span>
         
         <!-- Todo Unique ID -->
         <button
           @click.stop="copyTodoId"
           :class="[
-            'px-2 py-0.5 text-xs font-mono rounded border transition-all duration-200 cursor-pointer',
+            'px-1.5 py-0.5 text-[10px] font-mono rounded border transition-all duration-200 cursor-pointer',
             copyFeedback === 'copied' 
               ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600' 
               : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -187,16 +187,16 @@
         </button>
       </div>
       
-      <div class="flex items-center gap-1 text-gray-500">
-        <Icon name="Calendar" class="w-4 h-4" />
+      <div class="flex items-center gap-1 text-gray-500 shrink-0 text-[11px]">
+        <Icon name="Calendar" class="w-3 h-3" />
         <span v-if="todo.due_date">{{ formatDate(todo.due_date) }}</span>
         <span v-else>No due date</span>
       </div>
     </div>
 
     <!-- Story points (only show on main todos, not subtasks) -->
-    <div v-if="!todo.parent_task_id" class="absolute top-2 right-2 flex items-center gap-1">
-      <span v-if="todo.story_points" class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300">
+    <div v-if="!todo.parent_task_id" class="absolute top-1.5 right-1.5 flex items-center gap-0.5">
+      <span v-if="todo.story_points" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-700 text-[10px] font-medium text-gray-700 dark:text-gray-300">
         {{ todo.story_points }}
       </span>
       <span v-if="todo.is_new_assigned" class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-700">
@@ -212,12 +212,12 @@
     </div>
 
     <!-- Subtask Controls (only for non-subtasks) -->
-    <div v-if="!todo.parent_task_id" class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-      <div class="flex items-center justify-between">
+    <div v-if="!todo.parent_task_id" class="mt-1.5 pt-1.5 border-t border-gray-200 dark:border-gray-700">
+      <div class="flex items-center justify-between gap-1">
         <button
           v-if="!isReadOnly"
           @click.stop="$emit('add-subtask', todo)"
-          class="flex items-center gap-2 text-xs text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          class="flex items-center gap-1 text-[11px] text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
         >
           <Icon name="Plus" class="w-3 h-3" />
           Add Subtask
@@ -227,7 +227,7 @@
         <button
           v-if="todo.subtasks && todo.subtasks.length > 0"
           @click.stop="toggleSubtasks"
-          class="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+          class="flex items-center gap-0.5 text-[11px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors shrink-0"
         >
           <Icon 
             :name="subtasksVisible ? 'ChevronUp' : 'ChevronDown'" 

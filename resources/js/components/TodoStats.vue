@@ -1,55 +1,27 @@
 <template>
-  <div class="grid grid-cols-4 gap-1 sm:gap-2 mb-3">
-    <!-- Total Todos -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-2">
-      <div class="text-center">
-        <p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{t('dashboard.total_todos')}}</p>
-        <div class="flex items-center justify-center">
-          <div class="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-2">
-            <Icon name="List" class="w-4 h-4 text-blue-600 dark:text-blue-400" />
-          </div>
-          <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ stats.total }}</p>
-        </div>
-      </div>
+  <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+    <div class="inline-flex items-center gap-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-1.5 py-0.5">
+      <Icon name="List" class="w-3 h-3 text-blue-600 dark:text-blue-400" />
+      <span class="text-gray-600 dark:text-gray-400 hidden sm:inline">{{ t('dashboard.total_todos') }}</span>
+      <span class="font-semibold text-gray-900 dark:text-gray-100">{{ stats.total }}</span>
     </div>
 
-    <!-- In Progress -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-2">
-      <div class="text-center">
-        <p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{t('dashboard.in_progress')}}</p>
-        <div class="flex items-center justify-center">
-          <div class="w-6 h-6 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center mr-2">
-            <Icon name="Clock" class="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
-          </div>
-          <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ stats.inProgress }}</p>
-        </div>
-      </div>
+    <div class="inline-flex items-center gap-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-1.5 py-0.5">
+      <Icon name="Clock" class="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
+      <span class="text-gray-600 dark:text-gray-400 hidden sm:inline">{{ t('dashboard.in_progress') }}</span>
+      <span class="font-semibold text-gray-900 dark:text-gray-100">{{ stats.inProgress }}</span>
     </div>
 
-    <!-- Completed -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-2">
-      <div class="text-center">
-        <p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{t('dashboard.completed')}}</p>
-        <div class="flex items-center justify-center">
-          <div class="w-6 h-6 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-2">
-            <Icon name="CheckCircle" class="w-4 h-4 text-green-600 dark:text-green-400" />
-          </div>
-          <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ stats.done }}</p>
-        </div>
-      </div>
+    <div class="inline-flex items-center gap-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-1.5 py-0.5">
+      <Icon name="CheckCircle" class="w-3 h-3 text-green-600 dark:text-green-400" />
+      <span class="text-gray-600 dark:text-gray-400 hidden sm:inline">{{ t('dashboard.completed') }}</span>
+      <span class="font-semibold text-gray-900 dark:text-gray-100">{{ stats.done }}</span>
     </div>
 
-    <!-- Overdue -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-2">
-      <div class="text-center">
-        <p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{t('dashboard.overdue')}}</p>
-        <div class="flex items-center justify-center">
-          <div class="w-6 h-6 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center mr-2">
-            <Icon name="AlertTriangle" class="w-4 h-4 text-red-600 dark:text-red-400" />
-          </div>
-          <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ stats.overdue }}</p>
-        </div>
-      </div>
+    <div class="inline-flex items-center gap-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-1.5 py-0.5">
+      <Icon name="AlertTriangle" class="w-3 h-3 text-red-600 dark:text-red-400" />
+      <span class="text-gray-600 dark:text-gray-400 hidden sm:inline">{{ t('dashboard.overdue') }}</span>
+      <span class="font-semibold text-gray-900 dark:text-gray-100">{{ stats.overdue }}</span>
     </div>
   </div>
 </template>
