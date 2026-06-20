@@ -44,6 +44,7 @@ class TodoController extends Controller
             'type' => $request->get('type'),
             'assignee' => $request->get('assignee'),
             'search' => $request->get('search'),
+            'has_location' => $request->get('has_location'),
             'page' => $request->get('page', 1),
             'per_page' => $request->get('per_page', 20)
         ];
@@ -96,6 +97,10 @@ class TodoController extends Controller
 
             if ($request->boolean('due_today')) {
                 $query->dueToday();
+            }
+
+            if ($request->boolean('has_location')) {
+                $query->withLocation();
             }
 
             $parents = $query->get();
@@ -216,6 +221,10 @@ class TodoController extends Controller
             'tags.*' => 'string|max:50',
             'assignee' => 'nullable|string|max:255',
             'due_date' => 'nullable|date|after:today',
+            'location_name' => 'nullable|string|max:255',
+            'location_address' => 'nullable|string|max:500',
+            'latitude' => 'nullable|numeric|between:-90,90|required_with:longitude',
+            'longitude' => 'nullable|numeric|between:-180,180|required_with:latitude',
             'story_points' => 'nullable|integer|min:1|max:21',
             'status' => 'required|in:todo,in-progress,qa-testing,done',
             'email_assignee' => 'sometimes|boolean',
@@ -271,6 +280,10 @@ class TodoController extends Controller
             'tags' => $request->tags,
             'assignee' => $request->assignee,
             'due_date' => $request->due_date,
+            'location_name' => $request->location_name,
+            'location_address' => $request->location_address,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
             'company_id' => $user->company_id,
             'story_points' => $request->story_points,
             'status' => $request->status,
@@ -371,6 +384,10 @@ class TodoController extends Controller
             'tags.*' => 'string|max:50',
             'assignee' => 'nullable|string|max:255',
             'due_date' => 'nullable|date',
+            'location_name' => 'nullable|string|max:255',
+            'location_address' => 'nullable|string|max:500',
+            'latitude' => 'nullable|numeric|between:-90,90|required_with:longitude',
+            'longitude' => 'nullable|numeric|between:-180,180|required_with:latitude',
             'story_points' => 'nullable|integer|min:1|max:21',
             'status' => 'sometimes|required|in:todo,in-progress,qa-testing,done',
         ]);
@@ -387,7 +404,8 @@ class TodoController extends Controller
 
         $todo->update($request->only([
             'title', 'description', 'priority', 'type', 'tags',
-            'assignee', 'due_date', 'story_points', 'status'
+            'assignee', 'due_date', 'story_points', 'status',
+            'location_name', 'location_address', 'latitude', 'longitude',
         ]));
 
         $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);

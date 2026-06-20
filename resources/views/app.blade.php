@@ -205,6 +205,7 @@
         <script>
             window.VITE_SUPABASE_URL = "{{ env('VITE_SUPABASE_URL') }}";
             window.VITE_SUPABASE_ANON_KEY = "{{ env('VITE_SUPABASE_ANON_KEY') }}";
+            window.VITE_MAPBOX_ACCESS_TOKEN = "{{ env('VITE_MAPBOX_ACCESS_TOKEN') }}";
             
             // Mobile debugging - log errors to help diagnose issues
             window.addEventListener('error', function(e) {

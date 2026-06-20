@@ -466,7 +466,7 @@
       </div>
 
       <!-- Compact stats inside header -->
-      <div v-if="!props.showCalendar" class="mt-1.5 pt-1.5 border-t border-gray-200 dark:border-gray-700">
+      <div v-if="!props.showCalendar && !props.showMap" class="mt-1.5 pt-1.5 border-t border-gray-200 dark:border-gray-700">
         <TodoStats :todos="todosState" />
       </div>
     </div>
@@ -474,6 +474,11 @@
     <!-- Statistics / Calendar -->
     <div v-if="props.showCalendar" class="mb-4">
       <CalendarView :todos="todosState" :isReadOnly="props.isReadOnly" @edit-todo="handleEditTodoFromCalendar" @add-todo="handleAddTodoFromCalendar" />
+    </div>
+
+    <!-- Map view -->
+    <div v-if="props.showMap" class="mb-4">
+      <MapView :todos="todosState" :isReadOnly="props.isReadOnly" @edit-todo="handleEditTodoFromCalendar" />
     </div>
 
     <!-- Bulk Operations Bar -->
@@ -843,6 +848,7 @@ import TodoForm from './TodoForm.vue';
 import TodoStats from './TodoStats.vue';
 import TypeFilter from './TypeFilter.vue';
 import CalendarView from './CalendarView.vue';
+import MapView from './MapView.vue';
 import BulkOperationsBar from './BulkOperationsBar.vue';
 import KeyboardShortcutsHelp from './KeyboardShortcutsHelp.vue';
 import { todoApi, type Project, type Todo } from '@/services/todoApi';
@@ -860,6 +866,7 @@ const page = usePage();
 const props = defineProps<{
   showActivityFeed?: boolean;
   showCalendar?: boolean;
+  showMap?: boolean;
   isSelectMode?: boolean;
   isReadOnly?: boolean;
   todos?: any[];
@@ -872,6 +879,7 @@ const emit = defineEmits<{
   'project-changed': [project: any];
   'toggle-activity-feed': [];
   'toggle-calendar': [];
+  'toggle-map': [];
   'toggle-select-mode': [];
   'todo-click': [todo: any];
 }>();

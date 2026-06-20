@@ -188,6 +188,13 @@
       </div>
       
       <div class="flex items-center gap-1 text-gray-500 shrink-0 text-[11px]">
+        <span
+          v-if="todo.latitude != null && todo.longitude != null"
+          class="inline-flex items-center text-blue-600 dark:text-blue-400"
+          :title="todo.location_name || todo.location_address || 'Location set'"
+        >
+          <Icon name="MapPin" class="w-3 h-3" />
+        </span>
         <Icon name="Calendar" class="w-3 h-3" />
         <span v-if="todo.due_date">{{ formatDate(todo.due_date) }}</span>
         <span v-else>No due date</span>

@@ -157,6 +157,8 @@
             </div>
           </div>
 
+          <LocationPicker v-model="location" />
+
         <div
           v-if="!isEditing"
           class="flex items-start gap-3 rounded-md border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-800/50"
@@ -243,6 +245,7 @@ import TodoTemplateSelector from '@/components/TodoTemplateSelector.vue';
 import { usePage } from '@inertiajs/vue3';
 import Icon from '@/components/Icon.vue';
 import TodoComments from '@/components/TodoComments.vue';
+import LocationPicker, { type LocationValue } from '@/components/LocationPicker.vue';
 import { type Project } from '@/services/todoApi';
 import type { Todo } from '@/services/todoApi';
 // import { uploadImageToTaskitBucket } from '@/services/supabaseClient';
@@ -327,6 +330,13 @@ const form = ref({
   email_assignee: false,
 });
 
+const location = ref<LocationValue>({
+  location_name: null,
+  location_address: null,
+  latitude: null,
+  longitude: null,
+});
+
 const tagsInput = ref('');
 
 const selectedAssignee = computed<SimpleUser | null>(() => {
@@ -365,6 +375,12 @@ const resetForm = () => {
     email_assignee: false,
   };
   tagsInput.value = '';
+  location.value = {
+    location_name: null,
+    location_address: null,
+    latitude: null,
+    longitude: null,
+  };
 };
 
 // Initialize form when editing
@@ -385,6 +401,13 @@ watch(() => props.todo, (newTodo) => {
         form.value.due_date = date.toISOString().split('T')[0];
       }
     }
+
+    location.value = {
+      location_name: newTodo.location_name ?? null,
+      location_address: newTodo.location_address ?? null,
+      latitude: newTodo.latitude ?? null,
+      longitude: newTodo.longitude ?? null,
+    };
   } else {
     resetForm();
     // Auto-assign current user on create
@@ -424,6 +447,10 @@ const handleSubmit = async () => {
       assignee: form.value.assignee ? form.value.assignee : null,
       due_date: form.value.due_date ? form.value.due_date : null,
       story_points: form.value.story_points ? form.value.story_points : null,
+      location_name: location.value.location_name,
+      location_address: location.value.location_address,
+      latitude: location.value.latitude,
+      longitude: location.value.longitude,
     };
     
     if (props.isEditing) {

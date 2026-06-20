@@ -50,6 +50,21 @@ const showActivityFeed = ref(false);
 
 // Calendar and Filters state
 const showCalendar = ref(false);
+const showMap = ref(false);
+
+const toggleCalendar = () => {
+    showCalendar.value = !showCalendar.value;
+    if (showCalendar.value) {
+        showMap.value = false;
+    }
+};
+
+const toggleMap = () => {
+    showMap.value = !showMap.value;
+    if (showMap.value) {
+        showCalendar.value = false;
+    }
+};
 
 // Bulk selection state
 const isSelectMode = ref(false);
@@ -94,7 +109,7 @@ const toggleSelectMode = () => {
 
             <!-- Calendar Button -->
             <button
-                @click="showCalendar = !showCalendar"
+                @click="toggleCalendar"
                 :title="showCalendar ? t('dashboard.hide_calendar') : t('dashboard.show_calendar')"
                 :class="[
                     'inline-flex items-center justify-center p-2 transition-colors',
@@ -104,6 +119,20 @@ const toggleSelectMode = () => {
                 ]"
             >
                 <Icon name="Calendar" class="w-5 h-5" />
+            </button>
+
+            <!-- Map Button -->
+            <button
+                @click="toggleMap"
+                :title="showMap ? t('dashboard.hide_map') : t('dashboard.show_map')"
+                :class="[
+                    'inline-flex items-center justify-center p-2 transition-colors',
+                    showMap
+                        ? 'text-blue-600 dark:text-blue-400'
+                        : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                ]"
+            >
+                <Icon name="Map" class="w-5 h-5" />
             </button>
 
             <!-- Activity Feed Toggle Button -->
@@ -150,9 +179,11 @@ const toggleSelectMode = () => {
                         @project-changed="handleProjectChange" 
                         :show-activity-feed="showActivityFeed"
                         :show-calendar="showCalendar"
+                        :show-map="showMap"
                         :is-select-mode="isSelectMode"
                         @toggle-activity-feed="showActivityFeed = !showActivityFeed"
-                        @toggle-calendar="showCalendar = !showCalendar"
+                        @toggle-calendar="toggleCalendar"
+                        @toggle-map="toggleMap"
                         @toggle-select-mode="toggleSelectMode"
                     />
                 </div>

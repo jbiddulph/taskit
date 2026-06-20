@@ -26,6 +26,10 @@ class Todo extends Model
         'tags',
         'assignee',
         'due_date',
+        'location_name',
+        'location_address',
+        'latitude',
+        'longitude',
         'story_points',
         'status',
         'order',
@@ -35,6 +39,8 @@ class Todo extends Model
     protected $casts = [
         'tags' => 'array',
         'due_date' => 'date',
+        'latitude' => 'float',
+        'longitude' => 'float',
         'story_points' => 'integer',
     ];
 
@@ -135,6 +141,11 @@ class Todo extends Model
     public function scopeDueToday(Builder $query): void
     {
         $query->whereDate('due_date', now()->toDateString());
+    }
+
+    public function scopeWithLocation(Builder $query): void
+    {
+        $query->whereNotNull('latitude')->whereNotNull('longitude');
     }
 
     public function scopeSearch(Builder $query, string $search): void

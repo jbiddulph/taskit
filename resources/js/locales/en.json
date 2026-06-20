@@ -63,6 +63,8 @@
     "overdue": "Overdue",
     "show_calendar": "Show Calendar",
     "hide_calendar": "Hide Calendar",
+    "show_map": "Show Map",
+    "hide_map": "Hide Map",
     "show_activity_feed": "Show Activity Feed",
     "hide_activity_feed": "Hide Activity Feed",
     "select_for_bulk_update": "Select for Bulk Update",
@@ -315,6 +317,22 @@
     "settings_saved": "Settings saved successfully",
     "password_changed": "Password changed successfully",
     "profile_updated": "Profile updated successfully"
+  },
+  "map": {
+    "location": "Location",
+    "search_placeholder": "Search address or place...",
+    "selected_location": "Selected location",
+    "clear_location": "Clear",
+    "click_hint": "Search for a place or click the map to set a task location.",
+    "not_configured": "Mapbox is not configured. Add VITE_MAPBOX_ACCESS_TOKEN to your environment.",
+    "task_map": "Task map",
+    "task_map_hint": "{count} tasks with locations on this board",
+    "field_route": "Field route",
+    "plan_route": "Plan route",
+    "planning_route": "Planning route...",
+    "clear_route": "Clear route",
+    "no_located_tasks": "No tasks with locations yet. Add a location in the task form to see them here.",
+    "route_hint": "Select 2 or more stops in visit order, then plan a driving route."
   },
   "comments": {
     "title": "Comments",

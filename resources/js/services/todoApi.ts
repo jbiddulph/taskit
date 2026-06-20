@@ -36,6 +36,10 @@ export interface Todo {
     assignee_email?: string | null;
     email_assignee?: boolean;
     due_date?: string;
+    location_name?: string | null;
+    location_address?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
     story_points?: number;
     status: 'todo' | 'in-progress' | 'qa-testing' | 'done';
     order?: number;
@@ -89,6 +93,7 @@ export interface TodoFilters {
     status?: string;
     overdue?: boolean;
     due_today?: boolean;
+    has_location?: boolean;
 }
 
 export interface TodoStats {

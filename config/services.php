@@ -55,4 +55,8 @@ return [
         'webhook_secret' => env('N8N_WEBHOOK_SECRET'),
     ],
 
+    'mapbox' => [
+        'access_token' => env('VITE_MAPBOX_ACCESS_TOKEN'),
+    ],
+
 ];

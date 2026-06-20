@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\MeetingNotesController;
 use App\Http\Controllers\Api\MeetingNoteProposalController;
 use App\Http\Controllers\Api\N8nMeetingNotesController;
+use App\Http\Controllers\Api\MapboxController;
 
 /*
 |--------------------------------------------------------------------------
@@ -92,6 +93,12 @@ Route::delete('projects/{project}/with-todos', [ProjectController::class, 'destr
     Route::get('meeting-notes/proposals/{proposal}', [MeetingNoteProposalController::class, 'show']);
     Route::post('meeting-notes/proposals/{proposal}/approve', [MeetingNoteProposalController::class, 'approve']);
     Route::post('meeting-notes/proposals/{proposal}/dismiss', [MeetingNoteProposalController::class, 'dismiss']);
+
+    // Mapbox — geocoding & route planning for location-aware tasks
+    Route::get('mapbox/status', [MapboxController::class, 'status']);
+    Route::get('mapbox/geocode', [MapboxController::class, 'geocode']);
+    Route::get('mapbox/reverse-geocode', [MapboxController::class, 'reverseGeocode']);
+    Route::post('mapbox/directions', [MapboxController::class, 'directions']);
 
     // Activity routes
     Route::get('activities', [ActivityController::class, 'index']);
