@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useResizeObserver } from '@vueuse/core';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, getMapboxAccessToken, hasMapbox } from '@/services/mapboxClient';
@@ -39,6 +40,7 @@ const mapError = ref<string | null>(null);
 let map: mapboxgl.Map | null = null;
 let marker: mapboxgl.Marker | null = null;
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
+let initTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const hasLocation = computed(
     () => props.modelValue.latitude != null && props.modelValue.longitude != null,
@@ -58,6 +60,11 @@ const updateLocation = (location: Partial<LocationValue>) => {
     });
 };
 
+const resizeMap = () => {
+    if (!map) return;
+    map.resize();
+};
+
 const placeMarker = (longitude: number, latitude: number) => {
     if (!map) return;
     if (!marker) {
@@ -70,8 +77,21 @@ const placeMarker = (longitude: number, latitude: number) => {
     map.flyTo({ center: [longitude, latitude], zoom: 14 });
 };
 
+const destroyMap = () => {
+    marker?.remove();
+    marker = null;
+    map?.remove();
+    map = null;
+    mapReady.value = false;
+};
+
 const initMap = () => {
     if (!mapContainer.value || map || props.disabled) return;
+
+    const container = mapContainer.value;
+    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+        return;
+    }
 
     const token = getMapboxAccessToken();
     if (!token) {
@@ -86,16 +106,18 @@ const initMap = () => {
             : DEFAULT_MAP_CENTER;
 
     map = new mapboxgl.Map({
-        container: mapContainer.value,
+        container,
         style: 'mapbox://styles/mapbox/streets-v12',
         center,
         zoom: hasLocation.value ? 13 : DEFAULT_MAP_ZOOM,
+        attributionControl: true,
     });
 
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
 
     map.on('load', () => {
         mapReady.value = true;
+        resizeMap();
         if (hasLocation.value) {
             placeMarker(props.modelValue.longitude as number, props.modelValue.latitude as number);
         }
@@ -123,6 +145,25 @@ const initMap = () => {
             });
         }
     });
+};
+
+const scheduleMapInit = async () => {
+    if (!hasMapbox() || map || props.disabled) return;
+
+    await nextTick();
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+    if (!mapContainer.value) return;
+
+    initMap();
+    resizeMap();
+
+    if (!map) {
+        initTimeout = setTimeout(() => {
+            initMap();
+            resizeMap();
+        }, 100);
+    }
 };
 
 const runSearch = () => {
@@ -172,6 +213,10 @@ const clearLocation = () => {
     marker = null;
 };
 
+useResizeObserver(mapContainer, () => {
+    resizeMap();
+});
+
 watch(
     () => [props.modelValue.latitude, props.modelValue.longitude],
     ([latitude, longitude]) => {
@@ -182,22 +227,22 @@ watch(
 );
 
 onMounted(() => {
-    if (hasMapbox()) {
-        initMap();
-    } else {
+    if (!hasMapbox()) {
         mapError.value = t('map.not_configured');
+        return;
     }
+
+    scheduleMapInit();
+
     if (props.modelValue.location_address) {
         searchQuery.value = props.modelValue.location_address;
     }
 });
 
 onUnmounted(() => {
-    marker?.remove();
-    map?.remove();
-    map = null;
-    marker = null;
+    if (initTimeout) clearTimeout(initTimeout);
     if (searchTimeout) clearTimeout(searchTimeout);
+    destroyMap();
 });
 </script>
 
@@ -246,7 +291,7 @@ onUnmounted(() => {
 
             <div
                 ref="mapContainer"
-                class="h-44 w-full overflow-hidden rounded-md border border-gray-200 dark:border-gray-700"
+                class="location-picker-map relative z-0 h-44 w-full overflow-hidden rounded-md border border-gray-200 dark:border-gray-700"
                 :class="{ 'opacity-60': !mapReady }"
             />
 
@@ -277,3 +322,34 @@ onUnmounted(() => {
         </template>
     </div>
 </template>
+
+<style scoped>
+.location-picker-map {
+    position: relative;
+    isolation: isolate;
+    contain: layout paint;
+}
+
+.location-picker-map :deep(.mapboxgl-map) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.location-picker-map :deep(.mapboxgl-canvas-container),
+.location-picker-map :deep(.mapboxgl-canvas) {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.location-picker-map :deep(.mapboxgl-control-container) {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.location-picker-map :deep(.mapboxgl-ctrl-top-right) {
+    pointer-events: auto;
+}
+</style>

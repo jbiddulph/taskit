@@ -258,7 +258,7 @@ onUnmounted(() => {
             <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_16rem]">
                 <div
                     ref="mapContainer"
-                    class="min-h-[320px] w-full overflow-hidden rounded-md border border-gray-200 dark:border-gray-700"
+                    class="task-map relative z-0 min-h-[320px] w-full overflow-hidden rounded-md border border-gray-200 dark:border-gray-700"
                     :class="{ 'opacity-60': !mapReady }"
                 />
 
@@ -317,3 +317,34 @@ onUnmounted(() => {
         </template>
     </div>
 </template>
+
+<style scoped>
+.task-map {
+    position: relative;
+    isolation: isolate;
+    contain: layout paint;
+}
+
+.task-map :deep(.mapboxgl-map) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.task-map :deep(.mapboxgl-canvas-container),
+.task-map :deep(.mapboxgl-canvas) {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.task-map :deep(.mapboxgl-control-container) {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.task-map :deep(.mapboxgl-ctrl-top-right) {
+    pointer-events: auto;
+}
+</style>
