@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import Icon from '@/components/Icon.vue';
 import type { Todo } from '@/services/todoApi';
-import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, getMapboxAccessToken, hasMapbox } from '@/services/mapboxClient';
+import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, hasMapbox } from '@/services/mapboxClient';
 import {
     formatRouteDistance,
     formatRouteDuration,
@@ -12,7 +11,9 @@ import {
     mapboxApi,
     todoHasLocation,
 } from '@/services/mapboxApi';
+import { useMapboxMap } from '@/composables/useMapboxMap';
 import { useI18n } from 'vue-i18n';
+import mapboxgl from 'mapbox-gl';
 
 const { t } = useI18n();
 
@@ -30,13 +31,11 @@ const emit = defineEmits<{
 }>();
 
 const mapContainer = ref<HTMLDivElement | null>(null);
-const mapReady = ref(false);
 const mapError = ref<string | null>(null);
 const selectedRouteIds = ref<number[]>([]);
 const routeLoading = ref(false);
 const routeSummary = ref<{ distance?: string; duration?: string } | null>(null);
 
-let map: mapboxgl.Map | null = null;
 const markers = new Map<number, mapboxgl.Marker>();
 
 const locatedTodos = computed(() =>
@@ -47,7 +46,21 @@ const selectedRouteTodos = computed(() =>
     locatedTodos.value.filter((todo) => selectedRouteIds.value.includes(todo.id)),
 );
 
+const { mapReady, getMap, scheduleMapInit } = useMapboxMap(
+    mapContainer,
+    () => ({
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: DEFAULT_MAP_CENTER,
+        zoom: DEFAULT_MAP_ZOOM,
+    }),
+    (map) => {
+        map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+        syncMarkers();
+    },
+);
+
 const fitMapToMarkers = () => {
+    const map = getMap();
     if (!map || locatedTodos.value.length === 0) return;
 
     const bounds = new mapboxgl.LngLatBounds();
@@ -66,12 +79,14 @@ const fitMapToMarkers = () => {
 };
 
 const clearRouteLayer = () => {
+    const map = getMap();
     if (!map) return;
     if (map.getLayer('route-line')) map.removeLayer('route-line');
     if (map.getSource('route-line')) map.removeSource('route-line');
 };
 
 const syncMarkers = () => {
+    const map = getMap();
     if (!map) return;
 
     const activeIds = new Set(locatedTodos.value.map((todo) => todo.id));
@@ -126,31 +141,8 @@ const syncMarkers = () => {
     fitMapToMarkers();
 };
 
-const initMap = () => {
-    if (!mapContainer.value || map) return;
-
-    const token = getMapboxAccessToken();
-    if (!token) {
-        mapError.value = t('map.not_configured');
-        return;
-    }
-
-    mapboxgl.accessToken = token;
-    map = new mapboxgl.Map({
-        container: mapContainer.value,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: DEFAULT_MAP_CENTER,
-        zoom: DEFAULT_MAP_ZOOM,
-    });
-
-    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
-    map.on('load', () => {
-        mapReady.value = true;
-        syncMarkers();
-    });
-};
-
 const planRoute = async () => {
+    const map = getMap();
     if (!map || selectedRouteTodos.value.length < 2) return;
 
     routeLoading.value = true;
@@ -220,19 +212,22 @@ watch(
     { deep: true },
 );
 
-onMounted(() => {
-    if (hasMapbox()) {
-        initMap();
-    } else {
+onMounted(async () => {
+    if (!hasMapbox()) {
         mapError.value = t('map.not_configured');
+        return;
     }
+
+    await scheduleMapInit();
+});
+
+watch(mapReady, (ready) => {
+    if (ready) syncMarkers();
 });
 
 onUnmounted(() => {
     markers.forEach((marker) => marker.remove());
     markers.clear();
-    map?.remove();
-    map = null;
 });
 </script>
 
@@ -258,7 +253,7 @@ onUnmounted(() => {
             <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_16rem]">
                 <div
                     ref="mapContainer"
-                    class="task-map relative z-0 min-h-[320px] w-full overflow-hidden rounded-md border border-gray-200 dark:border-gray-700"
+                    class="task-map h-[320px] w-full overflow-hidden rounded-md border border-gray-200 dark:border-gray-700"
                     :class="{ 'opacity-60': !mapReady }"
                 />
 
@@ -321,30 +316,14 @@ onUnmounted(() => {
 <style scoped>
 .task-map {
     position: relative;
-    isolation: isolate;
-    contain: layout paint;
+    overflow: hidden;
 }
 
 .task-map :deep(.mapboxgl-map) {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-}
-
-.task-map :deep(.mapboxgl-canvas-container),
-.task-map :deep(.mapboxgl-canvas) {
-    width: 100% !important;
-    height: 100% !important;
-}
-
-.task-map :deep(.mapboxgl-control-container) {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-}
-
-.task-map :deep(.mapboxgl-ctrl-top-right) {
-    pointer-events: auto;
 }
 </style>

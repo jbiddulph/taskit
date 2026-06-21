@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useResizeObserver } from '@vueuse/core';
-import mapboxgl from 'mapbox-gl';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, getMapboxAccessToken, hasMapbox } from '@/services/mapboxClient';
-import { mapboxApi, type MapLocation } from '@/services/mapboxApi';
 import Icon from '@/components/Icon.vue';
+import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, hasMapbox } from '@/services/mapboxClient';
+import { mapboxApi, type MapLocation } from '@/services/mapboxApi';
+import { useMapboxMap } from '@/composables/useMapboxMap';
 import { useI18n } from 'vue-i18n';
+import mapboxgl from 'mapbox-gl';
 
 const { t } = useI18n();
 
@@ -34,13 +34,10 @@ const searchQuery = ref('');
 const searchResults = ref<MapLocation[]>([]);
 const searching = ref(false);
 const mapContainer = ref<HTMLDivElement | null>(null);
-const mapReady = ref(false);
 const mapError = ref<string | null>(null);
 
-let map: mapboxgl.Map | null = null;
 let marker: mapboxgl.Marker | null = null;
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
-let initTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const hasLocation = computed(
     () => props.modelValue.latitude != null && props.modelValue.longitude != null,
@@ -60,12 +57,8 @@ const updateLocation = (location: Partial<LocationValue>) => {
     });
 };
 
-const resizeMap = () => {
-    if (!map) return;
-    map.resize();
-};
-
 const placeMarker = (longitude: number, latitude: number) => {
+    const map = getMap();
     if (!map) return;
     if (!marker) {
         marker = new mapboxgl.Marker({ color: '#2563eb' })
@@ -77,94 +70,45 @@ const placeMarker = (longitude: number, latitude: number) => {
     map.flyTo({ center: [longitude, latitude], zoom: 14 });
 };
 
-const destroyMap = () => {
-    marker?.remove();
-    marker = null;
-    map?.remove();
-    map = null;
-    mapReady.value = false;
-};
-
-const initMap = () => {
-    if (!mapContainer.value || map || props.disabled) return;
-
-    const container = mapContainer.value;
-    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
-        return;
-    }
-
-    const token = getMapboxAccessToken();
-    if (!token) {
-        mapError.value = t('map.not_configured');
-        return;
-    }
-
-    mapboxgl.accessToken = token;
-    const center: [number, number] =
-        props.modelValue.longitude != null && props.modelValue.latitude != null
-            ? [props.modelValue.longitude, props.modelValue.latitude]
-            : DEFAULT_MAP_CENTER;
-
-    map = new mapboxgl.Map({
-        container,
+const { mapReady, getMap, scheduleMapInit } = useMapboxMap(
+    mapContainer,
+    () => ({
         style: 'mapbox://styles/mapbox/streets-v12',
-        center,
+        center:
+            props.modelValue.longitude != null && props.modelValue.latitude != null
+                ? [props.modelValue.longitude, props.modelValue.latitude]
+                : DEFAULT_MAP_CENTER,
         zoom: hasLocation.value ? 13 : DEFAULT_MAP_ZOOM,
-        attributionControl: true,
-    });
-
-    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
-
-    map.on('load', () => {
-        mapReady.value = true;
-        resizeMap();
+    }),
+    (map) => {
+        map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
         if (hasLocation.value) {
             placeMarker(props.modelValue.longitude as number, props.modelValue.latitude as number);
         }
-    });
+        map.on('click', async (event) => {
+            if (props.disabled) return;
+            const { lng, lat } = event.lngLat;
+            placeMarker(lng, lat);
 
-    map.on('click', async (event) => {
-        if (props.disabled) return;
-        const { lng, lat } = event.lngLat;
-        placeMarker(lng, lat);
-
-        try {
-            const result = await mapboxApi.reverseGeocode(lat, lng);
-            updateLocation({
-                latitude: lat,
-                longitude: lng,
-                location_name: result?.location_name ?? t('map.selected_location'),
-                location_address: result?.location_address ?? `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
-            });
-        } catch {
-            updateLocation({
-                latitude: lat,
-                longitude: lng,
-                location_name: t('map.selected_location'),
-                location_address: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
-            });
-        }
-    });
-};
-
-const scheduleMapInit = async () => {
-    if (!hasMapbox() || map || props.disabled) return;
-
-    await nextTick();
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-
-    if (!mapContainer.value) return;
-
-    initMap();
-    resizeMap();
-
-    if (!map) {
-        initTimeout = setTimeout(() => {
-            initMap();
-            resizeMap();
-        }, 100);
-    }
-};
+            try {
+                const result = await mapboxApi.reverseGeocode(lat, lng);
+                updateLocation({
+                    latitude: lat,
+                    longitude: lng,
+                    location_name: result?.location_name ?? t('map.selected_location'),
+                    location_address: result?.location_address ?? `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+                });
+            } catch {
+                updateLocation({
+                    latitude: lat,
+                    longitude: lng,
+                    location_name: t('map.selected_location'),
+                    location_address: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+                });
+            }
+        });
+    },
+);
 
 const runSearch = () => {
     if (searchTimeout) clearTimeout(searchTimeout);
@@ -213,26 +157,22 @@ const clearLocation = () => {
     marker = null;
 };
 
-useResizeObserver(mapContainer, () => {
-    resizeMap();
-});
-
 watch(
     () => [props.modelValue.latitude, props.modelValue.longitude],
     ([latitude, longitude]) => {
-        if (map && latitude != null && longitude != null) {
+        if (getMap() && latitude != null && longitude != null) {
             placeMarker(longitude as number, latitude as number);
         }
     },
 );
 
-onMounted(() => {
+onMounted(async () => {
     if (!hasMapbox()) {
         mapError.value = t('map.not_configured');
         return;
     }
 
-    scheduleMapInit();
+    await scheduleMapInit();
 
     if (props.modelValue.location_address) {
         searchQuery.value = props.modelValue.location_address;
@@ -240,9 +180,9 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-    if (initTimeout) clearTimeout(initTimeout);
     if (searchTimeout) clearTimeout(searchTimeout);
-    destroyMap();
+    marker?.remove();
+    marker = null;
 });
 </script>
 
@@ -291,7 +231,7 @@ onUnmounted(() => {
 
             <div
                 ref="mapContainer"
-                class="location-picker-map relative z-0 h-44 w-full overflow-hidden rounded-md border border-gray-200 dark:border-gray-700"
+                class="location-picker-map h-44 w-full overflow-hidden rounded-md border border-gray-200 dark:border-gray-700"
                 :class="{ 'opacity-60': !mapReady }"
             />
 
@@ -326,30 +266,14 @@ onUnmounted(() => {
 <style scoped>
 .location-picker-map {
     position: relative;
-    isolation: isolate;
-    contain: layout paint;
+    overflow: hidden;
 }
 
 .location-picker-map :deep(.mapboxgl-map) {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-}
-
-.location-picker-map :deep(.mapboxgl-canvas-container),
-.location-picker-map :deep(.mapboxgl-canvas) {
-    width: 100% !important;
-    height: 100% !important;
-}
-
-.location-picker-map :deep(.mapboxgl-control-container) {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-}
-
-.location-picker-map :deep(.mapboxgl-ctrl-top-right) {
-    pointer-events: auto;
 }
 </style>

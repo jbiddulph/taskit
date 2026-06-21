@@ -477,7 +477,7 @@
     </div>
 
     <!-- Map view -->
-    <div v-if="props.showMap" class="mb-4">
+    <div v-if="props.showMap" class="mb-4 overflow-hidden">
       <MapView :todos="todosState" :isReadOnly="props.isReadOnly" @edit-todo="handleEditTodoFromCalendar" />
     </div>
 
