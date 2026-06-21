@@ -14,6 +14,7 @@ export interface SubmitMeetingNotesParams {
     stoppedReason: 'manual' | 'timeout';
     recordedAt: string;
     availableProjects?: { id: number; name: string }[];
+    recordingTemplate?: string | null;
 }
 
 export async function submitMeetingNotes(params: SubmitMeetingNotesParams): Promise<MeetingNotesResponse> {
@@ -24,6 +25,9 @@ export async function submitMeetingNotes(params: SubmitMeetingNotesParams): Prom
     formData.append('recorded_at', params.recordedAt);
     if (params.availableProjects?.length) {
         formData.append('available_projects', JSON.stringify(params.availableProjects));
+    }
+    if (params.recordingTemplate) {
+        formData.append('recording_template', params.recordingTemplate);
     }
 
     const response = await axios.post<MeetingNotesResponse>('/meeting-notes', formData, {

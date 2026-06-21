@@ -87,7 +87,9 @@
     "meeting_notes_tip_project": "Which project — say part of the name, e.g. \"for marketing\" or \"website project\"",
     "meeting_notes_tip_column": "Which column — casual is fine, e.g. \"in progress\", \"progress column\", or \"testing\"",
     "meeting_notes_tip_due_date": "Due date — e.g. \"due tomorrow\", \"due next Wednesday\", or \"due in 2 weeks\"",
-    "meeting_notes_tip_example": "Example: \"Create 2 high-priority tasks for marketing, put them in progress, due this Sunday.\"",
+    "meeting_notes_tip_location": "Location — e.g. \"task at Brighton Pier\" or \"on site at 12 High Street\"",
+    "meeting_notes_templates_title": "Recording templates",
+    "meeting_notes_tip_example": "Example: \"Create 2 high-priority tasks for marketing, put them in progress, due this Sunday. Task at Brighton Pier for the site visit.\"",
     "qa_testing": "Q&A / Testing",
     "no_todos_yet": "No todos yet",
     "drag_drop_or_click": "Drag and drop here or click + to add",
@@ -279,7 +281,10 @@
     "all_clients": "All Clients",
     "unassigned": "Unassigned",
     "my_todos": "My Todos",
-    "clear_filters": "Clear Filters"
+    "clear_filters": "Clear Filters",
+    "overdue": "Overdue",
+    "assigned_to_me": "Assigned to me",
+    "has_location": "Has location"
   },
   "languages": {
     "english": "English",
@@ -332,7 +337,18 @@
     "planning_route": "Planning route...",
     "clear_route": "Clear route",
     "no_located_tasks": "No tasks with locations yet. Add a location in the task form to see them here.",
-    "route_hint": "Select 2 or more stops in visit order, then plan a driving route."
+    "route_hint": "Select 2 or more stops in visit order, then plan a driving route.",
+    "my_route_today": "My route today",
+    "no_my_route_tasks": "No located tasks assigned to you on this board.",
+    "navigate": "Navigate",
+    "select_stops_first": "Select at least one stop to navigate.",
+    "check_in": "Check in",
+    "checking_in": "Checking in...",
+    "check_in_success": "Checked in at task location.",
+    "check_in_failed": "Could not check in.",
+    "checked_in": "Checked in",
+    "geolocation_unavailable": "Location is not available in this browser.",
+    "geolocation_denied": "Allow location access to check in at the task site."
   },
   "comments": {
     "title": "Comments",

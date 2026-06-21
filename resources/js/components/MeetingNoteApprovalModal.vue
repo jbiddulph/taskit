@@ -10,12 +10,13 @@ import {
 import { Button } from '@/components/ui/button';
 import {
     meetingNoteProposalApi,
+    type MeetingActionItem,
     type MeetingNoteProposal,
     type ReviewActionItem,
 } from '@/services/meetingNoteProposalApi';
 import { todoApi, type Project } from '@/services/todoApi';
 import { matchProjectByName, matchProjectFromTranscript } from '@/utils/matchProject';
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const isOpen = ref(false);
 const loading = ref(false);
@@ -33,10 +34,21 @@ const statusOptions = [
     { value: 'done', label: 'Done' },
 ];
 
+const sortedReviewItems = computed(() =>
+    [...reviewItems.value].sort((a, b) => (a.confidence ?? 1) - (b.confidence ?? 1)),
+);
+
 const notify = (type: 'success' | 'error' | 'warning', title: string, message: string) => {
     if ((window as any).$notify) {
         (window as any).$notify({ type, title, message });
     }
+};
+
+const confidenceLabel = (confidence?: number | null) => {
+    const value = confidence ?? 0.75;
+    if (value >= 0.85) return { text: 'High confidence', class: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200' };
+    if (value >= 0.65) return { text: 'Medium confidence', class: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200' };
+    return { text: 'Low confidence — review first', class: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200' };
 };
 
 const resetState = () => {
@@ -62,17 +74,25 @@ const resolveSuggestedProjectId = (data: MeetingNoteProposal): number | null => 
     return matchProjectFromTranscript(projects.value, data.transcript);
 };
 
+const buildReviewItem = (item: MeetingActionItem, index: number): ReviewActionItem => ({
+    index,
+    approved: true,
+    title: item.title,
+    priority: item.priority || 'Medium',
+    status: item.status || 'todo',
+    due_date: item.due_date || '',
+    assignee: item.assignee || '',
+    description: item.notes || '',
+    location_query: item.location_query || item.location_name || '',
+    location_name: item.location_name ?? null,
+    location_address: item.location_address ?? null,
+    latitude: item.latitude ?? null,
+    longitude: item.longitude ?? null,
+    confidence: item.confidence ?? null,
+});
+
 const buildReviewItems = (data: MeetingNoteProposal) => {
-    reviewItems.value = data.action_items.map((item, index) => ({
-        index,
-        approved: true,
-        title: item.title,
-        priority: item.priority || 'Medium',
-        status: item.status || 'todo',
-        due_date: item.due_date || '',
-        assignee: item.assignee || '',
-        description: item.notes || '',
-    }));
+    reviewItems.value = data.action_items.map((item, index) => buildReviewItem(item, index));
 };
 
 const openProposal = async (proposalId: number) => {
@@ -153,6 +173,11 @@ const approveSelected = async () => {
                 due_date: item.due_date.trim() || null,
                 assignee: item.assignee.trim() || null,
                 description: item.description.trim() || null,
+                location_query: item.location_query.trim() || null,
+                location_name: item.location_name ?? null,
+                location_address: item.location_address ?? null,
+                latitude: item.latitude ?? null,
+                longitude: item.longitude ?? null,
             }))
         );
 
@@ -200,7 +225,7 @@ onUnmounted(() => {
             <DialogHeader>
                 <DialogTitle>Review meeting action items</DialogTitle>
                 <DialogDescription>
-                    Approve, edit, or reject proposed todos before they are created in your project.
+                    Items are sorted by confidence — review low-confidence items first. Locations are geocoded when you approve.
                 </DialogDescription>
             </DialogHeader>
 
@@ -252,16 +277,27 @@ onUnmounted(() => {
                 </div>
 
                 <div v-else class="space-y-3">
-                    <p class="text-sm font-medium">Proposed action items</p>
+                    <p class="text-sm font-medium">Proposed action items (low confidence first)</p>
                     <div
-                        v-for="item in reviewItems"
+                        v-for="item in sortedReviewItems"
                         :key="item.index"
                         class="rounded-md border p-3 space-y-2"
                     >
-                        <label class="flex items-center gap-2 text-sm font-medium">
-                            <input v-model="item.approved" type="checkbox" class="rounded" />
-                            Include this todo
-                        </label>
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <label class="flex items-center gap-2 text-sm font-medium">
+                                <input v-model="item.approved" type="checkbox" class="rounded" />
+                                Include this todo
+                            </label>
+                            <span
+                                class="rounded-full px-2 py-0.5 text-[11px] font-medium"
+                                :class="confidenceLabel(item.confidence).class"
+                            >
+                                {{ confidenceLabel(item.confidence).text }}
+                                <span v-if="item.confidence != null" class="opacity-75">
+                                    ({{ Math.round(item.confidence * 100) }}%)
+                                </span>
+                            </span>
+                        </div>
                         <input
                             v-model="item.title"
                             type="text"
@@ -303,6 +339,21 @@ onUnmounted(() => {
                                 class="rounded-md border bg-background px-3 py-2 text-sm"
                                 placeholder="Assignee (optional)"
                             />
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-medium text-muted-foreground">Location (from speech)</label>
+                            <input
+                                v-model="item.location_query"
+                                type="text"
+                                class="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                                placeholder="e.g. Brighton Pier — geocoded on approval"
+                            />
+                            <p
+                                v-if="item.location_address || item.latitude"
+                                class="mt-1 text-xs text-muted-foreground"
+                            >
+                                Preview: {{ item.location_address || item.location_name }}
+                            </p>
                         </div>
                         <textarea
                             v-model="item.description"

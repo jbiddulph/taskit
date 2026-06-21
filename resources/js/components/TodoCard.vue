@@ -195,6 +195,13 @@
         >
           <Icon name="MapPin" class="w-3 h-3" />
         </span>
+        <span
+          v-if="todo.checked_in_at"
+          class="inline-flex items-center text-emerald-600 dark:text-emerald-400"
+          title="Checked in at location"
+        >
+          <Icon name="MapPinCheck" class="w-3 h-3" />
+        </span>
         <Icon name="Calendar" class="w-3 h-3" />
         <span v-if="todo.due_date">{{ formatDate(todo.due_date) }}</span>
         <span v-else>No due date</span>

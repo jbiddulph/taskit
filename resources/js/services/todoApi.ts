@@ -40,6 +40,9 @@ export interface Todo {
     location_address?: string | null;
     latitude?: number | null;
     longitude?: number | null;
+    checked_in_at?: string | null;
+    checked_in_latitude?: number | null;
+    checked_in_longitude?: number | null;
     story_points?: number;
     status: 'todo' | 'in-progress' | 'qa-testing' | 'done';
     order?: number;
@@ -435,6 +438,15 @@ class TodoApiService {
             url: '/todos/bulk',
             data: { todo_ids: todoIds },
         });
+    }
+
+    async checkIn(todoId: number, latitude: number, longitude: number): Promise<Todo> {
+        const response = await this.request<{ data: Todo }>({
+            method: 'POST',
+            url: `/todos/${todoId}/check-in`,
+            data: { latitude, longitude },
+        });
+        return response.data;
     }
 }
 

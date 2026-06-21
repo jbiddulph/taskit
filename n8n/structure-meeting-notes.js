@@ -209,10 +209,18 @@ const padActionItemsToCount = (items, count, label, defaults) => {
       due_date: defaults.due_date ?? null,
       project_name: defaults.project_name ?? null,
       notes: defaults.notes ?? 'Requested in recording — edit title before approving.',
+      location_query: null,
+      confidence: 0.35,
     });
   }
 
   return result;
+};
+
+const clampConfidence = (value) => {
+  const parsed = Number(value);
+  if (Number.isNaN(parsed)) return 0.75;
+  return Math.max(0, Math.min(1, parsed));
 };
 
 const globalStatus = inferGlobalStatus();
@@ -249,6 +257,8 @@ const actionItems = (Array.isArray(parsed.action_items) ? parsed.action_items : 
     due_date: item.due_date ?? null,
     project_name: projectName,
     notes: item.notes ?? null,
+    location_query: item.location_query ?? null,
+    confidence: clampConfidence(item.confidence),
   };
 });
 
@@ -275,6 +285,7 @@ return [
       duration_seconds: context.duration_seconds,
       stopped_reason: context.stopped_reason,
       recorded_at: context.recorded_at,
+      recording_template: context.recording_template ?? null,
       meeting_summary: parsed.summary ?? '',
       suggested_project_name: suggestedProject,
       key_decisions: parsed.key_decisions ?? [],

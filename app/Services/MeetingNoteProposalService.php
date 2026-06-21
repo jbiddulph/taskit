@@ -17,6 +17,7 @@ class MeetingNoteProposalService
     public function __construct(
         protected TodoWebSocketService $webSocketService,
         protected AssignmentNotificationService $assignmentNotificationService,
+        protected MapboxService $mapboxService,
     ) {}
 
     public function createFromN8n(array $payload): MeetingNoteProposal
@@ -33,6 +34,8 @@ class MeetingNoteProposalService
             'action_items.*.status' => 'nullable|in:todo,in-progress,qa-testing,done',
             'action_items.*.due_date' => 'nullable|date_format:Y-m-d',
             'action_items.*.project_name' => 'nullable|string|max:255',
+            'action_items.*.location_query' => 'nullable|string|max:255',
+            'action_items.*.confidence' => 'nullable|numeric|min:0|max:1',
             'duration_seconds' => 'nullable|integer',
             'stopped_reason' => 'nullable|string',
             'recorded_at' => 'nullable|string',
@@ -45,17 +48,11 @@ class MeetingNoteProposalService
         $user = User::findOrFail($payload['user_id']);
         $actionItems = collect($payload['action_items'])
             ->filter(fn ($item) => ! empty($item['title']))
-            ->map(fn ($item) => [
-                'title' => $item['title'],
-                'assignee' => $item['assignee'] ?? null,
-                'priority' => $item['priority'] ?? 'Medium',
-                'status' => $this->normalizeStatus($item['status'] ?? 'todo', $item['notes'] ?? null),
-                'due_date' => $item['due_date'] ?? null,
-                'project_name' => $item['project_name'] ?? null,
-                'notes' => $item['notes'] ?? null,
-            ])
+            ->map(fn ($item) => $this->normalizeActionItem($item))
             ->values()
             ->all();
+
+        $actionItems = $this->enrichActionItemsWithLocations($actionItems);
 
         $actionItems = $this->enforceRequestedActionItemCount(
             $actionItems,
@@ -76,6 +73,7 @@ class MeetingNoteProposalService
                 'key_decisions' => $payload['key_decisions'] ?? [],
                 'follow_ups' => $payload['follow_ups'] ?? [],
                 'suggested_project_name' => $payload['suggested_project_name'] ?? null,
+                'recording_template' => $payload['recording_template'] ?? null,
             ],
         ]);
 
@@ -115,6 +113,11 @@ class MeetingNoteProposalService
             'items.*.due_date' => 'nullable|date_format:Y-m-d',
             'items.*.assignee' => 'nullable|string|max:255',
             'items.*.description' => 'nullable|string',
+            'items.*.location_query' => 'nullable|string|max:255',
+            'items.*.location_name' => 'nullable|string|max:255',
+            'items.*.location_address' => 'nullable|string|max:500',
+            'items.*.latitude' => 'nullable|numeric|between:-90,90',
+            'items.*.longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
         if ($validator->fails()) {
@@ -152,9 +155,11 @@ class MeetingNoteProposalService
 
                 if ($proposal->meeting_summary && $description) {
                     $description = trim($description."\n\nMeeting summary: ".mb_substr($proposal->meeting_summary, 0, 500));
-                } elseif ($proposal->meeting_summary && ! $description) {
+                } else                if ($proposal->meeting_summary && ! $description) {
                     $description = 'From meeting notes: '.mb_substr($proposal->meeting_summary, 0, 500);
                 }
+
+                $location = $this->resolveApprovedItemLocation($item, $original);
 
                 $todo = Todo::create([
                     'user_id' => $user->id,
@@ -166,6 +171,10 @@ class MeetingNoteProposalService
                     'assignee' => $item['assignee'] ?? $original['assignee'] ?? null,
                     'due_date' => $item['due_date'] ?? $original['due_date'] ?? null,
                     'status' => $this->normalizeStatus($item['status'] ?? $original['status'] ?? 'todo', $item['description'] ?? $original['notes'] ?? null),
+                    'location_name' => $location['location_name'] ?? null,
+                    'location_address' => $location['location_address'] ?? null,
+                    'latitude' => $location['latitude'] ?? null,
+                    'longitude' => $location['longitude'] ?? null,
                 ]);
 
                 $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
@@ -331,5 +340,93 @@ class MeetingNoteProposalService
         }
 
         return 'Todo';
+    }
+
+    private function normalizeActionItem(array $item): array
+    {
+        $confidence = isset($item['confidence']) ? (float) $item['confidence'] : null;
+        if ($confidence !== null) {
+            $confidence = max(0, min(1, $confidence));
+        }
+
+        return [
+            'title' => $item['title'],
+            'assignee' => $item['assignee'] ?? null,
+            'priority' => $item['priority'] ?? 'Medium',
+            'status' => $this->normalizeStatus($item['status'] ?? 'todo', $item['notes'] ?? null),
+            'due_date' => $item['due_date'] ?? null,
+            'project_name' => $item['project_name'] ?? null,
+            'notes' => $item['notes'] ?? null,
+            'location_query' => trim((string) ($item['location_query'] ?? '')) ?: null,
+            'location_name' => $item['location_name'] ?? null,
+            'location_address' => $item['location_address'] ?? null,
+            'latitude' => isset($item['latitude']) ? (float) $item['latitude'] : null,
+            'longitude' => isset($item['longitude']) ? (float) $item['longitude'] : null,
+            'confidence' => $confidence,
+        ];
+    }
+
+    private function enrichActionItemsWithLocations(array $actionItems): array
+    {
+        if (! $this->mapboxService->isConfigured()) {
+            return $actionItems;
+        }
+
+        return array_map(function (array $item) {
+            if (empty($item['location_query']) || ($item['latitude'] && $item['longitude'])) {
+                return $item;
+            }
+
+            $results = $this->mapboxService->geocode($item['location_query']);
+            $match = $results[0] ?? null;
+            if (! $match) {
+                return $item;
+            }
+
+            return array_merge($item, [
+                'location_name' => $match['location_name'] ?? $item['location_query'],
+                'location_address' => $match['location_address'] ?? null,
+                'latitude' => $match['latitude'] ?? null,
+                'longitude' => $match['longitude'] ?? null,
+            ]);
+        }, $actionItems);
+    }
+
+    private function resolveApprovedItemLocation(array $item, ?array $original): array
+    {
+        $locationQuery = trim((string) ($item['location_query'] ?? $original['location_query'] ?? ''));
+        $latitude = $item['latitude'] ?? $original['latitude'] ?? null;
+        $longitude = $item['longitude'] ?? $original['longitude'] ?? null;
+        $locationName = $item['location_name'] ?? $original['location_name'] ?? null;
+        $locationAddress = $item['location_address'] ?? $original['location_address'] ?? null;
+
+        if ($locationQuery !== '' && $this->mapboxService->isConfigured()) {
+            $results = $this->mapboxService->geocode($locationQuery);
+            $match = $results[0] ?? null;
+            if ($match) {
+                return [
+                    'location_name' => $match['location_name'] ?? $locationName ?? $locationQuery,
+                    'location_address' => $match['location_address'] ?? $locationAddress,
+                    'latitude' => $match['latitude'] ?? null,
+                    'longitude' => $match['longitude'] ?? null,
+                ];
+            }
+        }
+
+        if ($latitude && $longitude) {
+            return [
+                'location_name' => $locationName,
+                'location_address' => $locationAddress,
+                'latitude' => (float) $latitude,
+                'longitude' => (float) $longitude,
+            ];
+        }
+
+        return [
+            'location_name' => null,
+            'location_address' => null,
+            'latitude' => null,
+            'longitude' => null,
+        ];
     }
 }

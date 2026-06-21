@@ -23,6 +23,7 @@ class MeetingNotesController extends Controller
             'stopped_reason' => 'required|in:manual,timeout',
             'recorded_at' => 'nullable|date',
             'available_projects' => 'nullable|string',
+            'recording_template' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -43,6 +44,7 @@ class MeetingNotesController extends Controller
                     'stopped_reason' => $request->input('stopped_reason'),
                     'recorded_at' => $request->input('recorded_at') ?? now()->toIso8601String(),
                     'available_projects' => $request->input('available_projects'),
+                    'recording_template' => $request->input('recording_template'),
                 ]
             );
 

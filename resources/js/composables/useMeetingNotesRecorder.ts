@@ -13,6 +13,7 @@ export type StoppedReason = 'manual' | 'timeout';
 const state = ref<RecordingState>('idle');
 const elapsedSeconds = ref(0);
 const errorMessage = ref<string | null>(null);
+const recordingTemplate = ref<string | null>(null);
 
 let mediaRecorder: MediaRecorder | null = null;
 let mediaStream: MediaStream | null = null;
@@ -149,6 +150,7 @@ async function processRecording() {
             stoppedReason,
             recordedAt: submittedRecordedAt,
             availableProjects,
+            recordingTemplate: recordingTemplate.value,
         });
 
         if (!response.success) {
@@ -303,11 +305,17 @@ function formattedElapsedTime() {
     return formatElapsedTime(elapsedSeconds.value);
 }
 
+function setRecordingTemplate(templateId: string | null) {
+    recordingTemplate.value = templateId;
+}
+
 export function useMeetingNotesRecorder() {
     return {
         state,
         elapsedSeconds,
         errorMessage,
+        recordingTemplate,
+        setRecordingTemplate,
         toggleRecording,
         formattedElapsedTime,
         maxDurationMinutes: MAX_DURATION_SECONDS / 60,

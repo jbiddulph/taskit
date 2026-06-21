@@ -9,6 +9,12 @@ export interface MeetingActionItem {
     due_date?: string | null;
     project_name?: string | null;
     notes?: string | null;
+    location_query?: string | null;
+    location_name?: string | null;
+    location_address?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    confidence?: number | null;
 }
 
 export interface MeetingNoteProposal {
@@ -26,6 +32,7 @@ export interface MeetingNoteProposal {
         key_decisions?: string[];
         follow_ups?: string[];
         suggested_project_name?: string | null;
+        recording_template?: string | null;
     } | null;
     project_id?: number | null;
     created_at: string;
@@ -40,6 +47,12 @@ export interface ReviewActionItem {
     due_date: string;
     assignee: string;
     description: string;
+    location_query: string;
+    location_name?: string | null;
+    location_address?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    confidence?: number | null;
 }
 
 class MeetingNoteProposalApiService {

@@ -528,6 +528,83 @@ class TodoController extends Controller
         ]);
     }
 
+    public function checkIn(Request $request, Todo $todo): JsonResponse
+    {
+        $user = Auth::user();
+
+        if (! $todo->canAccess($user)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized',
+            ], 403);
+        }
+
+        if ($todo->latitude === null || $todo->longitude === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This task does not have a location set.',
+            ], 422);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $distanceMeters = $this->distanceMeters(
+            (float) $request->latitude,
+            (float) $request->longitude,
+            (float) $todo->latitude,
+            (float) $todo->longitude
+        );
+
+        if ($distanceMeters > 200) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You must be within 200m of the task location to check in.',
+                'distance_meters' => round($distanceMeters),
+            ], 422);
+        }
+
+        $todo->update([
+            'checked_in_at' => now(),
+            'checked_in_latitude' => (float) $request->latitude,
+            'checked_in_longitude' => (float) $request->longitude,
+        ]);
+
+        $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
+
+        CacheService::invalidateUserCaches($user->id, $user->company_id);
+        CacheService::invalidateProjectCaches($todo->project_id, $user->company_id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Checked in at task location.',
+            'data' => $todo,
+        ]);
+    }
+
+    private function distanceMeters(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $earthRadius = 6371000;
+        $latFrom = deg2rad($lat1);
+        $latTo = deg2rad($lat2);
+        $latDelta = deg2rad($lat2 - $lat1);
+        $lngDelta = deg2rad($lng2 - $lng1);
+
+        $a = sin($latDelta / 2) ** 2
+            + cos($latFrom) * cos($latTo) * sin($lngDelta / 2) ** 2;
+
+        return 2 * $earthRadius * asin(min(1, sqrt($a)));
+    }
+
     /**
      * Update todo status (for drag & drop)
      */

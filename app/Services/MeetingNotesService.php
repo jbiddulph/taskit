@@ -34,6 +34,7 @@ class MeetingNotesService
                     'stopped_reason' => $metadata['stopped_reason'] ?? 'manual',
                     'recorded_at' => $metadata['recorded_at'] ?? now()->toIso8601String(),
                     'available_projects' => $metadata['available_projects'] ?? null,
+                    'recording_template' => $metadata['recording_template'] ?? null,
                 ]);
 
             if (! $response->successful()) {

@@ -30,6 +30,9 @@ class Todo extends Model
         'location_address',
         'latitude',
         'longitude',
+        'checked_in_at',
+        'checked_in_latitude',
+        'checked_in_longitude',
         'story_points',
         'status',
         'order',
@@ -41,6 +44,9 @@ class Todo extends Model
         'due_date' => 'date',
         'latitude' => 'float',
         'longitude' => 'float',
+        'checked_in_at' => 'datetime',
+        'checked_in_latitude' => 'float',
+        'checked_in_longitude' => 'float',
         'story_points' => 'integer',
     ];
 

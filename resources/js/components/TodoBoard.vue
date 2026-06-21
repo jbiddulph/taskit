@@ -465,6 +465,41 @@
         </button>
       </div>
 
+      <!-- Quick filters -->
+      <div v-if="currentProject" class="mt-2 flex flex-wrap items-center gap-1.5">
+        <button
+          type="button"
+          class="rounded-full border px-2.5 py-0.5 text-xs font-medium transition"
+          :class="quickFilter === 'overdue'
+            ? 'border-red-400 bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-200'
+            : 'border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300'"
+          @click="toggleQuickFilter('overdue')"
+        >
+          {{ t('filters.overdue') }}
+        </button>
+        <button
+          v-if="currentUserName"
+          type="button"
+          class="rounded-full border px-2.5 py-0.5 text-xs font-medium transition"
+          :class="quickFilter === 'assigned_to_me'
+            ? 'border-blue-400 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200'
+            : 'border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300'"
+          @click="toggleQuickFilter('assigned_to_me')"
+        >
+          {{ t('filters.assigned_to_me') }}
+        </button>
+        <button
+          type="button"
+          class="rounded-full border px-2.5 py-0.5 text-xs font-medium transition"
+          :class="quickFilter === 'has_location'
+            ? 'border-emerald-400 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200'
+            : 'border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300'"
+          @click="toggleQuickFilter('has_location')"
+        >
+          {{ t('filters.has_location') }}
+        </button>
+      </div>
+
       <!-- Compact stats inside header -->
       <div v-if="!props.showCalendar && !props.showMap" class="mt-1.5 pt-1.5 border-t border-gray-200 dark:border-gray-700">
         <TodoStats :todos="todosState" />
@@ -478,7 +513,13 @@
 
     <!-- Map view -->
     <div v-if="props.showMap" class="mb-4 overflow-hidden">
-      <MapView :todos="todosState" :isReadOnly="props.isReadOnly" @edit-todo="handleEditTodoFromCalendar" />
+      <MapView
+        :todos="todosState"
+        :isReadOnly="props.isReadOnly"
+        :current-user-name="currentUserName"
+        @edit-todo="handleEditTodoFromCalendar"
+        @todo-updated="handleMapTodoUpdated"
+      />
     </div>
 
     <!-- Bulk Operations Bar -->
@@ -852,6 +893,7 @@ import MapView from './MapView.vue';
 import BulkOperationsBar from './BulkOperationsBar.vue';
 import KeyboardShortcutsHelp from './KeyboardShortcutsHelp.vue';
 import { todoApi, type Project, type Todo } from '@/services/todoApi';
+import { todoHasLocation } from '@/services/mapboxApi';
 import { realtimeService } from '@/services/realtimeService';
 import { deleteImagesInHtml } from '@/services/supabaseClient';
 import { useAnalytics } from '../composables/useAnalytics';
@@ -862,6 +904,27 @@ import { useI18n } from 'vue-i18n';
 import { usePage } from '@inertiajs/vue3';
 const { t } = useI18n();
 const page = usePage();
+
+type QuickFilter = '' | 'overdue' | 'assigned_to_me' | 'has_location';
+
+const currentUserName = computed(() => (page.props.auth as { user?: { name?: string } })?.user?.name ?? '');
+
+const isTodoOverdue = (todo: Todo) => {
+  if (!todo.due_date || todo.status === 'done') {
+    return false;
+  }
+
+  const due = new Date(todo.due_date);
+  due.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return due < today;
+};
+
+const toggleQuickFilter = (filter: QuickFilter) => {
+  quickFilter.value = quickFilter.value === filter ? '' : filter;
+  selectedSavedViewName.value = '';
+};
 // Define props
 const props = defineProps<{
   showActivityFeed?: boolean;
@@ -1030,6 +1093,7 @@ const searchQuery = ref('');
 const priorityFilter = ref('');
 const typeFilter = ref('');
 const assigneeFilter = ref('');
+const quickFilter = ref<QuickFilter>('');
 
 // Saved Views (local-only for now)
 type SavedView = {
@@ -1038,6 +1102,8 @@ type SavedView = {
   priority: string;
   type: string;
   assignee: string;
+  quickFilter?: QuickFilter;
+  hasLocation?: boolean;
 };
 const SAVED_VIEWS_KEY = 'taskit_saved_views_v1';
 const savedViews = ref<SavedView[]>([]);
@@ -1087,6 +1153,8 @@ const getCurrentFilters = (): SavedView => ({
   priority: priorityFilter.value || '',
   type: typeFilter.value || '',
   assignee: assigneeFilter.value || '',
+  quickFilter: quickFilter.value || '',
+  hasLocation: quickFilter.value === 'has_location',
 });
 
 const applyView = (view: SavedView) => {
@@ -1094,6 +1162,7 @@ const applyView = (view: SavedView) => {
   priorityFilter.value = view.priority;
   typeFilter.value = view.type;
   assigneeFilter.value = view.assignee;
+  quickFilter.value = view.quickFilter || (view.hasLocation ? 'has_location' : '');
 };
 
 const onApplySavedView = () => {
@@ -1156,8 +1225,21 @@ const filteredTodos = computed(() => {
     const matchesPriority = !priorityFilter.value || todo.priority === priorityFilter.value;
     const matchesType = !typeFilter.value || todo.type === typeFilter.value;
     const matchesAssignee = !assigneeFilter.value || todo.assignee === assigneeFilter.value;
+
+    const matchesQuickFilter = !quickFilter.value || (() => {
+      switch (quickFilter.value) {
+        case 'overdue':
+          return isTodoOverdue(todo);
+        case 'assigned_to_me':
+          return todo.assignee?.trim().toLowerCase() === currentUserName.value.trim().toLowerCase();
+        case 'has_location':
+          return todoHasLocation(todo);
+        default:
+          return true;
+      }
+    })();
     
-    return matchesSearch && matchesPriority && matchesType && matchesAssignee;
+    return matchesSearch && matchesPriority && matchesType && matchesAssignee && matchesQuickFilter;
   });
 
   return {
@@ -1180,7 +1262,8 @@ const hasActiveFilters = computed(() => {
   return searchQuery.value.trim() !== '' || 
          priorityFilter.value !== '' || 
          typeFilter.value !== '' || 
-         assigneeFilter.value !== '';
+         assigneeFilter.value !== '' ||
+         quickFilter.value !== '';
 });
 
 // Safe projectsState array to prevent undefined errors
@@ -1214,6 +1297,13 @@ const editTodo = async (todo: Todo) => {
 const handleEditTodoFromCalendar = (todo: Todo) => {
   editingTodo.value = { ...todo };
   showForm.value = true;
+};
+
+const handleMapTodoUpdated = (todo: Todo) => {
+  const index = todosState.value.findIndex((item) => item.id === todo.id);
+  if (index !== -1) {
+    todosState.value[index] = { ...todosState.value[index], ...todo };
+  }
 };
 
 const handleAddTodoFromCalendar = (date: Date) => {
@@ -2173,6 +2263,7 @@ const clearAllFilters = () => {
   priorityFilter.value = '';
   typeFilter.value = '';
   assigneeFilter.value = '';
+  quickFilter.value = '';
   selectedSavedViewName.value = '';
 };
 

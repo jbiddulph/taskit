@@ -9,21 +9,28 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { MEETING_NOTES_TEMPLATES } from '@/constants/meetingNotesTemplates';
 import { useMeetingNotesRecorder } from '@/composables/useMeetingNotesRecorder';
 import { ref, watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
-const { state, elapsedSeconds } = useMeetingNotesRecorder();
+const { state, elapsedSeconds, recordingTemplate, setRecordingTemplate } = useMeetingNotesRecorder();
 
 const isOpen = ref(false);
 const dismissed = ref(false);
+const showTemplateScript = ref<string | null>(null);
+
 const elapsedDisplay = computed(() => {
     const seconds = elapsedSeconds.value;
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 });
+
+const activeTemplate = computed(() =>
+    MEETING_NOTES_TEMPLATES.find((template) => template.id === recordingTemplate.value) ?? null,
+);
 
 watch(state, (newState) => {
     if (newState === 'recording') {
@@ -34,6 +41,7 @@ watch(state, (newState) => {
 
     isOpen.value = false;
     dismissed.value = false;
+    showTemplateScript.value = null;
 });
 
 const minimize = () => {
@@ -44,6 +52,12 @@ const minimize = () => {
 const reopen = () => {
     dismissed.value = false;
     isOpen.value = true;
+};
+
+const selectTemplate = (templateId: string) => {
+    const next = recordingTemplate.value === templateId ? null : templateId;
+    setRecordingTemplate(next);
+    showTemplateScript.value = next;
 };
 </script>
 
@@ -74,6 +88,31 @@ const reopen = () => {
             </DialogHeader>
 
             <div class="space-y-3 text-sm">
+                <div>
+                    <p class="mb-2 font-medium text-foreground">{{ t('dashboard.meeting_notes_templates_title') }}</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            v-for="template in MEETING_NOTES_TEMPLATES"
+                            :key="template.id"
+                            type="button"
+                            class="rounded-full border px-3 py-1 text-xs transition"
+                            :class="recordingTemplate === template.id
+                                ? 'border-amber-500 bg-amber-100 text-amber-950 dark:bg-amber-900/40 dark:text-amber-100'
+                                : 'border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800'"
+                            @click="selectTemplate(template.id)"
+                        >
+                            {{ template.label }}
+                        </button>
+                    </div>
+                    <p v-if="activeTemplate" class="mt-2 text-xs text-muted-foreground">
+                        {{ activeTemplate.hint }}
+                    </p>
+                    <pre
+                        v-if="activeTemplate && showTemplateScript === activeTemplate.id"
+                        class="mt-2 max-h-32 overflow-y-auto rounded-md border bg-muted/40 p-2 text-[11px] whitespace-pre-wrap"
+                    >{{ activeTemplate.script }}</pre>
+                </div>
+
                 <p class="text-muted-foreground">{{ t('dashboard.meeting_notes_tips_intro') }}</p>
                 <ul class="list-disc space-y-2 pl-5">
                     <li>{{ t('dashboard.meeting_notes_tip_count') }}</li>
@@ -81,6 +120,7 @@ const reopen = () => {
                     <li>{{ t('dashboard.meeting_notes_tip_project') }}</li>
                     <li>{{ t('dashboard.meeting_notes_tip_column') }}</li>
                     <li>{{ t('dashboard.meeting_notes_tip_due_date') }}</li>
+                    <li>{{ t('dashboard.meeting_notes_tip_location') }}</li>
                 </ul>
                 <p class="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs italic text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
                     {{ t('dashboard.meeting_notes_tip_example') }}
