@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\TodoWebSocketService;
 use App\Services\AssignmentNotificationService;
 use App\Services\CacheService;
+use App\Support\TodoTypes;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -216,7 +217,9 @@ class TodoController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'priority' => 'required|in:Low,Medium,High,Critical',
-            'type' => 'nullable|in:Bug,Feature,Task,Story,Epic',
+            'type' => TodoTypes::validationRule(),
+            'card_icon' => 'nullable|string|max:50|regex:/^[A-Za-z0-9]+$/',
+            'outline_color' => ['nullable', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:50',
             'assignee' => 'nullable|string|max:255',
@@ -277,6 +280,8 @@ class TodoController extends Controller
             'description' => $request->description,
             'priority' => $request->priority,
             'type' => $request->type,
+            'card_icon' => $request->card_icon,
+            'outline_color' => $request->outline_color,
             'tags' => $request->tags,
             'assignee' => $request->assignee,
             'due_date' => $request->due_date,
@@ -379,7 +384,9 @@ class TodoController extends Controller
             'title' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
             'priority' => 'sometimes|required|in:Low,Medium,High,Critical',
-            'type' => 'nullable|in:Bug,Feature,Task,Story,Epic',
+            'type' => TodoTypes::validationRule(),
+            'card_icon' => 'nullable|string|max:50|regex:/^[A-Za-z0-9]+$/',
+            'outline_color' => ['nullable', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:50',
             'assignee' => 'nullable|string|max:255',
@@ -403,7 +410,7 @@ class TodoController extends Controller
         $oldAssignee = $todo->assignee;
 
         $todo->update($request->only([
-            'title', 'description', 'priority', 'type', 'tags',
+            'title', 'description', 'priority', 'type', 'card_icon', 'outline_color', 'tags',
             'assignee', 'due_date', 'story_points', 'status',
             'location_name', 'location_address', 'latitude', 'longitude',
         ]));
@@ -694,7 +701,9 @@ class TodoController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'priority' => 'nullable|in:Low,Medium,High,Critical',
-            'type' => 'nullable|in:Bug,Feature,Task,Story,Epic',
+            'type' => TodoTypes::validationRule(),
+            'card_icon' => 'nullable|string|max:50|regex:/^[A-Za-z0-9]+$/',
+            'outline_color' => ['nullable', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
             'assignee' => 'nullable|string|max:255',
             'due_date' => 'nullable|date|after:today',
             'story_points' => 'nullable|integer|min:1|max:21',
@@ -732,6 +741,8 @@ class TodoController extends Controller
             'description' => $request->description,
             'priority' => $request->priority ?? $todo->priority, // Inherit parent priority if not specified
             'type' => $request->type,
+            'card_icon' => $request->card_icon,
+            'outline_color' => $request->outline_color,
             'tags' => [],
             'assignee' => $request->assignee ?? $todo->assignee, // Inherit parent assignee if not specified
             'due_date' => $request->due_date,
@@ -957,7 +968,7 @@ class TodoController extends Controller
         $validator = Validator::make($request->all(), [
             'todo_ids' => 'required|array|min:1',
             'todo_ids.*' => 'integer|exists:taskit_todos,id',
-            'type' => 'required|string|in:Bug,Feature,Task,Story,Epic'
+            'type' => TodoTypes::requiredValidationRule(),
         ]);
 
         if ($validator->fails()) {

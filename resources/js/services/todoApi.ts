@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { TodoType } from '@/constants/todoTypes';
 
 // Configure axios defaults
 axios.defaults.baseURL = '/api';
@@ -30,7 +31,9 @@ export interface Todo {
     title: string;
     description?: string;
     priority: 'Low' | 'Medium' | 'High' | 'Critical';
-    type?: 'Bug' | 'Feature' | 'Task' | 'Story' | 'Epic';
+    type?: TodoType;
+    card_icon?: string | null;
+    outline_color?: string | null;
     tags?: string[];
     assignee?: string;
     assignee_email?: string | null;

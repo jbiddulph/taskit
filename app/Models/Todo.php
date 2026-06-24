@@ -23,6 +23,8 @@ class Todo extends Model
         'description',
         'priority',
         'type',
+        'card_icon',
+        'outline_color',
         'tags',
         'assignee',
         'due_date',

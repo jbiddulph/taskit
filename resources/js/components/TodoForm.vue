@@ -159,6 +159,44 @@
 
           <LocationPicker v-model="location" />
 
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {{ t('todos.card_icon') }}
+              </label>
+              <IconSelector
+                v-model="form.card_icon"
+                :clear-label="t('todos.use_type_icon_default')"
+              />
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('todos.card_icon_hint') }}
+              </p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {{ t('todos.outline_color') }}
+              </label>
+              <div class="flex items-center gap-3">
+                <input
+                  v-model="outlineColorPicker"
+                  type="color"
+                  class="w-12 h-10 border border-gray-300 dark:border-gray-600 rounded-md cursor-pointer"
+                />
+                <span class="text-sm text-gray-600 dark:text-gray-400">{{ outlineColorPicker }}</span>
+              </div>
+              <button
+                type="button"
+                class="mt-2 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                @click="resetOutlineColor"
+              >
+                {{ t('todos.use_project_color') }}
+              </button>
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('todos.outline_color_hint') }}
+              </p>
+            </div>
+          </div>
+
         <div
           v-if="!isEditing"
           class="flex items-start gap-3 rounded-md border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-800/50"
@@ -241,6 +279,7 @@
 import { ref, watch, onMounted, computed } from 'vue';
 import TipTapEditor from '@/components/TipTapEditor.vue';
 import TypeSelector from '@/components/TypeSelector.vue';
+import IconSelector from '@/components/IconSelector.vue';
 import TodoTemplateSelector from '@/components/TodoTemplateSelector.vue';
 import { usePage } from '@inertiajs/vue3';
 import Icon from '@/components/Icon.vue';
@@ -328,7 +367,26 @@ const form = ref({
   story_points: undefined as number | undefined,
   status: 'todo' as const,
   email_assignee: false,
+  card_icon: null as string | null,
+  outline_color: null as string | null,
 });
+
+const useCustomOutlineColor = ref(false);
+
+const defaultProjectColor = computed(() => props.currentProject?.color || '#3b82f6');
+
+const outlineColorPicker = computed({
+  get: () => form.value.outline_color || defaultProjectColor.value,
+  set: (value: string) => {
+    form.value.outline_color = value;
+    useCustomOutlineColor.value = true;
+  },
+});
+
+const resetOutlineColor = () => {
+  form.value.outline_color = null;
+  useCustomOutlineColor.value = false;
+};
 
 const location = ref<LocationValue>({
   location_name: null,
@@ -373,7 +431,10 @@ const resetForm = () => {
     story_points: undefined,
     status: 'todo',
     email_assignee: false,
+    card_icon: null,
+    outline_color: null,
   };
+  useCustomOutlineColor.value = false;
   tagsInput.value = '';
   location.value = {
     location_name: null,
@@ -392,6 +453,9 @@ watch(() => props.todo, (newTodo) => {
   if (newTodo) {
     form.value = { ...newTodo };
     form.value.email_assignee = false;
+    useCustomOutlineColor.value = !!newTodo.outline_color;
+    form.value.card_icon = newTodo.card_icon ?? null;
+    form.value.outline_color = newTodo.outline_color ?? null;
     
     // Fix date format for HTML date input (YYYY-MM-DD)
     if (newTodo.due_date) {
@@ -451,6 +515,8 @@ const handleSubmit = async () => {
       location_address: location.value.location_address,
       latitude: location.value.latitude,
       longitude: location.value.longitude,
+      card_icon: form.value.card_icon || null,
+      outline_color: useCustomOutlineColor.value ? form.value.outline_color : null,
     };
     
     if (props.isEditing) {

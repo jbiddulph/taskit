@@ -8,7 +8,7 @@
         : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700',
       isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
     ]"
-    :style="projectColor ? { borderColor: projectColor, borderWidth: '1px', borderStyle: 'solid' } : {}"
+    :style="cardOutlineStyle"
     @click="handleClick"
   >
     <!-- Selection checkbox (only in select mode) -->
@@ -35,11 +35,11 @@
           {{ todo.priority }}
         </span>
         <span
-          v-if="todo.type"
+          v-if="todo.type || todo.card_icon"
           class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium leading-none bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
         >
-          <Icon :name="getTypeIcon(todo.type)" class="w-3 h-3" />
-          {{ todo.type }}
+          <Icon :name="getTodoDisplayIcon(todo)" class="w-3 h-3" />
+          <span v-if="todo.type">{{ todo.type }}</span>
         </span>
       </div>
       <div class="flex items-center gap-1">
@@ -295,6 +295,7 @@
 <script setup lang="ts">
 import { computed, ref, nextTick } from 'vue';
 import Icon from '@/components/Icon.vue';
+import { getTodoDisplayIcon } from '@/constants/todoTypes';
 import { todoApi } from '@/services/todoApi';
 
 import type { Todo } from '@/services/todoApi';
@@ -391,21 +392,6 @@ const stripHtml = (html?: string): string => {
   return text.replace(/\s+/g, ' ').trim();
 };
 
-// Get appropriate icon for todo type
-const getTypeIcon = (type: string): string => {
-  const iconMap: Record<string, string> = {
-    'Bug': 'Bug',
-    'Feature': 'Zap',
-    'Task': 'CheckSquare',
-    'Story': 'BookOpen',
-    'Epic': 'Layers'
-  };
-  return iconMap[type] || 'Circle';
-};
-
-const firstImageSrc = computed(() => getFirstImageSrc((props as any).todo?.description));
-const plainTextDescription = computed(() => stripHtml((props as any).todo?.description));
-
 // Check if todo is overdue and not in Done status
 const isOverdueAndNotDone = computed(() => {
   if (!props.todo.due_date || props.todo.status === 'done') {
@@ -419,6 +405,26 @@ const isOverdueAndNotDone = computed(() => {
   
   return diffDays < 0; // Overdue if due date is in the past
 });
+
+const cardOutlineStyle = computed(() => {
+  if (isOverdueAndNotDone.value) {
+    return {};
+  }
+
+  const color = props.todo.outline_color || props.projectColor || props.todo.project?.color;
+  if (!color) {
+    return {};
+  }
+
+  return {
+    borderColor: color,
+    borderWidth: '1px',
+    borderStyle: 'solid',
+  };
+});
+
+const firstImageSrc = computed(() => getFirstImageSrc((props as any).todo?.description));
+const plainTextDescription = computed(() => stripHtml((props as any).todo?.description));
 
 // Title editing methods
 const startEditTitle = () => {

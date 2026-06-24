@@ -70,11 +70,13 @@
             :disabled="isProcessing"
           >
             <option value="">{{ t('todos.please_select') }}</option>
-            <option value="Bug">{{ t('todos.type_bug') }}</option>
-            <option value="Feature">{{ t('todos.type_feature') }}</option>
-            <option value="Task">{{ t('todos.type_task') }}</option>
-            <option value="Story">{{ t('todos.type_story') }}</option>
-            <option value="Epic">{{ t('todos.type_epic') }}</option>
+            <option
+              v-for="typeOption in TODO_TYPE_OPTIONS"
+              :key="typeOption.value"
+              :value="typeOption.value"
+            >
+              {{ t(typeOption.labelKey) }}
+            </option>
           </select>
         </div>
       </div>
@@ -137,6 +139,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Icon from '@/components/Icon.vue';
+import { TODO_TYPE_OPTIONS } from '@/constants/todoTypes';
 import { useBulkOperations } from '@/composables/useBulkOperations';
 import { todoApi } from '@/services/todoApi';
 import { useI18n } from 'vue-i18n';

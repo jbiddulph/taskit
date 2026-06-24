@@ -123,7 +123,7 @@ const jsonLd = {
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">🎙️ Morning briefing notes</h2>
                     <p class="text-sm text-gray-600 dark:text-gray-300">
                         Record your team huddle and let AI turn it into tasks—with locations picked up from speech like
-                        "viewing at Brighton Pier tomorrow."
+                        "viewing at Brighton Road tomorrow."
                     </p>
                 </div>
                 <div class="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">

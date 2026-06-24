@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue';
+import { TODO_TYPE_OPTIONS } from '@/constants/todoTypes';
 
 export interface SearchFilter {
   field: string;
@@ -37,7 +38,7 @@ export function useAdvancedSearch() {
     { value: 'description', label: 'Description', type: 'text' },
     { value: 'status', label: 'Status', type: 'select', options: ['todo', 'in-progress', 'qa-testing', 'done'] },
     { value: 'priority', label: 'Priority', type: 'select', options: ['Low', 'Medium', 'High', 'Critical'] },
-    { value: 'type', label: 'Type', type: 'select', options: ['Bug', 'Feature', 'Task', 'Story', 'Epic'] },
+    { value: 'type', label: 'Type', type: 'select', options: TODO_TYPE_OPTIONS.map((option) => option.value) },
     { value: 'assignee', label: 'Assignee', type: 'text' },
     { value: 'due_date', label: 'Due Date', type: 'date' },
     { value: 'created_at', label: 'Created Date', type: 'date' },

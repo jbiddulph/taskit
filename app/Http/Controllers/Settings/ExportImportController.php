@@ -133,6 +133,8 @@ class ExportImportController extends Controller
                     'status' => $todo->status,
                     'priority' => $todo->priority,
                     'type' => $todo->type,
+                    'card_icon' => $todo->card_icon,
+                    'outline_color' => $todo->outline_color,
                     'tags' => $todo->tags,
                     'assignee' => $todo->assignee,
                     'due_date' => $todo->due_date,
