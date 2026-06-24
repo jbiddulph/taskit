@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Project;
+use App\Models\ProjectGroup;
 use App\Models\Todo;
 use Illuminate\Support\Facades\Http;
 use App\Models\Notification;
@@ -40,6 +42,7 @@ class TodoController extends Controller
             'user_id' => $user->id,
             'company_id' => $user->company_id,
             'project_id' => $request->get('project_id'),
+            'project_group_id' => $request->get('project_group_id'),
             'status' => $request->get('status'),
             'priority' => $request->get('priority'),
             'type' => $request->get('type'),
@@ -69,6 +72,10 @@ class TodoController extends Controller
             // Filter by project if specified
             if ($request->filled('project_id')) {
                 $query->forProject($request->project_id);
+            }
+
+            if ($request->filled('project_group_id')) {
+                $query->forProjectGroup((int) $request->project_group_id);
             }
 
             // Apply filters
@@ -116,6 +123,10 @@ class TodoController extends Controller
 
             if ($request->filled('project_id')) {
                 $subtasksQuery->where('project_id', (int) $request->project_id);
+            }
+
+            if ($request->filled('project_group_id')) {
+                $subtasksQuery->where('project_group_id', (int) $request->project_group_id);
             }
 
             // Apply the same optional filters to subtasks
@@ -213,6 +224,7 @@ class TodoController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'project_id' => 'required|exists:taskit_projects,id',
+            'project_group_id' => 'nullable|exists:taskit_project_groups,id',
             'parent_task_id' => 'nullable|exists:taskit_todos,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -272,9 +284,12 @@ class TodoController extends Controller
             }
         }
 
+        $projectGroupId = $this->resolveProjectGroupId($user, (int) $request->project_id, $request->input('project_group_id'));
+
         $todo = Todo::create([
             'user_id' => $user->id,
             'project_id' => $request->project_id,
+            'project_group_id' => $projectGroupId,
             'parent_task_id' => $request->parent_task_id,
             'title' => $request->title,
             'description' => $request->description,
@@ -736,6 +751,7 @@ class TodoController extends Controller
         $subtask = Todo::create([
             'user_id' => Auth::id(),
             'project_id' => $todo->project_id,
+            'project_group_id' => $todo->project_group_id,
             'parent_task_id' => $todo->id,
             'title' => $request->title,
             'description' => $request->description,
@@ -1213,5 +1229,35 @@ class TodoController extends Controller
             'success' => true,
             'message' => 'Successfully deleted ' . count($todoIds) . ' todos'
         ]);
+    }
+
+    private function resolveProjectGroupId(User $user, int $projectId, mixed $groupId): int
+    {
+        $project = Project::find($projectId);
+
+        if (! $project || ! $project->canAccess($user->id)) {
+            abort(403, 'Unauthorized');
+        }
+
+        if ($groupId) {
+            $group = ProjectGroup::query()
+                ->where('id', (int) $groupId)
+                ->where('project_id', $projectId)
+                ->first();
+
+            if (! $group) {
+                abort(422, 'Invalid group for this project.');
+            }
+
+            return $group->id;
+        }
+
+        $defaultGroupId = ProjectGroup::resolveDefaultIdForProject($projectId);
+
+        if ($defaultGroupId) {
+            return $defaultGroupId;
+        }
+
+        return ProjectGroup::createDefaultForProject($project)->id;
     }
 }

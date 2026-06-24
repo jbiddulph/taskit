@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\MeetingNotesController;
 use App\Http\Controllers\Api\N8nMeetingNotesController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\ProjectGroupController;
 use App\Http\Controllers\Api\TodoAttachmentController;
 use App\Http\Controllers\Api\TodoCommentController;
 use App\Http\Controllers\Api\TodoController;
@@ -35,6 +36,11 @@ Route::middleware(['n8n.webhook', 'api.rate.limit:api,120,1'])->group(function (
 
 // Todo routes
 Route::middleware(['web', 'auth', 'subscription.access', 'api.rate.limit:api,60,1'])->group(function () {
+    Route::get('projects/{project}/groups', [ProjectGroupController::class, 'index']);
+    Route::post('projects/{project}/groups', [ProjectGroupController::class, 'store']);
+    Route::put('project-groups/{projectGroup}', [ProjectGroupController::class, 'update']);
+    Route::delete('project-groups/{projectGroup}', [ProjectGroupController::class, 'destroy']);
+
     // Project routes (place specific routes BEFORE resource to avoid {project} capturing)
     Route::patch('projects/update-order', [ProjectController::class, 'updateOrder']);
     Route::apiResource('projects', ProjectController::class);

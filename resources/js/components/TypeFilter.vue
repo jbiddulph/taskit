@@ -32,7 +32,7 @@
           class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
         >
           <Icon :name="type.icon" class="w-4 h-4" />
-          <span>{{ type.label }}</span>
+          <span>{{ type.value }}</span>
         </button>
       </div>
     </div>
@@ -54,12 +54,6 @@ const emit = defineEmits<{
 }>();
 
 const isOpen = ref(false);
-
-const types = TODO_TYPE_OPTIONS.map((option) => ({
-  value: option.value,
-  label: option.value,
-  icon: option.icon,
-}));
 
 const selectedType = computed(() => props.modelValue);
 

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Activity;
 use App\Models\Project;
+use App\Models\ProjectGroup;
 use App\Models\Todo;
 use App\Models\User;
 use Illuminate\Support\Collection;
@@ -153,6 +154,7 @@ class VoiceCommandService
         $payload = array_merge([
             'user_id' => $user->id,
             'project_id' => $project->id,
+            'project_group_id' => ProjectGroup::resolveDefaultIdForProject($project->id),
             'company_id' => $user->company_id,
             'title' => Str::limit($title, 255, ''),
             'priority' => 'Medium',

@@ -18,6 +18,7 @@ class Todo extends Model
     protected $fillable = [
         'user_id',
         'project_id',
+        'project_group_id',
         'parent_task_id',
         'title',
         'description',
@@ -69,6 +70,11 @@ class Todo extends Model
         return $this->belongsTo(Project::class);
     }
 
+    public function projectGroup(): BelongsTo
+    {
+        return $this->belongsTo(ProjectGroup::class);
+    }
+
     public function comments(): HasMany
     {
         return $this->hasMany(TodoComment::class)->orderBy('created_at', 'desc');
@@ -118,6 +124,11 @@ class Todo extends Model
     public function scopeForProject(Builder $query, int $projectId): void
     {
         $query->where('project_id', $projectId);
+    }
+
+    public function scopeForProjectGroup(Builder $query, int $projectGroupId): void
+    {
+        $query->where('project_group_id', $projectGroupId);
     }
 
     public function scopeByStatus(Builder $query, string $status): void

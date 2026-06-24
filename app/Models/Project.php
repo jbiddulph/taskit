@@ -53,6 +53,11 @@ class Project extends Model
         return $this->hasMany(Todo::class);
     }
 
+    public function groups(): HasMany
+    {
+        return $this->hasMany(ProjectGroup::class)->orderBy('viewing_order')->orderBy('name');
+    }
+
     /**
      * Get todos by status for this project
      */

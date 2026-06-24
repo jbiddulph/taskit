@@ -178,6 +178,15 @@
             </div>
           </div>
           
+          <ProjectGroupTabs
+            v-if="currentProject"
+            :groups="projectGroups"
+            :current-group-id="currentGroup?.id ?? null"
+            :read-only="props.isReadOnly"
+            @select="selectProjectGroup"
+            @create="openCreateGroupModal"
+          />
+
           <!-- Create Project Button (only shown when no project is selected and not at FREE limit) -->
           <div v-if="!currentProject && !props.isReadOnly && !isAtFreeProjectLimit" class="mt-2">
             <button
@@ -630,10 +639,51 @@
       :todo="editingTodo"
       :is-editing="!!editingTodo"
       :current-project="currentProject"
+      :current-project-group-id="currentGroup?.id ?? null"
       :modal-title="!editingTodo && isBulkMode ? t('dashboard.add_bulk') : undefined"
       @close="closeForm"
       @save="saveTodo"
     />
+
+    <div v-if="showCreateGroup && currentProject" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click="showCreateGroup = false">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full" @click.stop>
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">{{ t('todos.project_groups.create_group') }}</h2>
+            <button @click="showCreateGroup = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              <Icon name="X" class="w-6 h-6" />
+            </button>
+          </div>
+          <form @submit.prevent="createProjectGroup" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('todos.project_groups.group_name') }}</label>
+              <input
+                v-model="newGroup.name"
+                type="text"
+                required
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                :placeholder="t('todos.project_groups.group_name_placeholder')"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('projects.color') }}</label>
+              <div class="flex items-center gap-3">
+                <input v-model="newGroup.color" type="color" class="w-12 h-10 border border-gray-300 dark:border-gray-600 rounded-md cursor-pointer" />
+                <span class="text-sm text-gray-600 dark:text-gray-400">{{ newGroup.color }}</span>
+              </div>
+            </div>
+            <div class="flex gap-3 pt-2">
+              <button type="submit" class="flex-1 rounded-md px-4 py-2 text-sm font-medium bg-black text-white dark:bg-white dark:text-black">
+                {{ t('todos.project_groups.create_group') }}
+              </button>
+              <button type="button" @click="showCreateGroup = false" class="flex-1 rounded-md px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600">
+                {{ t('common.cancel') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
 
     <!-- Create Project Modal -->
     <div v-if="showCreateProject && !props.isReadOnly" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click="showCreateProject = false">
@@ -886,6 +936,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import Icon from '@/components/Icon.vue';
 import TodoColumn from './TodoColumn.vue';
 import TodoForm from './TodoForm.vue';
+import ProjectGroupTabs from './ProjectGroupTabs.vue';
 import TodoStats from './TodoStats.vue';
 import TypeFilter from './TypeFilter.vue';
 import CalendarView from './CalendarView.vue';
@@ -893,6 +944,7 @@ import MapView from './MapView.vue';
 import BulkOperationsBar from './BulkOperationsBar.vue';
 import KeyboardShortcutsHelp from './KeyboardShortcutsHelp.vue';
 import { todoApi, type Project, type Todo } from '@/services/todoApi';
+import { projectGroupApi, type ProjectGroup } from '@/services/projectGroupApi';
 import { todoHasLocation } from '@/services/mapboxApi';
 import { realtimeService } from '@/services/realtimeService';
 import { deleteImagesInHtml } from '@/services/supabaseClient';
@@ -1001,6 +1053,15 @@ const toggleSelection = (todo: Todo) => {
 };
 
 const currentProject = ref<Project | null>(null);
+const projectGroups = ref<ProjectGroup[]>([]);
+const currentGroup = ref<ProjectGroup | null>(null);
+const showCreateGroup = ref(false);
+const newGroup = ref({
+  name: '',
+  color: '#3B82F6',
+});
+
+const groupStorageKey = (projectId: number) => `currentProjectGroupId:${projectId}`;
 
 // Watch for project changes and emit to parent
 watch(currentProject, (newProject) => {
@@ -1463,7 +1524,8 @@ const saveTodo = async (todo: Todo) => {
         // Create regular todo
         newTodo = await todoApi.createTodo({
           ...todo,
-          project_id: currentProject.value.id
+          project_id: currentProject.value.id,
+          project_group_id: currentGroup.value?.id ?? null,
         });
         
         // Add todo immediately to the list (realtime will handle updates/conflicts)
@@ -1930,6 +1992,7 @@ const initVoiceRecording = () => {
       try {
         const newTodo = await todoApi.createTodo({
           project_id: currentProject.value.id,
+          project_group_id: currentGroup.value?.id ?? null,
           title: transcript,
           description: '',
           status: 'todo',
@@ -2327,6 +2390,7 @@ const createProject = async () => {
     
     // Refresh projectsState list to include the new project
     await loadProjects();
+    await loadProjectGroups(newProjectCreated.id);
     
     // Refresh todosState
     await loadTodos();
@@ -2398,6 +2462,7 @@ const loadProjects = async () => {
       currentProject.value = firstProject;
       selectedProjectId.value = firstProject.id.toString();
       localStorage.setItem('currentProjectId', firstProject.id.toString());
+      await loadProjectGroups(firstProject.id);
       
     }
   } catch {
@@ -2445,6 +2510,8 @@ const onProjectChange = async (projectIdOrEvent?: Event | string) => {
     
     currentProject.value = project;
     localStorage.setItem('currentProjectId', projectId.toString());
+
+    await loadProjectGroups(projectId);
     
     // Dispatch event to update sidebar selection
     window.dispatchEvent(new CustomEvent('projectSelected', {
@@ -2625,6 +2692,87 @@ const handleBulkDelete = async () => {
 };
 
 
+const loadProjectGroups = async (projectId: number | null) => {
+  if (!projectId) {
+    projectGroups.value = [];
+    currentGroup.value = null;
+    return;
+  }
+
+  try {
+    const groups = await projectGroupApi.list(projectId);
+    projectGroups.value = groups;
+
+    const storedGroupId = localStorage.getItem(groupStorageKey(projectId));
+    const storedGroup = storedGroupId
+      ? groups.find((group) => group.id === Number.parseInt(storedGroupId, 10))
+      : null;
+    const defaultGroup = groups.find((group) => group.is_default) ?? groups[0] ?? null;
+
+    currentGroup.value = storedGroup ?? defaultGroup;
+
+    if (currentGroup.value) {
+      localStorage.setItem(groupStorageKey(projectId), currentGroup.value.id.toString());
+    }
+  } catch {
+    projectGroups.value = [];
+    currentGroup.value = null;
+  }
+};
+
+const selectProjectGroup = async (group: ProjectGroup) => {
+  if (!currentProject.value || currentGroup.value?.id === group.id) {
+    return;
+  }
+
+  currentGroup.value = group;
+  localStorage.setItem(groupStorageKey(currentProject.value.id), group.id.toString());
+  await loadTodos();
+};
+
+const openCreateGroupModal = () => {
+  newGroup.value = {
+    name: '',
+    color: currentProject.value?.color || '#3B82F6',
+  };
+  showCreateGroup.value = true;
+};
+
+const createProjectGroup = async () => {
+  if (!currentProject.value || !newGroup.value.name.trim()) {
+    return;
+  }
+
+  try {
+    const created = await projectGroupApi.create(currentProject.value.id, {
+      name: newGroup.value.name.trim(),
+      color: newGroup.value.color,
+    });
+
+    projectGroups.value = [...projectGroups.value, created];
+    currentGroup.value = created;
+    localStorage.setItem(groupStorageKey(currentProject.value.id), created.id.toString());
+    showCreateGroup.value = false;
+    await loadTodos();
+
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'success',
+        title: t('todos.project_groups.create_success'),
+        message: created.name,
+      });
+    }
+  } catch {
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: t('todos.project_groups.create_failed'),
+        message: t('todos.project_groups.create_failed'),
+      });
+    }
+  }
+};
+
 // Load current project from localStorage
 const loadCurrentProject = async () => {
   try {
@@ -2633,6 +2781,7 @@ const loadCurrentProject = async () => {
       const project = await todoApi.getProject(parseInt(projectId));
       currentProject.value = project;
       selectedProjectId.value = projectId;
+      await loadProjectGroups(project.id);
       
       // Don't dispatch event here to prevent circular loop
       // The sidebar will be updated when the component mounts
@@ -2642,6 +2791,7 @@ const loadCurrentProject = async () => {
       currentProject.value = firstProject;
       selectedProjectId.value = firstProject.id.toString();
       localStorage.setItem('currentProjectId', firstProject.id.toString());
+      await loadProjectGroups(firstProject.id);
       
     }
   } catch {
@@ -2653,6 +2803,7 @@ const loadCurrentProject = async () => {
       currentProject.value = firstProject;
       selectedProjectId.value = firstProject.id.toString();
       localStorage.setItem('currentProjectId', firstProject.id.toString());
+      await loadProjectGroups(firstProject.id);
       
     }
   }
@@ -2665,6 +2816,9 @@ const loadTodos = async () => {
     const filters: any = {};
     if (currentProject.value) {
       filters.project_id = currentProject.value.id;
+      if (currentGroup.value) {
+        filters.project_group_id = currentGroup.value.id;
+      }
       console.log('🚀 Loading todosState for project:', currentProject.value.id);
     } else {
       console.log('🚀 No current project set');
@@ -2727,6 +2881,10 @@ const loadTodos = async () => {
 
 // Watch for project changes and reload todosState
 watch(currentProject, async (newProject, oldProject) => {
+  if (newProject?.id !== oldProject?.id) {
+    await loadProjectGroups(newProject?.id ?? null);
+  }
+
   // Only reload todosState if the project actually changed (not just set for the first time)
   if (newProject && oldProject && newProject.id !== oldProject.id) {
     selectedProjectId.value = newProject.id.toString();
@@ -2758,6 +2916,7 @@ async function onSubmitBulkTodos() {
           await todoApi.createTodo({
             ...p,
             project_id: currentProject.value.id,
+            project_group_id: currentGroup.value?.id ?? null,
             status: 'todo',
           } as any);
         }
@@ -2778,6 +2937,10 @@ async function onSubmitBulkTodos() {
 
 const ingestCreatedTodo = (newTodo: Todo): boolean => {
   if (!currentProject.value || newTodo.project_id !== currentProject.value.id) {
+    return false;
+  }
+
+  if (currentGroup.value && newTodo.project_group_id && newTodo.project_group_id !== currentGroup.value.id) {
     return false;
   }
 
@@ -2924,6 +3087,9 @@ onMounted(async () => {
   
   // Then load current project from localStorage
   await loadCurrentProject();
+  if (currentProject.value) {
+    await loadProjectGroups(currentProject.value.id);
+  }
   
   // Finally load todosState for the current project
   await loadTodos();

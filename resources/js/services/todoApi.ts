@@ -27,6 +27,7 @@ export interface Todo {
     id: number;
     user_id: number;
     project_id: number;
+    project_group_id?: number | null;
     parent_task_id?: number;
     title: string;
     description?: string;
@@ -92,6 +93,8 @@ export interface TodoAttachment {
 }
 
 export interface TodoFilters {
+    project_id?: number;
+    project_group_id?: number;
     search?: string;
     priority?: string;
     type?: string;

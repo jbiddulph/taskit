@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Activity;
+use App\Models\ProjectGroup;
 use App\Services\TodoWebSocketService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -154,6 +155,8 @@ class ProjectController extends Controller
             'client_id' => $request->client_id,
             'company_id' => $user->company_id,
         ]);
+
+        ProjectGroup::createDefaultForProject($project);
 
         // Log activity
         Activity::createProjectActivity($project, $user, 'project_created');

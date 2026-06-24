@@ -6,6 +6,7 @@ use App\Models\Activity;
 use App\Models\MeetingNoteProposal;
 use App\Models\Notification;
 use App\Models\Project;
+use App\Models\ProjectGroup;
 use App\Models\Todo;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -164,6 +165,7 @@ class MeetingNoteProposalService
                 $todo = Todo::create([
                     'user_id' => $user->id,
                     'project_id' => $project->id,
+                    'project_group_id' => ProjectGroup::resolveDefaultIdForProject($project->id),
                     'company_id' => $user->company_id,
                     'title' => $title,
                     'description' => $description,

@@ -168,6 +168,16 @@
     "outline_color_hint": "Defaults to the project colour when not set.",
     "use_project_color": "Use project colour",
     "use_type_icon_default": "Use type default",
+    "project_groups": {
+      "add_group": "Add board",
+      "create_group": "Create board",
+      "group_name": "Board name",
+      "group_name_placeholder": "e.g. Sales pipeline, Maintenance",
+      "create_success": "Board created",
+      "create_failed": "Failed to create board",
+      "delete_confirm": "Delete this board? Tasks will move to the default board.",
+      "switch_board": "Switch kanban board"
+    },
     "assignee": "Assignee",
     "due_date": "Due Date",
     "story_points": "Story Points",
