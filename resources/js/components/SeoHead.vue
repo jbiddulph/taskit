@@ -91,11 +91,6 @@ const jsonLdPayload = computed(() => {
         <meta name="twitter:title" :content="fullTitle" />
         <meta name="twitter:description" :content="normalizedDescription" />
         <meta name="twitter:image" :content="ogImageUrl" />
-        <component
-            :is="'script'"
-            v-if="jsonLdPayload"
-            type="application/ld+json"
-            v-html="jsonLdPayload"
-        />
+        <script v-if="jsonLdPayload" type="application/ld+json">{{ jsonLdPayload }}</script>
     </Head>
 </template>
