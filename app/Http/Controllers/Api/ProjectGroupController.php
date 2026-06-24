@@ -8,6 +8,7 @@ use App\Models\ProjectGroup;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ProjectGroupController extends Controller
@@ -107,20 +108,16 @@ class ProjectGroupController extends Controller
             ], 422);
         }
 
-        $defaultGroup = ProjectGroup::query()
-            ->where('project_id', $projectGroup->project_id)
-            ->where('is_default', true)
-            ->first();
+        $todoCount = $projectGroup->todos()->count();
 
-        if ($defaultGroup) {
-            $projectGroup->todos()->update(['project_group_id' => $defaultGroup->id]);
-        }
-
-        $projectGroup->delete();
+        DB::transaction(function () use ($projectGroup): void {
+            $projectGroup->todos()->delete();
+            $projectGroup->delete();
+        });
 
         return response()->json([
             'success' => true,
-            'message' => 'Group deleted successfully',
+            'message' => "Group and {$todoCount} todos deleted successfully",
         ]);
     }
 }

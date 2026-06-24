@@ -171,11 +171,17 @@
     "project_groups": {
       "add_group": "Add board",
       "create_group": "Create board",
+      "edit_group": "Edit board",
       "group_name": "Board name",
       "group_name_placeholder": "e.g. Sales pipeline, Maintenance",
+      "board_actions": "Board actions",
       "create_success": "Board created",
       "create_failed": "Failed to create board",
-      "delete_confirm": "Delete this board? Tasks will move to the default board.",
+      "update_success": "Board updated",
+      "update_failed": "Failed to update board",
+      "delete_success": "Board deleted",
+      "delete_failed": "Failed to delete board",
+      "delete_confirm": "Delete this board and all todos on it? This cannot be undone.",
       "switch_board": "Switch kanban board"
     },
     "assignee": "Assignee",
