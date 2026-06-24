@@ -185,6 +185,8 @@
             :read-only="props.isReadOnly"
             @select="selectProjectGroup"
             @create="openCreateGroupModal"
+            @edit="openEditGroupModal"
+            @delete="deleteProjectGroup"
           />
 
           <!-- Create Project Button (only shown when no project is selected and not at FREE limit) -->
@@ -685,6 +687,46 @@
       </div>
     </div>
 
+    <div v-if="showEditGroup && editingGroup" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click="closeEditGroupModal">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full" @click.stop>
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">{{ t('todos.project_groups.edit_group') }}</h2>
+            <button @click="closeEditGroupModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              <Icon name="X" class="w-6 h-6" />
+            </button>
+          </div>
+          <form @submit.prevent="saveProjectGroup" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('todos.project_groups.group_name') }}</label>
+              <input
+                v-model="editingGroupName"
+                type="text"
+                required
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                :placeholder="t('todos.project_groups.group_name_placeholder')"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ t('projects.color') }}</label>
+              <div class="flex items-center gap-3">
+                <input v-model="editingGroupColor" type="color" class="w-12 h-10 border border-gray-300 dark:border-gray-600 rounded-md cursor-pointer" />
+                <span class="text-sm text-gray-600 dark:text-gray-400">{{ editingGroupColor }}</span>
+              </div>
+            </div>
+            <div class="flex gap-3 pt-2">
+              <button type="submit" class="flex-1 rounded-md px-4 py-2 text-sm font-medium bg-black text-white dark:bg-white dark:text-black">
+                {{ t('common.save') }}
+              </button>
+              <button type="button" @click="closeEditGroupModal" class="flex-1 rounded-md px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600">
+                {{ t('common.cancel') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- Create Project Modal -->
     <div v-if="showCreateProject && !props.isReadOnly" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click="showCreateProject = false">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full" @click.stop>
@@ -1056,6 +1098,10 @@ const currentProject = ref<Project | null>(null);
 const projectGroups = ref<ProjectGroup[]>([]);
 const currentGroup = ref<ProjectGroup | null>(null);
 const showCreateGroup = ref(false);
+const showEditGroup = ref(false);
+const editingGroup = ref<ProjectGroup | null>(null);
+const editingGroupName = ref('');
+const editingGroupColor = ref('#3B82F6');
 const newGroup = ref({
   name: '',
   color: '#3B82F6',
@@ -2768,6 +2814,107 @@ const createProjectGroup = async () => {
         type: 'error',
         title: t('todos.project_groups.create_failed'),
         message: t('todos.project_groups.create_failed'),
+      });
+    }
+  }
+};
+
+const openEditGroupModal = (group: ProjectGroup) => {
+  editingGroup.value = group;
+  editingGroupName.value = group.name;
+  editingGroupColor.value = group.color || currentProject.value?.color || '#3B82F6';
+  showEditGroup.value = true;
+};
+
+const closeEditGroupModal = () => {
+  showEditGroup.value = false;
+  editingGroup.value = null;
+  editingGroupName.value = '';
+  editingGroupColor.value = '#3B82F6';
+};
+
+const saveProjectGroup = async () => {
+  if (!editingGroup.value || !editingGroupName.value.trim()) {
+    return;
+  }
+
+  try {
+    const updated = await projectGroupApi.update(editingGroup.value.id, {
+      name: editingGroupName.value.trim(),
+      color: editingGroupColor.value,
+    });
+
+    projectGroups.value = projectGroups.value.map((group) =>
+      group.id === updated.id ? updated : group,
+    );
+
+    if (currentGroup.value?.id === updated.id) {
+      currentGroup.value = updated;
+    }
+
+    closeEditGroupModal();
+
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'success',
+        title: t('todos.project_groups.update_success'),
+        message: updated.name,
+      });
+    }
+  } catch {
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: t('todos.project_groups.update_failed'),
+        message: t('todos.project_groups.update_failed'),
+      });
+    }
+  }
+};
+
+const deleteProjectGroup = async (group: ProjectGroup) => {
+  if (!currentProject.value || group.is_default) {
+    return;
+  }
+
+  if (!window.confirm(t('todos.project_groups.delete_confirm'))) {
+    return;
+  }
+
+  try {
+    await projectGroupApi.delete(group.id);
+
+    const remainingGroups = projectGroups.value.filter((item) => item.id !== group.id);
+    projectGroups.value = remainingGroups;
+
+    if (currentGroup.value?.id === group.id) {
+      const nextGroup = remainingGroups.find((item) => item.is_default) ?? remainingGroups[0] ?? null;
+      currentGroup.value = nextGroup;
+
+      if (nextGroup) {
+        localStorage.setItem(groupStorageKey(currentProject.value.id), nextGroup.id.toString());
+      } else {
+        localStorage.removeItem(groupStorageKey(currentProject.value.id));
+      }
+
+      await loadTodos();
+    }
+
+    window.dispatchEvent(new CustomEvent('todoChanged'));
+
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'success',
+        title: t('todos.project_groups.delete_success'),
+        message: group.name,
+      });
+    }
+  } catch {
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: t('todos.project_groups.delete_failed'),
+        message: t('todos.project_groups.delete_failed'),
       });
     }
   }
