@@ -4,6 +4,26 @@ import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import PublicNavigation from '@/components/PublicNavigation.vue';
 import SeoHead from '@/components/SeoHead.vue';
+import { SEO_HOME_DESCRIPTION, SEO_HOME_TITLE } from '@/constants/seo';
+
+const homeJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'ZapTask',
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'Web',
+    description: SEO_HOME_DESCRIPTION,
+    url: 'https://www.zaptask.co.uk',
+    offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'GBP',
+    },
+    audience: {
+        '@type': 'Audience',
+        audienceType: 'Estate agents, trades, field teams, and small businesses',
+    },
+};
 
 // Mobile menu state
 const mobileMenuOpen = ref(false);
@@ -39,8 +59,10 @@ onMounted(() => {
 
 <template>
     <SeoHead
-        title="Welcome"
-        description="ZapTask helps teams manage work with a clear Kanban workflow, real-time collaboration, and powerful automation."
+        :title="SEO_HOME_TITLE"
+        :description="SEO_HOME_DESCRIPTION"
+        keywords="task management for estate agents, location based tasks, small business task app, property viewing planner, field team management, Kanban for small teams UK"
+        :json-ld="homeJsonLd"
         image="/images/activity-feed.png"
     />
     <Head>
@@ -66,6 +88,9 @@ onMounted(() => {
                         <button @click="scrollToSection('pricing')" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer">
                             Pricing
                         </button>
+                        <a href="/for-estate-agents" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                            Estate agents
+                        </a>
                         <a href="/competitors" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                             Competitors
                         </a>
@@ -132,6 +157,13 @@ onMounted(() => {
                             Pricing
                         </button>
                         <a
+                            href="/for-estate-agents"
+                            class="px-2 py-1 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                            @click="mobileMenuOpen = false"
+                        >
+                            Estate agents
+                        </a>
+                        <a
                             href="/competitors"
                             class="px-2 py-1 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                             @click="mobileMenuOpen = false"
@@ -178,9 +210,9 @@ onMounted(() => {
                 <div
                     class="flex-1 rounded-br-lg rounded-bl-lg bg-white p-4 pb-8 text-[15px] leading-[22px] shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] lg:rounded-tl-lg lg:rounded-br-none lg:p-12 dark:bg-[#161615] dark:text-[#EDEDEC] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]"
                 >
-                    <h1 class="mb-2 text-lg font-medium">Welcome to ZapTask</h1>
+                    <h1 class="mb-2 text-lg font-medium">Task management for teams on the move</h1>
                     <p class="mb-4 text-[15px] text-[#706f6c] dark:text-[#A1A09A]">
-                        The ultimate task management platform designed for teams that want to get things done efficiently.
+                        ZapTask helps estate agents, trades, and small businesses plan property visits, site jobs, and everyday work—with locations on a map, not just another dev-focused project tool.
                     </p>
                     
                     <!-- Features Section -->
@@ -192,8 +224,20 @@ onMounted(() => {
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="font-medium text-base text-[#1b1b18] dark:text-[#EDEDEC]">Kanban Board Management</h3>
-                                <p class="text-[14px] text-[#706f6c] dark:text-[#A1A09A]">Organize tasks with intuitive drag-and-drop columns: To Do, In Progress, Q&A/Testing, and Done.</p>
+                                <h3 class="font-medium text-base text-[#1b1b18] dark:text-[#EDEDEC]">Location tasks & map routes</h3>
+                                <p class="text-[14px] text-[#706f6c] dark:text-[#A1A09A]">Pin tasks to addresses, plan viewing or site-visit routes, check in on arrival, and navigate with Apple or Google Maps.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start gap-2">
+                            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 flex-shrink-0">
+                                <svg class="h-4 w-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-base text-[#1b1b18] dark:text-[#EDEDEC]">Simple Kanban boards</h3>
+                                <p class="text-[14px] text-[#706f6c] dark:text-[#A1A09A]">Organise work with drag-and-drop columns everyone understands—no agile jargon required.</p>
                             </div>
                         </div>
                         
@@ -216,8 +260,8 @@ onMounted(() => {
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="font-medium text-base text-[#1b1b18] dark:text-[#EDEDEC]">Advanced Features</h3>
-                                <p class="text-[14px] text-[#706f6c] dark:text-[#A1A09A]">Subtasks, file attachments, due dates, priorities, custom logos, and powerful filtering.</p>
+                                <h3 class="font-medium text-base text-[#1b1b18] dark:text-[#EDEDEC]">Voice & meeting notes</h3>
+                                <p class="text-[14px] text-[#706f6c] dark:text-[#A1A09A]">Record a morning briefing or client call—AI turns it into tasks with priorities, due dates, and locations from speech.</p>
                             </div>
                         </div>
                     </div>
@@ -271,10 +315,10 @@ onMounted(() => {
                                 ZapTask
                             </h2>
                             <p class="text-lg text-gray-600 dark:text-gray-300 font-medium">
-                                Task Management Made Simple
+                                For estate agents & small teams
                             </p>
                             <p class="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
-                                Organize your projects, track progress, and collaborate with your team effortlessly.
+                                Viewings, site visits, and daily jobs—organised on a map and board your whole team can use.
                             </p>
                             
                         </div>
@@ -372,11 +416,54 @@ onMounted(() => {
             </div>
         </section>
         
+        <!-- Who ZapTask is for -->
+        <section id="industries" class="w-full py-12 mt-4">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">
+                        Built for small teams—not just software projects
+                    </h2>
+                    <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] max-w-3xl mx-auto">
+                        If your work happens at addresses, on the road, or across clients, ZapTask keeps everyone aligned without enterprise complexity.
+                    </p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <a href="/for-estate-agents" class="rounded-xl border border-blue-200 bg-white p-5 hover:shadow-md transition-shadow dark:border-blue-800 dark:bg-[#161615]">
+                        <h3 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">🏠 Estate agents</h3>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Plan viewings on a map, route negotiators, and track sales progression.</p>
+                    </a>
+                    <div class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-[#161615]">
+                        <h3 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">🔧 Trades & field services</h3>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Schedule jobs by postcode, check in on site, and see today's route at a glance.</p>
+                    </div>
+                    <div class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-[#161615]">
+                        <h3 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">📣 Agencies & consultancies</h3>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Manage client projects, deadlines, and deliverables on boards clients can understand.</p>
+                    </div>
+                    <div class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-[#161615]">
+                        <h3 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">🏪 Retail & hospitality</h3>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Coordinate openings, refits, and multi-site tasks with locations and assignees.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
         <!-- Additional Features Section -->
         <section id="features-advanced" class="w-full py-12 mt-12">
             <div class="max-w-6xl mx-auto px-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- TODO: Replace placeholder PNGs in public/images with real marketing screenshots -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white dark:bg-[#161615] rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
+                        <div class="flex items-center justify-center mb-4">
+                            <div class="flex h-24 w-full items-center justify-center rounded-lg bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/20 text-5xl">
+                                🗺️
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">Map & location tasks</h3>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                            Add an address to any task and see it on the map. Filter by location, plan routes between stops, navigate in Apple or Google Maps, and check in when your team arrives on site.
+                        </p>
+                    </div>
+                    
                     <!-- Calendar Feature -->
                     <div class="bg-white dark:bg-[#161615] rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
                         <div class="flex items-center justify-center mb-4">
@@ -421,7 +508,7 @@ onMounted(() => {
                         Choose Your Plan
                     </h2>
                     <p class="text-xl text-[#4a4a45] dark:text-gray-300 max-w-3xl mx-auto leading-relaxed mb-6">
-                        Select the perfect plan for your team size and project needs. All plans include our core features with no hidden fees.
+                        Start free as a solo agent or tradesperson. Upgrade when your branch or team needs more members, clients, and projects.
                     </p>
 
                     <!-- Billing interval toggle -->
@@ -714,7 +801,7 @@ onMounted(() => {
                 
                 <div class="text-center mt-16">
                     <p class="text-base text-[#4a4a45] dark:text-gray-400 max-w-2xl mx-auto">
-                        All plans include our core features: Kanban boards, real-time collaboration, file attachments, and email notifications. 
+                        All plans include Kanban boards, map & location tasks, real-time collaboration, and voice meeting notes.
                         <span class="font-semibold text-[#1b1b18] dark:text-white">No credit card required for FREE plan.</span>
                     </p>
                 </div>
@@ -765,7 +852,7 @@ onMounted(() => {
                             <span class="text-xl font-bold text-white">ZapTask</span>
                         </div>
                         <p class="text-gray-300 text-sm mb-4 max-w-md">
-                            The ultimate task management platform designed for teams that want to get things done efficiently. Organize projects, track progress, and collaborate seamlessly.
+                            Location-based task management for estate agents, trades, agencies, and small teams across the UK. Plan visits on a map, route your day, and keep work visible on simple boards.
                         </p>
                     </div>
                     
@@ -786,6 +873,11 @@ onMounted(() => {
                             <li>
                                 <a href="#pricing" class="text-gray-300 hover:text-white transition-colors">
                                     Pricing
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/for-estate-agents" class="text-gray-300 hover:text-white transition-colors">
+                                    Estate agents
                                 </a>
                             </li>
                             <li>
@@ -838,7 +930,7 @@ onMounted(() => {
                 <div class="border-t border-gray-700 mt-8 pt-8">
                     <div class="flex flex-col md:flex-row justify-between items-center">
                         <div class="text-gray-400 text-sm mb-4 md:mb-0">
-                            Made with ❤️ for productive teams worldwide
+                            Made for estate agents, field teams, and small businesses across the UK
                         </div>
                         <div class="text-gray-400 text-sm">
                             ZapTask &copy; 2025 ZapTask.co.uk. All rights reserved.

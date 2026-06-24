@@ -27,6 +27,26 @@ class SitemapController extends Controller
                 'priority' => '0.8',
             ],
             [
+                'loc' => route('competitors'),
+                'changefreq' => 'monthly',
+                'priority' => '0.7',
+            ],
+            [
+                'loc' => route('alternative-to'),
+                'changefreq' => 'monthly',
+                'priority' => '0.7',
+            ],
+            [
+                'loc' => route('for-estate-agents'),
+                'changefreq' => 'monthly',
+                'priority' => '0.9',
+            ],
+            [
+                'loc' => route('cookies'),
+                'changefreq' => 'yearly',
+                'priority' => '0.3',
+            ],
+            [
                 'loc' => route('contact'),
                 'changefreq' => 'monthly',
                 'priority' => '0.6',

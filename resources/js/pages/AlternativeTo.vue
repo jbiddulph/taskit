@@ -1,8 +1,9 @@
 <template>
     <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
         <SeoHead
-            title="Alternative to project management tools"
-            description="Compare ZapTask with Trello, Asana, and Jira for a simpler, opinionated Kanban workflow."
+            title="Alternative to Trello, Asana & spreadsheets"
+            description="Looking for a simpler alternative? ZapTask gives estate agents and small teams location-based tasks, map routes, and Kanban boards—without complex setup."
+            keywords="Trello alternative for estate agents, Asana alternative small business, simple task management UK"
             image="/zap_icon.png"
         />
         
@@ -47,9 +48,9 @@
         <!-- Main Content with padding for fixed header -->
         <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24">
             <section class="mb-12">
-                <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">Looking for an alternative to your current tool?</h1>
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">A simpler alternative for teams who work on site</h1>
                 <p class="text-gray-600 dark:text-gray-300 text-base md:text-lg max-w-3xl">
-                    ZapTask is a focused, opinionated alternative to complex project management tools. If you're feeling overwhelmed by configuration and endless views, ZapTask keeps everyone aligned around a single, clear board.
+                    Tired of tools built for developers? ZapTask is for estate agents, trades, agencies, and small businesses who need tasks on a map, clear boards, and less admin—not dozens of views and integrations.
                 </p>
             </section>
 
@@ -73,8 +74,9 @@
                     </p>
                     <ul class="list-disc list-inside text-sm text-gray-600 dark:text-gray-300 space-y-1">
                         <li>ZapTask keeps everyone on one board with just enough structure.</li>
-                        <li>Fast to onboard clients and non-technical stakeholders.</li>
-                        <li>Designed for product teams, agencies, and founders.</li>
+                        <li>Fast to onboard negotiators, contractors, and non-technical staff.</li>
+                        <li>Location tasks, routes, and on-site check-in—not just dev sprints.</li>
+                        <li>Designed for estate agents, agencies, trades, and founders.</li>
                     </ul>
                 </div>
 

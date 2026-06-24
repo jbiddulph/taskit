@@ -42,6 +42,10 @@ Route::get('/alternative-to', function () {
     return Inertia::render('AlternativeTo');
 })->name('alternative-to');
 
+Route::get('/for-estate-agents', function () {
+    return Inertia::render('ForEstateAgents');
+})->name('for-estate-agents');
+
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 

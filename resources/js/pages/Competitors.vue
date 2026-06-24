@@ -1,8 +1,9 @@
 <template>
     <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
         <SeoHead
-            title="Competitors"
-            description="See how ZapTask compares to other task management tools with a focused, distraction-free workflow."
+            title="ZapTask vs Trello, Asana & Monday"
+            description="Compare ZapTask with other tools for estate agents and small teams. Get location tasks, maps, and simple Kanban—without enterprise bloat or dev-team jargon."
+            keywords="ZapTask vs Trello, task management for estate agents, small business project tool comparison"
             image="/zap_icon.png"
         />
         
@@ -47,9 +48,9 @@
         <!-- Main Content with padding for fixed header -->
         <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24">
             <section class="mb-12">
-                <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">ZapTask vs Competitors</h1>
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">ZapTask vs other task tools</h1>
                 <p class="text-gray-600 dark:text-gray-300 text-base md:text-lg max-w-3xl">
-                    See how ZapTask compares to other project and task management tools. We focus on clarity, speed, and a distraction-free experience for teams that just want to ship work.
+                    Most project tools are built for software teams. ZapTask is different: location tasks on a map, routes for field staff, and boards simple enough for estate agents, trades, and small businesses.
                 </p>
             </section>
 

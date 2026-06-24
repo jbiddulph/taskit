@@ -17,8 +17,9 @@ defineOptions({
 
 <template>
     <SeoHead
-        title="Demo"
-        description="Explore the ZapTask demo and walkthrough to see how teams plan, track, and deliver work."
+        title="Demo — see location tasks & boards in action"
+        description="Try ZapTask free: map property viewings, plan routes, run Kanban boards, and record meeting notes—built for estate agents and small teams, not just developers."
+        keywords="ZapTask demo, estate agent task software demo, location task management demo"
         image="/images/calendar.png"
     />
     <Head>
@@ -61,10 +62,10 @@ defineOptions({
             <section class="w-full bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/30 py-16">
                 <div class="max-w-4xl mx-auto px-6 text-center">
                     <h1 class="text-4xl lg:text-5xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-6">
-                        Try ZapTask Demo
+                        Try ZapTask — built for teams on the move
                     </h1>
                     <p class="text-xl text-[#706f6c] dark:text-[#A1A09A] mb-8 max-w-2xl mx-auto">
-                        Experience ZapTask with our pre-configured demo account. Explore all features and see how easy project management can be.
+                        Explore the demo account: pin tasks to addresses, plan viewing routes, run a simple Kanban board, and try voice meeting notes—no developer setup required.
                     </p>
                     
                     <!-- Demo Login Credentials -->

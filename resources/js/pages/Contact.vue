@@ -1,8 +1,8 @@
 <template>
     <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
         <SeoHead
-            title="Contact support"
-            description="Reach ZapTask support with questions about plans, billing, or product help."
+            title="Contact ZapTask"
+            description="Questions about ZapTask for your estate agency or small business? Contact our UK team about plans, location tasks, onboarding, and support."
             image="/zap_icon.png"
         />
         
