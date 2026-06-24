@@ -61,7 +61,7 @@ onMounted(() => {
     <SeoHead
         :title="SEO_HOME_TITLE"
         :description="SEO_HOME_DESCRIPTION"
-        keywords="task management for estate agents, location based tasks, small business task app, property viewing planner, field team management, Kanban for small teams UK"
+        keywords="task management for estate agents, AI task management, location based tasks, small business task app, property viewing planner, field team management, Kanban for small teams UK"
         :json-ld="homeJsonLd"
         image="/images/activity-feed.png"
     />
@@ -212,7 +212,7 @@ onMounted(() => {
                 >
                     <h1 class="mb-2 text-lg font-medium">Task management for teams on the move</h1>
                     <p class="mb-4 text-[15px] text-[#706f6c] dark:text-[#A1A09A]">
-                        ZapTask helps estate agents, trades, and small businesses plan property visits, site jobs, and everyday work—with locations on a map, not just another dev-focused project tool.
+                        ZapTask helps estate agents, trades, and small businesses plan property visits, site jobs, and everyday work—with AI built into the dashboard controls so you can create multiple tasks in seconds, plus location-based tasks on a map.
                     </p>
                     
                     <!-- Features Section -->
@@ -260,8 +260,8 @@ onMounted(() => {
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="font-medium text-base text-[#1b1b18] dark:text-[#EDEDEC]">Voice & meeting notes</h3>
-                                <p class="text-[14px] text-[#706f6c] dark:text-[#A1A09A]">Record a morning briefing or client call—AI turns it into tasks with priorities, due dates, and locations from speech.</p>
+                                <h3 class="font-medium text-base text-[#1b1b18] dark:text-[#EDEDEC]">AI dashboard controls</h3>
+                                <p class="text-[14px] text-[#706f6c] dark:text-[#A1A09A]">Tap the AI button on your dashboard—speak to create multiple tasks at once, update or delete by task ID or title, or record a meeting and let AI extract action items with priorities, due dates, and locations.</p>
                             </div>
                         </div>
                     </div>
@@ -318,7 +318,7 @@ onMounted(() => {
                                 For estate agents & small teams
                             </p>
                             <p class="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
-                                Viewings, site visits, and daily jobs—organised on a map and board your whole team can use.
+                                AI-powered dashboard, location tasks, and Kanban boards your whole team can use on the move.
                             </p>
                             
                         </div>
@@ -801,7 +801,7 @@ onMounted(() => {
                 
                 <div class="text-center mt-16">
                     <p class="text-base text-[#4a4a45] dark:text-gray-400 max-w-2xl mx-auto">
-                        All plans include Kanban boards, map & location tasks, real-time collaboration, and voice meeting notes.
+                        All plans include Kanban boards, AI dashboard controls, location-based tasks on a map, real-time collaboration, and voice meeting notes.
                         <span class="font-semibold text-[#1b1b18] dark:text-white">No credit card required for FREE plan.</span>
                     </p>
                 </div>
@@ -852,7 +852,7 @@ onMounted(() => {
                             <span class="text-xl font-bold text-white">ZapTask</span>
                         </div>
                         <p class="text-gray-300 text-sm mb-4 max-w-md">
-                            Location-based task management for estate agents, trades, agencies, and small teams across the UK. Plan visits on a map, route your day, and keep work visible on simple boards.
+                            AI-powered task management for estate agents, trades, and small teams across the UK. Create tasks from the dashboard by voice, plan location-based visits on a map, and keep work visible on simple boards.
                         </p>
                     </div>
                     

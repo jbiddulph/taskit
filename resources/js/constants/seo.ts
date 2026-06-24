@@ -6,7 +6,7 @@ export const SEO_DEFAULT_DESCRIPTION =
 export const SEO_HOME_TITLE = 'Task Management for Estate Agents & Small Teams';
 
 export const SEO_HOME_DESCRIPTION =
-    'Location-based task management for estate agents, trades, and small businesses. Map viewings, plan routes, check in on site, and run your team from one simple board.';
+    'AI-powered task management for estate agents, trades, and small businesses. Create tasks by voice from the dashboard, plan location-based visits on a map, and run your team from one board.';
 
 export const SEO_ESTATE_AGENTS_TITLE = 'Task Management for Estate Agents';
 

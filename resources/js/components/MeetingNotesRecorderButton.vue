@@ -5,7 +5,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
-const { state, toggleRecording, formattedElapsedTime, maxDurationMinutes, isBusy } = useMeetingNotesRecorder();
+const { state, toggleRecording, formattedElapsedTime, isBusy } = useMeetingNotesRecorder();
 
 const buttonTitle = computed(() => {
     if (state.value === 'uploading') {
@@ -17,7 +17,7 @@ const buttonTitle = computed(() => {
     if (state.value === 'recording') {
         return t('dashboard.meeting_notes_stop', { time: formattedElapsedTime() });
     }
-    return t('dashboard.meeting_notes_start', { minutes: maxDurationMinutes });
+    return t('dashboard.ai_dashboard_start');
 });
 
 const buttonClasses = computed(() => {
@@ -27,7 +27,7 @@ const buttonClasses = computed(() => {
     if (isBusy()) {
         return 'text-blue-600 dark:text-blue-400 cursor-wait';
     }
-    return 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100';
+    return 'text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300';
 });
 
 const iconName = computed(() => {
@@ -37,7 +37,7 @@ const iconName = computed(() => {
     if (isBusy()) {
         return 'Loader2';
     }
-    return 'Mic';
+    return 'Sparkles';
 });
 </script>
 
