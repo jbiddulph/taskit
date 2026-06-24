@@ -4,9 +4,8 @@
       <div
         v-for="group in groups"
         :key="group.id"
-        class="relative inline-flex shrink-0"
+        class="inline-flex shrink-0 items-stretch rounded-md border transition-colors"
         :class="[
-          'rounded-md border transition-colors',
           currentGroupId === group.id
             ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900 dark:border-white'
             : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700',
@@ -27,41 +26,32 @@
           </span>
         </button>
 
-        <button
-          v-if="!readOnly"
-          type="button"
-          @click.stop="toggleMenu(group.id)"
-          class="inline-flex items-center justify-center border-l border-current/20 px-1.5 text-current/80 hover:text-current focus:outline-none focus:ring-2 focus:ring-blue-500"
-          :aria-expanded="openMenuGroupId === group.id"
-          :aria-label="t('todos.project_groups.board_actions')"
-          :title="t('todos.project_groups.board_actions')"
-        >
-          <Icon name="ChevronDown" class="w-3.5 h-3.5" />
-        </button>
-
-        <div
-          v-if="openMenuGroupId === group.id"
-          class="absolute right-0 top-full z-30 mt-1 w-40 overflow-hidden rounded-md border border-gray-200 bg-white py-1 text-gray-700 shadow-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-          @click.stop
-        >
-          <button
-            type="button"
-            @click="emitAction('edit', group)"
-            class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <Icon name="Edit3" class="w-3.5 h-3.5" />
-            {{ t('common.edit') }}
-          </button>
-          <button
-            v-if="!group.is_default"
-            type="button"
-            @click="emitAction('delete', group)"
-            class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
-          >
-            <Icon name="Trash2" class="w-3.5 h-3.5" />
-            {{ t('common.delete') }}
-          </button>
-        </div>
+        <DropdownMenu v-if="!readOnly">
+          <DropdownMenuTrigger as-child>
+            <button
+              type="button"
+              class="inline-flex items-center justify-center border-l border-current/20 px-2 text-current/80 hover:text-current focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              :aria-label="t('todos.project_groups.board_actions')"
+              :title="t('todos.project_groups.board_actions')"
+            >
+              <Icon name="EllipsisVertical" class="w-3.5 h-3.5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" class="w-44">
+            <DropdownMenuItem @select="$emit('edit', group)">
+              <Icon name="Edit3" class="w-3.5 h-3.5 mr-2" />
+              {{ t('common.edit') }}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              v-if="!group.is_default"
+              class="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
+              @select="$emit('delete', group)"
+            >
+              <Icon name="Trash2" class="w-3.5 h-3.5 mr-2" />
+              {{ t('common.delete') }}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <button
@@ -80,8 +70,13 @@
 
 <script setup lang="ts">
 import Icon from '@/components/Icon.vue';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import type { ProjectGroup } from '@/services/projectGroupApi';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 defineProps<{
@@ -90,7 +85,7 @@ defineProps<{
   readOnly?: boolean;
 }>();
 
-const emit = defineEmits<{
+defineEmits<{
   select: [group: ProjectGroup];
   create: [];
   edit: [group: ProjectGroup];
@@ -98,31 +93,4 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const openMenuGroupId = ref<number | null>(null);
-
-const toggleMenu = (groupId: number) => {
-  openMenuGroupId.value = openMenuGroupId.value === groupId ? null : groupId;
-};
-
-const emitAction = (action: 'edit' | 'delete', group: ProjectGroup) => {
-  openMenuGroupId.value = null;
-  if (action === 'edit') {
-    emit('edit', group);
-    return;
-  }
-
-  emit('delete', group);
-};
-
-const closeMenu = () => {
-  openMenuGroupId.value = null;
-};
-
-onMounted(() => {
-  document.addEventListener('click', closeMenu);
-});
-
-onBeforeUnmount(() => {
-  document.removeEventListener('click', closeMenu);
-});
 </script>

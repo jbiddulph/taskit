@@ -108,16 +108,26 @@ class ProjectGroupController extends Controller
             ], 422);
         }
 
+        $defaultGroup = ProjectGroup::query()
+            ->where('project_id', $projectGroup->project_id)
+            ->where('is_default', true)
+            ->first();
+
         $todoCount = $projectGroup->todos()->count();
 
-        DB::transaction(function () use ($projectGroup): void {
-            $projectGroup->todos()->delete();
+        DB::transaction(function () use ($projectGroup, $defaultGroup): void {
+            if ($defaultGroup) {
+                $projectGroup->todos()->update(['project_group_id' => $defaultGroup->id]);
+            }
+
             $projectGroup->delete();
         });
 
         return response()->json([
             'success' => true,
-            'message' => "Group and {$todoCount} todos deleted successfully",
+            'message' => $todoCount > 0
+                ? "Board deleted. {$todoCount} tasks moved to the default board."
+                : 'Board deleted successfully',
         ]);
     }
 }

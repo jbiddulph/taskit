@@ -13,7 +13,7 @@ class ProjectGroupControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_deleting_non_default_project_group_deletes_its_todos(): void
+    public function test_deleting_non_default_project_group_moves_its_todos_to_default_board(): void
     {
         $user = User::factory()->create();
         $project = Project::create([
@@ -39,11 +39,11 @@ class ProjectGroupControllerTest extends TestCase
             'type' => 'Task',
             'status' => 'todo',
         ]);
-        $deletedTodo = Todo::create([
+        $movedTodo = Todo::create([
             'user_id' => $user->id,
             'project_id' => $project->id,
             'project_group_id' => $extraGroup->id,
-            'title' => 'Delete me',
+            'title' => 'Move me',
             'priority' => 'Medium',
             'type' => 'Task',
             'status' => 'todo',
@@ -56,11 +56,14 @@ class ProjectGroupControllerTest extends TestCase
         $response->assertOk()
             ->assertJson([
                 'success' => true,
-                'message' => 'Group and 1 todos deleted successfully',
+                'message' => 'Board deleted. 1 tasks moved to the default board.',
             ]);
 
         $this->assertDatabaseMissing('taskit_project_groups', ['id' => $extraGroup->id]);
-        $this->assertDatabaseMissing('taskit_todos', ['id' => $deletedTodo->id]);
+        $this->assertDatabaseHas('taskit_todos', [
+            'id' => $movedTodo->id,
+            'project_group_id' => $defaultGroup->id,
+        ]);
         $this->assertDatabaseHas('taskit_project_groups', ['id' => $defaultGroup->id]);
         $this->assertDatabaseHas('taskit_todos', ['id' => $defaultTodo->id]);
     }

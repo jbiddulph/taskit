@@ -181,7 +181,8 @@
       "update_failed": "Failed to update board",
       "delete_success": "Board deleted",
       "delete_failed": "Failed to delete board",
-      "delete_confirm": "Delete this board and all todos on it? This cannot be undone.",
+      "delete_board": "Delete this board",
+      "delete_confirm": "Delete this board? Tasks on it will move to the default board.",
       "switch_board": "Switch kanban board"
     },
     "assignee": "Assignee",

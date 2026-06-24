@@ -722,6 +722,14 @@
                 {{ t('common.cancel') }}
               </button>
             </div>
+            <button
+              v-if="editingGroup && !editingGroup.is_default"
+              type="button"
+              class="mt-2 w-full rounded-md px-4 py-2 text-sm font-medium border border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+              @click="deleteProjectGroup(editingGroup)"
+            >
+              {{ t('todos.project_groups.delete_board') }}
+            </button>
           </form>
         </div>
       </div>
@@ -2883,6 +2891,8 @@ const deleteProjectGroup = async (group: ProjectGroup) => {
 
   try {
     await projectGroupApi.delete(group.id);
+
+    closeEditGroupModal();
 
     const remainingGroups = projectGroups.value.filter((item) => item.id !== group.id);
     projectGroups.value = remainingGroups;
