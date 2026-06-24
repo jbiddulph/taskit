@@ -2854,6 +2854,43 @@ const handleMeetingNotesTodosCreated = async (event: Event) => {
   }
 };
 
+const handleVoiceCommandApplied = (event: Event) => {
+  const detail = (event as CustomEvent<{ action?: string; todo?: Todo; deletedTodoId?: number }>).detail;
+  if (!detail) {
+    return;
+  }
+
+  if (detail.action === 'deleted' && detail.deletedTodoId) {
+    removeTodoFromState(detail.deletedTodoId);
+    window.dispatchEvent(new CustomEvent('todoChanged'));
+    return;
+  }
+
+  if (detail.todo) {
+    const existing = findTodoById(detail.todo.id);
+    if (existing) {
+      if (existing.parentIndex !== undefined && existing.subtaskIndex !== undefined) {
+        const parent = todosState.value[existing.parentIndex];
+        if (parent?.subtasks?.[existing.subtaskIndex]) {
+          parent.subtasks[existing.subtaskIndex] = {
+            ...parent.subtasks[existing.subtaskIndex],
+            ...detail.todo,
+          };
+        }
+      } else if (existing.parentIndex !== undefined) {
+        todosState.value[existing.parentIndex] = {
+          ...todosState.value[existing.parentIndex],
+          ...detail.todo,
+        };
+      }
+      todosState.value = [...todosState.value];
+    } else if (detail.action === 'created') {
+      ingestCreatedTodo(detail.todo);
+    }
+    window.dispatchEvent(new CustomEvent('todoChanged'));
+  }
+};
+
 // Single onMounted hook to handle all initialization
 onMounted(async () => {
   // In read-only mode, use passed data instead of making API calls
@@ -3158,6 +3195,7 @@ onMounted(async () => {
   // Listen for openTodoById dispatched by notifications
   window.addEventListener('openTodoById', handleOpenTodoById);
   window.addEventListener('meetingNotesTodosCreated', handleMeetingNotesTodosCreated);
+  window.addEventListener('voiceCommandApplied', handleVoiceCommandApplied);
 });
 
 // Cleanup on unmount
@@ -3175,6 +3213,7 @@ onUnmounted(() => {
   // Remove listeners
   window.removeEventListener('openTodoById', handleOpenTodoById);
   window.removeEventListener('meetingNotesTodosCreated', handleMeetingNotesTodosCreated);
+  window.removeEventListener('voiceCommandApplied', handleVoiceCommandApplied);
 });
 
 </script>

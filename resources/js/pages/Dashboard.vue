@@ -6,7 +6,8 @@ import SeoHead from '@/components/SeoHead.vue';
 import TodoBoard from '../components/TodoBoard.vue';
 import LimitWarnings from '../components/LimitWarnings.vue';
 import ActivityFeed from '../components/ActivityFeed.vue';
-import MeetingNotesRecorderButton from '../components/MeetingNotesRecorderButton.vue';
+import VoiceAssistantButton from '../components/VoiceAssistantButton.vue';
+import VoiceDeleteConfirmDialog from '../components/VoiceDeleteConfirmDialog.vue';
 import MeetingNotesGeneratingBanner from '../components/MeetingNotesGeneratingBanner.vue';
 import Icon from '../components/Icon.vue';
 import { ref } from 'vue';
@@ -44,6 +45,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 // Project color state for main tag border
 const currentProjectColor = ref<string | null>(null);
+const currentProjectId = ref<number | null>(null);
 
 // Activity Feed toggle state
 const showActivityFeed = ref(false);
@@ -71,6 +73,7 @@ const isSelectMode = ref(false);
 
 const handleProjectChange = (project: any) => {
     currentProjectColor.value = project?.color || null;
+    currentProjectId.value = project?.id ?? null;
 };
 
 const toggleSelectMode = () => {
@@ -104,8 +107,7 @@ const toggleSelectMode = () => {
 
     <AppLayout :breadcrumbs="breadcrumbs" :company="company" :project-color="currentProjectColor">
         <template #dashboardActions>
-            <!-- Meeting Notes Recorder -->
-            <MeetingNotesRecorderButton />
+            <VoiceAssistantButton :project-id="currentProjectId" />
 
             <!-- Calendar Button -->
             <button
@@ -167,6 +169,7 @@ const toggleSelectMode = () => {
         <LimitWarnings v-if="company" :company="company" />
 
         <MeetingNotesGeneratingBanner />
+        <VoiceDeleteConfirmDialog :project-id="currentProjectId" />
         
         <div class="flex h-full flex-1 flex-col gap-2 overflow-x-auto rounded-xl p-2">
             <div :class="[
