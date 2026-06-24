@@ -19,7 +19,7 @@ class VoiceCommandController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'transcript' => 'required_without:confirm_delete|string|max:2000',
-            'project_id' => 'required|integer|exists:taskit_projects,id',
+            'project_id' => 'nullable|integer|exists:taskit_projects,id',
             'confirm_delete' => 'sometimes|boolean',
             'delete_todo_id' => 'required_if:confirm_delete,true|integer|exists:taskit_todos,id',
         ]);
@@ -37,7 +37,7 @@ class VoiceCommandController extends Controller
             $result = $this->voiceCommandService->process(
                 $user,
                 (string) $request->input('transcript', ''),
-                (int) $request->input('project_id'),
+                $request->filled('project_id') ? (int) $request->input('project_id') : null,
                 $request->boolean('confirm_delete'),
                 $request->input('delete_todo_id') ? (int) $request->input('delete_todo_id') : null,
             );

@@ -15,29 +15,35 @@ class VoiceCommandParser
             return ['intent' => 'unknown', 'message' => 'No speech was detected.'];
         }
 
-        if ($this->matchesDeleteIntent($lower)) {
-            return array_merge(['intent' => 'delete'], $this->extractMatchAndFields($text));
+        $taskRef = $this->extractTaskReference($text);
+
+        if ($this->matchesDeleteIntent($lower, $text)) {
+            return array_merge(['intent' => 'delete'], $this->extractMatchAndFields($text, $taskRef));
         }
 
         if ($this->matchesCreateIntent($lower)) {
             return array_merge(['intent' => 'create'], $this->extractCreatePayload($text));
         }
 
-        if ($this->matchesUpdateIntent($lower)) {
-            return array_merge(['intent' => 'update'], $this->extractMatchAndFields($text));
+        if ($this->matchesUpdateIntent($lower, $text, $taskRef)) {
+            return array_merge(['intent' => 'update'], $this->extractMatchAndFields($text, $taskRef));
         }
 
         if (preg_match('/^(create|add|new)\b/i', $text)) {
             return array_merge(['intent' => 'create'], $this->extractCreatePayload($text));
         }
 
-        return array_merge(['intent' => 'create'], $this->extractCreatePayload($text));
+        return ['intent' => 'unknown', 'message' => 'Sorry, I could not understand that command.'];
     }
 
-    private function matchesDeleteIntent(string $lower): bool
+    private function matchesDeleteIntent(string $lower, string $text): bool
     {
-        return (bool) preg_match('/\b(delete|remove|drop)\b/', $lower)
-            && preg_match('/\b(task|todo)\b/', $lower);
+        if (! preg_match('/\b(delete|remove|drop)\b/', $lower)) {
+            return false;
+        }
+
+        return preg_match('/\b(task|todo)\b/', $lower)
+            || $this->extractTaskReference($text) !== null;
     }
 
     private function matchesCreateIntent(string $lower): bool
@@ -46,26 +52,59 @@ class VoiceCommandParser
             && preg_match('/\b(task|todo|reminder)\b/', $lower);
     }
 
-    private function matchesUpdateIntent(string $lower): bool
+    private function matchesUpdateIntent(string $lower, string $text, ?array $taskRef): bool
     {
         if (preg_match('/\b(update|change|edit|modify|move|set)\b/', $lower)) {
             return true;
         }
 
+        if ($taskRef !== null && ! empty($this->extractUpdates($text))) {
+            return true;
+        }
+
         return preg_match('/\b(priority|due date|location|column|status)\b/', $lower)
-            && preg_match('/\b(task|todo)\b/', $lower);
+            && (preg_match('/\b(task|todo)\b/', $lower) || $taskRef !== null);
     }
 
-    private function extractMatchAndFields(string $text): array
+    /**
+     * @return array{todo_id?: int, reference_id?: string}|null
+     */
+    private function extractTaskReference(string $text): ?array
     {
-        $referenceId = $this->extractReferenceId($text);
+        if (preg_match('/\b([A-Za-z]{2,10})-(\d+)\b/', $text, $m)) {
+            return [
+                'reference_id' => strtoupper($m[1]).'-'.$m[2],
+                'todo_id' => (int) $m[2],
+            ];
+        }
+
+        if (preg_match('/\b([A-Za-z]{2,10})\s+(\d{1,6})\b/', $text, $m)) {
+            return [
+                'reference_id' => strtoupper($m[1]).'-'.$m[2],
+                'todo_id' => (int) $m[2],
+            ];
+        }
+
+        if (preg_match('/\b(?:task|todo)(?:\s+(?:id|number|#|no\.?))?\s*(\d{1,6})\b/i', $text, $m)) {
+            return ['todo_id' => (int) $m[1]];
+        }
+
+        return null;
+    }
+
+    private function extractMatchAndFields(string $text, ?array $taskRef = null): array
+    {
+        $taskRef ??= $this->extractTaskReference($text);
         $title = $this->extractQuotedTitle($text) ?? $this->extractTitleAfterTask($text);
 
+        $match = array_filter([
+            'todo_id' => $taskRef['todo_id'] ?? null,
+            'reference_id' => $taskRef['reference_id'] ?? null,
+            'title' => $title,
+        ]);
+
         return [
-            'match' => array_filter([
-                'reference_id' => $referenceId,
-                'title' => $title,
-            ]),
+            'match' => $match,
             'updates' => $this->extractUpdates($text),
         ];
     }
@@ -92,15 +131,6 @@ class VoiceCommandParser
         ];
     }
 
-    private function extractReferenceId(string $text): ?string
-    {
-        if (preg_match('/\b([A-Za-z]{2,10})-(\d+)\b/', $text, $m)) {
-            return strtoupper($m[1]).'-'.$m[2];
-        }
-
-        return null;
-    }
-
     private function extractQuotedTitle(string $text): ?string
     {
         if (preg_match('/["\']([^"\']+)["\']/', $text, $m)) {
@@ -113,8 +143,9 @@ class VoiceCommandParser
     private function extractTitleAfterTask(string $text): ?string
     {
         $patterns = [
-            '/\b(?:update|change|edit|modify|move|delete|remove)\s+(?:the\s+)?(?:task|todo)\s+(.+?)(?:\s+and\s+|\s+to\s+(?:the\s+)?(?:done|todo|progress|qa|testing)\b|$)/i',
-            '/\b(?:task|todo)\s+(.+?)(?:\s+and\s+|\s+to\s+(?:the\s+)?(?:done|todo|progress|qa|testing)\b|$)/i',
+            '/\b(?:update|change|edit|modify|move|delete|remove|set)\s+(?:the\s+)?(?:task|todo)\s+(.+?)(?:\s+to\s+(?:the\s+)?(?:done|todo|in[\s-]?progress|progress|qa|testing)\b|\s+(?:priority|due|location|status)\b|$)/i',
+            '/\b(?:task|todo)\s+(.+?)(?:\s+to\s+(?:the\s+)?(?:done|todo|in[\s-]?progress|progress|qa|testing)\b|\s+(?:priority|due|location|status)\b|$)/i',
+            '/\b(?:move|change|update)\s+(.+?)\s+to\s+(?:the\s+)?(?:done|todo|in[\s-]?progress|progress|qa|testing)\b/i',
         ];
 
         foreach ($patterns as $pattern) {
@@ -135,7 +166,8 @@ class VoiceCommandParser
         $value = preg_replace('/\b(please|the|a|an|called|named|titled)\b/i', ' ', $value) ?? $value;
         $value = preg_replace('/\b(and move it|and move|move it|to the|into the)\b.*$/i', '', $value) ?? $value;
         $value = preg_replace('/\b(priority|due date|location|status|column)\b.*$/i', '', $value) ?? $value;
-        $value = preg_replace('/\b([A-Za-z]{2,10})-\d+\b/', '', $value) ?? $value;
+        $value = preg_replace('/\b([A-Za-z]{2,10})-?\s*\d+\b/', '', $value) ?? $value;
+        $value = preg_replace('/\b(?:task|todo)(?:\s+(?:id|number|#))?\s*\d+\b/i', '', $value) ?? $value;
         $value = preg_replace('/\s+/', ' ', $value) ?? $value;
 
         return trim($value, " \t\n\r\0\x0B.,");
@@ -240,8 +272,8 @@ class VoiceCommandParser
     private function extractLocationQuery(string $text): ?string
     {
         $patterns = [
-            '/\blocation\s+(?:of|for|at)\s+(?:this\s+task\s+)?(?:of\s+)?(.+?)(?:\.|$)/i',
-            '/\badd\s+(?:a\s+)?location\s+(?:for\s+(?:this\s+)?task\s+)?(?:of\s+)?(.+?)(?:\.|$)/i',
+            '/\b(?:set|add|change|update)\s+(?:the\s+)?location\s+(?:to|at|for)\s+(.+?)(?:\.|$)/i',
+            '/\blocation\s+(?:to|of|for|at)\s+(.+?)(?:\.|$)/i',
             '/\bat\s+([A-Z][^.]+(?:Pier|Street|Road|Avenue|Lane|Park|Station|Centre|Center)[^.]*)/i',
         ];
 

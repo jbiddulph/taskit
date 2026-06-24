@@ -18,20 +18,20 @@ export interface VoiceCommandResult {
 }
 
 class VoiceCommandApiService {
-    async process(transcript: string, projectId: number): Promise<VoiceCommandResult> {
+    async process(transcript: string, projectId?: number | null): Promise<VoiceCommandResult> {
         const response = await axios.post<VoiceCommandResult>('/voice-commands/process', {
             transcript,
-            project_id: projectId,
+            ...(projectId ? { project_id: projectId } : {}),
         });
         return response.data;
     }
 
-    async confirmDelete(todoId: number, projectId: number): Promise<VoiceCommandResult> {
+    async confirmDelete(todoId: number, projectId?: number | null): Promise<VoiceCommandResult> {
         const response = await axios.post<VoiceCommandResult>('/voice-commands/process', {
-            project_id: projectId,
             confirm_delete: true,
             delete_todo_id: todoId,
             transcript: '',
+            ...(projectId ? { project_id: projectId } : {}),
         });
         return response.data;
     }

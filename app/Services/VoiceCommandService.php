@@ -19,14 +19,18 @@ class VoiceCommandService
         protected AssignmentNotificationService $assignmentNotificationService,
     ) {}
 
-    public function process(User $user, string $transcript, int $projectId, bool $confirmDelete = false, ?int $deleteTodoId = null): array
-    {
-        $project = $this->resolveAccessibleProject($user, $projectId);
-
+    public function process(
+        User $user,
+        string $transcript,
+        ?int $projectId = null,
+        bool $confirmDelete = false,
+        ?int $deleteTodoId = null,
+    ): array {
         if ($confirmDelete && $deleteTodoId) {
             return $this->executeConfirmedDelete($user, $deleteTodoId);
         }
 
+        $project = $projectId ? $this->resolveAccessibleProject($user, $projectId) : null;
         $parsed = $this->parser->parse($transcript);
         $intent = $parsed['intent'] ?? 'unknown';
 
@@ -42,14 +46,14 @@ class VoiceCommandService
         };
     }
 
-    private function handleDelete(User $user, Project $project, array $parsed): array
+    private function handleDelete(User $user, ?Project $project, array $parsed): array
     {
         $todo = $this->resolveTodo($user, $project, $parsed['match'] ?? []);
 
         if (! $todo) {
             return [
                 'success' => false,
-                'message' => 'I could not find a task matching that description.',
+                'message' => 'I could not find a task with that ID or title. Try saying something like ZAPT-183 or the task name.',
             ];
         }
 
@@ -92,14 +96,14 @@ class VoiceCommandService
         ];
     }
 
-    private function handleUpdate(User $user, Project $project, array $parsed): array
+    private function handleUpdate(User $user, ?Project $project, array $parsed): array
     {
         $todo = $this->resolveTodo($user, $project, $parsed['match'] ?? []);
 
         if (! $todo) {
             return [
                 'success' => false,
-                'message' => 'I could not find a task to update. Try saying the task title or ID like ZAPT-183.',
+                'message' => 'I could not find a task to update. Say the task ID (like ZAPT-183) or the task title.',
             ];
         }
 
@@ -118,7 +122,7 @@ class VoiceCommandService
         $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
 
         CacheService::invalidateUserCaches($user->id, $user->company_id);
-        CacheService::invalidateProjectCaches($project->id, $user->company_id);
+        CacheService::invalidateProjectCaches($todo->project_id, $user->company_id);
 
         $this->webSocketService->todoUpdated($todo);
         $this->assignmentNotificationService->sendAssignmentNotification($todo, $oldAssignee);
@@ -132,8 +136,10 @@ class VoiceCommandService
         ];
     }
 
-    private function handleCreate(User $user, Project $project, array $parsed): array
+    private function handleCreate(User $user, ?Project $project, array $parsed): array
     {
+        $project ??= $this->resolveDefaultProject($user);
+
         $create = $parsed['create'] ?? [];
         $title = trim((string) ($create['title'] ?? ''));
 
@@ -171,32 +177,47 @@ class VoiceCommandService
         ];
     }
 
-    private function resolveTodo(User $user, Project $project, array $match): ?Todo
+    private function resolveTodo(User $user, ?Project $project, array $match): ?Todo
     {
-        $todos = $this->projectTodos($user, $project);
+        $accessible = $this->accessibleTodos($user);
 
-        if (! empty($match['reference_id']) && preg_match('/-(\d+)$/', $match['reference_id'], $m)) {
-            $todo = $todos->firstWhere('id', (int) $m[1]);
+        if (! empty($match['todo_id'])) {
+            $todo = $accessible->firstWhere('id', (int) $match['todo_id']);
             if ($todo) {
                 return $todo;
             }
         }
 
+        if (! empty($match['reference_id']) && preg_match('/-(\d+)$/', $match['reference_id'], $m)) {
+            $todo = $accessible->firstWhere('id', (int) $m[1]);
+            if ($todo) {
+                return $todo;
+            }
+        }
+
+        $candidates = $project
+            ? $accessible->where('project_id', $project->id)
+            : $accessible;
+
         if (! empty($match['title'])) {
             $needle = strtolower($match['title']);
-            $exact = $todos->first(fn (Todo $todo) => strtolower($todo->title) === $needle);
+            $exact = $candidates->first(fn (Todo $todo) => strtolower($todo->title) === $needle);
             if ($exact) {
                 return $exact;
             }
 
-            $contains = $todos->filter(fn (Todo $todo) => str_contains(strtolower($todo->title), $needle));
+            $contains = $candidates->filter(fn (Todo $todo) => str_contains(strtolower($todo->title), $needle));
             if ($contains->count() === 1) {
                 return $contains->first();
             }
 
+            if ($contains->count() > 1) {
+                return null;
+            }
+
             $best = null;
             $bestScore = 0.0;
-            foreach ($todos as $todo) {
+            foreach ($candidates as $todo) {
                 similar_text($needle, strtolower($todo->title), $percent);
                 if ($percent > $bestScore) {
                     $bestScore = $percent;
@@ -212,11 +233,10 @@ class VoiceCommandService
         return null;
     }
 
-    private function projectTodos(User $user, Project $project): Collection
+    private function accessibleTodos(User $user): Collection
     {
         return Todo::query()
             ->with('project')
-            ->where('project_id', $project->id)
             ->whereNull('parent_task_id')
             ->where(function ($query) use ($user) {
                 if ($user->company_id) {
@@ -226,6 +246,26 @@ class VoiceCommandService
                 }
             })
             ->get();
+    }
+
+    private function resolveDefaultProject(User $user): Project
+    {
+        if ($user->company_id) {
+            $project = Project::visibleForCompany($user->company_id)->first();
+        } else {
+            $project = Project::query()
+                ->where('owner_id', $user->id)
+                ->orderBy('created_at')
+                ->first();
+        }
+
+        if (! $project || ! $project->canAccess($user->id)) {
+            throw ValidationException::withMessages([
+                'project_id' => ['Select a project on your dashboard before creating tasks by voice.'],
+            ]);
+        }
+
+        return $project;
     }
 
     private function applyLocationGeocode(array $fields): array
@@ -252,7 +292,7 @@ class VoiceCommandService
 
     private function referenceIdForTodo(Todo $todo): string
     {
-        $prefix = strtoupper(substr($todo->project?->name ?? 'TASK', 0, 4));
+        $prefix = strtoupper($todo->project?->key ?? substr($todo->project?->name ?? 'TASK', 0, 4));
 
         return "{$prefix}-{$todo->id}";
     }
@@ -283,7 +323,7 @@ class VoiceCommandService
 
         if (! $project || ! $project->canAccess($user->id)) {
             throw ValidationException::withMessages([
-                'project_id' => ['Select a valid project on your dashboard before using voice commands.'],
+                'project_id' => ['That project was not found or you do not have access to it.'],
             ]);
         }
 

@@ -70,8 +70,12 @@ function looksLikeTaskCommand(text: string): boolean {
         return false;
     }
 
-    if (/\b(delete|remove|drop)\b/.test(lower) && /\b(task|todo)\b/.test(lower)) {
+    if (/\b[a-z]{2,10}[-\s]+\d+\b/i.test(lower) || /\b(?:task|todo)\s*(?:id|number|#)?\s*\d+\b/i.test(lower)) {
         return true;
+    }
+
+    if (/\b(delete|remove|drop)\b/.test(lower)) {
+        return /\b(task|todo)\b/.test(lower) || /\b[a-z]{2,10}[-\s]+\d+\b/i.test(lower);
     }
 
     if (/\b(create|add|make|new)\b/.test(lower) && /\b(task|todo|reminder)\b/.test(lower)) {
@@ -82,12 +86,11 @@ function looksLikeTaskCommand(text: string): boolean {
         return true;
     }
 
-    if (/\b(priority|due date|location|column|status)\b/.test(lower) && /\b(task|todo)\b/.test(lower)) {
-        return true;
+    if (/\b(priority|due date|location|column|status)\b/.test(lower)) {
+        return /\b(task|todo)\b/.test(lower) || /\b(to|done|critical|high|low)\b/.test(lower);
     }
 
-    return /\b[a-z]{2,6}-\d+\b/i.test(lower)
-        && /\b(change|move|delete|update|set|priority|due)\b/i.test(lower);
+    return false;
 }
 
 function dispatchVoiceResult(detail: Record<string, unknown>) {
@@ -145,10 +148,6 @@ async function tryVoiceCommand(transcript: string, durationSeconds: number): Pro
     }
 
     const projectId = getActiveProjectId();
-    if (!projectId) {
-        notify('warning', 'Voice command', 'Select a project on your board, then try again.');
-        return true;
-    }
 
     state.value = 'uploading';
 
@@ -464,17 +463,11 @@ async function confirmPendingDelete() {
         return;
     }
 
-    const projectId = getActiveProjectId();
-    if (!projectId) {
-        notify('warning', 'Voice command', 'Select a project on your board, then confirm deletion.');
-        return;
-    }
-
     const todoId = pendingDelete.value.todo_id;
     state.value = 'uploading';
 
     try {
-        const result = await voiceCommandApi.confirmDelete(todoId, projectId);
+        const result = await voiceCommandApi.confirmDelete(todoId, getActiveProjectId());
         pendingDelete.value = null;
 
         if (result.success) {
