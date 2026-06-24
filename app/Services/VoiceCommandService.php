@@ -21,10 +21,7 @@ class VoiceCommandService
 
     public function process(User $user, string $transcript, int $projectId, bool $confirmDelete = false, ?int $deleteTodoId = null): array
     {
-        $project = Project::query()
-            ->where('id', $projectId)
-            ->when($user->company_id, fn ($q) => $q->where('company_id', $user->company_id))
-            ->firstOrFail();
+        $project = $this->resolveAccessibleProject($user, $projectId);
 
         if ($confirmDelete && $deleteTodoId) {
             return $this->executeConfirmedDelete($user, $deleteTodoId);
@@ -278,5 +275,18 @@ class VoiceCommandService
         }
 
         return implode(', ', $parts).'.';
+    }
+
+    private function resolveAccessibleProject(User $user, int $projectId): Project
+    {
+        $project = Project::find($projectId);
+
+        if (! $project || ! $project->canAccess($user->id)) {
+            throw ValidationException::withMessages([
+                'project_id' => ['Select a valid project on your dashboard before using voice commands.'],
+            ]);
+        }
+
+        return $project;
     }
 }

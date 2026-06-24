@@ -8,21 +8,17 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { useVoiceAssistant } from '@/composables/useVoiceAssistant';
+import { useMeetingNotesRecorder } from '@/composables/useMeetingNotesRecorder';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-const props = defineProps<{
-    projectId: number | null;
-}>();
-
 const { t } = useI18n();
-const { pendingDelete, confirmPendingDelete, dismissPendingDelete, isBusy } = useVoiceAssistant();
+const { pendingDelete, confirmPendingDelete, dismissPendingDelete, isBusy } = useMeetingNotesRecorder();
 
 const isOpen = computed(() => pendingDelete.value !== null);
 
 const handleConfirm = () => {
-    void confirmPendingDelete(props.projectId);
+    void confirmPendingDelete();
 };
 
 const handleDismiss = () => {
