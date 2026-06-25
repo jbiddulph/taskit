@@ -35,6 +35,7 @@ class MeetingNoteProposalService
             'action_items.*.status' => 'nullable|in:todo,in-progress,qa-testing,done',
             'action_items.*.due_date' => 'nullable|date_format:Y-m-d',
             'action_items.*.project_name' => 'nullable|string|max:255',
+            'action_items.*.board_group_name' => 'nullable|string|max:255',
             'action_items.*.location_query' => 'nullable|string|max:255',
             'action_items.*.confidence' => 'nullable|numeric|min:0|max:1',
             'duration_seconds' => 'nullable|integer',
@@ -119,6 +120,8 @@ class MeetingNoteProposalService
             'items.*.location_address' => 'nullable|string|max:500',
             'items.*.latitude' => 'nullable|numeric|between:-90,90',
             'items.*.longitude' => 'nullable|numeric|between:-180,180',
+            'items.*.project_group_id' => 'nullable|integer|exists:taskit_project_groups,id',
+            'items.*.board_group_name' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -161,11 +164,12 @@ class MeetingNoteProposalService
                 }
 
                 $location = $this->resolveApprovedItemLocation($item, $original);
+                $groupId = $this->resolveApprovedItemGroupId($project, $item, $original);
 
                 $todo = Todo::create([
                     'user_id' => $user->id,
                     'project_id' => $project->id,
-                    'project_group_id' => ProjectGroup::resolveDefaultIdForProject($project->id),
+                    'project_group_id' => $groupId,
                     'company_id' => $user->company_id,
                     'title' => $title,
                     'description' => $description,
@@ -358,6 +362,7 @@ class MeetingNoteProposalService
             'status' => $this->normalizeStatus($item['status'] ?? 'todo', $item['notes'] ?? null),
             'due_date' => $item['due_date'] ?? null,
             'project_name' => $item['project_name'] ?? null,
+            'board_group_name' => $item['board_group_name'] ?? null,
             'notes' => $item['notes'] ?? null,
             'location_query' => trim((string) ($item['location_query'] ?? '')) ?: null,
             'location_name' => $item['location_name'] ?? null,
@@ -430,5 +435,43 @@ class MeetingNoteProposalService
             'latitude' => null,
             'longitude' => null,
         ];
+    }
+
+    private function resolveApprovedItemGroupId(Project $project, array $item, ?array $original): int
+    {
+        if (! empty($item['project_group_id'])) {
+            $group = ProjectGroup::query()
+                ->where('id', (int) $item['project_group_id'])
+                ->where('project_id', $project->id)
+                ->first();
+
+            if ($group) {
+                return $group->id;
+            }
+        }
+
+        $boardName = trim((string) ($item['board_group_name'] ?? $original['board_group_name'] ?? ''));
+        if ($boardName !== '') {
+            $needle = strtolower($boardName);
+            $groups = ProjectGroup::query()->where('project_id', $project->id)->get();
+
+            $exact = $groups->first(fn (ProjectGroup $group) => strtolower($group->name) === $needle);
+            if ($exact) {
+                return $exact->id;
+            }
+
+            $partial = $groups->filter(function (ProjectGroup $group) use ($needle) {
+                $name = strtolower($group->name);
+
+                return str_contains($name, $needle) || str_contains($needle, $name);
+            });
+
+            if ($partial->count() === 1) {
+                return $partial->first()->id;
+            }
+        }
+
+        return ProjectGroup::resolveDefaultIdForProject($project->id)
+            ?? ProjectGroup::createDefaultForProject($project)->id;
     }
 }

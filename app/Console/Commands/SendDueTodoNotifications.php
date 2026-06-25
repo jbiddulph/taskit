@@ -30,6 +30,22 @@ class SendDueTodoNotifications extends Command
         $tomorrow = $now->copy()->addDay()->startOfDay();
         $inThreeDays = $now->copy()->addDays(3)->endOfDay();
         $inSevenDays = $now->copy()->addDays(7)->endOfDay();
+        $today = $now->copy()->startOfDay();
+
+        $overdue = Todo::query()
+            ->whereNotNull('due_date')
+            ->whereDate('due_date', '<', $today->toDateString())
+            ->where('status', '!=', 'done')
+            ->with(['project'])
+            ->get();
+
+        $viewingsToday = Todo::query()
+            ->where('type', 'Viewing')
+            ->whereNotNull('due_date')
+            ->whereDate('due_date', $today->toDateString())
+            ->where('status', '!=', 'done')
+            ->with(['project'])
+            ->get();
 
         // Due tomorrow (exact date match)
         $dueTomorrow = Todo::query()
@@ -56,6 +72,41 @@ class SendDueTodoNotifications extends Command
             ->get();
 
         $created = 0;
+
+        foreach ($overdue as $todo) {
+            $address = $todo->location_address ?: $todo->location_name;
+            $locationSuffix = $address ? " at {$address}" : '';
+
+            $created += $this->notifyIfNotExists(
+                userId: $todo->user_id,
+                type: 'warning',
+                title: 'Task overdue',
+                message: "'{$todo->title}' is overdue{$locationSuffix}.",
+                data: [
+                    'todo_id' => $todo->id,
+                    'project_id' => $todo->project_id,
+                    'scope' => 'overdue',
+                ],
+            );
+        }
+
+        foreach ($viewingsToday as $todo) {
+            $when = $todo->due_date ? Carbon::parse($todo->due_date)->toFormattedDateString() : 'today';
+            $address = $todo->location_address ?: $todo->location_name;
+            $locationSuffix = $address ? " at {$address}" : '';
+
+            $created += $this->notifyIfNotExists(
+                userId: $todo->user_id,
+                type: 'info',
+                title: 'Viewing today',
+                message: "Viewing: '{$todo->title}'{$locationSuffix} ({$when}).",
+                data: [
+                    'todo_id' => $todo->id,
+                    'project_id' => $todo->project_id,
+                    'scope' => 'viewing_today',
+                ],
+            );
+        }
 
         // Notifications for todos due tomorrow
         foreach ($dueTomorrow as $todo) {

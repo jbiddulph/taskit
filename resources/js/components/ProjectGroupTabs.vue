@@ -17,6 +17,11 @@
           @click="$emit('select', group)"
           class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium"
         >
+          <span
+            v-if="group.color && currentGroupId !== group.id"
+            class="w-2 h-2 rounded-full shrink-0"
+            :style="{ backgroundColor: group.color }"
+          />
           <span class="truncate max-w-[10rem]">{{ group.name }}</span>
           <span
             v-if="group.is_default"

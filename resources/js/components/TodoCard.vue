@@ -43,14 +43,35 @@
         </span>
       </div>
       <div class="flex items-center gap-1">
-        <!-- Time Tracking button - Hidden for now -->
-        <!-- <button
-          @click.stop="showTimeTracker = !showTimeTracker"
-          class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-500 transition-opacity"
-          title="Time Tracking"
-        >
-          <Icon name="Clock" class="w-4 h-4" />
-        </button> -->
+        <div v-if="!isReadOnly && movableGroups.length > 0" class="relative">
+          <button
+            @click.stop="showMoveMenu = !showMoveMenu"
+            class="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-blue-500 focus:text-blue-500 transition-opacity p-0.5 rounded min-w-8 min-h-8 flex items-center justify-center"
+            :title="t('todos.project_groups.move_to_board')"
+          >
+            <Icon name="FolderInput" class="w-4 h-4" />
+          </button>
+          <div
+            v-if="showMoveMenu"
+            class="absolute right-0 top-full z-20 mt-1 min-w-[10rem] rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+            @click.stop
+          >
+            <button
+              v-for="group in movableGroups"
+              :key="group.id"
+              type="button"
+              class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-gray-50 dark:hover:bg-gray-700"
+              @click="moveToGroup(group.id)"
+            >
+              <span
+                v-if="group.color"
+                class="h-2 w-2 rounded-full shrink-0"
+                :style="{ backgroundColor: group.color }"
+              />
+              <span class="truncate">{{ group.name }}</span>
+            </button>
+          </div>
+        </div>
         <button
           v-if="!isReadOnly"
           @click.stop="$emit('delete', String(todo.id))"
@@ -293,11 +314,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, nextTick } from 'vue';
+import { computed, ref, nextTick, onMounted, onUnmounted } from 'vue';
 import Icon from '@/components/Icon.vue';
 import { getTodoDisplayIcon } from '@/constants/todoTypes';
 import { todoApi } from '@/services/todoApi';
-
+import { useI18n } from 'vue-i18n';
+import type { ProjectGroup } from '@/services/projectGroupApi';
 import type { Todo } from '@/services/todoApi';
 
 interface Props {
@@ -306,9 +328,12 @@ interface Props {
   isSelected?: boolean;
   projectColor?: string | null;
   isReadOnly?: boolean;
+  projectGroups?: ProjectGroup[];
+  currentGroupId?: number | null;
 }
 
 const props = defineProps<Props>();
+const { t } = useI18n();
 const emit = defineEmits<{
   edit: [todo: Todo];
   delete: [id: string];
@@ -316,7 +341,31 @@ const emit = defineEmits<{
   'add-subtask': [todo: Todo];
   'toggle-selection': [todo: Todo];
   'todo-click': [todo: Todo];
+  'move-to-group': [payload: { todo: Todo; groupId: number }];
 }>();
+
+const showMoveMenu = ref(false);
+
+const movableGroups = computed(() =>
+  (props.projectGroups ?? []).filter((group) => group.id !== (props.todo.project_group_id ?? props.currentGroupId)),
+);
+
+const moveToGroup = (groupId: number) => {
+  showMoveMenu.value = false;
+  emit('move-to-group', { todo: props.todo, groupId });
+};
+
+const closeMoveMenu = () => {
+  showMoveMenu.value = false;
+};
+
+onMounted(() => {
+  document.addEventListener('click', closeMoveMenu);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeMoveMenu);
+});
 
 // Title editing state
 const editingTitle = ref(false);

@@ -17,6 +17,14 @@ class VoiceCommandParser
 
         $taskRef = $this->extractTaskReference($text);
 
+        if ($this->matchesSummaryIntent($lower)) {
+            return ['intent' => 'summary'];
+        }
+
+        if ($this->matchesMoveBoardIntent($lower, $text)) {
+            return array_merge(['intent' => 'move_board'], $this->extractMatchAndBoard($text, $taskRef));
+        }
+
         if ($this->matchesDeleteIntent($lower, $text)) {
             return array_merge(['intent' => 'delete'], $this->extractMatchAndFields($text, $taskRef));
         }
@@ -34,6 +42,64 @@ class VoiceCommandParser
         }
 
         return ['intent' => 'unknown', 'message' => 'Sorry, I could not understand that command.'];
+    }
+
+    private function matchesSummaryIntent(string $lower): bool
+    {
+        if (! preg_match('/\b(today|my day|for today|this morning|this afternoon)\b/', $lower)) {
+            return false;
+        }
+
+        return (bool) preg_match(
+            '/\b(what\'?s on|what is on|what do i have|what have i got|tell me about|run me through|give me|summary|overview)\b/',
+            $lower
+        );
+    }
+
+    private function matchesMoveBoardIntent(string $lower, string $text): bool
+    {
+        if (! preg_match('/\bmove\b/', $lower)) {
+            return false;
+        }
+
+        return preg_match('/\b(board|group)\b/', $lower)
+            || $this->extractBoardName($text) !== null;
+    }
+
+    private function extractMatchAndBoard(string $text, ?array $taskRef = null): array
+    {
+        $taskRef ??= $this->extractTaskReference($text);
+        $title = $this->extractQuotedTitle($text) ?? $this->extractTitleAfterTask($text);
+        $boardName = $this->extractBoardName($text);
+
+        return [
+            'match' => array_filter([
+                'todo_id' => $taskRef['todo_id'] ?? null,
+                'reference_id' => $taskRef['reference_id'] ?? null,
+                'title' => $title,
+            ]),
+            'board_name' => $boardName,
+        ];
+    }
+
+    private function extractBoardName(string $text): ?string
+    {
+        $patterns = [
+            '/\bmove\s+(?:it\s+|this\s+|the\s+task\s+|task\s+)?(?:to\s+)?(?:the\s+)?(.+?)\s+(?:board|group)\b/i',
+            '/\bmove\s+to\s+(?:the\s+)?(.+?)\s+(?:board|group)\b/i',
+            '/\b(?:onto|to)\s+(?:the\s+)?(.+?)\s+(?:board|group)\b/i',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text, $m)) {
+                $name = trim($m[1]);
+                $name = preg_replace('/\b(task|todo)\b.*$/i', '', $name) ?? $name;
+
+                return trim($name, " \t\n\r\0\x0B.,");
+            }
+        }
+
+        return null;
     }
 
     private function matchesDeleteIntent(string $lower, string $text): bool

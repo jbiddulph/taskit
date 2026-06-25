@@ -91,6 +91,9 @@ onMounted(() => {
                         <a href="/for-estate-agents" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                             Estate agents
                         </a>
+                        <a href="/case-studies" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                            Case studies
+                        </a>
                         <a href="/competitors" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                             Competitors
                         </a>

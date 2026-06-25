@@ -1,7 +1,7 @@
 import { meetingNoteProposalApi } from '@/services/meetingNoteProposalApi';
 import { submitMeetingNotes } from '@/services/meetingNotesApi';
 import { todoApi } from '@/services/todoApi';
-import { voiceCommandApi, type VoiceCommandPendingDelete } from '@/services/voiceCommandApi';
+import { voiceCommandApi, type VoiceCommandPendingDelete, type VoiceCommandPendingTask } from '@/services/voiceCommandApi';
 import { getActiveProjectId } from '@/composables/useDashboardProjectContext';
 import { ref } from 'vue';
 
@@ -18,6 +18,7 @@ const elapsedSeconds = ref(0);
 const errorMessage = ref<string | null>(null);
 const recordingTemplate = ref<string | null>(null);
 const pendingDelete = ref<VoiceCommandPendingDelete | null>(null);
+const pendingTask = ref<VoiceCommandPendingTask | null>(null);
 
 let mediaRecorder: MediaRecorder | null = null;
 let mediaStream: MediaStream | null = null;
@@ -79,6 +80,14 @@ function looksLikeTaskCommand(text: string): boolean {
     }
 
     if (/\b(create|add|make|new)\b/.test(lower) && /\b(task|todo|reminder)\b/.test(lower)) {
+        return true;
+    }
+
+    if (/\b(what'?s on|what is on|what do i have|tell me about|for today|today)\b/.test(lower)) {
+        return true;
+    }
+
+    if (/\bmove\b/.test(lower) && /\b(board|group)\b/.test(lower)) {
         return true;
     }
 
@@ -164,6 +173,17 @@ async function tryVoiceCommand(transcript: string, durationSeconds: number): Pro
             return true;
         }
 
+        if (result.action === 'confirm_task' && result.pending_task) {
+            pendingTask.value = result.pending_task;
+            return true;
+        }
+
+        if (result.action === 'summary' && result.summary) {
+            speakSummary(result.message || result.summary.spoken_summary);
+            notify('info', 'Today', result.message || result.summary.spoken_summary);
+            return true;
+        }
+
         if (result.action === 'created' || result.action === 'updated') {
             dispatchVoiceResult({ todo: result.todo, action: result.action });
             notify('success', 'Voice command', result.message || 'Task updated.');
@@ -183,6 +203,17 @@ async function tryVoiceCommand(transcript: string, durationSeconds: number): Pro
         notify('error', 'Voice command', message);
         return true;
     }
+}
+
+function speakSummary(text: string) {
+    if (!text || typeof window === 'undefined' || !('speechSynthesis' in window)) {
+        return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-GB';
+    utterance.rate = 1;
+    window.speechSynthesis.speak(utterance);
 }
 
 function clearTimer() {
@@ -488,6 +519,50 @@ function dismissPendingDelete() {
     notify('info', 'Voice command', 'Deletion cancelled.');
 }
 
+async function confirmPendingTask(todoId: number) {
+    if (!pendingTask.value) {
+        return;
+    }
+
+    const { intent, payload } = pendingTask.value;
+    state.value = 'uploading';
+
+    try {
+        const result = await voiceCommandApi.confirmTask(todoId, intent, payload, getActiveProjectId());
+        pendingTask.value = null;
+
+        if (!result.success) {
+            notify('error', 'Voice command', result.message || 'Could not complete that command.');
+            return;
+        }
+
+        if (result.action === 'confirm_delete' && result.pending_delete) {
+            pendingDelete.value = result.pending_delete;
+            return;
+        }
+
+        if (result.action === 'created' || result.action === 'updated') {
+            dispatchVoiceResult({ todo: result.todo, action: result.action });
+            notify('success', 'Voice command', result.message || 'Task updated.');
+            return;
+        }
+
+        if (result.action === 'deleted') {
+            dispatchVoiceResult({ deletedTodoId: result.deleted_todo_id, action: 'deleted' });
+            notify('success', 'Voice command', result.message || 'Task deleted.');
+        }
+    } catch (error: any) {
+        notify('error', 'Voice command', error.response?.data?.message || error.message);
+    } finally {
+        state.value = 'idle';
+    }
+}
+
+function dismissPendingTask() {
+    pendingTask.value = null;
+    notify('info', 'Voice command', 'Command cancelled.');
+}
+
 export function useMeetingNotesRecorder() {
     return {
         state,
@@ -495,10 +570,13 @@ export function useMeetingNotesRecorder() {
         errorMessage,
         recordingTemplate,
         pendingDelete,
+        pendingTask,
         setRecordingTemplate,
         toggleRecording,
         confirmPendingDelete,
         dismissPendingDelete,
+        confirmPendingTask,
+        dismissPendingTask,
         formattedElapsedTime,
         maxDurationMinutes: MAX_DURATION_SECONDS / 60,
         isBusy,

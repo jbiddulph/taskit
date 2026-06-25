@@ -84,6 +84,10 @@
     "voice_assistant_processing_short": "Processing...",
     "voice_delete_confirm_title": "Delete this task?",
     "voice_delete_confirm_body": "You asked to delete this task by voice. Confirm to remove it permanently.",
+    "voice_task_confirm_title": "Which task did you mean?",
+    "voice_task_confirm_body": "I found more than one match. Tap the correct task to continue.",
+    "show_today": "Today view",
+    "hide_today": "Hide today view",
     "meeting_notes_tips_title": "Recording tips — say these out loud for better results",
     "meeting_notes_tips_recording": "Recording {time} — speak clearly into your microphone.",
     "meeting_notes_tips_intro": "The AI listens for specific instructions. Try saying:",
@@ -183,7 +187,9 @@
       "delete_failed": "Failed to delete board",
       "delete_board": "Delete this board",
       "delete_confirm": "Delete this board? Tasks on it will move to the default board.",
-      "switch_board": "Switch kanban board"
+      "switch_board": "Switch kanban board",
+      "use_viewing_template": "Pre-fill with listing lifecycle tasks",
+      "move_to_board": "Move to board"
     },
     "assignee": "Assignee",
     "due_date": "Due Date",
@@ -385,7 +391,27 @@
     "check_in_failed": "Could not check in.",
     "checked_in": "Checked in",
     "geolocation_unavailable": "Location is not available in this browser.",
-    "geolocation_denied": "Allow location access to check in at the task site."
+    "geolocation_denied": "Allow location access to check in at the task site.",
+    "check_in_queued": "You are offline. Check-in queued and will sync when back online.",
+    "check_in_synced": "{count} queued check-ins synced."
+  },
+  "today": {
+    "title": "Today",
+    "overdue": "Overdue",
+    "due_today": "Due today",
+    "viewings": "Viewings",
+    "route_stops": "Route stops",
+    "pending_check_ins": "{count} check-ins still pending on your route.",
+    "load_error": "Could not load today's summary."
+  },
+  "onboarding": {
+    "title": "Get started in 60 seconds",
+    "subtitle": "A quick path for field teams and estate agents.",
+    "step_project": "Create or select a project",
+    "step_board": "Add a kanban board (Sales, Maintenance, etc.)",
+    "step_voice": "Create one task by voice",
+    "step_map": "Add one task with a map location",
+    "progress": "{done} of {total} steps done"
   },
   "comments": {
     "title": "Comments",

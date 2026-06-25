@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\ProjectGroup;
+use App\Services\ViewingBoardTemplate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -44,6 +45,7 @@ class ProjectGroupController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'color' => 'nullable|string|regex:/^#[0-9A-F]{6}$/i',
+            'template' => 'nullable|in:viewing,listing',
         ]);
 
         if ($validator->fails()) {
@@ -59,10 +61,18 @@ class ProjectGroupController extends Controller
             'is_default' => false,
         ]);
 
+        $seeded = 0;
+        if (in_array($request->input('template'), ['viewing', 'listing'], true)) {
+            $seeded = ViewingBoardTemplate::seed($group, $project, $user);
+        }
+
         return response()->json([
             'success' => true,
-            'message' => 'Group created successfully',
+            'message' => $seeded > 0
+                ? "Board created with {$seeded} listing lifecycle tasks."
+                : 'Group created successfully',
             'data' => $group,
+            'seeded_tasks' => $seeded,
         ], 201);
     }
 

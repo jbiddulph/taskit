@@ -189,6 +189,14 @@
             @delete="deleteProjectGroup"
           />
 
+          <OnboardingBanner
+            v-if="currentProject"
+            :has-project="!!currentProject"
+            :has-board="projectGroups.length > 0"
+            :has-voice-task="onboardingHasVoice"
+            :has-map-task="onboardingHasMap"
+          />
+
           <!-- Create Project Button (only shown when no project is selected and not at FREE limit) -->
           <div v-if="!currentProject && !props.isReadOnly && !isAtFreeProjectLimit" class="mt-2">
             <button
@@ -437,14 +445,14 @@
 
 
           <!-- Saved Views Dropdown - Only show if there are saved views -->
-          <div v-if="savedViews.length > 0" class="flex flex-col sm:flex-row gap-2">
+          <div v-if="scopedSavedViews.length > 0" class="flex flex-col sm:flex-row gap-2">
             <select
               v-model="selectedSavedViewName"
               @change="onApplySavedView"
               class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="">{{ t('dashboard.saved_views') }}</option>
-              <option v-for="view in savedViews" :key="view.name" :value="view.name">{{ view.name }}</option>
+              <option v-for="view in scopedSavedViews" :key="view.name" :value="view.name">{{ view.name }}</option>
             </select>
 
             <button
@@ -512,7 +520,7 @@
       </div>
 
       <!-- Compact stats inside header -->
-      <div v-if="!props.showCalendar && !props.showMap" class="mt-1.5 pt-1.5 border-t border-gray-200 dark:border-gray-700">
+      <div v-if="!props.showCalendar && !props.showMap && !props.showToday" class="mt-1.5 pt-1.5 border-t border-gray-200 dark:border-gray-700">
         <TodoStats :todos="todosState" />
       </div>
     </div>
@@ -527,6 +535,20 @@
       <MapView
         :todos="todosState"
         :isReadOnly="props.isReadOnly"
+        :current-user-name="currentUserName"
+        @edit-todo="handleEditTodoFromCalendar"
+        @todo-updated="handleMapTodoUpdated"
+      />
+    </div>
+
+    <!-- Today view -->
+    <div v-if="props.showToday" class="mb-4 overflow-hidden">
+      <TodayView
+        :project-id="currentProject?.id ?? null"
+        :todos="todosState"
+        :is-read-only="props.isReadOnly"
+        :project-groups="projectGroups"
+        :current-group-id="currentGroup?.id ?? null"
         :current-user-name="currentUserName"
         @edit-todo="handleEditTodoFromCalendar"
         @todo-updated="handleMapTodoUpdated"
@@ -562,6 +584,8 @@
         :is-select-mode="props.isSelectMode"
         :selected-items="selectedItems"
         :is-read-only="props.isReadOnly"
+        :project-groups="projectGroups"
+        :current-group-id="currentGroup?.id ?? null"
         @add="handleShowForm"
         @edit="editTodo"
         @delete="deleteTodo"
@@ -571,6 +595,7 @@
         @menu="() => {}"
         @add-subtask="handleAddSubtask"
         @toggle-selection="toggleSelection"
+        @move-to-group="moveTodoToGroup"
         @todo-click="emit('todo-click', $event)"
       />
       
@@ -583,6 +608,8 @@
         :is-select-mode="props.isSelectMode"
         :selected-items="selectedItems"
         :is-read-only="props.isReadOnly"
+        :project-groups="projectGroups"
+        :current-group-id="currentGroup?.id ?? null"
         @edit="editTodo"
         @delete="deleteTodo"
         @update="updateTodo"
@@ -591,6 +618,7 @@
         @menu="() => {}"
         @add-subtask="handleAddSubtask"
         @toggle-selection="toggleSelection"
+        @move-to-group="moveTodoToGroup"
         @todo-click="emit('todo-click', $event)"
       />
       
@@ -603,6 +631,8 @@
         :is-select-mode="props.isSelectMode"
         :selected-items="selectedItems"
         :is-read-only="props.isReadOnly"
+        :project-groups="projectGroups"
+        :current-group-id="currentGroup?.id ?? null"
         @edit="editTodo"
         @delete="deleteTodo"
         @update="updateTodo"
@@ -611,6 +641,7 @@
         @menu="() => {}"
         @add-subtask="handleAddSubtask"
         @toggle-selection="toggleSelection"
+        @move-to-group="moveTodoToGroup"
         @todo-click="emit('todo-click', $event)"
       />
       
@@ -623,6 +654,8 @@
         :is-select-mode="props.isSelectMode"
         :selected-items="selectedItems"
         :is-read-only="props.isReadOnly"
+        :project-groups="projectGroups"
+        :current-group-id="currentGroup?.id ?? null"
         @edit="editTodo"
         @delete="deleteTodo"
         @update="updateTodo"
@@ -631,6 +664,7 @@
         @menu="() => {}"
         @add-subtask="handleAddSubtask"
         @toggle-selection="toggleSelection"
+        @move-to-group="moveTodoToGroup"
         @todo-click="emit('todo-click', $event)"
       />
     </div>
@@ -674,6 +708,10 @@
                 <span class="text-sm text-gray-600 dark:text-gray-400">{{ newGroup.color }}</span>
               </div>
             </div>
+            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <input v-model="newGroup.useViewingTemplate" type="checkbox" class="rounded border-gray-300" />
+              {{ t('todos.project_groups.use_viewing_template') }}
+            </label>
             <div class="flex gap-3 pt-2">
               <button type="submit" class="flex-1 rounded-md px-4 py-2 text-sm font-medium bg-black text-white dark:bg-white dark:text-black">
                 {{ t('todos.project_groups.create_group') }}
@@ -990,6 +1028,8 @@ import ProjectGroupTabs from './ProjectGroupTabs.vue';
 import TodoStats from './TodoStats.vue';
 import TypeFilter from './TypeFilter.vue';
 import CalendarView from './CalendarView.vue';
+import TodayView from './TodayView.vue';
+import OnboardingBanner from './OnboardingBanner.vue';
 import MapView from './MapView.vue';
 import BulkOperationsBar from './BulkOperationsBar.vue';
 import KeyboardShortcutsHelp from './KeyboardShortcutsHelp.vue';
@@ -1032,6 +1072,7 @@ const props = defineProps<{
   showActivityFeed?: boolean;
   showCalendar?: boolean;
   showMap?: boolean;
+  showToday?: boolean;
   isSelectMode?: boolean;
   isReadOnly?: boolean;
   todos?: any[];
@@ -1045,6 +1086,7 @@ const emit = defineEmits<{
   'toggle-activity-feed': [];
   'toggle-calendar': [];
   'toggle-map': [];
+  'toggle-today': [];
   'toggle-select-mode': [];
   'todo-click': [todo: any];
 }>();
@@ -1113,6 +1155,7 @@ const editingGroupColor = ref('#3B82F6');
 const newGroup = ref({
   name: '',
   color: '#3B82F6',
+  useViewingTemplate: false,
 });
 
 const groupStorageKey = (projectId: number) => `currentProjectGroupId:${projectId}`;
@@ -1212,6 +1255,8 @@ const quickFilter = ref<QuickFilter>('');
 
 // Saved Views (local-only for now)
 type SavedView = {
+  projectId: number;
+  groupId: number | null;
   name: string;
   searchQuery: string;
   priority: string;
@@ -1220,7 +1265,7 @@ type SavedView = {
   quickFilter?: QuickFilter;
   hasLocation?: boolean;
 };
-const SAVED_VIEWS_KEY = 'taskit_saved_views_v1';
+const SAVED_VIEWS_KEY = 'taskit_saved_views_v2';
 const savedViews = ref<SavedView[]>([]);
 const selectedSavedViewName = ref('');
 const newSavedViewName = ref('');
@@ -1262,7 +1307,25 @@ const handleOpenTodoById = async (e: any) => {
   }
 };
 
+const scopedSavedViews = computed(() => {
+  if (!currentProject.value) {
+    return [];
+  }
+
+  const groupId = currentGroup.value?.id ?? null;
+  return savedViews.value.filter(
+    (view) => view.projectId === currentProject.value!.id && (view.groupId ?? null) === groupId,
+  );
+});
+
+const onboardingHasVoice = ref(localStorage.getItem('zaptask_onboarding_voice') === '1');
+const onboardingHasMap = computed(() =>
+  todosState.value.some((todo) => todo.project_id === currentProject.value?.id && todoHasLocation(todo)),
+);
+
 const getCurrentFilters = (): SavedView => ({
+  projectId: currentProject.value?.id ?? 0,
+  groupId: currentGroup.value?.id ?? null,
   name: '',
   searchQuery: searchQuery.value || '',
   priority: priorityFilter.value || '',
@@ -1281,14 +1344,18 @@ const applyView = (view: SavedView) => {
 };
 
 const onApplySavedView = () => {
-  const view = savedViews.value.find(v => v.name === selectedSavedViewName.value);
+  const view = scopedSavedViews.value.find(v => v.name === selectedSavedViewName.value);
   if (view) applyView(view);
 };
 
 const saveCurrentAsView = () => {
   const name = newSavedViewName.value.trim();
-  if (!name) return;
-  const existingIdx = savedViews.value.findIndex(v => v.name === name);
+  if (!name || !currentProject.value) return;
+  const existingIdx = savedViews.value.findIndex(
+    (v) => v.name === name
+      && v.projectId === currentProject.value!.id
+      && (v.groupId ?? null) === (currentGroup.value?.id ?? null),
+  );
   const payload = { ...getCurrentFilters(), name };
   if (existingIdx >= 0) {
     savedViews.value.splice(existingIdx, 1, payload);
@@ -1303,8 +1370,11 @@ const saveCurrentAsView = () => {
 
 const deleteSavedView = () => {
   const name = selectedSavedViewName.value;
-  if (!name) return;
-  const idx = savedViews.value.findIndex(v => v.name === name);
+  if (!name || !currentProject.value) return;
+  const groupId = currentGroup.value?.id ?? null;
+  const idx = savedViews.value.findIndex(
+    (v) => v.name === name && v.projectId === currentProject.value!.id && (v.groupId ?? null) === groupId,
+  );
   if (idx >= 0) {
     savedViews.value.splice(idx, 1);
     persistSavedViews();
@@ -2781,6 +2851,7 @@ const selectProjectGroup = async (group: ProjectGroup) => {
 
   currentGroup.value = group;
   localStorage.setItem(groupStorageKey(currentProject.value.id), group.id.toString());
+  selectedSavedViewName.value = '';
   await loadTodos();
 };
 
@@ -2788,6 +2859,7 @@ const openCreateGroupModal = () => {
   newGroup.value = {
     name: '',
     color: currentProject.value?.color || '#3B82F6',
+    useViewingTemplate: false,
   };
   showCreateGroup.value = true;
 };
@@ -2801,6 +2873,7 @@ const createProjectGroup = async () => {
     const created = await projectGroupApi.create(currentProject.value.id, {
       name: newGroup.value.name.trim(),
       color: newGroup.value.color,
+      ...(newGroup.value.useViewingTemplate ? { template: 'viewing' as const } : {}),
     });
 
     projectGroups.value = [...projectGroups.value, created];
@@ -3174,6 +3247,35 @@ const handleMeetingNotesTodosCreated = async (event: Event) => {
   }
 };
 
+const moveTodoToGroup = async (todo: Todo, groupId: number) => {
+  if (props.isReadOnly || todo.project_group_id === groupId) {
+    return;
+  }
+
+  try {
+    const updated = await todoApi.updateTodo(todo.id, { project_group_id: groupId });
+    removeTodoFromState(todo.id);
+    window.dispatchEvent(new CustomEvent('todoChanged'));
+
+    if ((window as any).$notify) {
+      const groupName = projectGroups.value.find((group) => group.id === groupId)?.name ?? 'board';
+      (window as any).$notify({
+        type: 'success',
+        title: t('todos.project_groups.move_to_board'),
+        message: `${updated.title} → ${groupName}`,
+      });
+    }
+  } catch {
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: t('todos.project_groups.move_to_board'),
+        message: t('common.error'),
+      });
+    }
+  }
+};
+
 const handleVoiceCommandApplied = (event: Event) => {
   const detail = (event as CustomEvent<{ action?: string; todo?: Todo; deletedTodoId?: number }>).detail;
   if (!detail) {
@@ -3187,6 +3289,22 @@ const handleVoiceCommandApplied = (event: Event) => {
   }
 
   if (detail.todo) {
+    if (detail.action === 'created') {
+      localStorage.setItem('zaptask_onboarding_voice', '1');
+      onboardingHasVoice.value = true;
+    }
+
+    if (
+      detail.action === 'updated'
+      && detail.todo.project_group_id
+      && currentGroup.value
+      && detail.todo.project_group_id !== currentGroup.value.id
+    ) {
+      removeTodoFromState(detail.todo.id);
+      window.dispatchEvent(new CustomEvent('todoChanged'));
+      return;
+    }
+
     const existing = findTodoById(detail.todo.id);
     if (existing) {
       if (existing.parentIndex !== undefined && existing.subtaskIndex !== undefined) {

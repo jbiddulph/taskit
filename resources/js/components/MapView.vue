@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import Icon from '@/components/Icon.vue';
+import { flushCheckInQueue, isOnline, queueCheckIn } from '@/composables/useOfflineQueue';
 import type { Todo } from '@/services/todoApi';
 import { todoApi } from '@/services/todoApi';
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, hasMapbox } from '@/services/mapboxClient';
@@ -273,17 +274,28 @@ const checkInAtTask = async (todo: Todo) => {
 
     navigator.geolocation.getCurrentPosition(
         async (position) => {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            if (!isOnline()) {
+                queueCheckIn(todo.id, latitude, longitude);
+                checkInLoadingId.value = null;
+                notify('warning', t('map.check_in'), t('map.check_in_queued'));
+                return;
+            }
+
             try {
-                const updated = await todoApi.checkIn(
-                    todo.id,
-                    position.coords.latitude,
-                    position.coords.longitude,
-                );
+                const updated = await todoApi.checkIn(todo.id, latitude, longitude);
                 emit('todoUpdated', updated);
                 notify('success', t('map.check_in'), t('map.check_in_success'));
             } catch (error: any) {
-                const message = error.response?.data?.message || error.message || t('map.check_in_failed');
-                notify('error', t('map.check_in'), message);
+                if (!isOnline() || error?.message === 'Network Error') {
+                    queueCheckIn(todo.id, latitude, longitude);
+                    notify('warning', t('map.check_in'), t('map.check_in_queued'));
+                } else {
+                    const message = error.response?.data?.message || error.message || t('map.check_in_failed');
+                    notify('error', t('map.check_in'), message);
+                }
             } finally {
                 checkInLoadingId.value = null;
             }
@@ -318,14 +330,32 @@ onMounted(async () => {
         return;
     }
 
+    const syncResult = await flushCheckInQueue((todoId, latitude, longitude) =>
+        todoApi.checkIn(todoId, latitude, longitude),
+    );
+    if (syncResult.synced > 0) {
+        notify('success', t('map.check_in'), t('map.check_in_synced', { count: syncResult.synced }));
+    }
+
+    window.addEventListener('online', handleOnlineSync);
     await scheduleMapInit();
 });
+
+const handleOnlineSync = async () => {
+    const syncResult = await flushCheckInQueue((todoId, latitude, longitude) =>
+        todoApi.checkIn(todoId, latitude, longitude),
+    );
+    if (syncResult.synced > 0) {
+        notify('success', t('map.check_in'), t('map.check_in_synced', { count: syncResult.synced }));
+    }
+};
 
 watch(mapReady, (ready) => {
     if (ready) syncMarkers();
 });
 
 onUnmounted(() => {
+    window.removeEventListener('online', handleOnlineSync);
     markers.forEach((marker) => marker.remove());
     markers.clear();
 });

@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\TodoAttachmentController;
 use App\Http\Controllers\Api\TodoCommentController;
 use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\TodayController;
 use App\Http\Controllers\Api\VoiceCommandController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -97,6 +98,7 @@ Route::middleware(['web', 'auth', 'subscription.access', 'api.rate.limit:api,60,
     // Meeting notes
     Route::post('meeting-notes', [MeetingNotesController::class, 'store']);
     Route::post('voice-commands/process', [VoiceCommandController::class, 'process']);
+    Route::get('today/summary', [TodayController::class, 'summary']);
     Route::get('meeting-notes/proposals/pending', [MeetingNoteProposalController::class, 'pending']);
     Route::get('meeting-notes/proposals/{proposal}', [MeetingNoteProposalController::class, 'show']);
     Route::post('meeting-notes/proposals/{proposal}/approve', [MeetingNoteProposalController::class, 'approve']);

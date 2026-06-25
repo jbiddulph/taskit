@@ -46,6 +46,10 @@ Route::get('/for-estate-agents', function () {
     return Inertia::render('ForEstateAgents');
 })->name('for-estate-agents');
 
+Route::get('/case-studies', function () {
+    return Inertia::render('CaseStudies');
+})->name('case-studies');
+
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 

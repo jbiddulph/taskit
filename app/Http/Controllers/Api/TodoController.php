@@ -412,6 +412,7 @@ class TodoController extends Controller
             'longitude' => 'nullable|numeric|between:-180,180|required_with:latitude',
             'story_points' => 'nullable|integer|min:1|max:21',
             'status' => 'sometimes|required|in:todo,in-progress,qa-testing,done',
+            'project_group_id' => 'nullable|exists:taskit_project_groups,id',
         ]);
 
         if ($validator->fails()) {
@@ -424,10 +425,26 @@ class TodoController extends Controller
         // Store old assignee before updating
         $oldAssignee = $todo->assignee;
 
+        if ($request->filled('project_group_id')) {
+            $groupId = (int) $request->input('project_group_id');
+            $group = ProjectGroup::query()
+                ->where('id', $groupId)
+                ->where('project_id', $todo->project_id)
+                ->first();
+
+            if (! $group) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'That board does not belong to this project.',
+                ], 422);
+            }
+        }
+
         $todo->update($request->only([
             'title', 'description', 'priority', 'type', 'card_icon', 'outline_color', 'tags',
             'assignee', 'due_date', 'story_points', 'status',
             'location_name', 'location_address', 'latitude', 'longitude',
+            'project_group_id',
         ]));
 
         $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);

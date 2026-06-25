@@ -101,11 +101,14 @@
               :is-selected="selectedItems?.has(todo.id) || false"
               :project-color="currentProjectColor"
               :is-read-only="isReadOnly"
+              :project-groups="projectGroups"
+              :current-group-id="currentGroupId"
               @edit="$emit('edit', $event)"
               @delete="$emit('delete', $event)"
               @update="$emit('update', $event)"
               @add-subtask="$emit('add-subtask', $event)"
               @toggle-selection="$emit('toggle-selection', $event)"
+              @move-to-group="$emit('move-to-group', $event.todo, $event.groupId)"
               @todo-click="$emit('todo-click', $event)"
             />
           </div>
@@ -134,6 +137,7 @@ import Icon from '@/components/Icon.vue';
 import TodoCard from './TodoCard.vue';
 import { useI18n } from 'vue-i18n';
 
+import type { ProjectGroup } from '@/services/projectGroupApi';
 import type { Todo } from '@/services/todoApi';
 
 const { t } = useI18n();
@@ -148,6 +152,8 @@ interface Props {
   isSelectMode?: boolean;
   selectedItems?: Set<number>;
   isReadOnly?: boolean;
+  projectGroups?: ProjectGroup[];
+  currentGroupId?: number | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -174,6 +180,7 @@ const emit = defineEmits<{
   reorder: [draggedTodo: Todo, targetTodo: Todo, position: 'before' | 'after'];
   'add-subtask': [todo: Todo];
   'toggle-selection': [todo: Todo];
+  'move-to-group': [payload: { todo: Todo; groupId: number }];
   'todo-click': [todo: Todo];
 }>();
 

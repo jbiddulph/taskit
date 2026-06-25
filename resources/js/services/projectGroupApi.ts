@@ -20,7 +20,10 @@ class ProjectGroupApiService {
         return response.data.data;
     }
 
-    async create(projectId: number, data: { name: string; description?: string; color?: string }): Promise<ProjectGroup> {
+    async create(
+        projectId: number,
+        data: { name: string; description?: string; color?: string; template?: 'viewing' | 'listing' },
+    ): Promise<ProjectGroup> {
         const response = await axios.post<{ success: boolean; data: ProjectGroup }>(
             `/projects/${projectId}/groups`,
             data,

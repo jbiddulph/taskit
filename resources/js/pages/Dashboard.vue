@@ -8,6 +8,7 @@ import LimitWarnings from '../components/LimitWarnings.vue';
 import ActivityFeed from '../components/ActivityFeed.vue';
 import MeetingNotesRecorderButton from '../components/MeetingNotesRecorderButton.vue';
 import VoiceDeleteConfirmDialog from '../components/VoiceDeleteConfirmDialog.vue';
+import VoiceConfirmTaskDialog from '../components/VoiceConfirmTaskDialog.vue';
 import MeetingNotesGeneratingBanner from '../components/MeetingNotesGeneratingBanner.vue';
 import Icon from '../components/Icon.vue';
 import { ref } from 'vue';
@@ -54,11 +55,13 @@ const showActivityFeed = ref(false);
 // Calendar and Filters state
 const showCalendar = ref(false);
 const showMap = ref(false);
+const showToday = ref(false);
 
 const toggleCalendar = () => {
     showCalendar.value = !showCalendar.value;
     if (showCalendar.value) {
         showMap.value = false;
+        showToday.value = false;
     }
 };
 
@@ -66,6 +69,15 @@ const toggleMap = () => {
     showMap.value = !showMap.value;
     if (showMap.value) {
         showCalendar.value = false;
+        showToday.value = false;
+    }
+};
+
+const toggleToday = () => {
+    showToday.value = !showToday.value;
+    if (showToday.value) {
+        showCalendar.value = false;
+        showMap.value = false;
     }
 };
 
@@ -124,6 +136,20 @@ const toggleSelectMode = () => {
                 <Icon name="Calendar" class="w-5 h-5" />
             </button>
 
+            <!-- Today Button -->
+            <button
+                @click="toggleToday"
+                :title="showToday ? t('dashboard.hide_today') : t('dashboard.show_today')"
+                :class="[
+                    'inline-flex items-center justify-center p-2 transition-colors',
+                    showToday
+                        ? 'text-violet-600 dark:text-violet-400'
+                        : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                ]"
+            >
+                <Icon name="Sun" class="w-5 h-5" />
+            </button>
+
             <!-- Map Button -->
             <button
                 @click="toggleMap"
@@ -171,6 +197,7 @@ const toggleSelectMode = () => {
 
         <MeetingNotesGeneratingBanner />
         <VoiceDeleteConfirmDialog />
+        <VoiceConfirmTaskDialog />
         
         <div class="flex h-full flex-1 flex-col gap-2 overflow-x-auto rounded-xl p-2">
             <div :class="[
@@ -184,10 +211,12 @@ const toggleSelectMode = () => {
                         :show-activity-feed="showActivityFeed"
                         :show-calendar="showCalendar"
                         :show-map="showMap"
+                        :show-today="showToday"
                         :is-select-mode="isSelectMode"
                         @toggle-activity-feed="showActivityFeed = !showActivityFeed"
                         @toggle-calendar="toggleCalendar"
                         @toggle-map="toggleMap"
+                        @toggle-today="toggleToday"
                         @toggle-select-mode="toggleSelectMode"
                     />
                 </div>
@@ -201,6 +230,25 @@ const toggleSelectMode = () => {
                     />
                 </div>
             </div>
+        </div>
+
+        <div class="fixed bottom-4 right-4 z-40 flex flex-col gap-2 md:hidden">
+            <button
+                type="button"
+                class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg"
+                :title="showToday ? t('dashboard.hide_today') : t('dashboard.show_today')"
+                @click="toggleToday"
+            >
+                <Icon name="Sun" class="w-5 h-5" />
+            </button>
+            <button
+                type="button"
+                class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg"
+                :title="showMap ? t('dashboard.hide_map') : t('dashboard.show_map')"
+                @click="toggleMap"
+            >
+                <Icon name="Map" class="w-5 h-5" />
+            </button>
         </div>
     </AppLayout>
 </template>

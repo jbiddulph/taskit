@@ -89,6 +89,7 @@ const buildReviewItem = (item: MeetingActionItem, index: number): ReviewActionIt
     latitude: item.latitude ?? null,
     longitude: item.longitude ?? null,
     confidence: item.confidence ?? null,
+    board_group_name: item.board_group_name || '',
 });
 
 const buildReviewItems = (data: MeetingNoteProposal) => {
@@ -178,6 +179,8 @@ const approveSelected = async () => {
                 location_address: item.location_address ?? null,
                 latitude: item.latitude ?? null,
                 longitude: item.longitude ?? null,
+                board_group_name: item.board_group_name?.trim() || null,
+                project_group_id: item.project_group_id ?? null,
             }))
         );
 
@@ -303,6 +306,12 @@ onUnmounted(() => {
                             type="text"
                             class="w-full rounded-md border bg-background px-3 py-2 text-sm"
                             placeholder="Todo title"
+                        />
+                        <input
+                            v-model="item.board_group_name"
+                            type="text"
+                            class="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                            placeholder="Board (e.g. Sales, Maintenance)"
                         />
                         <div class="grid grid-cols-2 gap-2">
                             <select

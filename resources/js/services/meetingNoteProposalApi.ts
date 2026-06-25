@@ -8,6 +8,7 @@ export interface MeetingActionItem {
     status?: 'todo' | 'in-progress' | 'qa-testing' | 'done';
     due_date?: string | null;
     project_name?: string | null;
+    board_group_name?: string | null;
     notes?: string | null;
     location_query?: string | null;
     location_name?: string | null;
@@ -53,6 +54,8 @@ export interface ReviewActionItem {
     latitude?: number | null;
     longitude?: number | null;
     confidence?: number | null;
+    board_group_name?: string;
+    project_group_id?: number | null;
 }
 
 class MeetingNoteProposalApiService {

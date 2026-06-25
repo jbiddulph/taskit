@@ -256,6 +256,7 @@ const actionItems = (Array.isArray(parsed.action_items) ? parsed.action_items : 
     status,
     due_date: item.due_date ?? null,
     project_name: projectName,
+    board_group_name: item.board_group_name ?? null,
     notes: item.notes ?? null,
     location_query: item.location_query ?? null,
     confidence: clampConfidence(item.confidence),
