@@ -1,13 +1,42 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Prefer build-time Vite env; fallback to runtime window vars injected by Blade
-const runtimeUrl = (globalThis as any)?.VITE_SUPABASE_URL as string | undefined;
-const runtimeAnon = (globalThis as any)?.VITE_SUPABASE_ANON_KEY as string | undefined;
+function readRuntimeConfig(key: 'VITE_SUPABASE_URL' | 'VITE_SUPABASE_ANON_KEY'): string | undefined {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
 
-const supabaseUrl = (import.meta as any)?.env?.VITE_SUPABASE_URL || runtimeUrl;
-const supabaseAnonKey = (import.meta as any)?.env?.VITE_SUPABASE_ANON_KEY || runtimeAnon;
+  const value = (window as any)[key];
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Prefer runtime vars injected by Blade (production) over build-time Vite env (often local)
+const supabaseUrl = readRuntimeConfig('VITE_SUPABASE_URL') ?? import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = readRuntimeConfig('VITE_SUPABASE_ANON_KEY') ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export function isSupabaseConfigured(): boolean {
+  return Boolean(supabaseUrl && supabaseAnonKey);
+}
+
+export function isRealtimeAvailable(): boolean {
+  if (!isSupabaseConfigured()) {
+    return false;
+  }
+
+  const isLocalSupabase =
+    supabaseUrl!.includes('127.0.0.1') || supabaseUrl!.includes('localhost');
+
+  if (typeof window !== 'undefined' && isLocalSupabase) {
+    const host = window.location.hostname;
+    const onLocalApp = host === 'localhost' || host === '127.0.0.1';
+    if (!onLocalApp) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export const supabase = createClient(supabaseUrl ?? '', supabaseAnonKey ?? '');
 
 export async function uploadImageToTaskitBucket(file: File): Promise<string> {
   const fileExt = file.name.split('.').pop();

@@ -163,12 +163,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 // Count subtasks in this column
-const subtaskCount = computed(() => {
-  const subtasks = props.todos.filter(todo => todo.parent_task_id !== null);
-  console.log(`Column: ${props.title}, Total todos: ${props.todos.length}, Subtasks: ${subtasks.length}`);
-  console.log('Todos with parent_task_id:', props.todos.map(t => ({ id: t.id, title: t.title, parent_task_id: t.parent_task_id })));
-  return subtasks.length;
-});
+const subtaskCount = computed(() => props.todos.filter((todo) => todo.parent_task_id !== null).length);
 
 const emit = defineEmits<{
   add: [];
@@ -488,9 +483,9 @@ const handleTouchEnd = (event: TouchEvent, todo: Todo) => {
 };
 
 onMounted(() => {
-  // Detect touch device
-  isTouchDevice.value = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  
+  // Only disable HTML5 drag on touch-primary devices (not hybrid laptops/tablets with mouse)
+  isTouchDevice.value = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+
   document.addEventListener('dragend', handleGlobalDragEnd);
 });
 

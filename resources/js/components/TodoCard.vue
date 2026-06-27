@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="cardRoot"
     :data-todo-id="todo.id"
     :class="[
       'group relative rounded-md border p-2 shadow-sm hover:shadow-md transition-all duration-200 touch-manipulation',
@@ -7,7 +8,7 @@
         ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-700' 
         : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700',
       isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : '',
-      isSelectMode || isReadOnly ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing',
+      isSelectMode || isReadOnly ? 'cursor-pointer' : '',
     ]"
     :style="cardOutlineStyle"
     @click="handleClick"
@@ -94,7 +95,6 @@
             'text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2 flex-1 leading-snug select-none',
             { 'line-through opacity-60': todo.status === 'done' },
           ]"
-          @click.stop
         >
           {{ todo.title }}
         </h3>
@@ -343,6 +343,7 @@ const emit = defineEmits<{
   'move-to-group': [payload: { todo: Todo; groupId: number }];
 }>();
 
+const cardRoot = ref<HTMLElement | null>(null);
 const showMoveMenu = ref(false);
 
 const movableGroups = computed(() =>
@@ -358,12 +359,29 @@ const closeMoveMenu = () => {
   showMoveMenu.value = false;
 };
 
+let dragWrapper: HTMLElement | null = null;
+
+const onDragStart = () => {
+  isDragging = true;
+};
+
+const onDragEnd = () => {
+  window.setTimeout(() => {
+    isDragging = false;
+  }, 0);
+};
+
 onMounted(() => {
   document.addEventListener('click', closeMoveMenu);
+  dragWrapper = cardRoot.value?.parentElement ?? null;
+  dragWrapper?.addEventListener('dragstart', onDragStart);
+  dragWrapper?.addEventListener('dragend', onDragEnd);
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', closeMoveMenu);
+  dragWrapper?.removeEventListener('dragstart', onDragStart);
+  dragWrapper?.removeEventListener('dragend', onDragEnd);
 });
 
 // Title editing state
@@ -394,17 +412,17 @@ const todoUniqueId = computed(() => {
 let isDragging = false;
 
 const handleClick = () => {
-  if (!isDragging) {
-    if (props.isSelectMode) {
-      emit('toggle-selection', props.todo);
-    } else if (props.isReadOnly) {
-      // In read-only mode, emit todo-click for modal display
-      emit('todo-click', props.todo);
-    } else {
-      emit('edit', props.todo);
-    }
+  if (isDragging) {
+    return;
   }
-  isDragging = false;
+
+  if (props.isSelectMode) {
+    emit('toggle-selection', props.todo);
+  } else if (props.isReadOnly) {
+    emit('todo-click', props.todo);
+  } else {
+    emit('edit', props.todo);
+  }
 };
 
 const formatDate = (dateString: string) => {

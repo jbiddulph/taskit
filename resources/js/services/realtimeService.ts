@@ -1,4 +1,4 @@
-import { supabase } from '@/services/supabaseClient';
+import { isRealtimeAvailable, supabase } from '@/services/supabaseClient';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface Message {
@@ -26,20 +26,19 @@ class RealtimeService {
    * Initialize real-time service with user context
    */
   init(userId: number, companyId: number) {
-    console.log('🔥 RealtimeService.init called with userId:', userId, 'companyId:', companyId);
     this.currentUserId = userId;
     this.currentCompanyId = companyId;
-    
-    // Test Supabase connection
-    this.testSupabaseConnectionPrivate();
-    
+
+    if (!isRealtimeAvailable()) {
+      console.warn('Real-time updates disabled: Supabase is not configured for this environment.');
+      return;
+    }
+
     this.subscribeToCompanyMessages();
     this.subscribeToNotifications();
     this.subscribeToProjects();
     this.subscribeToTodos();
     this.subscribeToActivities();
-    
-    console.log('🔥 RealtimeService initialization complete');
   }
   
   /**
