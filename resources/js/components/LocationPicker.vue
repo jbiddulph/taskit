@@ -3,7 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import Icon from '@/components/Icon.vue';
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, hasMapbox } from '@/services/mapboxClient';
-import { mapboxApi, type MapLocation } from '@/services/mapboxApi';
+import { mapboxApi } from '@/services/mapboxApi';
 import { useMapboxMap } from '@/composables/useMapboxMap';
 import { useI18n } from 'vue-i18n';
 import mapboxgl from 'mapbox-gl';
@@ -30,14 +30,10 @@ const emit = defineEmits<{
     'update:modelValue': [value: LocationValue];
 }>();
 
-const searchQuery = ref('');
-const searchResults = ref<MapLocation[]>([]);
-const searching = ref(false);
 const mapContainer = ref<HTMLDivElement | null>(null);
 const mapError = ref<string | null>(null);
 
 let marker: mapboxgl.Marker | null = null;
-let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const hasLocation = computed(
     () => props.modelValue.latitude != null && props.modelValue.longitude != null,
@@ -110,49 +106,8 @@ const { mapReady, getMap, scheduleMapInit } = useMapboxMap(
     },
 );
 
-const runSearch = () => {
-    if (searchTimeout) clearTimeout(searchTimeout);
-    const query = searchQuery.value.trim();
-    if (query.length < 2) {
-        searchResults.value = [];
-        return;
-    }
-
-    searchTimeout = setTimeout(async () => {
-        searching.value = true;
-        try {
-            const proximity =
-                props.modelValue.latitude != null && props.modelValue.longitude != null
-                    ? {
-                          latitude: props.modelValue.latitude,
-                          longitude: props.modelValue.longitude,
-                      }
-                    : undefined;
-            searchResults.value = await mapboxApi.geocode(query, proximity);
-        } catch {
-            searchResults.value = [];
-        } finally {
-            searching.value = false;
-        }
-    }, 300);
-};
-
-const selectResult = (result: MapLocation) => {
-    updateLocation({
-        location_name: result.location_name ?? null,
-        location_address: result.location_address ?? null,
-        latitude: result.latitude,
-        longitude: result.longitude,
-    });
-    searchResults.value = [];
-    searchQuery.value = result.location_address ?? result.location_name ?? '';
-    placeMarker(result.longitude, result.latitude);
-};
-
 const clearLocation = () => {
     updateLocation(emptyLocation());
-    searchQuery.value = '';
-    searchResults.value = [];
     marker?.remove();
     marker = null;
 };
@@ -173,14 +128,9 @@ onMounted(async () => {
     }
 
     await scheduleMapInit();
-
-    if (props.modelValue.location_address) {
-        searchQuery.value = props.modelValue.location_address;
-    }
 });
 
 onUnmounted(() => {
-    if (searchTimeout) clearTimeout(searchTimeout);
     marker?.remove();
     marker = null;
 });
@@ -197,38 +147,6 @@ onUnmounted(() => {
         </div>
 
         <template v-else>
-            <div class="relative">
-                <input
-                    v-model="searchQuery"
-                    type="text"
-                    :disabled="disabled"
-                    class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                    :placeholder="t('map.search_placeholder')"
-                    @input="runSearch"
-                />
-                <div
-                    v-if="searching"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400"
-                >
-                    ...
-                </div>
-                <div
-                    v-if="searchResults.length > 0"
-                    class="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
-                >
-                    <button
-                        v-for="(result, index) in searchResults"
-                        :key="`${result.longitude}-${result.latitude}-${index}`"
-                        type="button"
-                        class="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
-                        @click="selectResult(result)"
-                    >
-                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ result.location_name }}</span>
-                        <span class="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">{{ result.location_address }}</span>
-                    </button>
-                </div>
-            </div>
-
             <div
                 ref="mapContainer"
                 class="location-picker-map h-44 w-full overflow-hidden rounded-md border border-gray-200 dark:border-gray-700"

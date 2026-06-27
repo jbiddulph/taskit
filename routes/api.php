@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ActivityController;
+use App\Http\Controllers\Api\MapboxController;
 use App\Http\Controllers\Api\MeetingNoteProposalController;
 use App\Http\Controllers\Api\MeetingNotesController;
 use App\Http\Controllers\Api\N8nMeetingNotesController;
@@ -104,9 +105,8 @@ Route::middleware(['web', 'auth', 'subscription.access', 'api.rate.limit:api,60,
     Route::post('meeting-notes/proposals/{proposal}/approve', [MeetingNoteProposalController::class, 'approve']);
     Route::post('meeting-notes/proposals/{proposal}/dismiss', [MeetingNoteProposalController::class, 'dismiss']);
 
-    // Mapbox — geocoding & route planning for location-aware tasks
+    // Mapbox — reverse geocoding & route planning for location-aware tasks
     Route::get('mapbox/status', [MapboxController::class, 'status']);
-    Route::get('mapbox/geocode', [MapboxController::class, 'geocode']);
     Route::get('mapbox/reverse-geocode', [MapboxController::class, 'reverseGeocode']);
     Route::post('mapbox/directions', [MapboxController::class, 'directions']);
 

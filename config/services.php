@@ -56,7 +56,7 @@ return [
     ],
 
     'mapbox' => [
-        'access_token' => env('VITE_MAPBOX_ACCESS_TOKEN'),
+        'access_token' => env('MAPBOX_ACCESS_TOKEN', env('VITE_MAPBOX_ACCESS_TOKEN')),
     ],
 
 ];

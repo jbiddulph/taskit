@@ -231,6 +231,12 @@ const planRoute = async () => {
             distance: formatRouteDistance(route.distance_meters),
             duration: formatRouteDuration(route.duration_seconds),
         };
+    } catch (error: any) {
+        const message =
+            error.response?.data?.message ||
+            error.message ||
+            t('map.route_plan_failed');
+        notify('error', t('map.plan_route'), message);
     } finally {
         routeLoading.value = false;
     }

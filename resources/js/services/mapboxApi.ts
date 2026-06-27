@@ -38,19 +38,6 @@ class MapboxApiService {
         return response.data;
     }
 
-    async geocode(query: string, proximity?: { latitude: number; longitude: number }): Promise<MapLocation[]> {
-        const response = await this.request<{ success: boolean; data: MapLocation[] }>({
-            method: 'GET',
-            url: '/mapbox/geocode',
-            params: {
-                query,
-                proximity_latitude: proximity?.latitude,
-                proximity_longitude: proximity?.longitude,
-            },
-        });
-        return response.data;
-    }
-
     async reverseGeocode(latitude: number, longitude: number): Promise<MapLocation | null> {
         const response = await this.request<{ success: boolean; data: MapLocation | null }>({
             method: 'GET',
