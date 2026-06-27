@@ -2,11 +2,12 @@
   <div
     :data-todo-id="todo.id"
     :class="[
-      'group relative rounded-md border p-2 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer touch-manipulation',
+      'group relative rounded-md border p-2 shadow-sm hover:shadow-md transition-all duration-200 touch-manipulation',
       isOverdueAndNotDone 
         ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-700' 
         : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700',
-      isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
+      isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : '',
+      isSelectMode || isReadOnly ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing',
     ]"
     :style="cardOutlineStyle"
     @click="handleClick"
@@ -46,7 +47,7 @@
         <div v-if="!isReadOnly && movableGroups.length > 0" class="relative">
           <button
             @click.stop="showMoveMenu = !showMoveMenu"
-            class="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-blue-500 focus:text-blue-500 transition-opacity p-0.5 rounded min-w-8 min-h-8 flex items-center justify-center"
+            class="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-blue-500 focus:text-blue-500 transition-opacity p-0.5 rounded min-w-8 min-h-8 flex items-center justify-center cursor-pointer"
             :title="t('todos.project_groups.move_to_board')"
           >
             <Icon name="FolderInput" class="w-4 h-4" />
@@ -60,7 +61,7 @@
               v-for="group in movableGroups"
               :key="group.id"
               type="button"
-              class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-gray-50 dark:hover:bg-gray-700"
+              class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
               @click="moveToGroup(group.id)"
             >
               <span
@@ -78,7 +79,7 @@
           @keydown.enter.stop="$emit('delete', String(todo.id))"
           @keydown.space.stop.prevent="$emit('delete', String(todo.id))"
           :aria-label="`Delete todo: ${todo.title}`"
-          class="opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-red-500 focus:text-red-500 transition-opacity focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded min-w-8 min-h-8 flex items-center justify-center p-0.5"
+          class="opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-red-500 focus:text-red-500 transition-opacity focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded min-w-8 min-h-8 flex items-center justify-center p-0.5 cursor-pointer"
         >
           <Icon name="Trash2" class="w-4 h-4" aria-hidden="true" />
         </button>
@@ -90,12 +91,10 @@
       <div v-if="!editingTitle" class="flex items-center gap-1">
         <h3
           :class="[
-            'text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2 flex-1 transition-colors leading-snug',
+            'text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2 flex-1 leading-snug select-none',
             { 'line-through opacity-60': todo.status === 'done' },
-            { 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400': !isReadOnly }
           ]"
-          @click.stop="!isReadOnly && startEditTitle()"
-          :title="isReadOnly ? '' : 'Click to edit title'"
+          @click.stop
         >
           {{ todo.title }}
         </h3>
@@ -105,13 +104,13 @@
           @keydown.enter.stop="startEditTitle"
           @keydown.space.stop.prevent="startEditTitle"
           :aria-label="`Edit title of todo: ${todo.title}`"
-          class="opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-blue-500 focus:text-blue-500 transition-opacity p-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded min-w-8 min-h-8 flex items-center justify-center"
+          class="opacity-0 group-hover:opacity-100 md:group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-blue-500 focus:text-blue-500 transition-opacity p-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded min-w-8 min-h-8 flex items-center justify-center cursor-pointer"
           title="Edit title"
         >
           <Icon name="Edit3" class="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
-      <div v-else class="flex items-center gap-2">
+      <div v-else class="flex items-center gap-2" @click.stop>
         <input
           v-model="editingTitleText"
           @keydown.enter="saveTitle"
@@ -126,7 +125,7 @@
           @keydown.enter.stop="saveTitle"
           @keydown.space.stop.prevent="saveTitle"
           aria-label="Save title"
-          class="p-0.5 text-green-500 hover:text-green-600 focus:text-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 rounded min-w-8 min-h-8 flex items-center justify-center"
+          class="p-0.5 text-green-500 hover:text-green-600 focus:text-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 rounded min-w-8 min-h-8 flex items-center justify-center cursor-pointer"
           title="Save"
         >
           <Icon name="Check" class="w-4 h-4" aria-hidden="true" />
@@ -136,7 +135,7 @@
           @keydown.enter.stop="cancelEditTitle"
           @keydown.space.stop.prevent="cancelEditTitle"
           aria-label="Cancel editing title"
-          class="p-0.5 text-gray-400 hover:text-red-500 focus:text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded min-w-8 min-h-8 flex items-center justify-center"
+          class="p-0.5 text-gray-400 hover:text-red-500 focus:text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded min-w-8 min-h-8 flex items-center justify-center cursor-pointer"
           title="Cancel"
         >
           <Icon name="X" class="w-3 h-3" />
@@ -252,7 +251,7 @@
         <button
           v-if="!isReadOnly"
           @click.stop="$emit('add-subtask', todo)"
-          class="flex items-center gap-1 text-[11px] text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          class="flex items-center gap-1 text-[11px] text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
         >
           <Icon name="Plus" class="w-3 h-3" />
           Add Subtask
@@ -262,7 +261,7 @@
         <button
           v-if="todo.subtasks && todo.subtasks.length > 0"
           @click.stop="toggleSubtasks"
-          class="flex items-center gap-0.5 text-[11px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors shrink-0"
+          class="flex items-center gap-0.5 text-[11px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors shrink-0 cursor-pointer"
         >
           <Icon 
             :name="subtasksVisible ? 'ChevronUp' : 'ChevronDown'" 
