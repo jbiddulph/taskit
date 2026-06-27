@@ -3,6 +3,7 @@
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\IndustryLandingController;
 use App\Http\Controllers\RedemptionController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SubdomainController;
@@ -43,12 +44,21 @@ Route::get('/alternative-to', function () {
 })->name('alternative-to');
 
 Route::get('/for-estate-agents', function () {
-    return Inertia::render('ForEstateAgents');
+    return redirect('/estate-agents', 301);
 })->name('for-estate-agents');
+
+foreach (config('industry_landing.slugs', []) as $industrySlug) {
+    Route::get("/{$industrySlug}", IndustryLandingController::class)
+        ->name("industry.{$industrySlug}");
+}
 
 Route::get('/case-studies', function () {
     return Inertia::render('CaseStudies');
 })->name('case-studies');
+
+Route::get('/industries', function () {
+    return Inertia::render('Industries');
+})->name('industries');
 
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');

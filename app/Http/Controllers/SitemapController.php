@@ -37,9 +37,14 @@ class SitemapController extends Controller
                 'priority' => '0.7',
             ],
             [
-                'loc' => route('for-estate-agents'),
+                'loc' => route('industries'),
                 'changefreq' => 'monthly',
                 'priority' => '0.9',
+            ],
+            [
+                'loc' => route('case-studies'),
+                'changefreq' => 'monthly',
+                'priority' => '0.7',
             ],
             [
                 'loc' => route('cookies'),
@@ -76,7 +81,17 @@ class SitemapController extends Controller
                 'changefreq' => 'monthly',
                 'priority' => '0.3',
             ],
-        ])->map(function (array $entry) use ($now) {
+        ]);
+
+        foreach (config('industry_landing.slugs', []) as $slug) {
+            $urls->push([
+                'loc' => route("industry.{$slug}"),
+                'changefreq' => 'monthly',
+                'priority' => '0.85',
+            ]);
+        }
+
+        $urls = $urls->map(function (array $entry) use ($now) {
             return $entry + ['lastmod' => $now];
         });
 

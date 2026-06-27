@@ -5,6 +5,7 @@ import { onMounted, ref } from 'vue';
 import PublicNavigation from '@/components/PublicNavigation.vue';
 import SeoHead from '@/components/SeoHead.vue';
 import { SEO_HOME_DESCRIPTION, SEO_HOME_TITLE } from '@/constants/seo';
+import { INDUSTRY_LANDING_PAGES } from '@/constants/industryLandingPages';
 
 const homeJsonLd = {
     '@context': 'https://schema.org',
@@ -88,8 +89,8 @@ onMounted(() => {
                         <button @click="scrollToSection('pricing')" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer">
                             Pricing
                         </button>
-                        <a href="/for-estate-agents" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
-                            Estate agents
+                        <a href="/industries" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                            Industries
                         </a>
                         <a href="/case-studies" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                             Case studies
@@ -160,11 +161,11 @@ onMounted(() => {
                             Pricing
                         </button>
                         <a
-                            href="/for-estate-agents"
+                            href="/industries"
                             class="px-2 py-1 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                             @click="mobileMenuOpen = false"
                         >
-                            Estate agents
+                            Industries
                         </a>
                         <a
                             href="/competitors"
@@ -430,23 +431,20 @@ onMounted(() => {
                         If your work happens at addresses, on the road, or across clients, ZapTask keeps everyone aligned without enterprise complexity.
                     </p>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                    <a href="/for-estate-agents" class="rounded-xl border border-blue-200 bg-white p-5 hover:shadow-md transition-shadow dark:border-blue-800 dark:bg-[#161615]">
-                        <h3 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">🏠 Estate agents</h3>
-                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Plan viewings on a map, route negotiators, and track sales progression.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <a
+                        v-for="industry in INDUSTRY_LANDING_PAGES"
+                        :key="industry.slug"
+                        :href="`/${industry.slug}`"
+                        class="rounded-xl border border-gray-200 bg-white p-5 hover:shadow-md hover:border-blue-200 transition-shadow dark:border-gray-700 dark:bg-[#161615] dark:hover:border-blue-800"
+                    >
+                        <h3 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">
+                            {{ industry.features[0]?.icon }} {{ industry.label }}
+                        </h3>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] line-clamp-3">
+                            {{ industry.subheadline }}
+                        </p>
                     </a>
-                    <div class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-[#161615]">
-                        <h3 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">🔧 Trades & field services</h3>
-                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Schedule jobs by postcode, check in on site, and see today's route at a glance.</p>
-                    </div>
-                    <div class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-[#161615]">
-                        <h3 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">📣 Agencies & consultancies</h3>
-                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Manage client projects, deadlines, and deliverables on boards clients can understand.</p>
-                    </div>
-                    <div class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-[#161615]">
-                        <h3 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">🏪 Retail & hospitality</h3>
-                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Coordinate openings, refits, and multi-site tasks with locations and assignees.</p>
-                    </div>
                 </div>
             </div>
         </section>
@@ -879,8 +877,8 @@ onMounted(() => {
                                 </a>
                             </li>
                             <li>
-                                <a href="/for-estate-agents" class="text-gray-300 hover:text-white transition-colors">
-                                    Estate agents
+                                <a href="#industries" class="text-gray-300 hover:text-white transition-colors">
+                                    Industries
                                 </a>
                             </li>
                             <li>
