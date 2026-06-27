@@ -3,12 +3,11 @@
     ref="cardRoot"
     :data-todo-id="todo.id"
     :class="[
-      'group relative rounded-md border p-2 shadow-sm hover:shadow-md transition-all duration-200 touch-manipulation',
+      'group relative rounded-md border p-2 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer touch-manipulation',
       isOverdueAndNotDone 
         ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-700' 
         : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700',
       isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : '',
-      isSelectMode || isReadOnly ? 'cursor-pointer' : '',
     ]"
     :style="cardOutlineStyle"
     @click="handleClick"
@@ -413,6 +412,7 @@ let isDragging = false;
 
 const handleClick = () => {
   if (isDragging) {
+    isDragging = false;
     return;
   }
 

@@ -74,7 +74,7 @@
           
           <!-- Todo Card Container -->
           <div
-            :draggable="canDragTodo(todo) && !isTouchDevice"
+            :draggable="canDragTodo(todo)"
             @dragstart="handleDragStart($event, todo)"
             @dragend="handleDragEnd"
             @dragover="handleTodoDragOver($event, index)"
@@ -87,11 +87,10 @@
             data-drop-zone="true"
             class="relative transition-all duration-200 touch-manipulation"
             :class="{
-              'hover:scale-[1.01] cursor-grab': canDragTodo(todo) && !draggedTodo && !isTouchDevice,
-              'cursor-grabbing': canDragTodo(todo) && draggedTodo?.id === todo.id && !isTouchDevice,
+              'hover:scale-[1.01]': canDragTodo(todo) && !draggedTodo,
               'opacity-60 cursor-not-allowed': !canDragTodo(todo),
               'opacity-40 scale-95': draggedTodo?.id === todo.id,
-              'hover:shadow-md': canDragTodo(todo) && !draggedTodo && !isTouchDevice,
+              'hover:shadow-md': canDragTodo(todo) && !draggedTodo,
               'touch-dragging': isTouchDragging && draggedTodo?.id === todo.id
             }"
           >
