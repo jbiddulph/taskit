@@ -204,7 +204,7 @@ class TodoApiService {
 
     // Update a todo
     async updateTodo(id: number, todoData: Partial<Todo>): Promise<Todo> {
-        const payload = {
+        const payload: Record<string, unknown> = {
             title: todoData.title,
             description: todoData.description,
             priority: todoData.priority,
@@ -222,6 +222,12 @@ class TodoApiService {
             outline_color: todoData.outline_color,
             project_group_id: todoData.project_group_id,
         };
+
+        Object.keys(payload).forEach((key) => {
+            if (payload[key] === undefined) {
+                delete payload[key];
+            }
+        });
 
         const response = await this.request<ApiResponse<Todo>>({
             method: 'PUT',

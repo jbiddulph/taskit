@@ -43,7 +43,7 @@
       </div>
     </div>
 
-    <div v-if="otherMode">
+    <div v-if="showOtherInput">
       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
         {{ t('todos.type_other_label') }}
       </label>
@@ -74,37 +74,52 @@ const modelValue = defineModel<string>({ default: '' });
 const rootEl = ref<HTMLElement | null>(null);
 const isOpen = ref(false);
 const otherInput = ref<HTMLInputElement | null>(null);
-const otherMode = ref(false);
+const showOtherInput = ref(false);
 
 const knownTypeValues = computed(() => typeOptions.value.map((option) => option.value));
 
 const isKnownPreset = (value: string) =>
   knownTypeValues.value.includes(value) && value !== 'Other';
 
-const syncUiFromModel = () => {
-  const value = (modelValue.value ?? '').trim();
+const syncFromModelValue = (value: string) => {
+  const trimmed = value.trim();
 
-  if (!value) {
-    otherMode.value = false;
+  if (trimmed && !isKnownPreset(trimmed)) {
+    showOtherInput.value = true;
     return;
   }
 
-  if (isKnownPreset(value)) {
-    otherMode.value = false;
-    return;
+  if (trimmed && isKnownPreset(trimmed)) {
+    showOtherInput.value = false;
   }
-
-  otherMode.value = true;
 };
 
-syncUiFromModel();
+watch(
+  modelValue,
+  (value) => {
+    syncFromModelValue((value ?? '').trim());
+  },
+  { immediate: true },
+);
 
-const displayType = computed(() => (modelValue.value ?? '').trim() || (otherMode.value ? 'Other' : ''));
+const displayType = computed(() => {
+  const value = (modelValue.value ?? '').trim();
+
+  if (value && !isKnownPreset(value)) {
+    return value;
+  }
+
+  if (showOtherInput.value) {
+    return 'Other';
+  }
+
+  return value;
+});
 
 const displayLabel = computed(() => {
   const value = (modelValue.value ?? '').trim();
 
-  if (otherMode.value) {
+  if (showOtherInput.value) {
     return value || t('todos.type_other');
   }
 
@@ -116,14 +131,14 @@ const displayLabel = computed(() => {
 });
 
 const displayIcon = computed(() => {
-  if (otherMode.value || !isKnownPreset(modelValue.value ?? '')) {
-    if ((modelValue.value ?? '').trim() && !otherMode.value) {
-      return 'CircleHelp';
-    }
+  const value = (modelValue.value ?? '').trim();
 
-    if (otherMode.value) {
-      return 'CircleHelp';
-    }
+  if (value && !isKnownPreset(value)) {
+    return 'CircleHelp';
+  }
+
+  if (showOtherInput.value) {
+    return 'CircleHelp';
   }
 
   return displayType.value ? getTypeIcon(displayType.value) : 'Circle';
@@ -140,20 +155,25 @@ const selectPreset = async (type: string) => {
   isOpen.value = false;
 
   if (!type) {
-    otherMode.value = false;
+    showOtherInput.value = false;
     modelValue.value = '';
     return;
   }
 
   if (type === 'Other') {
-    otherMode.value = true;
-    modelValue.value = '';
+    showOtherInput.value = true;
+
+    const current = (modelValue.value ?? '').trim();
+    if (!current || isKnownPreset(current)) {
+      modelValue.value = '';
+    }
+
     await nextTick();
     otherInput.value?.focus();
     return;
   }
 
-  otherMode.value = false;
+  showOtherInput.value = false;
   modelValue.value = type;
 };
 
@@ -170,11 +190,6 @@ const handleClickOutside = (event: Event) => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
-  syncUiFromModel();
-});
-
-watch(modelValue, () => {
-  syncUiFromModel();
 });
 
 onUnmounted(() => {

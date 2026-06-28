@@ -1602,7 +1602,14 @@ const saveTodo = async (todo: Todo) => {
       const updatedTodo = await todoApi.updateTodo(todo.id, todo);
       const index = todosState.value.findIndex(t => t.id === todo.id);
       if (index !== -1) {
-        todosState.value[index] = updatedTodo;
+        const existingTodo = todosState.value[index];
+        todosState.value[index] = {
+          ...existingTodo,
+          ...updatedTodo,
+          type: updatedTodo.type ?? todo.type ?? existingTodo.type ?? null,
+          project: existingTodo.project || currentProject.value,
+          subtasks: existingTodo.subtasks || [],
+        };
         
         // Force reactivity update to ensure UI changes immediately
         todosState.value = [...todosState.value];
@@ -1612,7 +1619,13 @@ const saveTodo = async (todo: Todo) => {
           if (todosState.value[i].subtasks) {
             const subtaskIndex = todosState.value[i].subtasks!.findIndex(subtask => subtask.id === todo.id);
             if (subtaskIndex !== -1) {
-              todosState.value[i].subtasks![subtaskIndex] = updatedTodo;
+              const existingSubtask = todosState.value[i].subtasks![subtaskIndex];
+              todosState.value[i].subtasks![subtaskIndex] = {
+                ...existingSubtask,
+                ...updatedTodo,
+                type: updatedTodo.type ?? todo.type ?? existingSubtask.type ?? null,
+                project: existingSubtask.project || currentProject.value,
+              };
               
               // Force reactivity update
               todosState.value = [...todosState.value];
@@ -3482,6 +3495,7 @@ onMounted(async () => {
             const existingTodo = todosState.value[updateIndex];
             const todoWithProject = {
               ...updatedTodo,
+              type: updatedTodo.type ?? existingTodo.type ?? null,
               project: existingTodo.project || currentProject.value,
               subtasks: existingTodo.subtasks || [] // Preserve subtasks
             };

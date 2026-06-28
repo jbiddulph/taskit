@@ -424,7 +424,7 @@ class TodoController extends Controller
 
         $validated = $validator->validated();
 
-        if ($request->exists('type')) {
+        if (array_key_exists('type', $request->all())) {
             $validated['type'] = $request->input('type');
         }
 
@@ -447,8 +447,14 @@ class TodoController extends Controller
         }
 
         $todo->update($validated);
+        $todo->refresh();
 
         $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
+
+        CacheService::invalidateUserCaches($user->id, $user->company_id);
+        if ($todo->project_id) {
+            CacheService::invalidateProjectCaches($todo->project_id, $user->company_id);
+        }
 
         // Send real-time notification
         $this->webSocketService->todoUpdated($todo);

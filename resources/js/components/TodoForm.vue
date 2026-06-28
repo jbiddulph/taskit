@@ -115,7 +115,7 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {{t('todos.type')}}
               </label>
-              <TypeSelector v-model="form.type" />
+              <TypeSelector v-model="todoType" />
             </div>
           </div>
 
@@ -371,6 +371,8 @@ const form = ref({
   outline_color: null as string | null,
 });
 
+const todoType = ref('');
+
 const useCustomOutlineColor = ref(false);
 
 const defaultProjectColor = computed(() => props.currentProject?.color || '#3b82f6');
@@ -434,6 +436,7 @@ const resetForm = () => {
     card_icon: null,
     outline_color: null,
   };
+  todoType.value = '';
   useCustomOutlineColor.value = false;
   tagsInput.value = '';
   location.value = {
@@ -452,6 +455,7 @@ onMounted(() => {
 watch(() => props.todo, (newTodo) => {
   if (newTodo) {
     form.value = { ...newTodo, type: newTodo.type ?? '' };
+    todoType.value = newTodo.type ?? '';
     form.value.email_assignee = false;
     useCustomOutlineColor.value = !!newTodo.outline_color;
     form.value.card_icon = newTodo.card_icon ?? null;
@@ -503,13 +507,13 @@ const handleSubmit = async () => {
       return;
     }
     
-    const todoType = (form.value.type ?? '').trim();
+    const resolvedType = todoType.value.trim();
 
     const todoData: any = {
       title: form.value.title,
       description: form.value.description,
       priority: form.value.priority,
-      type: todoType.length > 0 ? todoType : null,
+      type: resolvedType.length > 0 ? resolvedType : null,
       tags: form.value.tags,
       assignee: form.value.assignee ? form.value.assignee : null,
       due_date: form.value.due_date ? form.value.due_date : null,
@@ -571,6 +575,7 @@ const handleTemplateSelected = (todos: any[]) => {
     form.value.description = templateTodo.description;
     form.value.priority = templateTodo.priority;
     form.value.type = templateTodo.type;
+    todoType.value = templateTodo.type ?? '';
     form.value.assignee = templateTodo.assignee;
     form.value.tags = templateTodo.tags;
   }
