@@ -90,11 +90,11 @@ class Industries
 
     public static function validationRule(): string
     {
-        return 'nullable|in:'.implode(',', self::allTypeValues());
+        return 'nullable|string|max:50|not_in:Other';
     }
 
     public static function requiredValidationRule(): string
     {
-        return 'required|in:'.implode(',', self::allTypeValues());
+        return 'required|string|max:50|not_in:Other';
     }
 }

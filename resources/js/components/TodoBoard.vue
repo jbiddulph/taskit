@@ -673,10 +673,10 @@
     <TodoForm
       v-if="showForm && !props.isReadOnly"
       :todo="editingTodo"
-      :is-editing="!!editingTodo"
+      :is-editing="isEditingExistingTodo"
       :current-project="currentProject"
       :current-project-group-id="currentGroup?.id ?? null"
-      :modal-title="!editingTodo && isBulkMode ? t('dashboard.add_bulk') : undefined"
+      :modal-title="formModalTitle"
       @close="closeForm"
       @save="saveTodo"
     />
@@ -1241,6 +1241,24 @@ watch(selectedClientId, (newValue) => {
 
 const selectedProjectId = ref<string>('');
 const editingTodo = ref<Todo | null>(null);
+
+const isEditingExistingTodo = computed(
+  () => !!(editingTodo.value?.id && editingTodo.value.id > 0),
+);
+
+const formModalTitle = computed(() => {
+  if (isBulkMode.value && !editingTodo.value) {
+    return t('dashboard.add_bulk');
+  }
+
+  const todo = editingTodo.value;
+  if (todo?.parent_task_id && (!todo.id || todo.id === 0)) {
+    return t('todos.add_subtask');
+  }
+
+  return undefined;
+});
+
 const editingProjectName = ref('');
 const editingProjectClientId = ref<number | null>(null);
 const editingProjectColor = ref('#3B82F6');
