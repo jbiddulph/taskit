@@ -264,7 +264,7 @@ onMounted(() => {
                                     <ArrowRight class="w-4 h-4 ml-2" />
                                 </a>
                             </Button>
-                            <Button as-child variant="outline" size="lg" class="border-white/30 text-white hover:bg-white/10">
+                            <Button as-child variant="ghost" size="lg" class="border border-white/30 text-white hover:bg-white/10 hover:text-white">
                                 <a href="https://www.zaptask.co.uk">Visit ZapTask</a>
                             </Button>
                         </div>
