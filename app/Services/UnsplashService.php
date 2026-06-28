@@ -1,0 +1,153 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Company;
+use App\Support\Industries;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class UnsplashService
+{
+    public function backgroundQueryFor(?string $industrySlug): string
+    {
+        $slug = Industries::resolve($industrySlug);
+
+        return config("industries.background_queries.{$slug}")
+            ?? config('industries.background_queries.general', 'professional business team office');
+    }
+
+    /**
+     * @return array{url: string, attribution: array{name: string, profile_url: string, photo_url: string}}|null
+     */
+    public function fetchBackgroundForIndustry(?string $industrySlug, bool $forceFresh = false): ?array
+    {
+        $slug = Industries::resolve($industrySlug);
+        $query = $this->backgroundQueryFor($slug);
+        $accessKey = config('services.unsplash.access_key');
+
+        if (! $accessKey) {
+            return $this->fallbackBackground($slug);
+        }
+
+        $cacheKey = 'unsplash:industry:'.$slug.':'.md5($query);
+
+        if ($forceFresh) {
+            Cache::forget($cacheKey);
+        }
+
+        return Cache::remember($cacheKey, now()->addDays(7), function () use ($query, $accessKey, $slug) {
+            try {
+                $response = Http::withHeaders([
+                    'Authorization' => 'Client-ID '.$accessKey,
+                    'Accept-Version' => 'v1',
+                ])->get('https://api.unsplash.com/search/photos', [
+                    'query' => $query,
+                    'orientation' => 'landscape',
+                    'per_page' => 1,
+                    'content_filter' => 'high',
+                ]);
+
+                if (! $response->successful()) {
+                    Log::warning('Unsplash search failed', [
+                        'industry' => $slug,
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                    ]);
+
+                    return $this->fallbackBackground($slug);
+                }
+
+                $photo = $response->json('results.0');
+
+                if (! is_array($photo)) {
+                    return $this->fallbackBackground($slug);
+                }
+
+                return $this->formatPhoto($photo);
+            } catch (\Throwable $e) {
+                Log::warning('Unsplash search exception', [
+                    'industry' => $slug,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return $this->fallbackBackground($slug);
+            }
+        });
+    }
+
+    /**
+     * @return array{url: string, attribution: array{name: string, profile_url: string, photo_url: string}}
+     */
+    public function ensureCompanyHomepageBackground(Company $company, bool $forceRefresh = false): array
+    {
+        $industry = Industries::resolve($company->industry);
+
+        if (
+            ! $forceRefresh
+            && $company->homepage_background_url
+            && $company->homepage_background_industry === $industry
+        ) {
+            return [
+                'url' => $company->homepage_background_url,
+                'attribution' => $company->homepage_background_attribution ?? [],
+            ];
+        }
+
+        $background = $this->fetchBackgroundForIndustry($industry, $forceRefresh)
+            ?? $this->fallbackBackground($industry);
+
+        $company->update([
+            'homepage_background_url' => $background['url'],
+            'homepage_background_attribution' => $background['attribution'],
+            'homepage_background_industry' => $industry,
+        ]);
+
+        return $background;
+    }
+
+    /**
+     * @param  array<string, mixed>  $photo
+     * @return array{url: string, attribution: array{name: string, profile_url: string, photo_url: string}}
+     */
+    protected function formatPhoto(array $photo): array
+    {
+        $url = $photo['urls']['regular'] ?? $photo['urls']['full'] ?? null;
+
+        if (! $url) {
+            throw new \RuntimeException('Unsplash photo missing URL.');
+        }
+
+        return [
+            'url' => $url,
+            'attribution' => [
+                'name' => $photo['user']['name'] ?? 'Unsplash',
+                'profile_url' => $photo['user']['links']['html'] ?? 'https://unsplash.com',
+                'photo_url' => $photo['links']['html'] ?? 'https://unsplash.com',
+            ],
+        ];
+    }
+
+    /**
+     * @return array{url: string, attribution: array{name: string, profile_url: string, photo_url: string}}
+     */
+    protected function fallbackBackground(string $industrySlug): array
+    {
+        $fallbacks = config('industries.background_fallbacks', []);
+        $url = $fallbacks[$industrySlug] ?? $fallbacks['general'] ?? null;
+
+        if (! $url) {
+            $url = 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1600&q=80';
+        }
+
+        return [
+            'url' => $url,
+            'attribution' => [
+                'name' => 'Unsplash',
+                'profile_url' => 'https://unsplash.com',
+                'photo_url' => 'https://unsplash.com',
+            ],
+        ];
+    }
+}

@@ -14,6 +14,11 @@ class Company extends Model
         'name',
         'code',
         'industry',
+        'about_text',
+        'homepage_tagline',
+        'homepage_background_url',
+        'homepage_background_attribution',
+        'homepage_background_industry',
         'subscription_type',
         'scheduled_subscription_type',
         'stripe_customer_id',
@@ -32,6 +37,7 @@ class Company extends Model
         'subscription_ends_at' => 'datetime',
         'scheduled_change_date' => 'datetime',
         'prune_completed_tasks' => 'boolean',
+        'homepage_background_attribution' => 'array',
     ];
 
     protected static function boot()

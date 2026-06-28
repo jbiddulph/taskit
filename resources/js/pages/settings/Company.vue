@@ -29,6 +29,14 @@ interface Company {
     subdomain?: string;
     subdomain_url?: string;
     is_public?: boolean;
+    about_text?: string | null;
+    homepage_tagline?: string | null;
+    homepage_background_url?: string | null;
+    homepage_background_attribution?: {
+        name?: string;
+        profile_url?: string;
+        photo_url?: string;
+    } | null;
 }
 
 interface Props {
@@ -71,6 +79,13 @@ const nameForm = useForm({
 const industryForm = useForm({
     industry: props.company?.industry || 'general',
 });
+
+const homepageForm = useForm({
+    about_text: props.company?.about_text || '',
+    homepage_tagline: props.company?.homepage_tagline || '',
+});
+
+const refreshingBackground = ref(false);
 
 // Subdomain validation state
 const subdomainValidation = ref({
@@ -275,6 +290,27 @@ const updateCompanyIndustry = () => {
         },
         onError: (errors) => {
         }
+    });
+};
+
+const updateHomepage = () => {
+    homepageForm.patch('/settings/company/homepage', {
+        onSuccess: () => {
+            router.reload();
+        },
+    });
+};
+
+const refreshHomepageBackground = () => {
+    refreshingBackground.value = true;
+
+    router.post('/settings/company/homepage/refresh-background', {}, {
+        onFinish: () => {
+            refreshingBackground.value = false;
+        },
+        onSuccess: () => {
+            router.reload();
+        },
     });
 };
 
@@ -700,6 +736,83 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
                                 {{ creatingSubdomain ? 'Creating Subdomain...' : 'Create Company Subdomain' }}
                             </Button>
                         </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <!-- Subdomain Homepage -->
+            <Card v-if="hasAccess && hasSubdomain">
+                <CardHeader>
+                    <CardTitle class="flex items-center gap-2">
+                        <Image class="w-5 h-5" />
+                        Subdomain Homepage
+                    </CardTitle>
+                    <CardDescription>
+                        Customise your company page at {{ subdomainUrl }}. The hero background is chosen automatically from your industry ({{ industryLabel }}).
+                    </CardDescription>
+                </CardHeader>
+                <CardContent class="space-y-4">
+                    <div
+                        v-if="company?.homepage_background_url"
+                        class="relative h-40 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700"
+                    >
+                        <img
+                            :src="company.homepage_background_url"
+                            alt="Homepage background preview"
+                            class="w-full h-full object-cover"
+                        />
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                        <div class="absolute bottom-3 left-3 right-3 text-white text-sm font-medium">
+                            Background preview
+                        </div>
+                    </div>
+
+                    <div>
+                        <Label for="homepage-tagline" class="text-sm font-medium">Tagline</Label>
+                        <Input
+                            id="homepage-tagline"
+                            v-model="homepageForm.homepage_tagline"
+                            type="text"
+                            placeholder="e.g. Delivering exceptional service across the South West"
+                            class="mt-1"
+                        />
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Shown under your company name on your subdomain homepage.
+                        </p>
+                    </div>
+
+                    <div>
+                        <Label for="about-text" class="text-sm font-medium">About your company</Label>
+                        <textarea
+                            id="about-text"
+                            v-model="homepageForm.about_text"
+                            rows="5"
+                            maxlength="5000"
+                            placeholder="Tell visitors what your company does, your values, or how to work with you..."
+                            class="mt-1 flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:bg-gray-800 min-h-[120px]"
+                        />
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        <Button
+                            @click="updateHomepage"
+                            :disabled="homepageForm.processing"
+                        >
+                            {{ homepageForm.processing ? 'Saving...' : 'Save homepage' }}
+                        </Button>
+                        <Button
+                            variant="outline"
+                            @click="refreshHomepageBackground"
+                            :disabled="refreshingBackground"
+                        >
+                            {{ refreshingBackground ? 'Refreshing...' : 'Refresh background image' }}
+                        </Button>
+                        <Button as-child variant="outline">
+                            <a :href="subdomainUrl" target="_blank">
+                                Preview homepage
+                                <ExternalLink class="w-3 h-3 ml-2" />
+                            </a>
+                        </Button>
                     </div>
                 </CardContent>
             </Card>

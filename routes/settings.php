@@ -57,6 +57,8 @@ Route::middleware(['auth', 'subscription.access'])->group(function () {
     // Company name update route
     Route::patch('settings/company/name', [CompanyController::class, 'updateName'])->name('company.name.update');
     Route::patch('settings/company/industry', [CompanyController::class, 'updateIndustry'])->name('company.industry.update');
+    Route::patch('settings/company/homepage', [CompanyController::class, 'updateHomepage'])->name('company.homepage.update');
+    Route::post('settings/company/homepage/refresh-background', [CompanyController::class, 'refreshHomepageBackground'])->name('company.homepage.refresh-background');
 
     // Company subdomain validation routes
     Route::get('settings/company/check-subdomain', [CompanyController::class, 'checkSubdomainAvailability'])->name('company.subdomain.check');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Services\CloudflareService;
+use App\Services\UnsplashService;
 use App\Support\Industries;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -14,9 +15,12 @@ class CompanyController extends Controller
 {
     protected CloudflareService $cloudflareService;
 
-    public function __construct(CloudflareService $cloudflareService)
+    protected UnsplashService $unsplashService;
+
+    public function __construct(CloudflareService $cloudflareService, UnsplashService $unsplashService)
     {
         $this->cloudflareService = $cloudflareService;
+        $this->unsplashService = $unsplashService;
     }
 
     /**
@@ -56,6 +60,8 @@ class CompanyController extends Controller
             $result = $this->cloudflareService->createSubdomain($request->company_name);
 
             if ($result['success']) {
+                $this->unsplashService->ensureCompanyHomepageBackground($company->fresh());
+
                 return back()->with('success', 'Subdomain created successfully! Your company can now be accessed at: ' . $subdomainUrl);
             } else {
                 // If API creation fails, clean up the database
@@ -269,7 +275,69 @@ class CompanyController extends Controller
             'industry' => Industries::resolve($request->industry),
         ]);
 
-        return back()->with('success', 'Industry updated. Task types will reflect your business type.');
+        if ($company->subdomain) {
+            $this->unsplashService->ensureCompanyHomepageBackground($company->fresh(), forceRefresh: true);
+        }
+
+        return back()->with('success', 'Industry updated. Task types and homepage background will reflect your business type.');
+    }
+
+    /**
+     * Update subdomain homepage content (about text, tagline).
+     */
+    public function updateHomepage(Request $request)
+    {
+        $request->validate([
+            'about_text' => 'nullable|string|max:5000',
+            'homepage_tagline' => 'nullable|string|max:255',
+        ]);
+
+        $user = Auth::user();
+        $company = $user->company;
+
+        if (! $company) {
+            return back()->withErrors(['homepage' => 'No company found for this user.']);
+        }
+
+        if ($user->company_id !== $company->id) {
+            return back()->withErrors(['homepage' => 'You are not authorized to update this company.']);
+        }
+
+        if (! $company->subdomain) {
+            return back()->withErrors(['homepage' => 'Create a company subdomain before customizing your homepage.']);
+        }
+
+        $company->update([
+            'about_text' => $request->input('about_text'),
+            'homepage_tagline' => $request->input('homepage_tagline'),
+        ]);
+
+        return back()->with('success', 'Homepage content updated.');
+    }
+
+    /**
+     * Fetch a new industry-based background image from Unsplash.
+     */
+    public function refreshHomepageBackground(Request $request)
+    {
+        $user = Auth::user();
+        $company = $user->company;
+
+        if (! $company) {
+            return back()->withErrors(['homepage' => 'No company found for this user.']);
+        }
+
+        if ($user->company_id !== $company->id) {
+            return back()->withErrors(['homepage' => 'You are not authorized to update this company.']);
+        }
+
+        if (! $company->subdomain) {
+            return back()->withErrors(['homepage' => 'Create a company subdomain before customizing your homepage.']);
+        }
+
+        $this->unsplashService->ensureCompanyHomepageBackground($company, forceRefresh: true);
+
+        return back()->with('success', 'Homepage background refreshed from your industry theme.');
     }
 
     /**

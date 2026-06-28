@@ -5,12 +5,18 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\UnsplashService;
+use App\Support\Industries;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class SubdomainController extends Controller
 {
+    public function __construct(protected UnsplashService $unsplashService)
+    {
+    }
+
     /**
      * Show the subdomain dashboard
      */
@@ -167,9 +173,14 @@ class SubdomainController extends Controller
             return redirect('https://www.zaptask.co.uk');
         }
 
+        $background = $this->unsplashService->ensureCompanyHomepageBackground($company);
+        $company->refresh();
+
         $data = [
             'company' => $company,
-            'isSubdomain' => true
+            'isSubdomain' => true,
+            'homepageBackground' => $background,
+            'industryLabel' => Industries::label($company->industry ?? Industries::default()),
         ];
 
         // If company is public, include dashboard data

@@ -59,4 +59,8 @@ return [
         'access_token' => env('MAPBOX_ACCESS_TOKEN', env('VITE_MAPBOX_ACCESS_TOKEN')),
     ],
 
+    'unsplash' => [
+        'access_key' => env('UNSPLASH_ACCESS_KEY'),
+    ],
+
 ];

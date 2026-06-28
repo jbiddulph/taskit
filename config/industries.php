@@ -127,4 +127,58 @@ return [
         'charities' => ['Campaign', 'Fundraising', 'Volunteer', 'Event', 'Admin', 'Compliance', 'Other'],
         'manufacturing' => ['Production', 'Quality', 'Maintenance', 'Order', 'Safety', 'Inventory', 'Other'],
     ],
+
+    /*
+    | Unsplash search queries for subdomain homepage hero backgrounds (landscape).
+    */
+    'background_queries' => [
+        'general' => 'professional office team workspace',
+        'estate-agents' => 'modern house exterior residential property',
+        'property-management' => 'apartment building property management',
+        'construction' => 'construction site building workers',
+        'electricians' => 'electrician wiring installation',
+        'plumbers' => 'plumber plumbing repair',
+        'cleaning-companies' => 'professional cleaning service office',
+        'roofers' => 'roofing construction house',
+        'landscapers' => 'landscaping garden design',
+        'facilities-management' => 'commercial building facilities',
+        'care-agencies' => 'healthcare care home support',
+        'restaurants' => 'restaurant kitchen dining',
+        'hotels' => 'hotel lobby hospitality',
+        'retail' => 'retail store shopping',
+        'marketing-agencies' => 'creative agency marketing team',
+        'software-development' => 'software developer coding office',
+        'accountants' => 'accounting finance office',
+        'recruitment' => 'recruitment interview office',
+        'schools' => 'school classroom education',
+        'charities' => 'charity community volunteering',
+        'manufacturing' => 'manufacturing factory production',
+    ],
+
+    /*
+    | Static fallback hero images when Unsplash API is unavailable.
+    */
+    'background_fallbacks' => [
+        'general' => 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1600&q=80',
+        'estate-agents' => 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1600&q=80',
+        'property-management' => 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1600&q=80',
+        'construction' => 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1600&q=80',
+        'electricians' => 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=1600&q=80',
+        'plumbers' => 'https://images.unsplash.com/photo-1585704032915-c3400ca2765d?auto=format&fit=crop&w=1600&q=80',
+        'cleaning-companies' => 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1600&q=80',
+        'roofers' => 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80',
+        'landscapers' => 'https://images.unsplash.com/photo-1558904541-efa843a96f01?auto=format&fit=crop&w=1600&q=80',
+        'facilities-management' => 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80',
+        'care-agencies' => 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1600&q=80',
+        'restaurants' => 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1600&q=80',
+        'hotels' => 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1600&q=80',
+        'retail' => 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1600&q=80',
+        'marketing-agencies' => 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1600&q=80',
+        'software-development' => 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1600&q=80',
+        'accountants' => 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1600&q=80',
+        'recruitment' => 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1600&q=80',
+        'schools' => 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1600&q=80',
+        'charities' => 'https://images.unsplash.com/photo-1469571480202-5b953214599d?auto=format&fit=crop&w=1600&q=80',
+        'manufacturing' => 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1600&q=80',
+    ],
 ];
