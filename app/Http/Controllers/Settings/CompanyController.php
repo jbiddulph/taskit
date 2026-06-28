@@ -363,11 +363,15 @@ class CompanyController extends Controller
             $query = $this->unsplashService->backgroundQueryFor($company->industry);
         }
 
-        $results = $this->unsplashService->searchPhotos(
-            $query,
-            (int) $request->input('page', 1),
-            12,
-        );
+        try {
+            $results = $this->unsplashService->searchPhotos(
+                $query,
+                (int) $request->input('page', 1),
+                12,
+            );
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 502);
+        }
 
         return response()->json([
             'success' => true,

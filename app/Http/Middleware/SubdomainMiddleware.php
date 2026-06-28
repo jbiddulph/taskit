@@ -83,6 +83,20 @@ class SubdomainMiddleware
                     return redirect('https://www.zaptask.co.uk');
                 }
 
+                if ($path === 'login') {
+                    if ($request->isMethod('GET')) {
+                        return app(SubdomainController::class)->login($request);
+                    }
+
+                    if ($request->isMethod('POST')) {
+                        return app(SubdomainController::class)->authenticate($request);
+                    }
+                }
+
+                if ($path === 'dashboard' && $request->isMethod('GET')) {
+                    return app(SubdomainController::class)->dashboard($request);
+                }
+
                 // For all other paths, continue with normal routing so that
                 // logged-in users see the same app experience on subdomains
                 // as on https://www.zaptask.co.uk.

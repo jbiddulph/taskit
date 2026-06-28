@@ -32,7 +32,7 @@ class UnsplashService
         $accessKey = config('services.unsplash.access_key');
 
         if (! $accessKey) {
-            return [];
+            throw new \RuntimeException('Unsplash is not configured. Add UNSPLASH_ACCESS_KEY to your server environment.');
         }
 
         $perPage = max(1, min($perPage, 30));
@@ -50,13 +50,18 @@ class UnsplashService
                 'content_filter' => 'high',
             ]);
 
+            if ($response->status() === 401) {
+                throw new \RuntimeException('Invalid Unsplash access key. Check UNSPLASH_ACCESS_KEY in your server environment.');
+            }
+
             if (! $response->successful()) {
                 Log::warning('Unsplash search failed', [
                     'query' => $query,
                     'status' => $response->status(),
+                    'body' => $response->json('errors') ?? $response->body(),
                 ]);
 
-                return [];
+                throw new \RuntimeException('Unsplash search failed. Please try again later.');
             }
 
             return collect($response->json('results', []))
@@ -75,12 +80,16 @@ class UnsplashService
                 ->values()
                 ->all();
         } catch (\Throwable $e) {
+            if ($e instanceof \RuntimeException) {
+                throw $e;
+            }
+
             Log::warning('Unsplash search exception', [
                 'query' => $query,
                 'error' => $e->getMessage(),
             ]);
 
-            return [];
+            throw new \RuntimeException('Unsplash search failed. Please try again later.');
         }
     }
 

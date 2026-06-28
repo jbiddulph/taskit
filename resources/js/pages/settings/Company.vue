@@ -337,10 +337,13 @@ const searchHomepageImages = async () => {
             params.set('query', imageSearchQuery.value.trim());
         }
 
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+
         const response = await fetch(`/settings/company/homepage/search-images?${params.toString()}`, {
             headers: {
                 Accept: 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
+                ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
             },
             credentials: 'same-origin',
         });
@@ -348,7 +351,11 @@ const searchHomepageImages = async () => {
         const data = await response.json();
 
         if (!response.ok) {
-            imageSearchError.value = data.message || 'Unable to search images.';
+            if (response.status === 401) {
+                imageSearchError.value = 'Your session expired. Please refresh the page and try again.';
+            } else {
+                imageSearchError.value = data.message || 'Unable to search images.';
+            }
             imageSearchResults.value = [];
             return;
         }

@@ -3044,38 +3044,45 @@ const deleteProjectGroup = async (group: ProjectGroup) => {
   }
 };
 
-// Load current project from localStorage
+// Load current project from localStorage (scoped to projects the user can access)
 const loadCurrentProject = async () => {
   try {
     const projectId = localStorage.getItem('currentProjectId');
+
     if (projectId) {
-      const project = await todoApi.getProject(parseInt(projectId));
+      const parsedId = parseInt(projectId, 10);
+      const cachedProject = projectsState.value.find(p => p.id === parsedId);
+
+      if (cachedProject) {
+        currentProject.value = cachedProject;
+        selectedProjectId.value = projectId;
+        await loadProjectGroups(cachedProject.id);
+        return;
+      }
+
+      const project = await todoApi.getProject(parsedId);
       currentProject.value = project;
       selectedProjectId.value = projectId;
       await loadProjectGroups(project.id);
-      
-      // Don't dispatch event here to prevent circular loop
-      // The sidebar will be updated when the component mounts
-    } else if (projectsState.value.length > 0) {
-      // If no project is selected and projectsState are available, select the first one
-      const firstProject = projectsState.value[0];
-      currentProject.value = firstProject;
-      selectedProjectId.value = firstProject.id.toString();
-      localStorage.setItem('currentProjectId', firstProject.id.toString());
-      await loadProjectGroups(firstProject.id);
-      
+      return;
     }
-  } catch {
-    localStorage.removeItem('currentProjectId');
-    
-    // If there was an error but projectsState are available, try to select the first one
+
     if (projectsState.value.length > 0) {
       const firstProject = projectsState.value[0];
       currentProject.value = firstProject;
       selectedProjectId.value = firstProject.id.toString();
       localStorage.setItem('currentProjectId', firstProject.id.toString());
       await loadProjectGroups(firstProject.id);
-      
+    }
+  } catch {
+    localStorage.removeItem('currentProjectId');
+
+    if (projectsState.value.length > 0) {
+      const firstProject = projectsState.value[0];
+      currentProject.value = firstProject;
+      selectedProjectId.value = firstProject.id.toString();
+      localStorage.setItem('currentProjectId', firstProject.id.toString());
+      await loadProjectGroups(firstProject.id);
     }
   }
 };
@@ -3095,6 +3102,7 @@ const loadTodos = async () => {
     
     // Check specific todosState
     const allTodos = response.data.todo.concat(response.data['in-progress']).concat(response.data['qa-testing']).concat(response.data.done);
+    const subtasks = allTodos.filter(t => t.parent_task_id !== null);
     
     // Attach subtasks to their parent tasks
     allTodos.forEach(todo => {

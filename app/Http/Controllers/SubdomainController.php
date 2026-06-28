@@ -38,7 +38,7 @@ class SubdomainController extends Controller
         // Check if user is authenticated
         if (!Auth::check()) {
             \Log::info('User not authenticated, redirecting to login');
-            return redirect()->route('subdomain.login');
+            return redirect('/login');
         }
 
         // Check if user belongs to this company
@@ -56,7 +56,7 @@ class SubdomainController extends Controller
             ]);
             
             Auth::logout();
-            return redirect()->route('subdomain.login')->withErrors([
+            return redirect('/login')->withErrors([
                 'email' => 'You are not authorized to access this company portal.'
             ]);
         }
