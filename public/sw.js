@@ -1,172 +1,98 @@
-const CACHE_NAME = 'zaptask-v1';
-const STATIC_CACHE = 'zaptask-static-v1';
-const DYNAMIC_CACHE = 'zaptask-dynamic-v1';
+const CACHE_VERSION = 'zaptask-v2';
+const STATIC_CACHE = `zaptask-static-${CACHE_VERSION}`;
+const DYNAMIC_CACHE = `zaptask-dynamic-${CACHE_VERSION}`;
 
-// Files to cache for offline functionality
 const STATIC_FILES = [
-  '/',
-  '/dashboard',
-  '/projects',
-  '/settings',
   '/favicon.ico',
   '/zap_icon.png',
-  '/manifest.json'
+  '/manifest.json',
 ];
 
-// API endpoints to cache
 const API_CACHE_PATTERNS = [
   /\/api\/todos/,
   /\/api\/projects/,
   /\/api\/notifications/,
-  /\/api\/users/
+  /\/api\/users/,
 ];
 
-// Install event - cache static files
 self.addEventListener('install', (event) => {
-  
   event.waitUntil(
     caches.open(STATIC_CACHE)
-      .then((cache) => {
-        return cache.addAll(STATIC_FILES);
-      })
-      .then(() => {
-        return self.skipWaiting();
-      })
-      .catch((error) => {
-      })
+      .then((cache) => cache.addAll(STATIC_FILES))
+      .then(() => self.skipWaiting()),
   );
 });
 
-// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  
   event.waitUntil(
     caches.keys()
-      .then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      })
-      .then(() => {
-        return self.clients.claim();
-      })
+      .then((cacheNames) => Promise.all(
+        cacheNames
+          .filter((cacheName) => cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE)
+          .map((cacheName) => caches.delete(cacheName)),
+      ))
+      .then(() => self.clients.claim()),
   );
 });
 
-// Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  const url = new URL(request.url);
 
-  // Skip non-GET requests
   if (request.method !== 'GET') {
     return;
   }
 
-  // Skip external requests
+  const url = new URL(request.url);
+
   if (url.origin !== location.origin) {
     return;
   }
 
+  // Never cache HTML, Inertia pages, or Vite build assets — always fetch fresh.
+  if (shouldBypassCache(request, url)) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
   event.respondWith(
-    caches.match(request)
-      .then((cachedResponse) => {
-        // Return cached version if available
-        if (cachedResponse) {
-          return cachedResponse;
+    fetch(request)
+      .then((response) => {
+        if (response && response.status === 200 && response.type === 'basic' && isStaticFile(request)) {
+          const responseToCache = response.clone();
+          caches.open(STATIC_CACHE)
+            .then((cache) => cache.put(request, responseToCache))
+            .catch(() => {});
         }
 
-        // Fetch from network
-        return fetch(request)
-          .then((response) => {
-            // Don't cache non-successful responses
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // Clone the response for caching
-            const responseToCache = response.clone();
-
-            // Determine cache strategy based on request type
-            if (isStaticFile(request)) {
-              // Cache static files in static cache
-              caches.open(STATIC_CACHE)
-                .then((cache) => {
-                  cache.put(request, responseToCache);
-                })
-                .catch(() => {
-                  // Silently fail if caching doesn't work
-                });
-            } else if (isApiRequest(request)) {
-              // Temporarily disable API caching to fix realtime issues
-              // Cache API responses in dynamic cache with TTL
-              // caches.open(DYNAMIC_CACHE)
-              //   .then((cache) => {
-              //     // Clone the response before modifying to avoid body consumption issues
-              //     const responseClone = responseToCache.clone();
-              //     
-              //     // Set expiration timestamp
-              //     const expirationTime = Date.now() + (5 * 60 * 1000); // 5 minutes
-              //     const headers = new Headers(responseClone.headers);
-              //     headers.set('sw-cache-timestamp', expirationTime.toString());
-              //     
-              //     // Create a new response with the timestamp header using the cloned body
-              //     const modifiedResponse = new Response(responseClone.body, {
-              //       status: responseClone.status,
-              //       statusText: responseClone.statusText,
-              //       headers: headers
-              //     });
-              //     
-              //     cache.put(request, modifiedResponse);
-              //   });
-            }
-
-            return response;
-          })
-          .catch((error) => {
-            // Return offline page for navigation requests
-            if (request.mode === 'navigate') {
-              return caches.match('/offline.html') || new Response(
-                '<html><body><h1>Offline</h1><p>Please check your internet connection.</p></body></html>',
-                { headers: { 'Content-Type': 'text/html' } }
-              );
-            }
-            
-            // For non-navigation requests, return a basic error response
-            // This prevents unhandled promise rejections
-            return new Response('Network error', { 
-              status: 503, 
-              statusText: 'Service Unavailable' 
-            });
-          });
+        return response;
       })
-      .catch(() => {
-        // If cache match fails, just try to fetch normally
-        return fetch(request).catch(() => {
-          return new Response('Network error', { 
-            status: 503, 
-            statusText: 'Service Unavailable' 
-          });
-        });
-      })
+      .catch(() => caches.match(request)),
   );
 });
 
-// Background sync for offline actions
+function shouldBypassCache(request, url) {
+  if (request.mode === 'navigate') {
+    return true;
+  }
+
+  if (url.pathname === '/' || url.pathname.startsWith('/build/')) {
+    return true;
+  }
+
+  if (request.headers.get('X-Inertia') === 'true') {
+    return true;
+  }
+
+  return false;
+}
+
 self.addEventListener('sync', (event) => {
-  
   if (event.tag === 'background-sync') {
     event.waitUntil(doBackgroundSync());
   }
 });
 
-// Push notifications
 self.addEventListener('push', (event) => {
-  
   const options = {
     body: event.data ? event.data.text() : 'New notification from ZapTask',
     icon: '/zap_icon.png',
@@ -174,52 +100,46 @@ self.addEventListener('push', (event) => {
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
-      primaryKey: 1
+      primaryKey: 1,
     },
     actions: [
       {
         action: 'explore',
         title: 'View',
-        icon: '/zap_icon.png'
+        icon: '/zap_icon.png',
       },
       {
         action: 'close',
         title: 'Close',
-        icon: '/zap_icon.png'
-      }
-    ]
+        icon: '/zap_icon.png',
+      },
+    ],
   };
 
   event.waitUntil(
-    self.registration.showNotification('ZapTask', options)
+    self.registration.showNotification('ZapTask', options),
   );
 });
 
-// Notification click handler
 self.addEventListener('notificationclick', (event) => {
-  
   event.notification.close();
 
   if (event.action === 'explore') {
     event.waitUntil(
-      clients.openWindow('/dashboard')
+      clients.openWindow('/dashboard'),
     );
   }
 });
 
-// Helper functions
 function isStaticFile(request) {
   const url = new URL(request.url);
-  return url.pathname.endsWith('.html') ||
-         url.pathname.endsWith('.css') ||
-         url.pathname.endsWith('.js') ||
-         url.pathname.endsWith('.png') ||
-         url.pathname.endsWith('.jpg') ||
-         url.pathname.endsWith('.jpeg') ||
-         url.pathname.endsWith('.gif') ||
-         url.pathname.endsWith('.svg') ||
-         url.pathname.endsWith('.ico') ||
-         url.pathname === '/';
+
+  return url.pathname.endsWith('.png')
+    || url.pathname.endsWith('.jpg')
+    || url.pathname.endsWith('.jpeg')
+    || url.pathname.endsWith('.gif')
+    || url.pathname.endsWith('.svg')
+    || url.pathname.endsWith('.ico');
 }
 
 function isApiRequest(request) {
@@ -229,60 +149,55 @@ function isApiRequest(request) {
 
 async function doBackgroundSync() {
   try {
-    // Get pending offline actions from IndexedDB
     const pendingActions = await getPendingActions();
-    
+
     for (const action of pendingActions) {
       try {
         await syncAction(action);
         await removePendingAction(action.id);
       } catch (error) {
+        // Ignore individual sync failures.
       }
     }
-    
   } catch (error) {
+    // Ignore background sync failures.
   }
 }
 
 async function getPendingActions() {
-  // This would integrate with your IndexedDB implementation
-  // For now, return empty array
   return [];
 }
 
 async function syncAction(action) {
-  // Sync individual action to server
   const response = await fetch(action.url, {
     method: action.method,
     headers: action.headers,
-    body: action.body
+    body: action.body,
   });
-  
+
   if (!response.ok) {
     throw new Error(`Sync failed: ${response.status}`);
   }
-  
+
   return response;
 }
 
 async function removePendingAction(actionId) {
-  // Remove action from IndexedDB after successful sync
+  // Remove action from IndexedDB after successful sync.
 }
 
-// Cache management
 async function cleanExpiredCache() {
   const cache = await caches.open(DYNAMIC_CACHE);
   const requests = await cache.keys();
-  
+
   for (const request of requests) {
     const response = await cache.match(request);
-    const timestamp = response.headers.get('sw-cache-timestamp');
-    
-    if (timestamp && Date.now() > parseInt(timestamp)) {
+    const timestamp = response?.headers.get('sw-cache-timestamp');
+
+    if (timestamp && Date.now() > parseInt(timestamp, 10)) {
       await cache.delete(request);
     }
   }
 }
 
-// Clean expired cache every 10 minutes
 setInterval(cleanExpiredCache, 10 * 60 * 1000);
