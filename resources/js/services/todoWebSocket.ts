@@ -34,7 +34,7 @@ export class TodoWebSocketService {
         this.pusher.connection.bind('disconnected', () => {
         });
 
-        this.pusher.connection.bind('error', (error: any) => {
+        this.pusher.connection.bind('error', () => {
         });
     }
 

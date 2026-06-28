@@ -275,7 +275,7 @@ class CompanyController extends Controller
             'industry' => Industries::resolve($request->industry),
         ]);
 
-        if ($company->subdomain) {
+        if ($company->subdomain && $company->homepage_background_mode !== 'custom') {
             $this->unsplashService->ensureCompanyHomepageBackground($company->fresh(), forceRefresh: true);
         }
 
@@ -337,7 +337,76 @@ class CompanyController extends Controller
 
         $this->unsplashService->ensureCompanyHomepageBackground($company, forceRefresh: true);
 
-        return back()->with('success', 'Homepage background refreshed from your industry theme.');
+        return back()->with('success', 'Homepage background set from your industry theme.');
+    }
+
+    /**
+     * Search Unsplash for homepage header images.
+     */
+    public function searchHomepageImages(Request $request): JsonResponse
+    {
+        $request->validate([
+            'query' => 'nullable|string|max:100',
+            'page' => 'nullable|integer|min:1|max:20',
+        ]);
+
+        $user = Auth::user();
+        $company = $user->company;
+
+        if (! $company || $user->company_id !== $company->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $query = trim((string) $request->input('query', ''));
+
+        if ($query === '') {
+            $query = $this->unsplashService->backgroundQueryFor($company->industry);
+        }
+
+        $results = $this->unsplashService->searchPhotos(
+            $query,
+            (int) $request->input('page', 1),
+            12,
+        );
+
+        return response()->json([
+            'success' => true,
+            'query' => $query,
+            'results' => $results,
+        ]);
+    }
+
+    /**
+     * Select a custom Unsplash photo for the homepage header.
+     */
+    public function selectHomepageImage(Request $request)
+    {
+        $request->validate([
+            'photo_id' => 'required|string|max:64',
+        ]);
+
+        $user = Auth::user();
+        $company = $user->company;
+
+        if (! $company) {
+            return back()->withErrors(['homepage' => 'No company found for this user.']);
+        }
+
+        if ($user->company_id !== $company->id) {
+            return back()->withErrors(['homepage' => 'You are not authorized to update this company.']);
+        }
+
+        if (! $company->subdomain) {
+            return back()->withErrors(['homepage' => 'Create a company subdomain before customizing your homepage.']);
+        }
+
+        try {
+            $this->unsplashService->applyPhotoToCompany($company, $request->photo_id);
+        } catch (\Throwable $e) {
+            return back()->withErrors(['homepage' => $e->getMessage()]);
+        }
+
+        return back()->with('success', 'Homepage header image updated.');
     }
 
     /**

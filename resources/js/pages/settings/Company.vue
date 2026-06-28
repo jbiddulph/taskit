@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useForm, usePage, router, Link } from '@inertiajs/vue3';
 import { useTodoTypes } from '@/composables/useTodoTypes';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,8 @@ interface Company {
         profile_url?: string;
         photo_url?: string;
     } | null;
+    homepage_background_mode?: 'industry' | 'custom';
+    homepage_background_unsplash_id?: string | null;
 }
 
 interface Props {
@@ -86,6 +88,17 @@ const homepageForm = useForm({
 });
 
 const refreshingBackground = ref(false);
+const searchingImages = ref(false);
+const selectingImageId = ref<string | null>(null);
+const imageSearchQuery = ref('');
+const imageSearchResults = ref<Array<{
+    id: string;
+    thumb_url: string;
+    regular_url: string;
+    description?: string | null;
+    attribution?: { name?: string; profile_url?: string; photo_url?: string };
+}>>([]);
+const imageSearchError = ref('');
 
 // Subdomain validation state
 const subdomainValidation = ref({
@@ -148,7 +161,7 @@ const uploadLogo = async () => {
             }
         });
         
-    } catch (error) {
+    } catch {
         uploadError.value = 'Failed to upload logo to storage. Please try again.';
     } finally {
         uploading.value = false;
@@ -201,7 +214,7 @@ const checkApiPermissions = async () => {
         const response = await fetch('/settings/company/api-permissions');
         const data = await response.json();
         apiPermissions.value = data;
-    } catch (error) {
+    } catch {
         apiPermissions.value = { error: 'Failed to check API permissions' };
     } finally {
         checkingPermissions.value = false;
@@ -239,7 +252,7 @@ const checkSubdomainAvailability = async (subdomain: string) => {
             subdomain: data.subdomain || subdomain,
             url: data.url || ''
         };
-    } catch (error) {
+    } catch {
         subdomainValidation.value = {
             checking: false,
             available: null,
@@ -278,7 +291,7 @@ const updateCompanyName = () => {
         onSuccess: () => {
             router.reload();
         },
-        onError: (errors) => {
+        onError: () => {
         }
     });
 };
@@ -288,7 +301,7 @@ const updateCompanyIndustry = () => {
         onSuccess: () => {
             router.reload();
         },
-        onError: (errors) => {
+        onError: () => {
         }
     });
 };
@@ -314,6 +327,66 @@ const refreshHomepageBackground = () => {
     });
 };
 
+const searchHomepageImages = async () => {
+    searchingImages.value = true;
+    imageSearchError.value = '';
+
+    try {
+        const params = new URLSearchParams();
+        if (imageSearchQuery.value.trim()) {
+            params.set('query', imageSearchQuery.value.trim());
+        }
+
+        const response = await fetch(`/settings/company/homepage/search-images?${params.toString()}`, {
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            credentials: 'same-origin',
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            imageSearchError.value = data.message || 'Unable to search images.';
+            imageSearchResults.value = [];
+            return;
+        }
+
+        imageSearchResults.value = data.results || [];
+        if (data.query && !imageSearchQuery.value.trim()) {
+            imageSearchQuery.value = data.query;
+        }
+    } catch {
+        imageSearchError.value = 'Unable to search images. Check your Unsplash API key.';
+        imageSearchResults.value = [];
+    } finally {
+        searchingImages.value = false;
+    }
+};
+
+const selectHomepageImage = (photoId: string) => {
+    selectingImageId.value = photoId;
+
+    router.post('/settings/company/homepage/select-image', { photo_id: photoId }, {
+        onFinish: () => {
+            selectingImageId.value = null;
+        },
+        onSuccess: () => {
+            router.reload();
+        },
+        onError: () => {
+            imageSearchError.value = 'Unable to save the selected image.';
+        },
+    });
+};
+
+onMounted(() => {
+    if (props.company?.subdomain) {
+        searchHomepageImages();
+    }
+});
+
 const industryLabel = computed(() => {
     const match = industries.value.find((item) => item.value === props.company?.industry);
     return match?.label ?? 'General / Other';
@@ -327,7 +400,7 @@ const togglePublicDashboard = () => {
         onSuccess: () => {
             router.reload();
         },
-        onError: (errors) => {
+        onError: () => {
         }
     });
 };
@@ -342,7 +415,14 @@ const hasCustomLogo = computed(() => !!currentLogoUrl.value);
 
 // Subdomain status
 const hasSubdomain = computed(() => !!props.company?.subdomain);
-const subdomainUrl = computed(() => props.company?.subdomain_url);
+const subdomainUrl = computed(() => {
+    const url = props.company?.subdomain_url;
+    if (!url) return '';
+
+    return url.replace(/^http:\/\//i, 'https://');
+});
+
+const homepageBackgroundMode = computed(() => props.company?.homepage_background_mode || 'industry');
 </script>
 
 <template>
@@ -748,23 +828,106 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
                         Subdomain Homepage
                     </CardTitle>
                     <CardDescription>
-                        Customise your company page at {{ subdomainUrl }}. The hero background is chosen automatically from your industry ({{ industryLabel }}).
+                        Customise your company page at {{ subdomainUrl }} — header image, tagline, and about text.
                     </CardDescription>
                 </CardHeader>
-                <CardContent class="space-y-4">
+                <CardContent class="space-y-6">
                     <div
                         v-if="company?.homepage_background_url"
-                        class="relative h-40 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700"
+                        class="relative h-44 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700"
                     >
                         <img
                             :src="company.homepage_background_url"
                             alt="Homepage background preview"
                             class="w-full h-full object-cover"
                         />
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                        <div class="absolute bottom-3 left-3 right-3 text-white text-sm font-medium">
-                            Background preview
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                        <div class="absolute bottom-3 left-3 right-3 text-white">
+                            <p class="text-sm font-medium">Current header image</p>
+                            <p class="text-xs text-white/80">
+                                {{ homepageBackgroundMode === 'custom' ? 'Custom image selected' : `Industry theme (${industryLabel})` }}
+                            </p>
                         </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between gap-3">
+                            <Label class="text-sm font-medium">Header image</Label>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                Powered by Unsplash
+                            </span>
+                        </div>
+
+                        <div class="flex flex-wrap gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                :disabled="refreshingBackground"
+                                @click="refreshHomepageBackground"
+                            >
+                                {{ refreshingBackground ? 'Loading...' : `Use ${industryLabel} image` }}
+                            </Button>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <Input
+                                v-model="imageSearchQuery"
+                                type="text"
+                                placeholder="Search Unsplash e.g. office, construction site, restaurant..."
+                                class="flex-1"
+                                @keydown.enter.prevent="searchHomepageImages"
+                            />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                :disabled="searchingImages"
+                                @click="searchHomepageImages"
+                            >
+                                {{ searchingImages ? 'Searching...' : 'Search' }}
+                            </Button>
+                        </div>
+
+                        <p v-if="imageSearchError" class="text-sm text-red-600 dark:text-red-400">
+                            {{ imageSearchError }}
+                        </p>
+
+                        <div
+                            v-if="imageSearchResults.length > 0"
+                            class="grid grid-cols-2 md:grid-cols-3 gap-3"
+                        >
+                            <button
+                                v-for="photo in imageSearchResults"
+                                :key="photo.id"
+                                type="button"
+                                class="group relative overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                :disabled="selectingImageId === photo.id"
+                                @click="selectHomepageImage(photo.id)"
+                            >
+                                <img
+                                    :src="photo.thumb_url"
+                                    :alt="photo.description || 'Unsplash photo'"
+                                    class="h-28 w-full object-cover transition group-hover:scale-105"
+                                />
+                                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition" />
+                                <div
+                                    v-if="company?.homepage_background_unsplash_id === photo.id"
+                                    class="absolute top-2 right-2 rounded-full bg-green-600 text-white text-xs px-2 py-0.5"
+                                >
+                                    Selected
+                                </div>
+                                <div
+                                    v-if="selectingImageId === photo.id"
+                                    class="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-sm"
+                                >
+                                    Saving...
+                                </div>
+                            </button>
+                        </div>
+
+                        <p v-else-if="!searchingImages" class="text-xs text-gray-500 dark:text-gray-400">
+                            Search for a header image, or use the industry button above for a suggested photo for {{ industryLabel }}.
+                        </p>
                     </div>
 
                     <div>
@@ -776,9 +939,6 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
                             placeholder="e.g. Delivering exceptional service across the South West"
                             class="mt-1"
                         />
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            Shown under your company name on your subdomain homepage.
-                        </p>
                     </div>
 
                     <div>
@@ -800,15 +960,8 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
                         >
                             {{ homepageForm.processing ? 'Saving...' : 'Save homepage' }}
                         </Button>
-                        <Button
-                            variant="outline"
-                            @click="refreshHomepageBackground"
-                            :disabled="refreshingBackground"
-                        >
-                            {{ refreshingBackground ? 'Refreshing...' : 'Refresh background image' }}
-                        </Button>
                         <Button as-child variant="outline">
-                            <a :href="subdomainUrl" target="_blank">
+                            <a :href="subdomainUrl" target="_blank" rel="noopener noreferrer">
                                 Preview homepage
                                 <ExternalLink class="w-3 h-3 ml-2" />
                             </a>

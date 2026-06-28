@@ -185,8 +185,7 @@ const loadActivities = async () => {
       hasMore.value = data.meta.has_more;
     } else {
     }
-  } catch (error) {
-  } finally {
+  } catch {} finally {
     loading.value = false;
   }
 };
@@ -205,8 +204,7 @@ const loadActivityTypes = async () => {
       const data = await response.json();
       activityTypes.value = data.data;
     }
-  } catch (error) {
-  }
+  } catch {}
 };
 
 const loadMoreActivities = async () => {
@@ -346,8 +344,5 @@ watch(() => props.visible, async (newVisible) => {
   }
 });
 
-// Watch for real-time updates - fallback mechanism
-watch(() => activities.value.length, (newLength, oldLength) => {
-});
 </script>
 

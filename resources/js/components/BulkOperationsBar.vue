@@ -187,7 +187,7 @@ const bulkChangeStatus = async () => {
     await todoApi.bulkUpdateStatus(selectedIds, selectedStatus.value);
     selectedStatus.value = '';
     emit('refresh');
-  } catch (error) {
+  } catch {
   }
 };
 
@@ -199,7 +199,7 @@ const bulkChangePriority = async () => {
     await todoApi.bulkUpdatePriority(selectedIds, selectedPriority.value);
     selectedPriority.value = '';
     emit('refresh');
-  } catch (error) {
+  } catch {
   }
 };
 
@@ -210,7 +210,7 @@ const bulkChangeAssignee = async () => {
     await todoApi.bulkUpdateAssignee(selectedIds, assignee);
     selectedAssignee.value = '';
     emit('refresh');
-  } catch (error) {
+  } catch {
   }
 };
 
@@ -222,7 +222,7 @@ const bulkChangeType = async () => {
     await todoApi.bulkUpdateType(selectedIds, selectedType.value);
     selectedType.value = '';
     emit('refresh');
-  } catch (error) {
+  } catch {
   }
 };
 
@@ -234,7 +234,7 @@ const bulkChangeDueDate = async () => {
     await todoApi.bulkUpdateDueDate(selectedIds, selectedDueDate.value);
     selectedDueDate.value = '';
     emit('refresh');
-  } catch (error) {
+  } catch {
   }
 };
 
@@ -247,7 +247,7 @@ const bulkChangeTags = async () => {
     await todoApi.bulkUpdateTags(selectedIds, tags);
     selectedTags.value = '';
     emit('refresh');
-  } catch (error) {
+  } catch {
   }
 };
 
@@ -262,7 +262,7 @@ const bulkDelete = async () => {
     const selectedIds = getSelectedIds();
     await todoApi.bulkDelete(selectedIds);
     emit('refresh');
-  } catch (error) {
+  } catch {
   }
 };
 </script>

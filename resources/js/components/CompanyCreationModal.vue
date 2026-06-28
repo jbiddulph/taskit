@@ -46,7 +46,7 @@ const createCompanyAndProceed = () => {
                 emit('close');
             }
         },
-        onError: (errors) => {
+        onError: () => {
         },
         onFinish: () => {
             creating.value = false;

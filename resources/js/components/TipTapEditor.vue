@@ -62,8 +62,7 @@ async function uploadAndInsert(e: Event) {
   try {
     const url = await uploadImageToTaskitBucket(file);
     (editor as any).chain().focus().setImage({ src: url }).run();
-  } catch (err) {
-  } finally {
+  } catch {} finally {
     if (fileInput.value) fileInput.value.value = '';
   }
 }

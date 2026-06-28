@@ -123,8 +123,7 @@ const loadMessages = async () => {
         }
       }
     }
-  } catch (error) {
-  } finally {
+  } catch {} finally {
     loading.value = false;
   }
 };

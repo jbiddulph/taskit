@@ -198,8 +198,7 @@ const loadNotifications = async () => {
     } else {
       notifications.value.push(...response.data);
     }
-  } catch (error) {
-  } finally {
+  } catch {} finally {
     loading.value = false;
   }
 };
@@ -208,8 +207,7 @@ const loadUnreadCount = async () => {
   try {
     const response = await notificationApi.getUnreadCount();
     unreadCount.value = response.count;
-  } catch (error) {
-  }
+  } catch {}
 };
 
 const toggleNotifications = () => {
@@ -228,8 +226,7 @@ const markAsRead = async (notificationId: number) => {
       notification.read_at = new Date().toISOString();
     }
     await loadUnreadCount();
-  } catch (error) {
-  }
+  } catch {}
 };
 
 const markAllAsRead = async () => {
@@ -240,8 +237,7 @@ const markAllAsRead = async () => {
       notification.read_at = new Date().toISOString();
     });
     unreadCount.value = 0;
-  } catch (error) {
-  }
+  } catch {}
 };
 
 const deleteNotification = async (notificationId: number) => {
@@ -249,8 +245,7 @@ const deleteNotification = async (notificationId: number) => {
     await notificationApi.deleteNotification(notificationId);
     notifications.value = notifications.value.filter(n => n.id !== notificationId);
     await loadUnreadCount();
-  } catch (error) {
-  }
+  } catch {}
 };
 
 const handleNotificationClick = async (notification: Notification) => {
@@ -305,8 +300,7 @@ const handleNotificationClick = async (notification: Notification) => {
       
       // Close notification dropdown
       showNotifications.value = false;
-    } catch (error) {
-    }
+    } catch {}
   }
 };
 

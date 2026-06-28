@@ -174,8 +174,7 @@ const handlePlanChange = (planType: string) => {
         const interval = isLifetime ? 'month' : billingInterval.value;
         
         changePlan(planType, interval);
-    } catch (error) {
-    }
+    } catch {}
 };
 
 const getYearlyPrice = (planType: string): string | null => {
@@ -281,20 +280,20 @@ const changePlan = async (planType: string, interval: 'month' | 'year' = 'month'
                 window.location.reload();
             }
         },
-        onError: (errors) => {
+        onError: () => {
             
             // Check if the error is "No company found"
-            if (errors.plan && errors.plan.includes('No company found')) {
+            if (errors.value.plan && errors.value.plan.includes('No company found')) {
                 pendingPlan.value = planType;
                 showCompanyModal.value = true;
                 return;
             }
             
             let errorMessage = 'An error occurred while changing your plan. Please try again.';
-            if (errors.plan) {
-                errorMessage = errors.plan;
-            } else if (errors.message) {
-                errorMessage = errors.message;
+            if (errors.value.plan) {
+                errorMessage = errors.value.plan;
+            } else if (errors.value.message) {
+                errorMessage = errors.value.message;
             }
             
             alert(errorMessage);
@@ -328,11 +327,10 @@ const testCSRF = async () => {
         });
         
         if (response.ok) {
-            const data = await response.json();
+            await response.json();
         } else {
         }
-    } catch (error) {
-    }
+    } catch {}
 };
 
 // Test if component is mounting properly
@@ -353,7 +351,7 @@ const cancelSubscription = async () => {
         onSuccess: () => {
             // Page will automatically reload with updated data
         },
-        onError: (errors) => {
+        onError: () => {
             alert('An error occurred while cancelling your subscription. Please try again.');
         },
         onFinish: () => {
@@ -368,7 +366,7 @@ const handleCompanyModalClose = () => {
     pendingPlan.value = '';
 };
 
-const handleCompanyCreated = (companyData: any) => {
+const handleCompanyCreated = () => {
     // The modal will handle the redirect to Stripe checkout
     showCompanyModal.value = false;
     pendingPlan.value = '';
@@ -385,7 +383,7 @@ const reactivateSubscription = async () => {
         onSuccess: () => {
             // Page will automatically reload with updated data
         },
-        onError: (errors) => {
+        onError: () => {
             alert('An error occurred while reactivating your subscription. Please try again.');
         },
         onFinish: () => {

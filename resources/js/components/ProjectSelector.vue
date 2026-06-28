@@ -222,7 +222,66 @@ const loadProjects = async () => {
     if (!currentProject.value && projects.value.length > 0) {
       selectProject(projects.value[0])
     }
-  } catch (error) {
+  } catch {
+  }
+}
+
+const selectProject = (project: Project) => {
+  currentProject.value = project
+  emit('update:modelValue', project)
+  showProjectDropdown.value = false
+}
+
+const createProject = async () => {
+  if (!newProject.value.name.trim()) return
+
+  isCreating.value = true
+
+  try {
+    const project = await todoApi.createProject({
+      name: newProject.value.name.trim(),
+      description: newProject.value.description.trim() || undefined,
+      key: newProject.value.key.trim() || undefined,
+      color: newProject.value.color
+    })
+
+    projects.value.push(project)
+    selectProject(project)
+
+    newProject.value = {
+      name: '',
+      description: '',
+      key: '',
+      color: '#3B82F6'
+    }
+    showCreateProject.value = false
+  } catch {
+  } finally {
+    isCreating.value = false
+  }
+}
+
+const handleClickOutside = (event: Event) => {
+  if (!(event.target as Element).closest('.project-selector')) {
+    showProjectDropdown.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+
+  if (unsubscribeFromProjects) {
+    unsubscribeFromProjects()
+  }
+})
+
+defineExpose({
+  loadProjects
+})
 </script>
 
 <style scoped>

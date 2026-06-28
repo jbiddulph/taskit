@@ -21,8 +21,7 @@ const copyToClipboard = async () => {
     setTimeout(() => {
       copied.value = false;
     }, 2000);
-  } catch (err) {
-  }
+  } catch {}
 };
 </script>
 

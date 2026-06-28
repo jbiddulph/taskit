@@ -533,7 +533,7 @@ const saveTitle = async () => {
     editingTitle.value = false;
     editingTitleText.value = '';
     
-  } catch (error) {
+  } catch {
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -570,7 +570,7 @@ const copyTodoId = async () => {
         message: `Todo ID "${todoUniqueId.value}" copied to clipboard`
       });
     }
-  } catch (error) {
+  } catch {
     
     // Fallback: try to select text for manual copy
     try {
@@ -585,7 +585,7 @@ const copyTodoId = async () => {
       setTimeout(() => {
         copyFeedback.value = '';
       }, 2000);
-    } catch (fallbackError) {
+    } catch {
       if ((window as any).$notify) {
         (window as any).$notify({
           type: 'error',

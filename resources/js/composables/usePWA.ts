@@ -55,8 +55,7 @@ export function usePWA() {
         }
       });
       
-    } catch (error) {
-    }
+    } catch {}
   };
 
   // Handle install prompt
@@ -82,8 +81,7 @@ export function usePWA() {
       
       installPrompt.value = null;
       isInstallable.value = false;
-    } catch (error) {
-    }
+    } catch {}
   };
 
   // Handle online/offline status

@@ -1338,8 +1338,7 @@ const handleOpenTodoById = async (e: any) => {
         window.dispatchEvent(new CustomEvent('highlightComment', { detail: { commentId: highlight } }));
       }
     }
-  } catch (err) {
-  }
+  } catch {}
 };
 
 const scopedSavedViews = computed(() => {
@@ -3081,9 +3080,6 @@ const loadTodos = async () => {
     
     // Check specific todosState
     const allTodos = response.data.todo.concat(response.data['in-progress']).concat(response.data['qa-testing']).concat(response.data.done);
-    const subtasks = allTodos.filter(t => t.parent_task_id !== null);
-    const parentTasks = allTodos.filter(t => t.parent_task_id === null);
-    
     
     // Attach subtasks to their parent tasks
     allTodos.forEach(todo => {
@@ -3104,9 +3100,6 @@ const loadTodos = async () => {
       } else {
       }
     });
-    
-    // Debug: Check if we have any todosState with subtasks attached
-    const todosWithSubtasks = allTodos.filter(t => t.subtasks && t.subtasks.length > 0);
     
     todosState.value = allTodos;
     

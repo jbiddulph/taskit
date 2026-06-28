@@ -8,27 +8,24 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ForceHttps
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next): Response
     {
-        // Force HTTPS for all URLs, but only in production
-        // Skip in local development
         if (app()->environment('local')) {
             return $next($request);
         }
-        
-        // Force HTTPS for all URLs, but only if we're not already on HTTPS
-        // and if the request is coming from a non-secure connection
-        if (config('app.force_https', true) && 
-            !$request->secure() && 
-            !$request->header('X-Forwarded-Proto') === 'https') {
-            return redirect()->secure($request->getRequestUri());
+
+        if (! config('app.force_https', true)) {
+            return $next($request);
         }
-        
+
+        $isSecure = $request->secure()
+            || $request->header('X-Forwarded-Proto') === 'https'
+            || $request->header('X-Forwarded-Ssl') === 'on';
+
+        if (! $isSecure) {
+            return redirect()->secure($request->getRequestUri(), 301);
+        }
+
         return $next($request);
     }
 }

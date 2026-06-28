@@ -33,9 +33,9 @@ const form = useForm({
 const submit = () => {
     form.post('/login', {
         onFinish: () => form.reset('password'),
-        onSuccess: (page) => {
+        onSuccess: () => {
         },
-        onError: (errors) => {
+        onError: () => {
         }
     });
 };

@@ -261,7 +261,6 @@ const handleDrop = (event: DragEvent) => {
   isDragOver.value = false;
   
   // Get the todo data from the dataTransfer
-  const todoId = event.dataTransfer?.getData('text/plain');
   const todoJson = event.dataTransfer?.getData('application/json');
   
   if (todoJson) {
@@ -272,8 +271,7 @@ const handleDrop = (event: DragEvent) => {
         emit('drop', todo, props.status);
       } else {
       }
-    } catch (error) {
-    }
+    } catch {}
   } else {
   }
 };

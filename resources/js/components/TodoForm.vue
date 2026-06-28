@@ -344,7 +344,7 @@ const loadUsers = async () => {
         users.value = [];
       }
     }
-  } catch (error) {
+  } catch {
     // Fallback to current user
     if (currentUser) {
       users.value = [{ id: currentUser.id, name: currentUser.name, email: currentUser.email }];
@@ -555,8 +555,7 @@ const handleSubmit = async () => {
     }
     
     emit('save', todoData);
-  } catch (error) {
-  }
+  } catch {}
 };
 
 // Template handlers

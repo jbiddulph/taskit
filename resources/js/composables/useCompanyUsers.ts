@@ -30,7 +30,7 @@ export function useCompanyUsers() {
       } else {
         error.value = 'Failed to load company users';
       }
-    } catch (err) {
+    } catch {
       error.value = 'Failed to load company users';
     } finally {
       loading.value = false;

@@ -134,7 +134,7 @@ onMounted(async () => {
   });
   
   // Listen for subscription downgrades to reload projects list
-  window.addEventListener('subscription-downgrade', async (e: any) => {
+  window.addEventListener('subscription-downgrade', async () => {
     await loadProjects();
   });
   
@@ -178,8 +178,7 @@ const loadProjects = async () => {
     }
     
 
-  } catch (error) {
-  } finally {
+  } catch {} finally {
     loading.value = false;
   }
 };
@@ -326,7 +325,7 @@ const deleteProject = async (project: Project, event: Event) => {
               message: `Project "${project.name}" and ${todoCount} todos have been deleted successfully.`
             });
           }
-        } catch (error) {
+        } catch {
           if ((window as any).$notify) {
             (window as any).$notify({
               type: 'error',
@@ -400,7 +399,7 @@ const deleteProject = async (project: Project, event: Event) => {
               message: `Project "${project.name}" has been deleted successfully.`
             });
           }
-        } catch (error) {
+        } catch {
           if ((window as any).$notify) {
             (window as any).$notify({
               type: 'error',
@@ -488,7 +487,7 @@ const handleDrop = async (event: DragEvent, dropIndex: number) => {
         message: 'Projects have been reordered successfully.'
       });
     }
-  } catch (error) {
+  } catch {
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',

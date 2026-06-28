@@ -105,7 +105,7 @@ async function cleanupOldLogoFiles(companyName: string, companyCode: string): Pr
       } else {
       }
     }
-  } catch (error) {
+  } catch {
     // Don't throw - cleanup failures shouldn't prevent new uploads
   }
 }

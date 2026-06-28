@@ -56,7 +56,7 @@ onMounted(() => {
       // Note: activityCallbacks is private, access via public methods if needed
     };
     (window as any).testActivitySubscription = () => {
-      const testCallback = (event: any) => {
+      const testCallback = () => {
       };
       const unsubscribe = realtimeService.onActivity(testCallback);
       

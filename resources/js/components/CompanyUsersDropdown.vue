@@ -41,8 +41,7 @@ const loadCompanyUsers = async () => {
       const data = await response.json();
       companyUsers.value = data.data || [];
     }
-  } catch (error) {
-  } finally {
+  } catch {} finally {
     loading.value = false;
   }
 };

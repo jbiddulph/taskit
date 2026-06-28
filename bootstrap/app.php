@@ -19,6 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        $middleware->web(prepend: [
+            \App\Http\Middleware\ForceHttps::class,
+        ]);
+
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,
@@ -50,6 +54,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'subdomain' => SubdomainMiddleware::class,
             'n8n.webhook' => \App\Http\Middleware\VerifyN8nWebhookSecret::class,
         ]);
+
+        $middleware->trustProxies(at: '*');
 
     })
     ->withExceptions(function (Exceptions $exceptions) {

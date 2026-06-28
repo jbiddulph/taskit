@@ -107,7 +107,7 @@ class RealtimeService {
           this.handleMessageUpdate(payload.new as Message);
         }
       )
-      .subscribe((status) => {
+      .subscribe(() => {
       });
 
     this.channels.set(channelName, channel);
@@ -412,7 +412,7 @@ class RealtimeService {
     // Only show notification if chat is not open with the sender
     if (!isChatOpen) {
       // Notify all notification callbacks
-      this.notificationCallbacks.forEach((callback, index) => {
+      this.notificationCallbacks.forEach((callback) => {
         callback({
           type: 'new_notification',
           data: notification
@@ -464,7 +464,7 @@ class RealtimeService {
   private handleNewProject(project: any) {
     
     // Notify all project callbacks
-    this.projectCallbacks.forEach((callback, index) => {
+    this.projectCallbacks.forEach((callback) => {
       callback({
         type: 'project_created',
         data: project
@@ -513,7 +513,7 @@ class RealtimeService {
   private handleNewTodo(todo: any) {
     
     // Notify all todo callbacks
-    this.todoCallbacks.forEach((callback, index) => {
+    this.todoCallbacks.forEach((callback) => {
       callback({
         type: 'todo_created',
         data: todo
@@ -527,7 +527,7 @@ class RealtimeService {
   private handleTodoUpdate(todo: any) {
     
     // Notify all todo callbacks
-    this.todoCallbacks.forEach((callback, index) => {
+    this.todoCallbacks.forEach((callback) => {
       callback({
         type: 'todo_updated',
         data: todo
@@ -541,7 +541,7 @@ class RealtimeService {
   private handleTodoDelete(todo: any) {
     
     // Notify all todo callbacks
-    this.todoCallbacks.forEach((callback, index) => {
+    this.todoCallbacks.forEach((callback) => {
       callback({
         type: 'todo_deleted',
         data: todo
@@ -649,7 +649,7 @@ class RealtimeService {
           callback(count);
         });
       }
-    } catch (error) {
+    } catch {
     }
   }
 
@@ -827,7 +827,7 @@ class RealtimeService {
           table: 'taskit_todos',
           filter: `company_id=eq.${this.currentCompanyId}`
         },
-        (payload) => {
+        () => {
         }
       )
       .on(
@@ -838,7 +838,7 @@ class RealtimeService {
           table: 'taskit_todos',
           filter: `company_id=eq.${this.currentCompanyId}`
         },
-        (payload) => {
+        () => {
         }
       )
       .on(
@@ -849,7 +849,7 @@ class RealtimeService {
           table: 'taskit_todos',
           filter: `company_id=eq.${this.currentCompanyId}`
         },
-        (payload) => {
+        () => {
         }
       )
       .subscribe((status) => {
@@ -879,7 +879,7 @@ class RealtimeService {
           table: 'taskit_todos',
           filter: `company_id=eq.${this.currentCompanyId}`
         },
-        (payload) => {
+        () => {
         }
       )
       .subscribe((status) => {

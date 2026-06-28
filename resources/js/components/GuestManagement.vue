@@ -295,7 +295,7 @@ const closeInviteModal = () => {
   };
 };
 
-const editGuest = (guest: GuestUser) => {
+const editGuest = () => {
   // TODO: Implement guest editing
 };
 

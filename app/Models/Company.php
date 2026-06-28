@@ -19,6 +19,8 @@ class Company extends Model
         'homepage_background_url',
         'homepage_background_attribution',
         'homepage_background_industry',
+        'homepage_background_mode',
+        'homepage_background_unsplash_id',
         'subscription_type',
         'scheduled_subscription_type',
         'stripe_customer_id',

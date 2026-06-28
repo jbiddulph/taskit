@@ -114,8 +114,7 @@ const updateProjectClient = async (projectId: number, event: Event) => {
             },
             body: JSON.stringify({ client_id: clientId }),
         });
-    } catch (e) {
-    }
+    } catch {}
 };
 </script>
 

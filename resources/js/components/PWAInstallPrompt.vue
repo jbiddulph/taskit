@@ -84,8 +84,7 @@ const installPWA = async () => {
     }
     
     emit('installed');
-  } catch (error) {
-  } finally {
+  } catch {} finally {
     isInstalling.value = false;
   }
 };
