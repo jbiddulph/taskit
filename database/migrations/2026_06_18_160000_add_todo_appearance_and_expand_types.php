@@ -12,6 +12,16 @@ return new class extends Migration
         $driver = Schema::getConnection()->getDriverName();
 
         if ($driver === 'pgsql') {
+            DB::statement("
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM pg_constraint WHERE conname = 'taskit_todos_type_check'
+                    ) THEN
+                        ALTER TABLE taskit_todos DROP CONSTRAINT taskit_todos_type_check;
+                    END IF;
+                END $$;
+            ");
             DB::statement('ALTER TABLE taskit_todos ALTER COLUMN type TYPE VARCHAR(50) USING type::text');
         } elseif ($driver === 'mysql') {
             DB::statement('ALTER TABLE taskit_todos MODIFY type VARCHAR(50) NULL');

@@ -1,9 +1,9 @@
 <template>
-  <div class="space-y-2">
+  <div ref="rootEl" class="space-y-2">
     <div class="relative">
       <button
         type="button"
-        @click="toggleDropdown"
+        @click.stop="toggleDropdown"
         class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-left flex items-center justify-between"
       >
         <div class="flex items-center gap-2 min-w-0">
@@ -16,11 +16,12 @@
       <div
         v-if="isOpen"
         class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-56 overflow-y-auto"
+        @click.stop
       >
         <div class="py-1">
           <button
             type="button"
-            @click="selectType('')"
+            @click.stop="selectType('')"
             class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
           >
             <span class="text-gray-400">{{ t('todos.select_type') }}</span>
@@ -29,7 +30,7 @@
             v-for="type in typeOptions"
             :key="type.value"
             type="button"
-            @click="selectType(type.value)"
+            @click.stop="selectType(type.value)"
             class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
           >
             <Icon :name="type.icon" class="w-4 h-4" />
@@ -75,6 +76,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: string];
 }>();
 
+const rootEl = ref<HTMLElement | null>(null);
 const isOpen = ref(false);
 const presetType = ref('');
 const customOtherType = ref('');
@@ -106,6 +108,11 @@ const displayIcon = computed(() => {
 
 const syncFromModelValue = (value?: string) => {
   if (!value) {
+    // User may have just picked Other — keep the text box open until they type.
+    if (presetType.value === 'Other') {
+      return;
+    }
+
     presetType.value = '';
     customOtherType.value = '';
     return;
@@ -148,7 +155,6 @@ const selectType = async (type: string) => {
   presetType.value = type;
 
   if (type === 'Other') {
-    emit('update:modelValue', customOtherType.value.trim());
     await nextTick();
     otherInput.value?.focus();
     return;
@@ -160,7 +166,7 @@ const selectType = async (type: string) => {
 
 const handleClickOutside = (event: Event) => {
   const target = event.target as HTMLElement;
-  if (!target.closest('.relative')) {
+  if (!rootEl.value?.contains(target)) {
     isOpen.value = false;
   }
 };
