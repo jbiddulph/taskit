@@ -265,7 +265,7 @@ onMounted(() => {
                                 </a>
                             </Button>
                             <Button as-child variant="outline" size="lg" class="border-white/30 text-white hover:bg-white/10">
-                                <a href="https://zaptask.co.uk">Visit ZapTask</a>
+                                <a href="https://www.zaptask.co.uk">Visit ZapTask</a>
                             </Button>
                         </div>
                     </div>

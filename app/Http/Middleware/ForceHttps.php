@@ -26,6 +26,12 @@ class ForceHttps
             return redirect()->secure($request->getRequestUri(), 301);
         }
 
-        return $next($request);
+        $response = $next($request);
+
+        if ($response instanceof Response && ! $response->headers->has('Strict-Transport-Security')) {
+            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+        }
+
+        return $response;
     }
 }

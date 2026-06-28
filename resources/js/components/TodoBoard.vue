@@ -547,6 +547,7 @@
         :project-id="currentProject?.id ?? null"
         :todos="todosState"
         :is-read-only="props.isReadOnly"
+        :disable-drag="disableDrag"
         :project-groups="projectGroups"
         :current-group-id="currentGroup?.id ?? null"
         :current-user-name="currentUserName"
@@ -584,6 +585,7 @@
         :is-select-mode="props.isSelectMode"
         :selected-items="selectedItems"
         :is-read-only="props.isReadOnly"
+        :disable-drag="disableDrag"
         :project-groups="projectGroups"
         :current-group-id="currentGroup?.id ?? null"
         @add="handleShowForm"
@@ -608,6 +610,7 @@
         :is-select-mode="props.isSelectMode"
         :selected-items="selectedItems"
         :is-read-only="props.isReadOnly"
+        :disable-drag="disableDrag"
         :project-groups="projectGroups"
         :current-group-id="currentGroup?.id ?? null"
         @edit="editTodo"
@@ -631,6 +634,7 @@
         :is-select-mode="props.isSelectMode"
         :selected-items="selectedItems"
         :is-read-only="props.isReadOnly"
+        :disable-drag="disableDrag"
         :project-groups="projectGroups"
         :current-group-id="currentGroup?.id ?? null"
         @edit="editTodo"
@@ -654,6 +658,7 @@
         :is-select-mode="props.isSelectMode"
         :selected-items="selectedItems"
         :is-read-only="props.isReadOnly"
+        :disable-drag="disableDrag"
         :project-groups="projectGroups"
         :current-group-id="currentGroup?.id ?? null"
         @edit="editTodo"
@@ -1051,6 +1056,10 @@ import { useI18n } from 'vue-i18n';
 import { usePage } from '@inertiajs/vue3';
 const { t } = useI18n();
 const page = usePage();
+
+const disableDrag = computed(
+  () => props.isReadOnly || Boolean((page.props as { isSubdomain?: boolean }).isSubdomain),
+);
 
 type QuickFilter = '' | 'overdue' | 'assigned_to_me' | 'has_location';
 
@@ -1819,6 +1828,9 @@ const deleteTodo = async (id: number | string) => {
 };
 
 const handleDrop = async (todo: Todo, newStatus: string) => {
+  if (disableDrag.value) {
+    return;
+  }
   
   // Validate that the todo belongs to the current project
   if (!currentProject.value) {
@@ -1892,6 +1904,9 @@ const handleDrop = async (todo: Todo, newStatus: string) => {
 };
 
 const handleReorder = async (draggedTodo: Todo, targetTodo: Todo, position: 'before' | 'after') => {
+  if (disableDrag.value) {
+    return;
+  }
   
   // Validate that both todosState belong to the current project
   if (!currentProject.value) {

@@ -151,6 +151,7 @@ interface Props {
   isSelectMode?: boolean;
   selectedItems?: Set<number>;
   isReadOnly?: boolean;
+  disableDrag?: boolean;
   projectGroups?: ProjectGroup[];
   currentGroupId?: number | null;
 }
@@ -159,6 +160,7 @@ const props = withDefaults(defineProps<Props>(), {
   showAddButton: false,
   isSelectMode: false,
   selectedItems: () => new Set(),
+  disableDrag: false,
 });
 
 // Count subtasks in this column
@@ -194,12 +196,20 @@ const touchStartIndex = ref<number | null>(null);
 
 // Touch drag and drop composable
 
-// Check if a todo can be dragged (belongs to current project)
+// Check if a todo can be dragged (belongs to current project and drag is allowed)
 const canDragTodo = (todo: Todo): boolean => {
+  if (props.disableDrag || props.isReadOnly) {
+    return false;
+  }
+
   return !props.currentProjectId || todo.project_id === props.currentProjectId;
 };
 
 const handleDragStart = (event: DragEvent, todo: Todo) => {
+  if (props.disableDrag || props.isReadOnly) {
+    event.preventDefault();
+    return;
+  }
   
   // Validate that the todo belongs to the current project
   if (props.currentProjectId && todo.project_id !== props.currentProjectId) {
@@ -236,6 +246,10 @@ const handleDragEnd = () => {
 };
 
 const handleDragOver = (event: DragEvent) => {
+  if (props.disableDrag || props.isReadOnly) {
+    return;
+  }
+
   event.preventDefault();
   event.stopPropagation();
   if (event.dataTransfer) {
@@ -256,6 +270,10 @@ const handleDragLeave = (event: DragEvent) => {
 };
 
 const handleDrop = (event: DragEvent) => {
+  if (props.disableDrag || props.isReadOnly) {
+    return;
+  }
+
   event.preventDefault();
   event.stopPropagation();
   isDragOver.value = false;
@@ -278,6 +296,10 @@ const handleDrop = (event: DragEvent) => {
 
 // Todo-level drag handlers for reordering within column
 const handleTodoDragOver = (event: DragEvent, index: number) => {
+  if (props.disableDrag || props.isReadOnly) {
+    return;
+  }
+
   if (!isDraggingWithinColumn.value || !draggedTodo.value) {
     return; // Only handle within-column reordering
   }
@@ -336,6 +358,10 @@ const handleTodoDragLeave = (event: DragEvent) => {
 };
 
 const handleTodoDrop = (event: DragEvent, index: number) => {
+  if (props.disableDrag || props.isReadOnly) {
+    return;
+  }
+
   if (!draggedTodo.value || draggedTodo.value.status !== props.status) {
     return;
   }
@@ -368,6 +394,10 @@ const handleGlobalDragEnd = () => {
 
 // Touch event handlers for mobile drag and drop
 const handleTouchStart = (event: TouchEvent, todo: Todo, element: HTMLElement) => {
+  if (props.disableDrag || props.isReadOnly) {
+    return;
+  }
+
   if (!canDragTodo(todo) || event.touches.length !== 1) return;
   
   const touch = event.touches[0];
