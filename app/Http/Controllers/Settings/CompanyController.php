@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Services\CloudflareService;
+use App\Support\Industries;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -242,6 +243,33 @@ class CompanyController extends Controller
 
             return back()->withErrors(['name' => 'Failed to update company name. Please try again.']);
         }
+    }
+
+    /**
+     * Update the company industry (controls task type options).
+     */
+    public function updateIndustry(Request $request)
+    {
+        $request->validate([
+            'industry' => 'required|string|in:'.implode(',', array_keys(Industries::list())),
+        ]);
+
+        $user = Auth::user();
+        $company = $user->company;
+
+        if (! $company) {
+            return back()->withErrors(['industry' => 'No company found for this user.']);
+        }
+
+        if ($user->company_id !== $company->id) {
+            return back()->withErrors(['industry' => 'You are not authorized to update this company.']);
+        }
+
+        $company->update([
+            'industry' => Industries::resolve($request->industry),
+        ]);
+
+        return back()->with('success', 'Industry updated. Task types will reflect your business type.');
     }
 
     /**

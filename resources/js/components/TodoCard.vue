@@ -314,7 +314,8 @@
 <script setup lang="ts">
 import { computed, ref, nextTick, onMounted, onUnmounted } from 'vue';
 import Icon from '@/components/Icon.vue';
-import { getTodoDisplayIcon } from '@/constants/todoTypes';
+import { getTodoDisplayIcon as resolveTodoDisplayIcon } from '@/constants/todoTypes';
+import { useTodoTypes } from '@/composables/useTodoTypes';
 import { todoApi } from '@/services/todoApi';
 import { useI18n } from 'vue-i18n';
 import type { ProjectGroup } from '@/services/projectGroupApi';
@@ -332,6 +333,9 @@ interface Props {
 
 const props = defineProps<Props>();
 const { t } = useI18n();
+const { typeIconMap } = useTodoTypes();
+const getTodoDisplayIcon = (todo: Todo) => resolveTodoDisplayIcon(todo, typeIconMap.value);
+
 const emit = defineEmits<{
   edit: [todo: Todo];
   delete: [id: string];

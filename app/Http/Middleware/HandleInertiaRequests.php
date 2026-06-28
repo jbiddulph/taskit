@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\Industries;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -51,13 +52,20 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
+        $user = $request->user();
+        $companyIndustry = $user?->company?->industry ?? Industries::default();
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
-                'user' => $request->user() ? $request->user()->load('company') : null,
+                'user' => $user ? $user->load('company') : null,
             ],
+            'companyIndustry' => $companyIndustry,
+            'todoTypeOptions' => Industries::typeOptionsFor($companyIndustry),
+            'todoTypeIcons' => Industries::typeIconMap(),
+            'industries' => Industries::choices(),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

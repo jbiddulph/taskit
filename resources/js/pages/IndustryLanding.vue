@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { register } from '@/routes';
 import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import PublicNavigation from '@/components/PublicNavigation.vue';
@@ -40,6 +39,8 @@ const jsonLd = computed(() => ({
 const otherIndustries = computed(() =>
     INDUSTRY_LANDING_PAGES.filter((industry) => industry.slug !== props.slug).slice(0, 8),
 );
+
+const registerUrl = computed(() => `/register?industry=${encodeURIComponent(props.slug)}`);
 </script>
 
 <template>
@@ -87,7 +88,7 @@ const otherIndustries = computed(() =>
                 </p>
                 <div class="flex flex-wrap justify-center gap-3">
                     <Link
-                        :href="register()"
+                        :href="registerUrl"
                         class="inline-flex items-center rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700"
                     >
                         Start free — no card needed
@@ -174,7 +175,7 @@ const otherIndustries = computed(() =>
                         {{ page.ctaSubheadline }}
                     </p>
                     <Link
-                        :href="register()"
+                        :href="registerUrl"
                         class="inline-flex items-center rounded-lg bg-white px-6 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-50"
                     >
                         Create your free account

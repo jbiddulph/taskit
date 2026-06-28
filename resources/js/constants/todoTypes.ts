@@ -1,37 +1,9 @@
-export type TodoType =
-    | 'Bug'
-    | 'Feature'
-    | 'Task'
-    | 'Story'
-    | 'Epic'
-    | 'Property'
-    | 'Lead'
-    | 'Viewing'
-    | 'Offer'
-    | 'Maintenance'
-    | 'Compliance'
-    | 'Other';
-
 export interface TodoTypeOption {
-    value: TodoType;
+    value: string;
     icon: string;
-    labelKey: string;
+    label?: string;
+    labelKey?: string;
 }
-
-export const TODO_TYPE_OPTIONS: TodoTypeOption[] = [
-    { value: 'Bug', icon: 'Bug', labelKey: 'todos.type_bug' },
-    { value: 'Feature', icon: 'Zap', labelKey: 'todos.type_feature' },
-    { value: 'Task', icon: 'CheckSquare', labelKey: 'todos.type_task' },
-    { value: 'Story', icon: 'BookOpen', labelKey: 'todos.type_story' },
-    { value: 'Epic', icon: 'Layers', labelKey: 'todos.type_epic' },
-    { value: 'Property', icon: 'Home', labelKey: 'todos.type_property' },
-    { value: 'Lead', icon: 'UserPlus', labelKey: 'todos.type_lead' },
-    { value: 'Viewing', icon: 'Eye', labelKey: 'todos.type_viewing' },
-    { value: 'Offer', icon: 'HandCoins', labelKey: 'todos.type_offer' },
-    { value: 'Maintenance', icon: 'Wrench', labelKey: 'todos.type_maintenance' },
-    { value: 'Compliance', icon: 'ShieldCheck', labelKey: 'todos.type_compliance' },
-    { value: 'Other', icon: 'CircleHelp', labelKey: 'todos.type_other' },
-];
 
 export const TODO_CARD_ICON_OPTIONS = [
     'CheckSquare',
@@ -67,25 +39,63 @@ export const TODO_CARD_ICON_OPTIONS = [
     'TreePine',
     'Briefcase',
     'ClipboardCheck',
+    'Package',
+    'HardHat',
+    'Truck',
+    'Pill',
+    'GraduationCap',
+    'ChefHat',
+    'ConciergeBell',
+    'LayoutGrid',
+    'Megaphone',
+    'Palette',
+    'BarChart3',
+    'Calculator',
+    'Search',
+    'CheckCircle',
+    'Heart',
+    'HeartHandshake',
+    'Factory',
+    'ShoppingCart',
+    'FolderKanban',
+    'PenTool',
 ] as const;
 
 export type TodoCardIcon = (typeof TODO_CARD_ICON_OPTIONS)[number];
 
-const TYPE_ICON_MAP = Object.fromEntries(
-    TODO_TYPE_OPTIONS.map((option) => [option.value, option.icon]),
-) as Record<TodoType, string>;
+const FALLBACK_TYPE_ICONS: Record<string, string> = {
+    Task: 'CheckSquare',
+    Other: 'CircleHelp',
+    Bug: 'Bug',
+    Feature: 'Zap',
+    Story: 'BookOpen',
+    Epic: 'Layers',
+    Property: 'Home',
+    Lead: 'UserPlus',
+    Viewing: 'Eye',
+    Offer: 'HandCoins',
+    Maintenance: 'Wrench',
+    Compliance: 'ShieldCheck',
+};
 
-export function getTypeIcon(type: string): string {
-    return TYPE_ICON_MAP[type as TodoType] || 'Circle';
+export function getTypeIcon(type: string, iconMap?: Record<string, string>): string {
+    if (iconMap?.[type]) {
+        return iconMap[type];
+    }
+
+    return FALLBACK_TYPE_ICONS[type] ?? 'Circle';
 }
 
-export function getTodoDisplayIcon(todo: { type?: string | null; card_icon?: string | null }): string {
+export function getTodoDisplayIcon(
+    todo: { type?: string | null; card_icon?: string | null },
+    iconMap?: Record<string, string>,
+): string {
     if (todo.card_icon) {
         return todo.card_icon;
     }
 
     if (todo.type) {
-        return getTypeIcon(todo.type);
+        return getTypeIcon(todo.type, iconMap);
     }
 
     return 'Circle';

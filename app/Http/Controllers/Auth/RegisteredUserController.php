@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\WelcomeMail;
 use App\Models\Company;
 use App\Models\User;
+use App\Support\Industries;
 use App\Services\StripeService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -30,6 +31,7 @@ class RegisteredUserController extends Controller
     {
         $subscriptionType = $request->query('plan', 'FREE');
         $billingInterval = $request->query('interval', 'month');
+        $industry = Industries::resolve($request->query('industry'));
         
         // Validate subscription type
         if (!in_array($subscriptionType, ['FREE', 'MIDI', 'MAXI'])) {
@@ -42,6 +44,8 @@ class RegisteredUserController extends Controller
         return Inertia::render('auth/Register', [
             'subscriptionType' => $subscriptionType,
             'billingInterval' => $billingInterval,
+            'industries' => Industries::choices(),
+            'selectedIndustry' => $industry !== Industries::default() ? $industry : null,
         ]);
     }
 
@@ -58,6 +62,7 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'company_type' => 'required|in:create,join,individual',
             'company_name' => 'required_if:company_type,create|string|max:255',
+            'industry' => 'required_if:company_type,create|string|in:'.implode(',', array_keys(Industries::list())),
             'company_code' => 'required_if:company_type,join|string|size:8|exists:taskit_companies,code',
             'subscription_type' => 'required|in:FREE,MIDI,MAXI,BUSINESS,LTD_SOLO,LTD_TEAM,LTD_AGENCY,LTD_BUSINESS',
             'billing_interval' => 'nullable|in:month,year',
@@ -69,6 +74,7 @@ class RegisteredUserController extends Controller
             // Create new company with subscription type
             $company = Company::create([
                 'name' => $request->company_name,
+                'industry' => Industries::resolve($request->industry),
                 'subscription_type' => $request->subscription_type,
             ]);
             $companyId = $company->id;

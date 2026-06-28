@@ -13,6 +13,7 @@ class Company extends Model
     protected $fillable = [
         'name',
         'code',
+        'industry',
         'subscription_type',
         'scheduled_subscription_type',
         'stripe_customer_id',

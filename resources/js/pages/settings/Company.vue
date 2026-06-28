@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useForm, usePage, router, Link } from '@inertiajs/vue3';
+import { useTodoTypes } from '@/composables/useTodoTypes';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,6 +23,7 @@ interface Company {
     id: number;
     name: string;
     code: string;
+    industry?: string;
     subscription_type: string;
     logo_url?: string;
     subdomain?: string;
@@ -36,6 +38,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const page = usePage();
+const { industries } = useTodoTypes();
 
 // Check if user has access to company features (paid SaaS + eligible LTD plans)
 const hasAccess = computed(() => {
@@ -63,6 +66,10 @@ const publicForm = useForm({
 // Form for company name update
 const nameForm = useForm({
     name: props.company?.name || ''
+});
+
+const industryForm = useForm({
+    industry: props.company?.industry || 'general',
 });
 
 // Subdomain validation state
@@ -265,6 +272,22 @@ const updateCompanyName = () => {
     });
 };
 
+const updateCompanyIndustry = () => {
+    industryForm.patch('/settings/company/industry', {
+        onSuccess: () => {
+            router.reload();
+        },
+        onError: (errors) => {
+            console.error('Failed to update company industry:', errors);
+        }
+    });
+};
+
+const industryLabel = computed(() => {
+    const match = industries.value.find((item) => item.value === props.company?.industry);
+    return match?.label ?? 'General / Other';
+});
+
 const togglePublicDashboard = () => {
     // Toggle the is_public value before sending
     publicForm.is_public = !publicForm.is_public;
@@ -443,12 +466,47 @@ const subdomainUrl = computed(() => props.company?.subdomain_url);
                             This will update your company name across the platform.
                         </p>
                     </div>
+
+                    <div>
+                        <Label for="company-industry" class="text-sm font-medium">
+                            Industry / business type
+                        </Label>
+                        <div class="flex gap-2 mt-1">
+                            <select
+                                id="company-industry"
+                                v-model="industryForm.industry"
+                                class="flex h-10 flex-1 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:bg-gray-800"
+                            >
+                                <option
+                                    v-for="industry in industries"
+                                    :key="industry.value"
+                                    :value="industry.value"
+                                >
+                                    {{ industry.label }}
+                                </option>
+                            </select>
+                            <Button
+                                @click="updateCompanyIndustry"
+                                :disabled="industryForm.processing || industryForm.industry === company?.industry"
+                                size="sm"
+                            >
+                                {{ industryForm.processing ? 'Updating...' : 'Update' }}
+                            </Button>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Controls which task types appear when creating todos (e.g. Viewing for estate agents, Bug for software teams).
+                        </p>
+                    </div>
                     
                     <!-- Company Details Display -->
                     <div v-if="company" class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <div>
                             <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Company Name:</span>
                             <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ company.name }}</p>
+                        </div>
+                        <div>
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Industry:</span>
+                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ industryLabel }}</p>
                         </div>
                         <div>
                             <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Company Code:</span>

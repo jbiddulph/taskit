@@ -25,14 +25,14 @@
           <span class="text-gray-400">{{ t('todos.select_type') }}</span>
         </button>
         <button
-          v-for="type in TODO_TYPE_OPTIONS"
+          v-for="type in typeOptions"
           :key="type.value"
           type="button"
           @click="selectType(type.value)"
           class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
         >
           <Icon :name="type.icon" class="w-4 h-4" />
-          <span>{{ getTypeLabel(type.value) }}</span>
+          <span>{{ type.label }}</span>
         </button>
       </div>
     </div>
@@ -42,10 +42,11 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import Icon from '@/components/Icon.vue';
-import { getTypeIcon, TODO_TYPE_OPTIONS } from '@/constants/todoTypes';
+import { useTodoTypes } from '@/composables/useTodoTypes';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
+const { typeOptions, getTypeLabel, getTypeIcon } = useTodoTypes();
 
 interface Props {
   modelValue?: string;
@@ -58,11 +59,6 @@ const emit = defineEmits<{
 
 const isOpen = ref(false);
 const selectedType = computed(() => props.modelValue);
-
-const getTypeLabel = (type: string): string => {
-  const option = TODO_TYPE_OPTIONS.find((item) => item.value === type);
-  return option ? t(option.labelKey) : type;
-};
 
 const toggleDropdown = () => {
   isOpen.value = !isOpen.value;

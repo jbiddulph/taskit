@@ -4,28 +4,18 @@ namespace App\Support;
 
 class TodoTypes
 {
-    public const ALL = [
-        'Bug',
-        'Feature',
-        'Task',
-        'Story',
-        'Epic',
-        'Property',
-        'Lead',
-        'Viewing',
-        'Offer',
-        'Maintenance',
-        'Compliance',
-        'Other',
-    ];
+    public static function all(): array
+    {
+        return Industries::allTypeValues();
+    }
 
     public static function validationRule(): string
     {
-        return 'nullable|in:'.implode(',', self::ALL);
+        return Industries::validationRule();
     }
 
     public static function requiredValidationRule(): string
     {
-        return 'required|in:'.implode(',', self::ALL);
+        return Industries::requiredValidationRule();
     }
 }

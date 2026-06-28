@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue';
-import { TODO_TYPE_OPTIONS } from '@/constants/todoTypes';
+import { useTodoTypes } from '@/composables/useTodoTypes';
 
 export interface SearchFilter {
   field: string;
@@ -31,21 +31,24 @@ export function useAdvancedSearch() {
   const savedSearches = ref<SavedSearch[]>([]);
   const searchHistory = ref<SearchHistory[]>([]);
   const showAdvancedFilters = ref(false);
+  const { typeOptions } = useTodoTypes();
+
+  const typeFilterOptions = computed(() => typeOptions.value.map((option) => option.value));
 
   // Available filter fields
-  const filterFields = [
+  const filterFields = computed(() => [
     { value: 'title', label: 'Title', type: 'text' },
     { value: 'description', label: 'Description', type: 'text' },
     { value: 'status', label: 'Status', type: 'select', options: ['todo', 'in-progress', 'qa-testing', 'done'] },
     { value: 'priority', label: 'Priority', type: 'select', options: ['Low', 'Medium', 'High', 'Critical'] },
-    { value: 'type', label: 'Type', type: 'select', options: TODO_TYPE_OPTIONS.map((option) => option.value) },
+    { value: 'type', label: 'Type', type: 'select', options: typeFilterOptions.value },
     { value: 'assignee', label: 'Assignee', type: 'text' },
     { value: 'due_date', label: 'Due Date', type: 'date' },
     { value: 'created_at', label: 'Created Date', type: 'date' },
     { value: 'updated_at', label: 'Updated Date', type: 'date' },
     { value: 'tags', label: 'Tags', type: 'text' },
     { value: 'story_points', label: 'Story Points', type: 'number' }
-  ];
+  ]);
 
   const operators = {
     text: [
@@ -146,7 +149,7 @@ export function useAdvancedSearch() {
   };
 
   const getFilterField = (fieldValue: string) => {
-    return filterFields.find(f => f.value === fieldValue);
+    return filterFields.value.find(f => f.value === fieldValue);
   };
 
   const getOperatorsForField = (fieldValue: string) => {

@@ -7,7 +7,7 @@
     >
       <div class="flex items-center gap-2">
         <Icon v-if="selectedType" :name="getTypeIcon(selectedType)" class="w-4 h-4" />
-        <span>{{ selectedType || 'All Types' }}</span>
+        <span>{{ selectedType || t('todos.all_types') }}</span>
       </div>
       <Icon name="ChevronDown" class="w-4 h-4 text-gray-400" />
     </button>
@@ -22,17 +22,17 @@
           @click="selectType('')"
           class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
         >
-          <span class="text-gray-500 dark:text-gray-400">All Types</span>
+          <span class="text-gray-500 dark:text-gray-400">{{ t('todos.all_types') }}</span>
         </button>
         <button
-          v-for="type in TODO_TYPE_OPTIONS"
+          v-for="type in typeOptions"
           :key="type.value"
           type="button"
           @click="selectType(type.value)"
           class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
         >
           <Icon :name="type.icon" class="w-4 h-4" />
-          <span>{{ type.value }}</span>
+          <span>{{ type.label }}</span>
         </button>
       </div>
     </div>
@@ -42,7 +42,11 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import Icon from '@/components/Icon.vue';
-import { getTypeIcon, TODO_TYPE_OPTIONS } from '@/constants/todoTypes';
+import { useTodoTypes } from '@/composables/useTodoTypes';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+const { typeOptions, getTypeIcon } = useTodoTypes();
 
 interface Props {
   modelValue?: string;
@@ -54,7 +58,6 @@ const emit = defineEmits<{
 }>();
 
 const isOpen = ref(false);
-
 const selectedType = computed(() => props.modelValue);
 
 const toggleDropdown = () => {

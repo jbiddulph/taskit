@@ -15,14 +15,19 @@ import SeoHead from '@/components/SeoHead.vue';
 interface Props {
     subscriptionType?: string;
     billingInterval?: 'month' | 'year';
+    industries?: Array<{ value: string; label: string }>;
+    selectedIndustry?: string | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     subscriptionType: 'FREE',
-    billingInterval: 'month'
+    billingInterval: 'month',
+    industries: () => [],
+    selectedIndustry: null,
 });
 
 const companyType = ref('');
+const selectedIndustry = ref(props.selectedIndustry ?? '');
 const subscriptionType = ref(props.subscriptionType);
 const billingInterval = ref<Props['billingInterval']>(props.billingInterval);
 
@@ -48,6 +53,12 @@ watch(subscriptionChoice, (newValue) => {
     // Fallbacks for safety
     subscriptionType.value = (['FREE', 'MIDI', 'MAXI'].includes(type) ? type : 'FREE') as typeof subscriptionType.value;
     billingInterval.value = (interval === 'year' ? 'year' : 'month');
+}, { immediate: true });
+
+watch(() => props.selectedIndustry, (value) => {
+    if (value) {
+        selectedIndustry.value = value;
+    }
 }, { immediate: true });
 
 // Hide individual option for paid plans
@@ -162,15 +173,41 @@ const showIndividualOption = computed(() => subscriptionType.value === 'FREE');
                             />
                             <Label for="create_company" class="text-sm font-medium">I am creating the account for my company</Label>
                         </div>
-                        <div v-if="companyType === 'create'" class="ml-6">
-                            <Input
-                                id="company_name"
-                                type="text"
-                                name="company_name"
-                                placeholder="Enter company name"
-                                :tabindex="5"
-                            />
-                            <InputError :message="errors.company_name" />
+                        <div v-if="companyType === 'create'" class="ml-6 space-y-3">
+                            <div>
+                                <Input
+                                    id="company_name"
+                                    type="text"
+                                    name="company_name"
+                                    placeholder="Enter company name"
+                                    :tabindex="5"
+                                />
+                                <InputError :message="errors.company_name" />
+                            </div>
+                            <div>
+                                <Label for="industry" class="text-sm font-medium">Industry / business type</Label>
+                                <select
+                                    id="industry"
+                                    name="industry"
+                                    v-model="selectedIndustry"
+                                    required
+                                    class="mt-1 flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    :tabindex="6"
+                                >
+                                    <option value="" disabled>Select your industry</option>
+                                    <option
+                                        v-for="industry in industries"
+                                        :key="industry.value"
+                                        :value="industry.value"
+                                    >
+                                        {{ industry.label }}
+                                    </option>
+                                </select>
+                                <p class="text-xs text-muted-foreground mt-1">
+                                    Task types and workflows are tailored to your industry.
+                                </p>
+                                <InputError :message="errors.industry" />
+                            </div>
                         </div>
 
                         <div class="flex items-center space-x-2">

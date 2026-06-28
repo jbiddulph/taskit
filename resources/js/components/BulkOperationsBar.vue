@@ -71,11 +71,11 @@
           >
             <option value="">{{ t('todos.please_select') }}</option>
             <option
-              v-for="typeOption in TODO_TYPE_OPTIONS"
+              v-for="typeOption in typeOptions"
               :key="typeOption.value"
               :value="typeOption.value"
             >
-              {{ t(typeOption.labelKey) }}
+              {{ typeOption.label }}
             </option>
           </select>
         </div>
@@ -139,12 +139,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Icon from '@/components/Icon.vue';
-import { TODO_TYPE_OPTIONS } from '@/constants/todoTypes';
+import { useTodoTypes } from '@/composables/useTodoTypes';
 import { useBulkOperations } from '@/composables/useBulkOperations';
 import { todoApi } from '@/services/todoApi';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
+const { typeOptions } = useTodoTypes();
 
 interface Props {
   availableAssignees: string[];
