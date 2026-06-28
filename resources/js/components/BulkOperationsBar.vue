@@ -188,7 +188,6 @@ const bulkChangeStatus = async () => {
     selectedStatus.value = '';
     emit('refresh');
   } catch (error) {
-    console.error('Failed to update status:', error);
   }
 };
 
@@ -201,7 +200,6 @@ const bulkChangePriority = async () => {
     selectedPriority.value = '';
     emit('refresh');
   } catch (error) {
-    console.error('Failed to update priority:', error);
   }
 };
 
@@ -213,7 +211,6 @@ const bulkChangeAssignee = async () => {
     selectedAssignee.value = '';
     emit('refresh');
   } catch (error) {
-    console.error('Failed to update assignee:', error);
   }
 };
 
@@ -226,7 +223,6 @@ const bulkChangeType = async () => {
     selectedType.value = '';
     emit('refresh');
   } catch (error) {
-    console.error('Failed to update type:', error);
   }
 };
 
@@ -239,7 +235,6 @@ const bulkChangeDueDate = async () => {
     selectedDueDate.value = '';
     emit('refresh');
   } catch (error) {
-    console.error('Failed to update due date:', error);
   }
 };
 
@@ -253,7 +248,6 @@ const bulkChangeTags = async () => {
     selectedTags.value = '';
     emit('refresh');
   } catch (error) {
-    console.error('Failed to update tags:', error);
   }
 };
 
@@ -269,7 +263,6 @@ const bulkDelete = async () => {
     await todoApi.bulkDelete(selectedIds);
     emit('refresh');
   } catch (error) {
-    console.error('Failed to delete items:', error);
   }
 };
 </script>

@@ -47,7 +47,6 @@ const createCompanyAndProceed = () => {
             }
         },
         onError: (errors) => {
-            console.error('Company creation failed:', errors);
         },
         onFinish: () => {
             creating.value = false;

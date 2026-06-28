@@ -1339,7 +1339,6 @@ const handleOpenTodoById = async (e: any) => {
       }
     }
   } catch (err) {
-    console.error('Failed to open todo by id:', err);
   }
 };
 
@@ -1583,8 +1582,6 @@ const handleAddSubtask = (parentTodo: Todo) => {
 };
 
 const saveTodo = async (todo: Todo) => {
-  console.log('💾 saveTodo called with todo:', todo);
-  console.log('💾 parent_task_id:', todo.parent_task_id);
   try {
     if (!currentProject.value) {
       if ((window as any).$notify) {
@@ -1666,12 +1663,10 @@ const saveTodo = async (todo: Todo) => {
       let newTodo;
       if (todo.parent_task_id) {
         // Create subtask
-        console.log('🎯 Creating subtask with parent_task_id:', todo.parent_task_id, 'Payload:', { ...todo, project_id: currentProject.value.id });
         newTodo = await todoApi.createSubtask(todo.parent_task_id, {
           ...todo,
           project_id: currentProject.value.id
         });
-        console.log('🎯 Created subtask:', newTodo);
         
         // Add subtask immediately to parent todo's subtasks array
         const parentIndex = todosState.value.findIndex(t => t.id === todo.parent_task_id);
@@ -1690,7 +1685,6 @@ const saveTodo = async (todo: Todo) => {
             parentTodo.subtasks.push(subtaskWithProject);
             // Force reactivity update
             todosState.value = [...todosState.value];
-            console.log('✅ Added subtask immediately to parent:', parentTodo.title, 'Subtask:', newTodo.title);
           }
         }
       } else {
@@ -1711,7 +1705,6 @@ const saveTodo = async (todo: Todo) => {
               subtasks: newTodo.subtasks || [] // Initialize subtasks array
             };
             todosState.value.push(todoWithProject);
-            console.log('✅ Added todo immediately to list:', todoWithProject.title);
           }
         }
       }
@@ -2057,7 +2050,6 @@ const accumulatedTranscript = ref('');
 const initVoiceRecording = () => {
   // Check if we're in a secure context (HTTPS or localhost)
   if (!window.isSecureContext) {
-    console.warn('Web Speech API requires a secure context (HTTPS or localhost)');
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -2070,7 +2062,6 @@ const initVoiceRecording = () => {
   
   // Check if browser supports Web Speech API
   if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    console.warn('Web Speech API not supported in this browser');
     return;
   }
 
@@ -2096,14 +2087,12 @@ const initVoiceRecording = () => {
     }
     
     accumulatedTranscript.value = finalTranscript + interimTranscript;
-    console.log('Voice transcription (interim):', accumulatedTranscript.value);
     
     // Only create todo when we have final results and recording has stopped
     // We'll handle this in onend to avoid creating multiple todosState
   };
 
   recognition.value.onerror = (event: any) => {
-    console.error('❌ Speech recognition error:', event.error);
     
     let errorMessage = 'Failed to recognize speech.';
     let errorTitle = 'Voice Recognition Error';
@@ -2150,18 +2139,15 @@ const initVoiceRecording = () => {
   };
 
   recognition.value.onstart = () => {
-    console.log('🎤 Speech recognition started');
   };
 
   recognition.value.onend = async () => {
-    console.log('🛑 Speech recognition ended');
     isRecording.value = false;
     stopTimer();
     
     // Create todo from accumulated transcript when recording ends
     if (accumulatedTranscript.value.trim() && currentProject.value) {
       const transcript = accumulatedTranscript.value.trim();
-      console.log('Creating todo from voice transcription:', transcript);
       
       try {
         const newTodo = await todoApi.createTodo({
@@ -2173,7 +2159,6 @@ const initVoiceRecording = () => {
           priority: 'Medium',
         });
         
-        console.log('✅ Voice todo created successfully:', newTodo);
         
         // Add todo immediately to the list (realtime will handle updates/conflicts)
         if (newTodo.project_id === currentProject.value.id) {
@@ -2185,7 +2170,6 @@ const initVoiceRecording = () => {
               subtasks: newTodo.subtasks || [] // Initialize subtasks array
             };
             todosState.value.push(todoWithProject);
-            console.log('✅ Added voice todo immediately to list:', todoWithProject.title);
           }
         }
         
@@ -2201,7 +2185,6 @@ const initVoiceRecording = () => {
           });
         }
       } catch {
-        console.error('❌ Error creating voice todo:', error);
         if ((window as any).$notify) {
           (window as any).$notify({
             type: 'error',
@@ -2259,15 +2242,12 @@ const startActualRecording = () => {
     return;
   }
   
-  console.log('🎤 Starting voice recording...');
   try {
     accumulatedTranscript.value = ''; // Reset transcript for new recording
     recognition.value.start();
     isRecording.value = true;
     // Timer will start after 3-second countdown completes
-    console.log('✅ Recording started successfully');
   } catch (error: any) {
-    console.error('❌ Failed to start speech recognition:', error);
     isRecording.value = false;
     stopTimer();
     
@@ -2296,7 +2276,6 @@ const stopTimer = () => {
 
 // Stop recording handler
 const stopRecording = () => {
-  console.log('🔴 Stop recording called');
   stopPreRecordingCountdown(); // Stop pre-recording if active
   
   if (recognition.value && isRecording.value) {
@@ -2339,11 +2318,9 @@ const handleVoiceRecord = () => {
 
   if (isRecording.value || isPreRecording.value) {
     // Stop recording or pre-recording countdown
-    console.log('🛑 Already recording or counting down, stopping...');
     stopRecording();
   } else {
     // Start recording immediately, then show 3-second countdown overlay
-    console.log('🎤 Starting voice recording immediately...');
     startActualRecording();
     startPreRecordingCountdown();
   }
@@ -3091,7 +3068,6 @@ const loadCurrentProject = async () => {
 
 // Load todosState from API
 const loadTodos = async () => {
-  console.log('🚀 loadTodos called');
   try {
     const filters: any = {};
     if (currentProject.value) {
@@ -3099,25 +3075,15 @@ const loadTodos = async () => {
       if (currentGroup.value) {
         filters.project_group_id = currentGroup.value.id;
       }
-      console.log('🚀 Loading todosState for project:', currentProject.value.id);
     } else {
-      console.log('🚀 No current project set');
     }
     const response = await todoApi.getTodos(filters);
-    console.log('🚀 API response received:', response);
-    console.log('🚀 response.data.todo:', response.data.todo);
-    console.log('🚀 response.data[\'in-progress\']:', response.data['in-progress']);
-    console.log('🚀 response.data[\'qa-testing\']:', response.data['qa-testing']);
-    console.log('🚀 response.data.done:', response.data.done);
     
     // Check specific todosState
     const allTodos = response.data.todo.concat(response.data['in-progress']).concat(response.data['qa-testing']).concat(response.data.done);
-    console.log('🚀 All todosState from API:', allTodos.map(t => ({ id: t.id, title: t.title, parent_task_id: t.parent_task_id })));
     const subtasks = allTodos.filter(t => t.parent_task_id !== null);
-    console.log('🚀 Filtered subtasks:', subtasks.map(s => ({ id: s.id, title: s.title, parent_task_id: s.parent_task_id })));
     const parentTasks = allTodos.filter(t => t.parent_task_id === null);
     
-    console.log('📋 Loaded todosState - Total:', allTodos.length, 'Subtasks:', subtasks.length, 'Parents:', parentTasks.length);
     
     // Attach subtasks to their parent tasks
     allTodos.forEach(todo => {
@@ -3133,21 +3099,16 @@ const loadTodos = async () => {
         
         // Debug logging
         if (childSubtasks.length > 0) {
-          console.log(`✅ Todo "${todo.title}" has ${childSubtasks.length} subtasks:`, childSubtasks.map(s => s.title));
         } else {
-          console.log(`ℹ️ Todo "${todo.title}" has NO subtasks (looking for parent_task_id=${todo.id})`);
         }
       } else {
-        console.log(`ℹ️ Skipping subtask "${todo.title}" (parent_task_id=${todo.parent_task_id})`);
       }
     });
     
     // Debug: Check if we have any todosState with subtasks attached
     const todosWithSubtasks = allTodos.filter(t => t.subtasks && t.subtasks.length > 0);
-    console.log(`📊 Todos with subtasks attached: ${todosWithSubtasks.length}`);
     
     todosState.value = allTodos;
-    console.log('📋 Final todosState array:', todosState.value.length);
     
     // Notify other components (like sidebar) that todosState have been loaded
     if (typeof window !== 'undefined') {
@@ -3155,7 +3116,6 @@ const loadTodos = async () => {
     }
 
   } catch {
-    console.error('❌ Error loading todosState:', error);
   }
 };
 
@@ -3201,7 +3161,6 @@ async function onSubmitBulkTodos() {
           } as any);
         }
       } catch {
-        console.error('Failed to create in bulk', e);
       }
     }
     pendingBulkTodos.value = [];
@@ -3427,29 +3386,22 @@ onMounted(async () => {
   // Subscribe to real-time todo updates (allow in read-only mode for viewing)
   // if (!props.isReadOnly) {
   
-  console.log('🔥 Setting up real-time todo subscription...');
   unsubscribeFromTodos = realtimeService.onTodo(async (event) => {
-    console.log('🔥 Real-time todo event received:', event.type, event.data);
     
     switch (event.type) {
       case 'todo_created':
         // Add new todo to the list if it belongs to current project
         const newTodo = event.data;
-        console.log('🔥 Processing todo_created:', newTodo);
-        console.log('🔥 New todo parent_task_id:', newTodo.parent_task_id);
         
         if (!currentProject.value || newTodo.project_id === currentProject.value.id) {
           ingestCreatedTodo(newTodo);
         } else {
-          console.log('🔥 Todo not for current project, skipping');
         }
         break;
         
       case 'todo_updated':
         // Update existing todo in the list
         const updatedTodo = event.data;
-        console.log('🔥 Processing todo_updated:', updatedTodo);
-        console.log('🔥 Updated todo parent_task_id:', updatedTodo.parent_task_id);
         
         // Check if this is a subtask
         if (updatedTodo.parent_task_id) {
@@ -3467,15 +3419,12 @@ onMounted(async () => {
                   project: existingSubtask.project || currentProject.value
                 };
                 parentTodo.subtasks[subtaskIndex] = subtaskWithProject;
-                console.log('🔥 Updated subtask in parent:', parentTodo.title, 'Subtask:', updatedTodo.title);
                 // Force reactivity update
                 todosState.value = [...todosState.value];
               } else {
-                console.log('🔥 Subtask not found in parent for update, skipping');
               }
             }
           } else {
-            console.log('🔥 Parent todo not found for subtask update, trying main list');
             // Try to update in main list if parent not found
             const updateIndex = todosState.value.findIndex(t => t.id === updatedTodo.id);
             if (updateIndex !== -1) {
@@ -3499,11 +3448,8 @@ onMounted(async () => {
               project: existingTodo.project || currentProject.value,
               subtasks: existingTodo.subtasks || [] // Preserve subtasks
             };
-            console.log('🔥 Updating todo at index:', updateIndex, todoWithProject);
             todosState.value[updateIndex] = todoWithProject;
-            console.log('🔥 Updated todosState list:', todosState.value.length, 'todosState');
           } else {
-            console.log('🔥 Todo not found for update, skipping');
           }
         }
         break;
@@ -3511,8 +3457,6 @@ onMounted(async () => {
       case 'todo_deleted':
         // Remove todo from the list
         const deletedTodo = event.data;
-        console.log('🔥 Processing todo_deleted:', deletedTodo);
-        console.log('🔥 Deleted todo parent_task_id:', deletedTodo.parent_task_id);
         
         // Check if this is a subtask
         if (deletedTodo.parent_task_id) {
@@ -3524,18 +3468,15 @@ onMounted(async () => {
               const subtaskIndex = parentTodo.subtasks.findIndex((st: any) => st.id === deletedTodo.id);
               if (subtaskIndex !== -1) {
                 parentTodo.subtasks.splice(subtaskIndex, 1);
-                console.log('🔥 Removed subtask from parent:', parentTodo.title, 'Subtask ID:', deletedTodo.id);
                 // Force reactivity update
                 todosState.value = [...todosState.value];
                 
                 // Dispatch event to refresh sidebar project stats
                 window.dispatchEvent(new CustomEvent('todoChanged'));
               } else {
-                console.log('🔥 Subtask not found in parent for deletion, skipping');
               }
             }
           } else {
-            console.log('🔥 Parent todo not found for subtask deletion, trying main list');
             // Try to delete from main list if parent not found
             const deleteIndex = todosState.value.findIndex(t => t.id === deletedTodo.id);
             if (deleteIndex !== -1) {
@@ -3548,16 +3489,13 @@ onMounted(async () => {
           // Regular todo (not a subtask)
           const deleteIndex = todosState.value.findIndex(t => t.id === deletedTodo.id);
           if (deleteIndex !== -1) {
-            console.log('🔥 Removing todo at index:', deleteIndex);
             todosState.value.splice(deleteIndex, 1);
             // Force reactivity update to ensure UI changes immediately
             todosState.value = [...todosState.value];
-            console.log('🔥 Updated todosState list:', todosState.value.length, 'todosState');
             
             // Dispatch event to refresh sidebar project stats
             window.dispatchEvent(new CustomEvent('todoChanged'));
           } else {
-            console.log('🔥 Todo not found for deletion, skipping');
           }
         }
         break;

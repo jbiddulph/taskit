@@ -48,7 +48,6 @@ export function useInfiniteScroll(options: InfiniteScrollOptions) {
 
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to load items';
-      console.error('Infinite scroll error:', err);
     } finally {
       loading.value = false;
     }

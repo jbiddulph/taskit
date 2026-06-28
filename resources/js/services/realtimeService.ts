@@ -30,7 +30,6 @@ class RealtimeService {
     this.currentCompanyId = companyId;
 
     if (!isRealtimeAvailable()) {
-      console.warn('Real-time updates disabled: Supabase is not configured for this environment.');
       return;
     }
 
@@ -58,16 +57,12 @@ class RealtimeService {
    * Public method to test Supabase connection
    */
   public testSupabaseConnection() {
-    console.log('🧪 Testing Supabase connection...');
     const testChannel = supabase
       .channel('connection-test-public')
       .subscribe((status) => {
-        console.log('🧪 Supabase connection test status:', status);
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Supabase connection successful!');
           testChannel.unsubscribe();
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Supabase connection failed!');
         }
       });
   }
@@ -113,7 +108,6 @@ class RealtimeService {
         }
       )
       .subscribe((status) => {
-        console.log('Real-time subscription status:', status);
       });
 
     this.channels.set(channelName, channel);
@@ -124,17 +118,13 @@ class RealtimeService {
    */
   private subscribeToNotifications() {
     if (!this.currentUserId) {
-      console.log('🚨 Cannot subscribe to notifications - no user ID');
       return;
     }
 
     const channelName = `user_notifications_${this.currentUserId}`;
-    console.log('📢 Subscribing to notifications channel:', channelName);
-    console.log('📢 Current user ID:', this.currentUserId, 'Type:', typeof this.currentUserId);
     
     // Remove existing channel if it exists
     if (this.channels.has(channelName)) {
-      console.log('🔄 Removing existing notifications channel');
       this.channels.get(channelName)?.unsubscribe();
       this.channels.delete(channelName);
     }
@@ -154,24 +144,17 @@ class RealtimeService {
           filter: `user_id=eq.${userId}`
         },
         (payload) => {
-          console.log('📢 Notification INSERT event received (filtered):', payload);
-          console.log('📢 Payload.new:', payload.new);
           this.handleNewNotification(payload.new as any);
         }
       )
       .subscribe((status) => {
-        console.log('📢 Notification real-time subscription status:', status);
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Notification subscription successful (filtered channel)');
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Notification subscription error');
           // Fallback: try unfiltered subscription with client-side filtering
           this.setupFallbackNotificationSubscription(userId);
         } else if (status === 'TIMED_OUT') {
-          console.error('⏰ Notification subscription timed out');
           this.setupFallbackNotificationSubscription(userId);
         } else if (status === 'CLOSED') {
-          console.warn('🔒 Notification subscription closed');
         }
       });
 
@@ -195,7 +178,6 @@ class RealtimeService {
       return;
     }
 
-    console.log('🔄 Setting up fallback notification subscription (unfiltered)');
     
     const fallbackChannel = supabase
       .channel(fallbackChannelName)
@@ -211,26 +193,17 @@ class RealtimeService {
           const notification = payload.new as any;
           const notificationUserId = parseInt(String(notification.user_id || notification.userId || 0), 10);
           
-          console.log('🧪 FALLBACK: Received notification INSERT:', payload);
-          console.log('🧪 FALLBACK: Notification user_id:', notificationUserId, 'Type:', typeof notificationUserId);
-          console.log('🧪 FALLBACK: Current user ID:', userId, 'Type:', typeof userId);
-          console.log('🧪 FALLBACK: Match?', notificationUserId === userId);
           
           // Filter on client side - only process if it matches current user
           if (notificationUserId === userId) {
-            console.log('✅ FALLBACK: Notification matches current user, processing...');
             this.handleNewNotification(notification);
           } else {
-            console.log('⏭️ FALLBACK: Notification is for different user, skipping');
           }
         }
       )
       .subscribe((status) => {
-        console.log('🧪 FALLBACK: Notification subscription status:', status);
         if (status === 'SUBSCRIBED') {
-          console.log('✅ FALLBACK: Notification subscription successful (will filter client-side)');
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ FALLBACK: Notification subscription error');
         }
       });
 
@@ -242,16 +215,13 @@ class RealtimeService {
    */
   private subscribeToProjects() {
     if (!this.currentCompanyId) {
-      console.log('🚨 Cannot subscribe to projects - no company ID');
       return;
     }
 
     const channelName = `company_projects_${this.currentCompanyId}`;
-    console.log('🔥 Subscribing to projects channel:', channelName);
     
     // Remove existing channel if it exists
     if (this.channels.has(channelName)) {
-      console.log('🔄 Removing existing projects channel');
       this.channels.get(channelName)?.unsubscribe();
       this.channels.delete(channelName);
     }
@@ -267,7 +237,6 @@ class RealtimeService {
           filter: `company_id=eq.${this.currentCompanyId}`
         },
         (payload) => {
-          console.log('🆕 Project INSERT event received:', payload);
           this.handleNewProject(payload.new as any);
         }
       )
@@ -280,7 +249,6 @@ class RealtimeService {
           filter: `company_id=eq.${this.currentCompanyId}`
         },
         (payload) => {
-          console.log('📝 Project UPDATE event received:', payload);
           this.handleProjectUpdate(payload.new as any);
         }
       )
@@ -293,21 +261,14 @@ class RealtimeService {
           filter: `company_id=eq.${this.currentCompanyId}`
         },
         (payload) => {
-          console.log('🗑️ Project DELETE event received:', payload);
-          console.log('🗑️ Project DELETE payload.old:', payload.old);
           this.handleProjectDelete(payload.old as any);
         }
       )
       .subscribe((status) => {
-        console.log('🔥 Projects real-time subscription status:', status);
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Projects real-time subscription successful');
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Projects real-time subscription error');
         } else if (status === 'TIMED_OUT') {
-          console.error('⏰ Projects real-time subscription timed out');
         } else if (status === 'CLOSED') {
-          console.warn('🔒 Projects real-time subscription closed');
         }
       });
 
@@ -318,14 +279,11 @@ class RealtimeService {
    * Subscribe to todos for real-time updates
    */
   private subscribeToTodos() {
-    console.log('🔥 subscribeToTodos called with companyId:', this.currentCompanyId);
     if (!this.currentCompanyId) {
-      console.log('🚨 No company ID available for todo subscription');
       return;
     }
 
     const channelName = `company_todos_${this.currentCompanyId}`;
-    console.log('🔥 Setting up todo subscription for channel:', channelName);
     
     // Remove existing channel if it exists
     if (this.channels.has(channelName)) {
@@ -344,7 +302,6 @@ class RealtimeService {
           filter: `company_id=eq.${this.currentCompanyId}`
         },
         (payload) => {
-          console.log('🔥 Supabase INSERT event received:', payload);
           this.handleNewTodo(payload.new as any);
         }
       )
@@ -357,7 +314,6 @@ class RealtimeService {
           filter: `company_id=eq.${this.currentCompanyId}`
         },
         (payload) => {
-          console.log('🔥 Supabase UPDATE event received:', payload);
           this.handleTodoUpdate(payload.new as any);
         }
       )
@@ -370,16 +326,12 @@ class RealtimeService {
           filter: `company_id=eq.${this.currentCompanyId}`
         },
         (payload) => {
-          console.log('🔥 Supabase DELETE event received:', payload);
           this.handleTodoDelete(payload.old as any);
         }
       )
       .subscribe((status) => {
-        console.log('🔥 Todo subscription status:', status, 'for channel:', channelName);
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Todo subscription successful!');
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Todo subscription failed!');
         }
       });
 
@@ -451,24 +403,16 @@ class RealtimeService {
    * Handle new notification received
    */
   private handleNewNotification(notification: any) {
-    console.log('🔔 New notification received:', notification);
-    console.log('🔔 Notification type:', notification.type);
-    console.log('🔔 Notification title:', notification.title);
-    console.log('🔔 Notification user_id:', notification.user_id);
     
     // Check if this is a chat message notification and if chat is currently open with sender
     const isMessageNotification = notification.data?.message_id && notification.data?.sender_id;
     const isChatOpen = isMessageNotification && this.isChatOpenWithUser(notification.data.sender_id);
     
-    console.log('🔔 Is message notification:', isMessageNotification);
-    console.log('🔔 Is chat open:', isChatOpen);
-    console.log('🔔 Callback count:', this.notificationCallbacks.size);
     
     // Only show notification if chat is not open with the sender
     if (!isChatOpen) {
       // Notify all notification callbacks
       this.notificationCallbacks.forEach((callback, index) => {
-        console.log(`🔔 Calling notification callback ${index + 1}/${this.notificationCallbacks.size}`);
         callback({
           type: 'new_notification',
           data: notification
@@ -502,7 +446,6 @@ class RealtimeService {
         }));
       }
     } else {
-      console.log('Chat is open with sender, skipping notification');
     }
   }
 
@@ -519,12 +462,9 @@ class RealtimeService {
    * Handle new project created
    */
   private handleNewProject(project: any) {
-    console.log('🚀 New project created:', project);
-    console.log('🚀 Project callbacks count:', this.projectCallbacks.size);
     
     // Notify all project callbacks
     this.projectCallbacks.forEach((callback, index) => {
-      console.log('🚀 Calling project callback', index + 1);
       callback({
         type: 'project_created',
         data: project
@@ -536,7 +476,6 @@ class RealtimeService {
    * Handle project update
    */
   private handleProjectUpdate(project: any) {
-    console.log('Project updated:', project);
     
     // Notify all project callbacks
     this.projectCallbacks.forEach(callback => {
@@ -551,12 +490,9 @@ class RealtimeService {
    * Handle project delete
    */
   private handleProjectDelete(project: any) {
-    console.log('🗑️ Project deleted:', project);
-    console.log('🗑️ Project callbacks count:', this.projectCallbacks.size);
     
     // Notify all project callbacks
     this.projectCallbacks.forEach(callback => {
-      console.log('🗑️ Notifying project callback of deletion');
       callback({
         type: 'project_deleted',
         data: project
@@ -575,12 +511,9 @@ class RealtimeService {
    * Handle new todo created
    */
   private handleNewTodo(todo: any) {
-    console.log('🔥 handleNewTodo called with todo:', todo);
-    console.log('🔥 Todo callbacks count:', this.todoCallbacks.size);
     
     // Notify all todo callbacks
     this.todoCallbacks.forEach((callback, index) => {
-      console.log(`🔥 Calling todo callback ${index + 1}/${this.todoCallbacks.size}`);
       callback({
         type: 'todo_created',
         data: todo
@@ -592,12 +525,9 @@ class RealtimeService {
    * Handle todo update
    */
   private handleTodoUpdate(todo: any) {
-    console.log('🔥 handleTodoUpdate called with todo:', todo);
-    console.log('🔥 Todo callbacks count:', this.todoCallbacks.size);
     
     // Notify all todo callbacks
     this.todoCallbacks.forEach((callback, index) => {
-      console.log(`🔥 Calling todo callback ${index + 1}/${this.todoCallbacks.size}`);
       callback({
         type: 'todo_updated',
         data: todo
@@ -609,12 +539,9 @@ class RealtimeService {
    * Handle todo delete
    */
   private handleTodoDelete(todo: any) {
-    console.log('🔥 handleTodoDelete called with todo:', todo);
-    console.log('🔥 Todo callbacks count:', this.todoCallbacks.size);
     
     // Notify all todo callbacks
     this.todoCallbacks.forEach((callback, index) => {
-      console.log(`🔥 Calling todo callback ${index + 1}/${this.todoCallbacks.size}`);
       callback({
         type: 'todo_deleted',
         data: todo
@@ -626,8 +553,6 @@ class RealtimeService {
    * Handle new activity created
    */
   private handleNewActivity(activity: any) {
-    console.log('RealtimeService: New activity received:', activity);
-    console.log('RealtimeService: Activity callbacks count:', this.activityCallbacks.size);
     // Notify all activity callbacks
     this.activityCallbacks.forEach(callback => {
       callback({
@@ -725,7 +650,6 @@ class RealtimeService {
         });
       }
     } catch (error) {
-      console.error('Failed to fetch unread count:', error);
     }
   }
 
@@ -736,7 +660,6 @@ class RealtimeService {
     if (senderId) {
       const isChatOpen = this.isChatOpenWithUser(senderId);
       if (isChatOpen) {
-        console.log('Chat is open with sender, skipping unread count update');
         return;
       }
     }
@@ -784,12 +707,10 @@ class RealtimeService {
    * Subscribe to project events
    */
   onProject(callback: (project: any) => void) {
-    console.log('🔥 Component subscribing to project events. Total callbacks:', this.projectCallbacks.size + 1);
     this.projectCallbacks.add(callback);
     
     // Return unsubscribe function
     return () => {
-      console.log('🔥 Component unsubscribing from project events');
       this.projectCallbacks.delete(callback);
     };
   }
@@ -798,12 +719,10 @@ class RealtimeService {
    * Subscribe to todo events
    */
   onTodo(callback: (todo: any) => void) {
-    console.log('🔥 Component subscribing to todo events. Total callbacks:', this.todoCallbacks.size + 1);
     this.todoCallbacks.add(callback);
     
     // Return unsubscribe function
     return () => {
-      console.log('🔥 Component unsubscribing from todo events');
       this.todoCallbacks.delete(callback);
     };
   }
@@ -812,12 +731,10 @@ class RealtimeService {
    * Subscribe to activity events
    */
   onActivity(callback: (activity: any) => void) {
-    console.log('RealtimeService: Adding activity callback. Total callbacks:', this.activityCallbacks.size + 1);
     this.activityCallbacks.add(callback);
     
     // Return unsubscribe function
     return () => {
-      console.log('RealtimeService: Removing activity callback');
       this.activityCallbacks.delete(callback);
     };
   }
@@ -854,20 +771,12 @@ class RealtimeService {
    * Test realtime functionality manually
    */
   testRealtime() {
-    console.log('🧪 Testing realtime functionality...');
-    console.log('🧪 Current user ID:', this.currentUserId);
-    console.log('🧪 Current company ID:', this.currentCompanyId);
-    console.log('🧪 Active channels:', Array.from(this.channels.keys()));
-    console.log('🧪 Todo callbacks registered:', this.todoCallbacks.size);
-    console.log('🧪 Activity callbacks registered:', this.activityCallbacks.size);
     
     // Test if we can create a test channel
     const testChannel = supabase
       .channel('manual-test')
       .subscribe((status) => {
-        console.log('🧪 Manual test channel status:', status);
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Manual test channel connected successfully!');
           testChannel.unsubscribe();
         }
       });
@@ -877,7 +786,6 @@ class RealtimeService {
    * Test real-time functionality by manually triggering events
    */
   testRealtimeEvents() {
-    console.log('🧪 Testing real-time events manually...');
     
     // Test todo creation
     const testTodo = {
@@ -887,18 +795,15 @@ class RealtimeService {
       company_id: this.currentCompanyId
     };
     
-    console.log('🧪 Triggering test todo_created event...');
     this.handleNewTodo(testTodo);
     
     // Test todo update
     setTimeout(() => {
-      console.log('🧪 Triggering test todo_updated event...');
       this.handleTodoUpdate({...testTodo, title: 'Updated Test Todo'});
     }, 1000);
     
     // Test todo deletion
     setTimeout(() => {
-      console.log('🧪 Triggering test todo_deleted event...');
       this.handleTodoDelete(testTodo);
     }, 2000);
   }
@@ -907,10 +812,8 @@ class RealtimeService {
    * Test database realtime subscription
    */
   testDatabaseRealtime() {
-    console.log('🧪 Testing database realtime subscription...');
     
     if (!this.currentCompanyId) {
-      console.log('🚨 No company ID available for testing');
       return;
     }
 
@@ -925,7 +828,6 @@ class RealtimeService {
           filter: `company_id=eq.${this.currentCompanyId}`
         },
         (payload) => {
-          console.log('🧪 Database realtime test - INSERT event:', payload);
         }
       )
       .on(
@@ -937,7 +839,6 @@ class RealtimeService {
           filter: `company_id=eq.${this.currentCompanyId}`
         },
         (payload) => {
-          console.log('🧪 Database realtime test - UPDATE event:', payload);
         }
       )
       .on(
@@ -949,21 +850,12 @@ class RealtimeService {
           filter: `company_id=eq.${this.currentCompanyId}`
         },
         (payload) => {
-          console.log('🧪 Database realtime test - DELETE event:', payload);
-          console.log('🧪 DELETE payload.old:', payload.old);
-          console.log('🧪 DELETE payload.new:', payload.new);
         }
       )
       .subscribe((status) => {
-        console.log('🧪 Database realtime test status:', status);
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Database realtime subscription successful!');
-          console.log('🧪 Now try creating, updating, or deleting a todo to see if events are received');
-          console.log('🧪 DELETE events should show payload.old with the deleted todo data');
-          console.log('🧪 If you see INSERT/UPDATE but no DELETE, the issue is with Supabase DELETE permissions');
           // Keep the subscription for testing
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Database realtime subscription failed!');
         }
       });
   }
@@ -972,10 +864,8 @@ class RealtimeService {
    * Test DELETE events specifically
    */
   testDeleteEvents() {
-    console.log('🧪 Testing DELETE events specifically...');
     
     if (!this.currentCompanyId) {
-      console.log('🚨 No company ID available for testing');
       return;
     }
 
@@ -990,21 +880,11 @@ class RealtimeService {
           filter: `company_id=eq.${this.currentCompanyId}`
         },
         (payload) => {
-          console.log('🧪 DELETE TEST - Event received:', payload);
-          console.log('🧪 DELETE TEST - payload.old:', payload.old);
-          console.log('🧪 DELETE TEST - payload.new:', payload.new);
-          console.log('🧪 DELETE TEST - payload.eventType:', payload.eventType);
-          console.log('🧪 DELETE TEST - payload.schema:', payload.schema);
-          console.log('🧪 DELETE TEST - payload.table:', payload.table);
         }
       )
       .subscribe((status) => {
-        console.log('🧪 DELETE TEST - Subscription status:', status);
         if (status === 'SUBSCRIBED') {
-          console.log('✅ DELETE TEST - Subscription successful!');
-          console.log('🧪 DELETE TEST - Now delete a todo and watch for DELETE events');
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ DELETE TEST - Subscription failed!');
         }
       });
   }

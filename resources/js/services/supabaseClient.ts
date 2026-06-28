@@ -84,7 +84,6 @@ async function cleanupOldLogoFiles(companyName: string, companyCode: string): Pr
     const { data: files, error } = await supabase.storage.from('taskit').list('logos');
     
     if (error) {
-      console.warn('Failed to list logo files for cleanup:', error);
       return;
     }
     
@@ -103,13 +102,10 @@ async function cleanupOldLogoFiles(companyName: string, companyCode: string): Pr
         .remove([`logos/${file.name}`]);
         
       if (deleteError) {
-        console.warn(`Failed to delete old logo file ${file.name}:`, deleteError);
       } else {
-        console.log(`Cleaned up old logo file: ${file.name}`);
       }
     }
   } catch (error) {
-    console.warn('Error during logo cleanup:', error);
     // Don't throw - cleanup failures shouldn't prevent new uploads
   }
 }

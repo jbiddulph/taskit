@@ -31,14 +31,11 @@ const form = useForm({
 });
 
 const submit = () => {
-    console.log('Subdomain login form submitting...', form.data());
     form.post('/login', {
         onFinish: () => form.reset('password'),
         onSuccess: (page) => {
-            console.log('Login successful, redirecting...', page);
         },
         onError: (errors) => {
-            console.log('Login failed with errors:', errors);
         }
     });
 };

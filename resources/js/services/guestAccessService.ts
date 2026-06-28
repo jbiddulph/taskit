@@ -166,7 +166,6 @@ class GuestAccessService {
     if (!invitation) return false;
 
     // In real app, this would send an email
-    console.log('Resending invitation to:', invitation.email);
     return true;
   }
 

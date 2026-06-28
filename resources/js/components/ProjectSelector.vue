@@ -165,7 +165,6 @@ onMounted(async () => {
   
   // Subscribe to real-time project updates
   unsubscribeFromProjects = realtimeService.onProject(async (event) => {
-    console.log('ProjectSelector: Real-time project event received:', event);
     
     switch (event.type) {
       case 'project_created':
@@ -173,7 +172,6 @@ onMounted(async () => {
         const newProject = event.data;
         if (!projects.value.find(p => p.id === newProject.id)) {
           projects.value.push(newProject);
-          console.log('ProjectSelector: Added new project to list:', newProject.name);
         }
         break;
         
@@ -183,7 +181,6 @@ onMounted(async () => {
         const updateIndex = projects.value.findIndex(p => p.id === updatedProject.id);
         if (updateIndex !== -1) {
           projects.value[updateIndex] = updatedProject;
-          console.log('ProjectSelector: Updated project in list:', updatedProject.name);
           
           // Update current project if it's the one being updated
           if (currentProject.value?.id === updatedProject.id) {
@@ -199,7 +196,6 @@ onMounted(async () => {
         const deleteIndex = projects.value.findIndex(p => p.id === deletedProject.id);
         if (deleteIndex !== -1) {
           projects.value.splice(deleteIndex, 1);
-          console.log('ProjectSelector: Removed project from list:', deletedProject.name);
           
           // Clear current project if it's the one being deleted
           if (currentProject.value?.id === deletedProject.id) {
@@ -227,75 +223,6 @@ const loadProjects = async () => {
       selectProject(projects.value[0])
     }
   } catch (error) {
-    console.error('Failed to load projects:', error)
-  }
-}
-
-// Select a project
-const selectProject = (project: Project) => {
-  currentProject.value = project
-  emit('update:modelValue', project)
-  showProjectDropdown.value = false
-}
-
-// Create a new project
-const createProject = async () => {
-  if (!newProject.value.name.trim()) return
-  
-  isCreating.value = true
-  
-  try {
-    const project = await todoApi.createProject({
-      name: newProject.value.name.trim(),
-      description: newProject.value.description.trim() || undefined,
-      key: newProject.value.key.trim() || undefined,
-      color: newProject.value.color
-    })
-    
-    // Add to projects list and select it
-    projects.value.push(project)
-    selectProject(project)
-    
-    // Reset form and close modal
-    newProject.value = {
-      name: '',
-      description: '',
-      key: '',
-      color: '#3B82F6'
-    }
-    showCreateProject.value = false
-    
-  } catch (error) {
-    console.error('Failed to create project:', error)
-  } finally {
-    isCreating.value = false
-  }
-}
-
-// Close dropdown when clicking outside
-const handleClickOutside = (event: Event) => {
-  if (!(event.target as Element).closest('.project-selector')) {
-    showProjectDropdown.value = false
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-  
-  // Cleanup real-time subscription
-  if (unsubscribeFromProjects) {
-    unsubscribeFromProjects()
-  }
-})
-
-// Expose methods to parent component
-defineExpose({
-  loadProjects
-})
 </script>
 
 <style scoped>

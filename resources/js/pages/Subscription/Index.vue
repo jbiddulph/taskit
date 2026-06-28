@@ -102,12 +102,6 @@ const availablePlans = computed(() => {
 });
 
 // Debug logging
-console.log('=== SUBSCRIPTION PAGE LOADED ===');
-console.log('Props:', props);
-console.log('Current plan computed:', currentPlan.value);
-console.log('Loading state:', loading.value);
-console.log('Component initial setup complete');
-console.log('Component fully loaded at:', new Date().toISOString());
 
 const formatPrice = (price: number): string => {
     return `£${(price / 100).toFixed(0)}`;
@@ -169,13 +163,6 @@ const getButtonText = (planType: string): string => {
 };
 
 const handlePlanChange = (planType: string) => {
-    console.log('=== BUTTON CLICKED ===');
-    console.log('Plan type:', planType);
-    console.log('Current time:', new Date().toISOString());
-    console.log('Loading state:', loading.value);
-    console.log('Current plan:', currentPlan.value);
-    console.log('Function exists:', typeof changePlan);
-    console.log('About to call changePlan...');
     
     try {
         // Check if this is a lifetime deal
@@ -187,9 +174,7 @@ const handlePlanChange = (planType: string) => {
         const interval = isLifetime ? 'month' : billingInterval.value;
         
         changePlan(planType, interval);
-        console.log('changePlan called successfully');
     } catch (error) {
-        console.error('Error calling changePlan:', error);
     }
 };
 
@@ -242,72 +227,51 @@ const redeemLifetimeCode = () => {
 };
 
 const changePlan = async (planType: string, interval: 'month' | 'year' = 'month') => {
-    console.log('changePlan called with:', planType, 'interval:', interval);
-    console.log('loading.value:', loading.value);
-    console.log('currentPlan.value:', currentPlan.value);
     
     if (loading.value || planType === currentPlan.value) {
-        console.log('Exiting early - either loading or same plan');
         return;
     }
     
     loading.value = true;
-    console.log('Setting loading to true, using Inertia router approach...');
     
     // Use Inertia router which handles CSRF automatically
     router.post('/subscription/change-plan', { plan: planType, billing_interval: interval }, {
         onBefore: () => {
-            console.log('Inertia request starting...');
             return true;
         },
         onSuccess: (page) => {
-            console.log('Inertia request successful:', page);
-            console.log('Full page props:', JSON.stringify(page.props, null, 2));
             
             // Debug all props keys to see what's actually available
-            console.log('All page props keys:', Object.keys(page.props));
-            console.log('Direct redirect_url check:', page.props.redirect_url);
-            console.log('Has redirect_url prop:', 'redirect_url' in page.props);
             
             // Check for redirect URL in flash data or response
             const flash = page.props.flash as any;
-            console.log('Flash data:', flash);
-            console.log('Flash type:', typeof flash);
-            console.log('Flash keys:', flash ? Object.keys(flash) : 'no flash');
             
             // Try different ways to access the redirect URL
             let redirectUrl = null;
             
             if (flash?.redirect_url) {
                 redirectUrl = flash.redirect_url;
-                console.log('Found redirect_url in flash.redirect_url');
             } else if (page.props.redirect_url) {
                 redirectUrl = page.props.redirect_url;
-                console.log('Found redirect_url in page.props.redirect_url');
             } else if (flash && typeof flash === 'object') {
                 // Check all flash properties
                 for (const [key, value] of Object.entries(flash)) {
-                    console.log(`Flash ${key}:`, value);
                     if (key === 'redirect_url' || (typeof value === 'string' && value.includes('checkout.stripe.com'))) {
                         redirectUrl = value as string;
-                        console.log(`Found redirect URL in flash.${key}`);
                         break;
                     }
                 }
             }
             
             if (redirectUrl) {
-                console.log('Redirecting to Stripe checkout:', redirectUrl);
                 window.location.href = redirectUrl;
             } else {
-                console.log('No redirect URL found, handling plan change');
                 
                 // If downgrading (MAXI->MIDI or paid->FREE), reload projects to hide excess ones
                 const isDowngrade = (currentPlan.value === 'MAXI' && planType === 'MIDI') || 
                                   (currentPlan.value !== 'FREE' && planType === 'FREE');
                 
                 if (isDowngrade) {
-                    console.log('Downgrade detected, emitting project reload event');
                     // Emit global event to reload projects
                     window.dispatchEvent(new CustomEvent('subscription-downgrade', { 
                         detail: { newPlan: planType, oldPlan: currentPlan.value }
@@ -318,12 +282,9 @@ const changePlan = async (planType: string, interval: 'month' | 'year' = 'month'
             }
         },
         onError: (errors) => {
-            console.error('Inertia request failed:', errors);
-            console.log('Error details:', JSON.stringify(errors, null, 2));
             
             // Check if the error is "No company found"
             if (errors.plan && errors.plan.includes('No company found')) {
-                console.log('No company found error detected, showing company creation modal');
                 pendingPlan.value = planType;
                 showCompanyModal.value = true;
                 return;
@@ -339,7 +300,6 @@ const changePlan = async (planType: string, interval: 'month' | 'year' = 'month'
             alert(errorMessage);
         },
         onFinish: () => {
-            console.log('Setting loading to false');
             loading.value = false;
         }
     });
@@ -353,9 +313,7 @@ const getCSRFToken = () => {
 
 // Test CSRF functionality
 const testCSRF = async () => {
-    console.log('=== TESTING CSRF ===');
     const csrfToken = getCSRFToken();
-    console.log('CSRF Token:', csrfToken ? 'Found' : 'Missing');
     
     try {
         const response = await fetch('/subscription/test-csrf', {
@@ -369,29 +327,18 @@ const testCSRF = async () => {
             credentials: 'same-origin'
         });
         
-        console.log('CSRF Test Response:', response.status, response.statusText);
         if (response.ok) {
             const data = await response.json();
-            console.log('CSRF Test Success:', data);
         } else {
-            console.log('CSRF Test Failed:', response.status);
         }
     } catch (error) {
-        console.error('CSRF Test Error:', error);
     }
 };
 
 // Test if component is mounting properly
 onMounted(() => {
-    console.log('=== COMPONENT MOUNTED ===');
-    console.log('onMounted hook called at:', new Date().toISOString());
-    console.log('Final function check:', {
-        handlePlanChange: typeof handlePlanChange,
-        changePlan: typeof changePlan
-    });
     
     // Run CSRF test automatically
-    console.log('Running automatic CSRF test...');
     testCSRF();
 });
 
@@ -407,7 +354,6 @@ const cancelSubscription = async () => {
             // Page will automatically reload with updated data
         },
         onError: (errors) => {
-            console.error('Error cancelling subscription:', errors);
             alert('An error occurred while cancelling your subscription. Please try again.');
         },
         onFinish: () => {
@@ -423,7 +369,6 @@ const handleCompanyModalClose = () => {
 };
 
 const handleCompanyCreated = (companyData: any) => {
-    console.log('Company created successfully:', companyData);
     // The modal will handle the redirect to Stripe checkout
     showCompanyModal.value = false;
     pendingPlan.value = '';
@@ -441,7 +386,6 @@ const reactivateSubscription = async () => {
             // Page will automatically reload with updated data
         },
         onError: (errors) => {
-            console.error('Error reactivating subscription:', errors);
             alert('An error occurred while reactivating your subscription. Please try again.');
         },
         onFinish: () => {

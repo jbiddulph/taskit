@@ -42,7 +42,6 @@ const loadCompanyUsers = async () => {
       companyUsers.value = data.data || [];
     }
   } catch (error) {
-    console.error('Failed to load company users:', error);
   } finally {
     loading.value = false;
   }

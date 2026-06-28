@@ -78,7 +78,6 @@ onMounted(async () => {
   
   // Subscribe to real-time project updates
   unsubscribeFromProjects = realtimeService.onProject(async (event) => {
-    console.log('Real-time project event received:', event);
     
     switch (event.type) {
       case 'project_created':
@@ -86,7 +85,6 @@ onMounted(async () => {
         const newProject = event.data;
         if (!projects.value.find(p => p.id === newProject.id)) {
           projects.value.push(newProject);
-          console.log('Added new project to list:', newProject.name);
         }
         break;
         
@@ -96,7 +94,6 @@ onMounted(async () => {
         const updateIndex = projects.value.findIndex(p => p.id === updatedProject.id);
         if (updateIndex !== -1) {
           projects.value[updateIndex] = updatedProject;
-          console.log('Updated project in list:', updatedProject.name);
         }
         break;
         
@@ -106,7 +103,6 @@ onMounted(async () => {
         const deleteIndex = projects.value.findIndex(p => p.id === deletedProject.id);
         if (deleteIndex !== -1) {
           projects.value.splice(deleteIndex, 1);
-          console.log('Removed project from list:', deletedProject.name);
         }
         break;
     }
@@ -130,7 +126,6 @@ onMounted(async () => {
         const project = projects.value.find(p => p.id === e.detail.projectId);
         if (project) {
           currentProject.value = project;
-          console.log('Sidebar updated to show selected project:', project.name);
         }
       } finally {
         isUpdatingProject.value = false;
@@ -140,7 +135,6 @@ onMounted(async () => {
   
   // Listen for subscription downgrades to reload projects list
   window.addEventListener('subscription-downgrade', async (e: any) => {
-    console.log('Subscription downgrade detected, reloading projects:', e.detail);
     await loadProjects();
   });
   
@@ -161,7 +155,6 @@ const loadProjects = async () => {
   try {
     loading.value = true;
     const response = await todoApi.getProjectsWithStats();
-    console.log('Projects with stats:', response);
     
     // Handle both flat array and object with data property
     if (Array.isArray(response)) {
@@ -186,7 +179,6 @@ const loadProjects = async () => {
     
 
   } catch (error) {
-    console.error('Failed to load projects:', error);
   } finally {
     loading.value = false;
   }
@@ -304,9 +296,6 @@ const deleteProject = async (project: Project, event: Event) => {
               currentProject.value = nextProject;
               localStorage.setItem('currentProjectId', nextProject.id.toString());
               
-              console.log(`Auto-selected next project: ${nextProject.name} (ID: ${nextProject.id})`);
-              console.log('Projects remaining after deletion:', projects.value.map(p => ({ id: p.id, name: p.name })));
-              console.log('Updated localStorage to project ID:', nextProject.id.toString());
               
               // Dispatch event to update TodoBoard
               window.dispatchEvent(new CustomEvent('projectSelected', {
@@ -317,7 +306,6 @@ const deleteProject = async (project: Project, event: Event) => {
               currentProject.value = null;
               localStorage.removeItem('currentProjectId');
               
-              console.log('No projects left after deletion');
               
               // Dispatch event to clear TodoBoard
               window.dispatchEvent(new CustomEvent('projectSelected', {
@@ -326,7 +314,6 @@ const deleteProject = async (project: Project, event: Event) => {
             }
           }
           
-          console.log(`Project "${project.name}" and ${todoCount} todos deleted successfully`);
           
           // Dispatch event to refresh sidebar project stats and TodoBoard
           window.dispatchEvent(new CustomEvent('todoChanged'));
@@ -340,7 +327,6 @@ const deleteProject = async (project: Project, event: Event) => {
             });
           }
         } catch (error) {
-          console.error('Failed to delete project with todos:', error);
           if ((window as any).$notify) {
             (window as any).$notify({
               type: 'error',
@@ -384,9 +370,6 @@ const deleteProject = async (project: Project, event: Event) => {
             currentProject.value = nextProject;
             localStorage.setItem('currentProjectId', nextProject.id.toString());
             
-            console.log(`Auto-selected next project: ${nextProject.name} (ID: ${nextProject.id})`);
-            console.log('Projects remaining after deletion:', projects.value.map(p => ({ id: p.id, name: p.name })));
-            console.log('Updated localStorage to project ID:', nextProject.id.toString());
             
             // Dispatch event to update TodoBoard
             window.dispatchEvent(new CustomEvent('projectSelected', {
@@ -397,7 +380,6 @@ const deleteProject = async (project: Project, event: Event) => {
             currentProject.value = null;
             localStorage.removeItem('currentProjectId');
             
-            console.log('No projects left after deletion');
             
             // Dispatch event to clear TodoBoard
             window.dispatchEvent(new CustomEvent('projectSelected', {
@@ -406,7 +388,6 @@ const deleteProject = async (project: Project, event: Event) => {
           }
         }
         
-                  console.log(`Project "${project.name}" deleted successfully`);
           
           // Dispatch event to refresh sidebar project stats and TodoBoard
           window.dispatchEvent(new CustomEvent('todoChanged'));
@@ -420,7 +401,6 @@ const deleteProject = async (project: Project, event: Event) => {
             });
           }
         } catch (error) {
-          console.error('Failed to delete project:', error);
           if ((window as any).$notify) {
             (window as any).$notify({
               type: 'error',
@@ -509,7 +489,6 @@ const handleDrop = async (event: DragEvent, dropIndex: number) => {
       });
     }
   } catch (error) {
-    console.error('Failed to update project order:', error);
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',

@@ -105,7 +105,6 @@ const exportData = async () => {
             throw new Error(`Export failed: ${response.status} ${response.statusText}`);
         }
     } catch (error) {
-        console.error('Export error:', error);
         downloadError.value = `Failed to download export: ${error.message}`;
     } finally {
         exportForm.processing = false;

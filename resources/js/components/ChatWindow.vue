@@ -112,7 +112,6 @@ const loadMessages = async () => {
       await nextTick();
       scrollToBottom();
     } else {
-      console.error('Failed to load messages:', response.status, response.statusText);
       if (response.status === 403) {
         if ((window as any).$notify) {
           (window as any).$notify({
@@ -125,7 +124,6 @@ const loadMessages = async () => {
       }
     }
   } catch (error) {
-    console.error('Failed to load messages:', error);
   } finally {
     loading.value = false;
   }
@@ -160,7 +158,6 @@ const sendMessage = async () => {
       
       // Handle specific error cases
       if (response.status === 419) {
-        console.error('CSRF token mismatch - please refresh the page');
         if ((window as any).$notify) {
           (window as any).$notify({
             type: 'error',
@@ -170,7 +167,6 @@ const sendMessage = async () => {
           });
         }
       } else if (response.status === 403) {
-        console.error('Unauthorized - user not in same company');
         if ((window as any).$notify) {
           (window as any).$notify({
             type: 'error',
@@ -180,7 +176,6 @@ const sendMessage = async () => {
           });
         }
       } else {
-        console.error('Failed to send message:', response.status, response.statusText);
         if ((window as any).$notify) {
           (window as any).$notify({
             type: 'error',
@@ -194,7 +189,6 @@ const sendMessage = async () => {
   } catch (error: any) {
     // Restore message on error
     newMessage.value = messageText;
-    console.error('Failed to send message:', error);
     if (error.response?.status === 419) {
       if ((window as any).$notify) {
         (window as any).$notify({

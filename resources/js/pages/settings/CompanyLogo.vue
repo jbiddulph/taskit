@@ -87,7 +87,6 @@ const uploadLogo = async () => {
         });
         
     } catch (error) {
-        console.error('Logo upload failed:', error);
         uploadError.value = 'Failed to upload logo to storage. Please try again.';
     } finally {
         uploading.value = false;

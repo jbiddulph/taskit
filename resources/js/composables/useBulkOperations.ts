@@ -59,7 +59,6 @@ export function useBulkOperations() {
       await operation.action(selectedIds);
       clearSelection();
     } catch (error) {
-      console.error('Bulk operation failed:', error);
       throw error;
     } finally {
       isProcessing.value = false;

@@ -183,12 +183,9 @@ const loadActivities = async () => {
         activities.value = [...activities.value, ...data.data];
       }
       hasMore.value = data.meta.has_more;
-      console.log('ActivityFeed: Activities loaded:', activities.value.length);
     } else {
-      console.error('ActivityFeed: API Error:', response.status, response.statusText);
     }
   } catch (error) {
-    console.error('Failed to load activities:', error);
   } finally {
     loading.value = false;
   }
@@ -209,7 +206,6 @@ const loadActivityTypes = async () => {
       activityTypes.value = data.data;
     }
   } catch (error) {
-    console.error('Failed to load activity types:', error);
   }
 };
 
@@ -280,13 +276,10 @@ let unsubscribeActivity: (() => void) | null = null;
 let activityCheckInterval: NodeJS.Timeout | null = null;
 
 onMounted(async () => {
-  console.log('ActivityFeed: Component mounted');
   await loadActivityTypes();
   
   // Subscribe to real-time activity events (always, not just when visible)
-  console.log('ActivityFeed: Subscribing to real-time events...');
   unsubscribeActivity = realtimeService.onActivity((event) => {
-    console.log('ActivityFeed: Real-time event received:', event);
     if (event.type === 'activity_created') {
       // Check if the new activity matches the current filter
       const shouldInclude = !selectedFilter.value || event.data.type === selectedFilter.value;
@@ -332,7 +325,6 @@ onMounted(async () => {
   // Start periodic activity check as fallback
   activityCheckInterval = setInterval(async () => {
     if (props.visible) {
-      console.log('ActivityFeed: Periodic check for new activities...');
       await loadActivities();
     }
   }, 10000); // Check every 10 seconds
@@ -356,7 +348,6 @@ watch(() => props.visible, async (newVisible) => {
 
 // Watch for real-time updates - fallback mechanism
 watch(() => activities.value.length, (newLength, oldLength) => {
-  console.log('ActivityFeed: Activities count changed from', oldLength, 'to', newLength);
 });
 </script>
 

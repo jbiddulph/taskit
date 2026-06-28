@@ -533,9 +533,7 @@ const saveTitle = async () => {
     editingTitle.value = false;
     editingTitleText.value = '';
     
-    console.log('Todo title updated successfully');
   } catch (error) {
-    console.error('Failed to update todo title:', error);
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -573,7 +571,6 @@ const copyTodoId = async () => {
       });
     }
   } catch (error) {
-    console.error('Failed to copy to clipboard:', error);
     
     // Fallback: try to select text for manual copy
     try {
@@ -589,7 +586,6 @@ const copyTodoId = async () => {
         copyFeedback.value = '';
       }, 2000);
     } catch (fallbackError) {
-      console.error('Fallback copy failed:', fallbackError);
       if ((window as any).$notify) {
         (window as any).$notify({
           type: 'error',

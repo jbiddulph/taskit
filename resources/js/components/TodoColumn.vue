@@ -200,11 +200,9 @@ const canDragTodo = (todo: Todo): boolean => {
 };
 
 const handleDragStart = (event: DragEvent, todo: Todo) => {
-  console.log('Drag start:', todo.title, 'Status:', todo.status, 'Column:', props.status);
   
   // Validate that the todo belongs to the current project
   if (props.currentProjectId && todo.project_id !== props.currentProjectId) {
-    console.log('Cannot drag todo from different project:', todo.project_id, 'vs', props.currentProjectId);
     event.preventDefault();
     return;
   }
@@ -216,12 +214,10 @@ const handleDragStart = (event: DragEvent, todo: Todo) => {
     event.dataTransfer.setData('application/json', JSON.stringify(todo));
     draggedTodo.value = todo;
     isDraggingWithinColumn.value = todo.status === props.status;
-    console.log('Set draggedTodo:', draggedTodo.value?.title, 'within column:', isDraggingWithinColumn.value);
   }
 };
 
 const handleDragEnd = () => {
-  console.log('Drag end in column:', props.status, 'draggedTodo:', draggedTodo.value?.title);
   // Always reset drag state when drag ends
   isDragOver.value = false;
   dropIndicatorIndex.value = null;
@@ -235,7 +231,6 @@ const handleDragEnd = () => {
   
   // Only clear draggedTodo if this is the source column
   if (draggedTodo.value && draggedTodo.value.status === props.status) {
-    console.log('Clearing draggedTodo in source column:', props.status);
     draggedTodo.value = null;
   }
 };
@@ -247,11 +242,9 @@ const handleDragOver = (event: DragEvent) => {
     event.dataTransfer.dropEffect = 'move';
   }
   isDragOver.value = true;
-  console.log('Drag over column:', props.status, 'isDragOver:', isDragOver.value);
 };
 
 const handleDragLeave = (event: DragEvent) => {
-  console.log('Drag leave column:', props.status);
   // Use a timeout to prevent flickering when moving between child elements
   setTimeout(() => {
     // Check if we're still over the drop zone or any of its children
@@ -263,7 +256,6 @@ const handleDragLeave = (event: DragEvent) => {
 };
 
 const handleDrop = (event: DragEvent) => {
-  console.log('Drop event triggered in column:', props.status);
   event.preventDefault();
   event.stopPropagation();
   isDragOver.value = false;
@@ -271,24 +263,18 @@ const handleDrop = (event: DragEvent) => {
   // Get the todo data from the dataTransfer
   const todoId = event.dataTransfer?.getData('text/plain');
   const todoJson = event.dataTransfer?.getData('application/json');
-  console.log('Drop dataTransfer todoId:', todoId, 'todoJson:', todoJson);
   
   if (todoJson) {
     try {
       const todo = JSON.parse(todoJson) as Todo;
-      console.log('Parsed todo from dataTransfer:', todo.title, 'Status:', todo.status);
       
       if (todo.status !== props.status) {
-        console.log('Emitting drop event:', todo.title, '->', props.status);
         emit('drop', todo, props.status);
       } else {
-        console.log('Cannot drop to same status');
       }
     } catch (error) {
-      console.error('Failed to parse todo from dataTransfer:', error);
     }
   } else {
-    console.log('No todo data in dataTransfer');
   }
 };
 
@@ -362,7 +348,6 @@ const handleTodoDrop = (event: DragEvent, index: number) => {
   const targetTodo = props.todos[index];
   
   if (draggedTodo.value.id !== targetTodo.id) {
-    console.log('Reordering todo:', draggedTodo.value.title, dropPosition.value, targetTodo.title);
     emit('reorder', draggedTodo.value, targetTodo, dropPosition.value);
   }
   

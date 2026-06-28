@@ -134,7 +134,6 @@ const uploadLogo = async () => {
         });
         
     } catch (error) {
-        console.error('Logo upload failed:', error);
         uploadError.value = 'Failed to upload logo to storage. Please try again.';
     } finally {
         uploading.value = false;
@@ -188,7 +187,6 @@ const checkApiPermissions = async () => {
         const data = await response.json();
         apiPermissions.value = data;
     } catch (error) {
-        console.error('Error checking API permissions:', error);
         apiPermissions.value = { error: 'Failed to check API permissions' };
     } finally {
         checkingPermissions.value = false;
@@ -227,7 +225,6 @@ const checkSubdomainAvailability = async (subdomain: string) => {
             url: data.url || ''
         };
     } catch (error) {
-        console.error('Failed to check subdomain availability:', error);
         subdomainValidation.value = {
             checking: false,
             available: null,
@@ -267,7 +264,6 @@ const updateCompanyName = () => {
             router.reload();
         },
         onError: (errors) => {
-            console.error('Failed to update company name:', errors);
         }
     });
 };
@@ -278,7 +274,6 @@ const updateCompanyIndustry = () => {
             router.reload();
         },
         onError: (errors) => {
-            console.error('Failed to update company industry:', errors);
         }
     });
 };
@@ -297,7 +292,6 @@ const togglePublicDashboard = () => {
             router.reload();
         },
         onError: (errors) => {
-            console.error('Failed to update public dashboard setting:', errors);
         }
     });
 };

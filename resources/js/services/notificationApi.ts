@@ -41,7 +41,6 @@ class NotificationApiService {
       });
       return response.data;
     } catch (error: any) {
-      console.error(`Notification API ${method} error:`, error);
       throw new Error(error.response?.data?.message || `Failed to ${method.toLowerCase()} notification`);
     }
   }

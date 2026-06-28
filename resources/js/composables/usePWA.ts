@@ -36,13 +36,11 @@ export function usePWA() {
   // Register service worker
   const registerServiceWorker = async () => {
     if (!isSupported.value) {
-      console.log('PWA not supported');
       return;
     }
 
     try {
       const registration = await navigator.serviceWorker.register('/sw.js');
-      console.log('Service Worker registered:', registration);
       
       // Check for updates
       registration.addEventListener('updatefound', () => {
@@ -58,7 +56,6 @@ export function usePWA() {
       });
       
     } catch (error) {
-      console.error('Service Worker registration failed:', error);
     }
   };
 
@@ -78,17 +75,14 @@ export function usePWA() {
       const choiceResult = await installPrompt.value.userChoice;
       
       if (choiceResult.outcome === 'accepted') {
-        console.log('PWA installation accepted');
         isInstalled.value = true;
         localStorage.setItem('pwa-installed', 'true');
       } else {
-        console.log('PWA installation dismissed');
       }
       
       installPrompt.value = null;
       isInstallable.value = false;
     } catch (error) {
-      console.error('PWA installation failed:', error);
     }
   };
 
@@ -100,7 +94,6 @@ export function usePWA() {
   // Request notification permission
   const requestNotificationPermission = async () => {
     if (!('Notification' in window)) {
-      console.log('Notifications not supported');
       return false;
     }
 
@@ -109,7 +102,6 @@ export function usePWA() {
     }
 
     if (Notification.permission === 'denied') {
-      console.log('Notification permission denied');
       return false;
     }
 
@@ -175,7 +167,6 @@ export function usePWA() {
       await Promise.all(
         cacheNames.map(cacheName => caches.delete(cacheName))
       );
-      console.log('Cache cleared');
     }
   };
 
@@ -214,7 +205,6 @@ export function usePWA() {
     
     // Listen for app installed
     window.addEventListener('appinstalled', () => {
-      console.log('PWA was installed');
       isInstalled.value = true;
       localStorage.setItem('pwa-installed', 'true');
     });

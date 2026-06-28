@@ -345,7 +345,6 @@ const loadUsers = async () => {
       }
     }
   } catch (error) {
-    console.error('Failed to load users:', error);
     // Fallback to current user
     if (currentUser) {
       users.value = [{ id: currentUser.id, name: currentUser.name, email: currentUser.email }];
@@ -503,7 +502,6 @@ const removeTag = (tagToRemove: string) => {
 const handleSubmit = async () => {
   try {
     if (!props.currentProject) {
-      console.error('No current project selected');
       return;
     }
     
@@ -558,7 +556,6 @@ const handleSubmit = async () => {
     
     emit('save', todoData);
   } catch (error) {
-    console.error('Failed to submit todo:', error);
   }
 };
 
@@ -585,7 +582,6 @@ const handleCreateTemplate = () => {
   // Close the template selector
   showTemplateSelector.value = false;
   // In a real app, this would open a template creation modal
-  console.log('Create new template');
 };
 
 // TipTap editor used; no extra config here

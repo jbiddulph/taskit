@@ -297,7 +297,6 @@ const closeInviteModal = () => {
 
 const editGuest = (guest: GuestUser) => {
   // TODO: Implement guest editing
-  console.log('Edit guest:', guest);
 };
 
 const revokeGuest = async (guestId: number) => {

@@ -29,15 +29,12 @@ export class TodoWebSocketService {
 
         // Handle connection events
         this.pusher.connection.bind('connected', () => {
-            console.log('Connected to WebSocket');
         });
 
         this.pusher.connection.bind('disconnected', () => {
-            console.log('Disconnected from WebSocket');
         });
 
         this.pusher.connection.bind('error', (error: any) => {
-            console.error('WebSocket connection error:', error);
         });
     }
 

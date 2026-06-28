@@ -206,36 +206,10 @@
             window.VITE_SUPABASE_URL = "{{ env('VITE_SUPABASE_URL') }}";
             window.VITE_SUPABASE_ANON_KEY = "{{ env('VITE_SUPABASE_ANON_KEY') }}";
             window.VITE_MAPBOX_ACCESS_TOKEN = "{{ env('VITE_MAPBOX_ACCESS_TOKEN') }}";
-            
-            // Mobile debugging - log errors to help diagnose issues
-            window.addEventListener('error', function(e) {
-                console.error('JavaScript Error:', e.error, e.filename, e.lineno);
-            });
-            
-            window.addEventListener('unhandledrejection', function(e) {
-                console.error('Unhandled Promise Rejection:', e.reason);
-            });
-            
-            // Log device info for debugging
-            console.log('Device Info:', {
-                userAgent: navigator.userAgent,
-                viewport: {
-                    width: window.innerWidth,
-                    height: window.innerHeight
-                },
-                pixelRatio: window.devicePixelRatio
-            });
-            
-            // Register Service Worker for PWA
+
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('/sw.js')
-                        .then(function(registration) {
-                            console.log('ServiceWorker registration successful');
-                        })
-                        .catch(function(err) {
-                            console.log('ServiceWorker registration failed: ', err);
-                        });
+                    navigator.serviceWorker.register('/sw.js');
                 });
             }
         </script>

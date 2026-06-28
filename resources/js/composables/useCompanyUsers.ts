@@ -32,7 +32,6 @@ export function useCompanyUsers() {
       }
     } catch (err) {
       error.value = 'Failed to load company users';
-      console.error('Failed to load company users:', err);
     } finally {
       loading.value = false;
     }

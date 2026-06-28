@@ -113,7 +113,6 @@ watch(availableUsers, (users) => {
 
 // Handle mentions in comments
 const handleMentions = (mentions: { userId: number; userName: string }[]) => {
-  console.log('Mentions detected:', mentions);
   // In a real app, this would trigger notifications
 };
 
@@ -158,7 +157,6 @@ const load = async () => {
       }, 5000);
     }
   } catch (e) {
-    console.error('Failed to load comments', e);
   } finally {
     loading.value = false;
   }
@@ -192,7 +190,6 @@ const handleAdd = async () => {
     newComment.value = '';
     (window as any).$notify?.({ type: 'success', title: 'Comment Added', message: 'Your comment was added.' });
   } catch (e) {
-    console.error('Failed to add comment', e);
     (window as any).$notify?.({ type: 'error', title: 'Add Failed', message: 'Could not add comment.' });
   } finally {
     adding.value = false;
@@ -236,7 +233,6 @@ const saveEdit = async (c: TodoComment) => {
     editContent.value = '';
     (window as any).$notify?.({ type: 'success', title: 'Comment Updated', message: 'Your comment was updated.' });
   } catch (e) {
-    console.error('Failed to update comment', e);
     (window as any).$notify?.({ type: 'error', title: 'Update Failed', message: 'Could not update comment.' });
   }
 };
@@ -255,7 +251,6 @@ const remove = async (c: TodoComment) => {
     comments.value = comments.value.filter(x => String(x.id) !== String(c.id));
     (window as any).$notify?.({ type: 'success', title: 'Comment Deleted', message: 'Your comment was deleted.' });
   } catch (e) {
-    console.error('Failed to delete comment', e);
     (window as any).$notify?.({ type: 'error', title: 'Delete Failed', message: 'Could not delete comment.' });
   }
 };

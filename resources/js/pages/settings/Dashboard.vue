@@ -44,26 +44,21 @@ const form = useForm({
 // Computed property for checkbox state
 const checkboxChecked = computed(() => {
     const propValue = props.company?.prune_completed_tasks;
-    console.log('CHECKBOX DEBUG: Raw prop value:', propValue, 'Type:', typeof propValue);
     
     // Explicit boolean checks
     if (propValue === true || propValue === 1 || propValue === '1' || propValue === 'true') {
-        console.log('CHECKBOX DEBUG: Setting to TRUE');
         return true;
     }
     
-    console.log('CHECKBOX DEBUG: Setting to FALSE');
     return false;
 });
 
 // Watch for changes in props.company and update form
 watch(() => props.company?.prune_completed_tasks, (newValue) => {
-    console.log('PROPS WATCH: New value:', newValue, 'Type:', typeof newValue);
     
     // Explicit boolean conversion
     const boolValue = newValue === true || newValue === 1 || newValue === '1' || newValue === 'true';
     
-    console.log('PROPS WATCH: Converted to:', boolValue);
     
     // Update the form and local ref
     form.prune_completed_tasks = boolValue;
@@ -72,7 +67,6 @@ watch(() => props.company?.prune_completed_tasks, (newValue) => {
 
 // Watch the local ref and sync changes back to the form
 watch(pruneCompletedTasks, (newValue) => {
-    console.log('REF WATCH: Local ref changed to:', newValue);
     form.prune_completed_tasks = newValue;
 });
 
@@ -148,7 +142,6 @@ const successMessage = computed(() => page.props.flash?.success as string || '')
                                 id="prune_completed_tasks"
                                 :checked="checkboxChecked"
                                 @update:checked="(value) => {
-                                    console.log('CHECKBOX CLICKED:', value);
                                     pruneCompletedTasks.value = value;
                                 }"
                             />

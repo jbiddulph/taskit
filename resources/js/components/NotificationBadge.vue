@@ -176,7 +176,6 @@ const handleRealtimeNotification = (event: any) => {
       // Update unread count
       loadUnreadCount();
     } else {
-      console.log('Chat is open with sender, skipping notification badge update');
     }
   }
 };
@@ -194,15 +193,12 @@ const loadNotifications = async () => {
   try {
     loading.value = true;
     const response = await notificationApi.getNotifications(currentPage.value);
-    console.log('📬 Loaded notifications:', response.data.length);
-    console.log('📬 Notification types:', response.data.map(n => n.type));
     if (currentPage.value === 1) {
       notifications.value = response.data;
     } else {
       notifications.value.push(...response.data);
     }
   } catch (error) {
-    console.error('Failed to load notifications:', error);
   } finally {
     loading.value = false;
   }
@@ -211,10 +207,8 @@ const loadNotifications = async () => {
 const loadUnreadCount = async () => {
   try {
     const response = await notificationApi.getUnreadCount();
-    console.log('🔔 Unread count:', response.count);
     unreadCount.value = response.count;
   } catch (error) {
-    console.error('Failed to load unread count:', error);
   }
 };
 
@@ -235,7 +229,6 @@ const markAsRead = async (notificationId: number) => {
     }
     await loadUnreadCount();
   } catch (error) {
-    console.error('Failed to mark notification as read:', error);
   }
 };
 
@@ -248,7 +241,6 @@ const markAllAsRead = async () => {
     });
     unreadCount.value = 0;
   } catch (error) {
-    console.error('Failed to mark all notifications as read:', error);
   }
 };
 
@@ -258,7 +250,6 @@ const deleteNotification = async (notificationId: number) => {
     notifications.value = notifications.value.filter(n => n.id !== notificationId);
     await loadUnreadCount();
   } catch (error) {
-    console.error('Failed to delete notification:', error);
   }
 };
 
@@ -315,7 +306,6 @@ const handleNotificationClick = async (notification: Notification) => {
       // Close notification dropdown
       showNotifications.value = false;
     } catch (error) {
-      console.error('Failed to open chat:', error);
     }
   }
 };
