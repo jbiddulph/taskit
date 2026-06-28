@@ -1718,12 +1718,13 @@ const saveTodo = async (todo: Todo) => {
     
     // Dispatch event to refresh sidebar project stats
     window.dispatchEvent(new CustomEvent('todoChanged'));
-  } catch {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to save todo. Please try again.';
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
         title: 'Save Failed',
-        message: 'Failed to save todo. Please try again.'
+        message,
       });
     }
   }

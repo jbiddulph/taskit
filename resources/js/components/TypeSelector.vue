@@ -8,7 +8,7 @@
         class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-left flex items-center justify-between"
       >
         <div class="flex items-center gap-2 min-w-0">
-          <Icon v-if="presetType" :name="displayIcon" class="w-4 h-4 shrink-0" />
+          <Icon v-if="displayType" :name="displayIcon" class="w-4 h-4 shrink-0" />
           <span class="truncate">{{ displayLabel || t('todos.select_type') }}</span>
         </div>
         <Icon name="ChevronDown" class="w-4 h-4 text-gray-400 shrink-0" />
@@ -23,7 +23,7 @@
           <button
             type="button"
             @mousedown.prevent
-            @click.stop="selectType('')"
+            @click.stop="selectPreset('')"
             class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
           >
             <span class="text-gray-400">{{ t('todos.select_type') }}</span>
@@ -33,7 +33,7 @@
             :key="type.value"
             type="button"
             @mousedown.prevent
-            @click.stop="selectType(type.value)"
+            @click.stop="selectPreset(type.value)"
             class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
           >
             <Icon :name="type.icon" class="w-4 h-4" />
@@ -43,20 +43,18 @@
       </div>
     </div>
 
-    <div v-if="showOtherInput">
+    <div v-if="otherMode">
       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
         {{ t('todos.type_other_label') }}
       </label>
       <input
         ref="otherInput"
-        v-model="customOtherType"
+        v-model="otherText"
         type="text"
         required
         maxlength="50"
         class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
         :placeholder="t('todos.type_other_placeholder')"
-        @input="emitCustomType"
-        @blur="emitCustomType"
       />
     </div>
   </div>
@@ -71,127 +69,96 @@ import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 const { typeOptions, getTypeLabel, getTypeIcon } = useTodoTypes();
 
-interface Props {
-  modelValue?: string;
-}
-
-const props = defineProps<Props>();
-const emit = defineEmits<{
-  'update:modelValue': [value: string];
-}>();
+const modelValue = defineModel<string>({ default: '' });
 
 const rootEl = ref<HTMLElement | null>(null);
 const isOpen = ref(false);
-const presetType = ref('');
-const customOtherType = ref('');
 const otherInput = ref<HTMLInputElement | null>(null);
-const pendingOtherSelection = ref(false);
+const otherMode = ref(false);
 
 const knownTypeValues = computed(() => typeOptions.value.map((option) => option.value));
 
-const showOtherInput = computed(() => presetType.value === 'Other');
+const isKnownPreset = (value: string) =>
+  knownTypeValues.value.includes(value) && value !== 'Other';
+
+const syncUiFromModel = () => {
+  const value = (modelValue.value ?? '').trim();
+
+  if (!value) {
+    otherMode.value = false;
+    return;
+  }
+
+  if (isKnownPreset(value)) {
+    otherMode.value = false;
+    return;
+  }
+
+  otherMode.value = true;
+};
+
+syncUiFromModel();
+
+const displayType = computed(() => (modelValue.value ?? '').trim() || (otherMode.value ? 'Other' : ''));
 
 const displayLabel = computed(() => {
-  if (!presetType.value) {
-    return '';
+  const value = (modelValue.value ?? '').trim();
+
+  if (otherMode.value) {
+    return value || t('todos.type_other');
   }
 
-  if (presetType.value === 'Other') {
-    return customOtherType.value.trim() || t('todos.type_other');
+  if (value) {
+    return getTypeLabel(value);
   }
 
-  return getTypeLabel(presetType.value);
+  return '';
 });
 
 const displayIcon = computed(() => {
-  if (presetType.value === 'Other') {
-    return 'CircleHelp';
-  }
-
-  return presetType.value ? getTypeIcon(presetType.value) : 'Circle';
-});
-
-const applyModelValue = (value?: string) => {
-  if (!value) {
-    if (pendingOtherSelection.value) {
-      presetType.value = 'Other';
-      return;
+  if (otherMode.value || !isKnownPreset(modelValue.value ?? '')) {
+    if ((modelValue.value ?? '').trim() && !otherMode.value) {
+      return 'CircleHelp';
     }
 
-    presetType.value = '';
-    customOtherType.value = '';
-    return;
+    if (otherMode.value) {
+      return 'CircleHelp';
+    }
   }
 
-  if (knownTypeValues.value.includes(value) && value !== 'Other') {
-    pendingOtherSelection.value = false;
-    presetType.value = value;
-    customOtherType.value = '';
-    return;
-  }
-
-  pendingOtherSelection.value = false;
-  presetType.value = 'Other';
-  customOtherType.value = value === 'Other' ? '' : value;
-};
-
-watch(() => props.modelValue, applyModelValue, { immediate: true });
-
-watch(customOtherType, () => {
-  if (presetType.value === 'Other') {
-    emitCustomType();
-  }
+  return displayType.value ? getTypeIcon(displayType.value) : 'Circle';
 });
 
-const getResolvedType = (): string => {
-  if (presetType.value === 'Other') {
-    return customOtherType.value.trim();
-  }
-
-  return (presetType.value || props.modelValue || '').trim();
-};
-
-defineExpose({
-  getResolvedType,
+const otherText = computed({
+  get: () => modelValue.value ?? '',
+  set: (value: string) => {
+    modelValue.value = value;
+  },
 });
 
-const emitCustomType = () => {
-  if (presetType.value === 'Other') {
-    const trimmed = customOtherType.value.trim();
-    pendingOtherSelection.value = trimmed.length === 0;
-    emit('update:modelValue', trimmed);
-  }
-};
-
-const toggleDropdown = () => {
-  isOpen.value = !isOpen.value;
-};
-
-const selectType = async (type: string) => {
+const selectPreset = async (type: string) => {
   isOpen.value = false;
 
   if (!type) {
-    pendingOtherSelection.value = false;
-    presetType.value = '';
-    customOtherType.value = '';
-    emit('update:modelValue', '');
+    otherMode.value = false;
+    modelValue.value = '';
     return;
   }
 
   if (type === 'Other') {
-    pendingOtherSelection.value = true;
-    presetType.value = 'Other';
-    customOtherType.value = '';
-    emit('update:modelValue', '');
+    otherMode.value = true;
+    modelValue.value = '';
     await nextTick();
     otherInput.value?.focus();
     return;
   }
 
-  pendingOtherSelection.value = false;
-  presetType.value = type;
-  customOtherType.value = '';
-  emit('update:modelValue', type);
+  otherMode.value = false;
+  modelValue.value = type;
+};
+
+const toggleDropdown = () => {
+  isOpen.value = !isOpen.value;
 };
 
 const handleClickOutside = (event: Event) => {
@@ -203,6 +170,11 @@ const handleClickOutside = (event: Event) => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
+  syncUiFromModel();
+});
+
+watch(modelValue, () => {
+  syncUiFromModel();
 });
 
 onUnmounted(() => {

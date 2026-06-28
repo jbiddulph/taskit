@@ -134,6 +134,13 @@ class TodoApiService {
             const response = await axios(config);
             return response.data;
         } catch (error: any) {
+            const validationErrors = error.response?.data?.errors;
+            if (validationErrors) {
+                const firstError = Object.values(validationErrors).flat()[0];
+                if (typeof firstError === 'string') {
+                    throw new Error(firstError);
+                }
+            }
             if (error.response?.data?.message) {
                 throw new Error(error.response.data.message);
             }
@@ -197,10 +204,29 @@ class TodoApiService {
 
     // Update a todo
     async updateTodo(id: number, todoData: Partial<Todo>): Promise<Todo> {
+        const payload = {
+            title: todoData.title,
+            description: todoData.description,
+            priority: todoData.priority,
+            type: todoData.type,
+            tags: todoData.tags,
+            assignee: todoData.assignee,
+            due_date: todoData.due_date,
+            story_points: todoData.story_points,
+            status: todoData.status,
+            location_name: todoData.location_name,
+            location_address: todoData.location_address,
+            latitude: todoData.latitude,
+            longitude: todoData.longitude,
+            card_icon: todoData.card_icon,
+            outline_color: todoData.outline_color,
+            project_group_id: todoData.project_group_id,
+        };
+
         const response = await this.request<ApiResponse<Todo>>({
             method: 'PUT',
             url: `/todos/${id}`,
-            data: todoData,
+            data: payload,
         });
         return response.data;
     }

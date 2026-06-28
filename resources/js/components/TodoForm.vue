@@ -115,7 +115,7 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {{t('todos.type')}}
               </label>
-              <TypeSelector ref="typeSelectorRef" v-model="formType" />
+              <TypeSelector v-model="form.type" />
             </div>
           </div>
 
@@ -371,15 +371,6 @@ const form = ref({
   outline_color: null as string | null,
 });
 
-const typeSelectorRef = ref<InstanceType<typeof TypeSelector> | null>(null);
-
-const formType = computed({
-  get: () => form.value.type ?? '',
-  set: (value: string) => {
-    form.value.type = value;
-  },
-});
-
 const useCustomOutlineColor = ref(false);
 
 const defaultProjectColor = computed(() => props.currentProject?.color || '#3b82f6');
@@ -460,7 +451,7 @@ onMounted(() => {
 
 watch(() => props.todo, (newTodo) => {
   if (newTodo) {
-    form.value = { ...newTodo };
+    form.value = { ...newTodo, type: newTodo.type ?? '' };
     form.value.email_assignee = false;
     useCustomOutlineColor.value = !!newTodo.outline_color;
     form.value.card_icon = newTodo.card_icon ?? null;
@@ -512,16 +503,19 @@ const handleSubmit = async () => {
       return;
     }
     
-    const resolvedType = typeSelectorRef.value?.getResolvedType?.() ?? form.value.type ?? '';
+    const todoType = (form.value.type ?? '').trim();
 
     const todoData: any = {
-      ...form.value,
-      project_id: props.currentProject.id,
-      // Normalize optional fields to null instead of empty strings for backend validation
-      type: resolvedType.trim() ? resolvedType.trim() : null,
+      title: form.value.title,
+      description: form.value.description,
+      priority: form.value.priority,
+      type: todoType.length > 0 ? todoType : null,
+      tags: form.value.tags,
       assignee: form.value.assignee ? form.value.assignee : null,
       due_date: form.value.due_date ? form.value.due_date : null,
       story_points: form.value.story_points ? form.value.story_points : null,
+      status: form.value.status,
+      project_id: props.currentProject.id,
       location_name: location.value.location_name,
       location_address: location.value.location_address,
       latitude: location.value.latitude,
@@ -559,7 +553,6 @@ const handleSubmit = async () => {
     }
     
     emit('save', todoData);
-    resetForm();
   } catch (error) {
     console.error('Failed to submit todo:', error);
   }

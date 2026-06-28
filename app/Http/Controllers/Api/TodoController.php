@@ -424,6 +424,10 @@ class TodoController extends Controller
 
         $validated = $validator->validated();
 
+        if ($request->exists('type')) {
+            $validated['type'] = $request->input('type');
+        }
+
         // Store old assignee before updating
         $oldAssignee = $todo->assignee;
 
