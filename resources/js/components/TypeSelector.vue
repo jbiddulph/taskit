@@ -56,6 +56,7 @@
         class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
         :placeholder="t('todos.type_other_placeholder')"
         @input="emitCustomType"
+        @blur="emitCustomType"
       />
     </div>
   </div>
@@ -135,6 +136,24 @@ const applyModelValue = (value?: string) => {
 };
 
 watch(() => props.modelValue, applyModelValue, { immediate: true });
+
+watch(customOtherType, () => {
+  if (presetType.value === 'Other') {
+    emitCustomType();
+  }
+});
+
+const getResolvedType = (): string => {
+  if (presetType.value === 'Other') {
+    return customOtherType.value.trim();
+  }
+
+  return (presetType.value || props.modelValue || '').trim();
+};
+
+defineExpose({
+  getResolvedType,
+});
 
 const emitCustomType = () => {
   if (presetType.value === 'Other') {

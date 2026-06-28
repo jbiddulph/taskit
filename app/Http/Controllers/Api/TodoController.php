@@ -422,6 +422,8 @@ class TodoController extends Controller
             ], 422);
         }
 
+        $validated = $validator->validated();
+
         // Store old assignee before updating
         $oldAssignee = $todo->assignee;
 
@@ -440,12 +442,7 @@ class TodoController extends Controller
             }
         }
 
-        $todo->update($request->only([
-            'title', 'description', 'priority', 'type', 'card_icon', 'outline_color', 'tags',
-            'assignee', 'due_date', 'story_points', 'status',
-            'location_name', 'location_address', 'latitude', 'longitude',
-            'project_group_id',
-        ]));
+        $todo->update($validated);
 
         $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
 

@@ -115,7 +115,7 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {{t('todos.type')}}
               </label>
-              <TypeSelector v-model="form.type" />
+              <TypeSelector ref="typeSelectorRef" v-model="formType" />
             </div>
           </div>
 
@@ -371,6 +371,15 @@ const form = ref({
   outline_color: null as string | null,
 });
 
+const typeSelectorRef = ref<InstanceType<typeof TypeSelector> | null>(null);
+
+const formType = computed({
+  get: () => form.value.type ?? '',
+  set: (value: string) => {
+    form.value.type = value;
+  },
+});
+
 const useCustomOutlineColor = ref(false);
 
 const defaultProjectColor = computed(() => props.currentProject?.color || '#3b82f6');
@@ -503,11 +512,13 @@ const handleSubmit = async () => {
       return;
     }
     
+    const resolvedType = typeSelectorRef.value?.getResolvedType?.() ?? form.value.type ?? '';
+
     const todoData: any = {
       ...form.value,
       project_id: props.currentProject.id,
       // Normalize optional fields to null instead of empty strings for backend validation
-      type: form.value.type ? form.value.type : null,
+      type: resolvedType.trim() ? resolvedType.trim() : null,
       assignee: form.value.assignee ? form.value.assignee : null,
       due_date: form.value.due_date ? form.value.due_date : null,
       story_points: form.value.story_points ? form.value.story_points : null,
