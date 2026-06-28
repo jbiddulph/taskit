@@ -3,6 +3,7 @@
     <div class="relative">
       <button
         type="button"
+        @mousedown.prevent
         @click.stop="toggleDropdown"
         class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-left flex items-center justify-between"
       >
@@ -16,11 +17,12 @@
       <div
         v-if="isOpen"
         class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-56 overflow-y-auto"
-        @click.stop
+        @mousedown.prevent
       >
         <div class="py-1">
           <button
             type="button"
+            @mousedown.prevent
             @click.stop="selectType('')"
             class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
           >
@@ -30,6 +32,7 @@
             v-for="type in typeOptions"
             :key="type.value"
             type="button"
+            @mousedown.prevent
             @click.stop="selectType(type.value)"
             class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
           >
@@ -81,6 +84,7 @@ const isOpen = ref(false);
 const presetType = ref('');
 const customOtherType = ref('');
 const otherInput = ref<HTMLInputElement | null>(null);
+const pendingOtherSelection = ref(false);
 
 const knownTypeValues = computed(() => typeOptions.value.map((option) => option.value));
 
@@ -106,10 +110,10 @@ const displayIcon = computed(() => {
   return presetType.value ? getTypeIcon(presetType.value) : 'Circle';
 });
 
-const syncFromModelValue = (value?: string) => {
+const applyModelValue = (value?: string) => {
   if (!value) {
-    // User may have just picked Other — keep the text box open until they type.
-    if (presetType.value === 'Other') {
+    if (pendingOtherSelection.value) {
+      presetType.value = 'Other';
       return;
     }
 
@@ -119,22 +123,24 @@ const syncFromModelValue = (value?: string) => {
   }
 
   if (knownTypeValues.value.includes(value) && value !== 'Other') {
+    pendingOtherSelection.value = false;
     presetType.value = value;
     customOtherType.value = '';
     return;
   }
 
+  pendingOtherSelection.value = false;
   presetType.value = 'Other';
   customOtherType.value = value === 'Other' ? '' : value;
 };
 
-watch(() => props.modelValue, syncFromModelValue, { immediate: true });
-
-watch(typeOptions, () => syncFromModelValue(props.modelValue));
+watch(() => props.modelValue, applyModelValue, { immediate: true });
 
 const emitCustomType = () => {
   if (presetType.value === 'Other') {
-    emit('update:modelValue', customOtherType.value.trim());
+    const trimmed = customOtherType.value.trim();
+    pendingOtherSelection.value = trimmed.length === 0;
+    emit('update:modelValue', trimmed);
   }
 };
 
@@ -146,20 +152,25 @@ const selectType = async (type: string) => {
   isOpen.value = false;
 
   if (!type) {
+    pendingOtherSelection.value = false;
     presetType.value = '';
     customOtherType.value = '';
     emit('update:modelValue', '');
     return;
   }
 
-  presetType.value = type;
-
   if (type === 'Other') {
+    pendingOtherSelection.value = true;
+    presetType.value = 'Other';
+    customOtherType.value = '';
+    emit('update:modelValue', '');
     await nextTick();
     otherInput.value?.focus();
     return;
   }
 
+  pendingOtherSelection.value = false;
+  presetType.value = type;
   customOtherType.value = '';
   emit('update:modelValue', type);
 };

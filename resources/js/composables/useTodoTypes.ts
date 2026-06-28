@@ -54,3 +54,49 @@ export function useTodoTypes() {
         getTypeIcon,
     };
 }
+
+export function mergeTypeOptionsWithCustom(
+    baseOptions: TodoTypeOption[],
+    customTypeValues: Iterable<string>,
+): TodoTypeOption[] {
+    const known = new Set(baseOptions.map((option) => option.value));
+    const merged = [...baseOptions];
+
+    for (const type of customTypeValues) {
+        const trimmed = type.trim();
+        if (!trimmed || trimmed === 'Other' || known.has(trimmed)) {
+            continue;
+        }
+
+        merged.push({
+            value: trimmed,
+            icon: 'CircleHelp',
+            label: trimmed,
+        });
+        known.add(trimmed);
+    }
+
+    return merged.sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
+}
+
+export function collectCustomTypesFromTodos(
+    todos: Array<{ type?: string | null; subtasks?: Array<{ type?: string | null }> | null }>,
+    knownTypes: Iterable<string>,
+): string[] {
+    const known = new Set(knownTypes);
+    const custom = new Set<string>();
+
+    const consider = (type?: string | null) => {
+        const trimmed = type?.trim();
+        if (trimmed && trimmed !== 'Other' && !known.has(trimmed)) {
+            custom.add(trimmed);
+        }
+    };
+
+    for (const todo of todos) {
+        consider(todo.type);
+        todo.subtasks?.forEach((subtask) => consider(subtask.type));
+    }
+
+    return [...custom].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+}

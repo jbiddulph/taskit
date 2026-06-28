@@ -412,7 +412,7 @@
           <!-- Type Filter -->
           <div>
             <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('dashboard.type_filter') }}</label>
-            <TypeFilter v-model="typeFilter" />
+            <TypeFilter v-model="typeFilter" :options="boardTypeFilterOptions" />
           </div>
           
           <!-- Assignee Filter -->
@@ -1041,6 +1041,11 @@ import { deleteImagesInHtml } from '@/services/supabaseClient';
 import { useAnalytics } from '../composables/useAnalytics';
 import { useKeyboardShortcuts } from '../composables/useKeyboardShortcuts';
 import { useBulkOperations } from '../composables/useBulkOperations';
+import {
+  useTodoTypes,
+  mergeTypeOptionsWithCustom,
+  collectCustomTypesFromTodos,
+} from '../composables/useTodoTypes';
 import { useClientStore } from '../composables/useClientStore';
 import { useI18n } from 'vue-i18n';
 import { usePage } from '@inertiajs/vue3';
@@ -1268,6 +1273,19 @@ const projectDescriptionInput = ref<HTMLInputElement | null>(null);
 const searchQuery = ref('');
 const priorityFilter = ref('');
 const typeFilter = ref('');
+
+const { typeOptions } = useTodoTypes();
+
+const boardTypeFilterOptions = computed(() =>
+  mergeTypeOptionsWithCustom(
+    typeOptions.value,
+    collectCustomTypesFromTodos(
+      todosState.value,
+      typeOptions.value.map((option) => option.value),
+    ),
+  ),
+);
+
 const assigneeFilter = ref('');
 const quickFilter = ref<QuickFilter>('');
 
