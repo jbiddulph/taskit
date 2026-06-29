@@ -12,6 +12,10 @@ use App\Support\Industries;
 
 class ComplianceTaskGeneratorService
 {
+    public function __construct(
+        protected TodoWebSocketService $webSocketService,
+    ) {}
+
     public function generateForCompany(Company $company): int
     {
         $created = 0;
@@ -96,6 +100,8 @@ class ComplianceTaskGeneratorService
             'longitude' => $object->longitude,
             'status' => 'todo',
         ]);
+
+        $this->webSocketService->todoCreated($todo);
 
         return (bool) $todo->id;
     }

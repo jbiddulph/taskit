@@ -1509,22 +1509,29 @@ const filteredProjects = computed(() => {
 
 // Methods
 const editTodo = async (todo: Todo) => {
-  // If marked as newly assigned, clear the badge by calling the detail API (which marks seen)
   try {
+    const fresh = await todoApi.getTodo(todo.id);
     if (todo.is_new_assigned) {
-      await todoApi.getTodo(todo.id);
-      // Optimistically clear flag locally
       const idx = todosState.value.findIndex(t => t.id === todo.id);
       if (idx !== -1) todosState.value[idx].is_new_assigned = false;
     }
-  } catch {}
-  editingTodo.value = { ...todo };
-  showForm.value = true;
+    editingTodo.value = { ...fresh };
+    showForm.value = true;
+  } catch {
+    removeTodoFromState(todo.id);
+    await loadTodos();
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: 'Task unavailable',
+        message: 'This task could not be loaded. The board has been refreshed.',
+      });
+    }
+  }
 };
 
-const handleEditTodoFromCalendar = (todo: Todo) => {
-  editingTodo.value = { ...todo };
-  showForm.value = true;
+const handleEditTodoFromCalendar = async (todo: Todo) => {
+  await editTodo(todo);
 };
 
 const handleMapTodoUpdated = (todo: Todo) => {
@@ -1739,6 +1746,12 @@ const saveTodo = async (todo: Todo) => {
     window.dispatchEvent(new CustomEvent('todoChanged'));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to save todo. Please try again.';
+    if (message.toLowerCase().includes('not found') || message.toLowerCase().includes('no query results')) {
+      if (editingTodo.value?.id) {
+        removeTodoFromState(editingTodo.value.id);
+      }
+      await loadTodos();
+    }
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -3410,15 +3423,21 @@ onMounted(async () => {
   unsubscribeFromTodos = realtimeService.onTodo(async (event) => {
     
     switch (event.type) {
-      case 'todo_created':
-        // Add new todo to the list if it belongs to current project
+      case 'todo_created': {
         const newTodo = event.data;
-        
-        if (!currentProject.value || newTodo.project_id === currentProject.value.id) {
+
+        if (!currentProject.value || newTodo.project_id !== currentProject.value.id) {
+          break;
+        }
+
+        try {
+          await todoApi.getTodo(newTodo.id);
           ingestCreatedTodo(newTodo);
-        } else {
+        } catch {
+          // Ignore Supabase events for todos that are not in the Laravel database.
         }
         break;
+      }
         
       case 'todo_updated':
         // Update existing todo in the list
@@ -3566,8 +3585,7 @@ onMounted(async () => {
   // Listen for project changes (like deletion) to refresh project list
   window.addEventListener('todoChanged', async () => {
     await loadProjects();
-    
-    // Check if current project still exists
+
     if (currentProject.value) {
       const projectStillExists = projectsState.value.find(p => p.id === currentProject.value!.id);
       if (!projectStillExists) {
@@ -3575,8 +3593,7 @@ onMounted(async () => {
         selectedProjectId.value = '';
         localStorage.removeItem('currentProjectId');
         todosState.value = [];
-        
-        // Auto-select first available project if any
+
         if (projectsState.value.length > 0) {
           const firstProject = projectsState.value[0];
           currentProject.value = firstProject;
@@ -3584,6 +3601,8 @@ onMounted(async () => {
           localStorage.setItem('currentProjectId', firstProject.id.toString());
           await loadTodos();
         }
+      } else {
+        await loadTodos();
       }
     }
   });

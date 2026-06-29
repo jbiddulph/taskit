@@ -254,7 +254,7 @@
         </form>
 
         <!-- Comments (only when editing) -->
-        <TodoComments v-if="isEditing && form.id" :todo-id="Number(form.id)" />
+        <TodoComments v-if="isEditing && props.todo?.id" :todo-id="Number(props.todo.id)" />
       </div>
     </div>
 
