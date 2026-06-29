@@ -103,6 +103,9 @@ class ComplianceTaskGeneratorService
 
         $this->webSocketService->todoCreated($todo);
 
+        CacheService::invalidateUserCaches($owner->id, $requirement->company_id);
+        CacheService::invalidateProjectCaches($project->id, $requirement->company_id);
+
         return (bool) $todo->id;
     }
 

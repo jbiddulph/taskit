@@ -1509,29 +1509,30 @@ const filteredProjects = computed(() => {
 
 // Methods
 const editTodo = async (todo: Todo) => {
+  editingTodo.value = { ...todo };
+  showForm.value = true;
+
   try {
     const fresh = await todoApi.getTodo(todo.id);
+    editingTodo.value = { ...fresh };
     if (todo.is_new_assigned) {
       const idx = todosState.value.findIndex(t => t.id === todo.id);
       if (idx !== -1) todosState.value[idx].is_new_assigned = false;
     }
-    editingTodo.value = { ...fresh };
-    showForm.value = true;
   } catch {
-    removeTodoFromState(todo.id);
-    await loadTodos();
     if ((window as any).$notify) {
       (window as any).$notify({
-        type: 'error',
-        title: 'Task unavailable',
-        message: 'This task could not be loaded. The board has been refreshed.',
+        type: 'warning',
+        title: 'Could not refresh task',
+        message: 'Showing the local copy. If save fails, refresh the board and try again.',
       });
     }
   }
 };
 
-const handleEditTodoFromCalendar = async (todo: Todo) => {
-  await editTodo(todo);
+const handleEditTodoFromCalendar = (todo: Todo) => {
+  editingTodo.value = { ...todo };
+  showForm.value = true;
 };
 
 const handleMapTodoUpdated = (todo: Todo) => {
@@ -3426,15 +3427,8 @@ onMounted(async () => {
       case 'todo_created': {
         const newTodo = event.data;
 
-        if (!currentProject.value || newTodo.project_id !== currentProject.value.id) {
-          break;
-        }
-
-        try {
-          await todoApi.getTodo(newTodo.id);
+        if (currentProject.value && newTodo.project_id === currentProject.value.id) {
           ingestCreatedTodo(newTodo);
-        } catch {
-          // Ignore Supabase events for todos that are not in the Laravel database.
         }
         break;
       }

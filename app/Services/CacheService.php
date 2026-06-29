@@ -253,23 +253,36 @@ class CacheService
     /**
      * Delete cache by pattern (Redis only)
      */
-    private static function deleteByPattern(string $pattern)
+    private static function deleteByPattern(string $pattern): void
     {
         try {
-            if (config('cache.default') === 'redis') {
-                $keys = Redis::keys($pattern);
-                if (!empty($keys)) {
-                    Redis::del($keys);
-                }
-            } else {
-                // For other cache drivers, we can't use pattern matching
-                // This is a limitation of file/database cache drivers
-                Log::warning('Pattern-based cache invalidation not supported for current cache driver');
+            if (config('cache.default') !== 'redis') {
+                return;
             }
+
+            $store = Cache::getStore();
+            if (! method_exists($store, 'connection')) {
+                return;
+            }
+
+            $connection = $store->connection();
+            $prefix = method_exists($store, 'getPrefix') ? $store->getPrefix() : '';
+            $matchPattern = $prefix.$pattern;
+            $cursor = '0';
+
+            do {
+                $result = $connection->scan($cursor, ['match' => $matchPattern, 'count' => 100]);
+                $cursor = is_array($result) ? (string) ($result[0] ?? '0') : '0';
+                $keys = is_array($result) ? ($result[1] ?? []) : [];
+
+                if (! empty($keys)) {
+                    $connection->del(...$keys);
+                }
+            } while ($cursor !== '0');
         } catch (\Exception $e) {
             Log::error('Failed to delete cache by pattern', [
                 'pattern' => $pattern,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }

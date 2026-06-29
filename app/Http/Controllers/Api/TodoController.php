@@ -59,8 +59,8 @@ class TodoController extends Controller
             'per_page' => $request->get('per_page', 20)
         ];
 
-        // Cache user todos with proper invalidation support
-        $todos = CacheService::cacheUserTodos($user->id, $filters, function () use ($user, $request) {
+        // Cache user todos (bypass with ?fresh=1 when the board needs a live DB read)
+        $loadTodos = function () use ($user, $request) {
             if ($user->company_id) {
                 // Show all todos from the same company
                 $query = Todo::forCompany($user->company_id)
@@ -163,7 +163,11 @@ class TodoController extends Controller
             $explicitSubtasks = $subtasksQuery->get();
 
             return $parents->concat($explicitSubtasks);
-        });
+        };
+
+        $todos = $request->boolean('fresh')
+            ? $loadTodos()
+            : CacheService::cacheUserTodos($user->id, $filters, $loadTodos);
 
         // Determine which todos are newly assigned to the current user (and not created by them)
         // Use Postgres JSON extraction to safely pluck todo IDs from notification data

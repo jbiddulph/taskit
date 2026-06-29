@@ -165,6 +165,7 @@ class TodoApiService {
                 params.append(key, value.toString());
             }
         });
+        params.append('fresh', '1');
 
         return this.request<TodoListResponse>({
             method: 'GET',

@@ -74,6 +74,11 @@ class InspectionFollowUpTaskService
             $created[] = $todo;
         }
 
+        if ($created !== []) {
+            CacheService::invalidateUserCaches($owner->id, $inspection->company_id);
+            CacheService::invalidateProjectCaches($project->id, $inspection->company_id);
+        }
+
         return $created;
     }
 
