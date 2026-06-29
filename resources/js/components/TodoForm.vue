@@ -85,15 +85,7 @@
           <!-- Advanced Tab Content -->
           <template v-if="!isEditing ? activeTab === 'advanced' : true">
 
-          <!-- Project (Read-only) - Hidden for now -->
-          <!-- <div v-if="currentProject">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Project
-            </label>
-            <div class="px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-gray-100">
-              {{ currentProject.key }} - {{ currentProject.name }}
-            </div>
-          </div> -->
+          <OperationsTips v-if="activeTab === 'advanced' || isEditing" context="task_form" class="mb-4" />
 
           <!-- Priority and Type -->
           <div class="grid grid-cols-2 gap-4">
@@ -156,6 +148,8 @@
               />
             </div>
           </div>
+
+          <SiteSelector v-model="operationalObjectId" @selected="onSiteSelected" />
 
           <LocationPicker v-model="location" />
 
@@ -285,6 +279,9 @@ import { usePage } from '@inertiajs/vue3';
 import Icon from '@/components/Icon.vue';
 import TodoComments from '@/components/TodoComments.vue';
 import LocationPicker, { type LocationValue } from '@/components/LocationPicker.vue';
+import SiteSelector from '@/components/SiteSelector.vue';
+import OperationsTips from '@/components/OperationsTips.vue';
+import { type OperationalSite } from '@/services/operationalSiteApi';
 import { type Project } from '@/services/todoApi';
 import type { Todo } from '@/services/todoApi';
 // import { uploadImageToTaskitBucket } from '@/services/supabaseClient';
@@ -389,6 +386,21 @@ const resetOutlineColor = () => {
   useCustomOutlineColor.value = false;
 };
 
+const operationalObjectId = ref<number | null>(null);
+
+const onSiteSelected = (site: OperationalSite | null) => {
+  if (!site) {
+    return;
+  }
+
+  location.value = {
+    location_name: site.name,
+    location_address: site.full_address || null,
+    latitude: site.latitude ?? null,
+    longitude: site.longitude ?? null,
+  };
+};
+
 const location = ref<LocationValue>({
   location_name: null,
   location_address: null,
@@ -444,6 +456,7 @@ const resetForm = () => {
     latitude: null,
     longitude: null,
   };
+  operationalObjectId.value = null;
 };
 
 // Initialize form when editing
@@ -475,6 +488,7 @@ watch(() => props.todo, (newTodo) => {
       latitude: newTodo.latitude ?? null,
       longitude: newTodo.longitude ?? null,
     };
+    operationalObjectId.value = newTodo.operational_object_id ?? null;
   } else {
     resetForm();
     // Auto-assign current user on create
@@ -522,6 +536,7 @@ const handleSubmit = async () => {
       location_address: location.value.location_address,
       latitude: location.value.latitude,
       longitude: location.value.longitude,
+      operational_object_id: operationalObjectId.value,
       card_icon: form.value.card_icon || null,
       outline_color: useCustomOutlineColor.value ? form.value.outline_color : null,
     };

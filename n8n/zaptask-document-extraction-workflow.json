@@ -1,0 +1,326 @@
+{
+  "name": "ZapTask – Document Extraction",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ZapTask certificate / document extraction\n\n### How it works (synchronous)\n\n1. **ZapTask** POSTs the uploaded file (multipart field `file`) + metadata\n2. This workflow extracts certificate fields with **OpenAI**\n3. **Respond to Webhook** returns JSON to ZapTask (waits up to 120s)\n4. User reviews extraction in ZapTask → **Apply to site**\n\n### ZapTask `.env`\n\n```\nN8N_DOCUMENT_EXTRACTION_WEBHOOK_URL=https://YOUR-N8N/webhook/document-extraction\nN8N_WEBHOOK_SECRET=same-as-below-if-using-async-fallback\n```\n\nUse the **Production** webhook URL after activating this workflow.\n\n### OpenAI credential\n\nReplace `REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID` on both OpenAI nodes.\n\n### Response shape (required)\n\n```json\n{\n  \"extracted_data\": {\n    \"document_type\": \"gas_safety|epc|electrical|pat_testing|fire_alarm|other\",\n    \"label\": \"Gas Safety Certificate\",\n    \"certificate_number\": \"...\",\n    \"expiry_date\": \"YYYY-MM-DD\",\n    \"issue_date\": \"YYYY-MM-DD\",\n    \"engineer_name\": \"...\",\n    \"address\": \"...\"\n  },\n  \"summary\": \"One sentence summary\"\n}\n```\n\n### Optional async fallback\n\nIf you prefer fire-and-forget, add an **HTTP – Send Proposal to ZapTask** node after Structure (instead of Respond to Webhook) posting to:\n`https://www.zaptask.co.uk/api/n8n/document-extraction/proposals`\nwith header `X-N8N-Webhook-Secret` = your `N8N_WEBHOOK_SECRET`.",
+        "height": 560,
+        "width": 580,
+        "color": 4
+      },
+      "id": "b1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Setup & Debug",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "document-extraction",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Webhook – Document Extraction",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        320
+      ],
+      "webhookId": "zaptask-document-extraction"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst binary = { ...(item.binary || {}) };\nconst binaryKeys = Object.keys(binary);\n\nconst fileKey =\n  binaryKeys.find((key) => key === 'file') ??\n  binaryKeys.find((key) => key.startsWith('file')) ??\n  binaryKeys[0];\n\nif (!fileKey) {\n  throw new Error(\n    'No file received from ZapTask. Expected multipart field \"file\". Binary keys: ' +\n      (binaryKeys.join(', ') || 'none'),\n  );\n}\n\nconst raw = item.json?.body ?? item.json ?? {};\nconst meta = raw.body ?? raw;\n\nreturn [\n  {\n    json: {\n      operational_document_id: Number(meta.operational_document_id),\n      operational_object_id: Number(meta.operational_object_id),\n      user_id: Number(meta.user_id),\n      company_id: meta.company_id ? Number(meta.company_id) : null,\n      mime_type: meta.mime_type || binary[fileKey]?.mimeType || 'application/octet-stream',\n      title: meta.title || binary[fileKey]?.fileName || 'document',\n      original_filename: binary[fileKey]?.fileName || meta.title || 'document',\n      debug_binary_key_used: fileKey,\n      is_pdf: String(meta.mime_type || '').includes('pdf'),\n      is_image: String(meta.mime_type || '').startsWith('image/'),\n    },\n    binary: fileKey === 'file' ? binary : { file: binary[fileKey] },\n  },\n];"
+      },
+      "id": "b1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Normalize Webhook Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "pdf-check",
+              "leftValue": "={{ $json.is_pdf }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Is PDF?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        760,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "file",
+        "options": {}
+      },
+      "id": "b1b2c3d4-0005-4000-8000-000000000005",
+      "name": "Extract PDF Text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1020,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "text",
+        "operation": "message",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You extract structured data from UK property/compliance certificates (gas safety, EPC, electrical, PAT, fire alarm, etc.). Return ONLY valid JSON (no markdown) with this exact structure:\n\n{\n  \"document_type\": \"gas_safety|epc|electrical|pat_testing|fire_alarm|other\",\n  \"label\": \"human readable certificate name\",\n  \"certificate_number\": \"string or null\",\n  \"expiry_date\": \"YYYY-MM-DD or null\",\n  \"issue_date\": \"YYYY-MM-DD or null\",\n  \"engineer_name\": \"string or null\",\n  \"address\": \"property address or null\",\n  \"summary\": \"one sentence summary\"\n}\n\nRules:\n- Prefer UK date formats (DD/MM/YYYY) converted to ISO YYYY-MM-DD\n- expiry_date = certificate expiry / valid until / next inspection due\n- document_type gas_safety for CP12 / Gas Safety / Landlord Gas Safety\n- Use null when a field is not present — do not guess",
+              "role": "system"
+            },
+            {
+              "content": "=Document title: {{ $('Normalize Webhook Input').item.json.title }}\nFilename: {{ $('Normalize Webhook Input').item.json.original_filename }}\nMIME: {{ $('Normalize Webhook Input').item.json.mime_type }}\n\n--- DOCUMENT TEXT ---\n{{ $json.text || $json.data || '' }}",
+              "role": "user"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {
+          "maxTokens": 2048,
+          "temperature": 0.1
+        }
+      },
+      "id": "b1b2c3d4-0006-4000-8000-000000000006",
+      "name": "OpenAI – Extract (PDF text)",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1280,
+        200
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const meta = $('Normalize Webhook Input').first();\nconst item = meta.binary?.file;\n\nif (!item?.data) {\n  throw new Error('No image binary on input item');\n}\n\nconst mime = meta.json.mime_type || item.mimeType || 'image/jpeg';\nconst base64 = item.data;\n\nreturn [\n  {\n    json: {\n      ...meta.json,\n      image_data_url: `data:${mime};base64,${base64}`,\n    },\n  },\n];"
+      },
+      "id": "b1b2c3d4-0007-4000-8000-000000000007",
+      "name": "Prepare Image for Vision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1020,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'gpt-4o-mini', response_format: { type: 'json_object' }, temperature: 0.1, messages: [ { role: 'system', content: 'You extract structured data from UK property/compliance certificate images. Return ONLY valid JSON with keys: document_type (gas_safety|epc|electrical|pat_testing|fire_alarm|other), label, certificate_number, expiry_date (YYYY-MM-DD or null), issue_date (YYYY-MM-DD or null), engineer_name, address, summary. Use null when not visible.' }, { role: 'user', content: [ { type: 'text', text: 'Document title: ' + ($json.title || '') + '\\nFilename: ' + ($json.original_filename || '') + '\\nExtract all certificate fields.' }, { type: 'image_url', image_url: { url: $json.image_data_url } } ] } ] }) }}",
+        "options": {
+          "timeout": 90000
+        }
+      },
+      "id": "b1b2c3d4-0008-4000-8000-000000000008",
+      "name": "OpenAI Vision – Extract (Image)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1280,
+        440
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// See n8n/structure-document-extraction.js\nconst meta = $('Normalize Webhook Input').first().json;\nconst ai = $input.first().json;\n\nlet parsed = ai.message?.content ?? ai.content ?? ai.choices?.[0]?.message?.content ?? ai;\n\nif (typeof parsed === 'string') {\n  try {\n    parsed = JSON.parse(parsed);\n  } catch {\n    parsed = {\n      document_type: 'other',\n      label: meta.title || meta.original_filename || 'Certificate',\n      certificate_number: null,\n      expiry_date: null,\n      issue_date: null,\n      engineer_name: null,\n      address: null,\n      summary: parsed.slice(0, 500),\n    };\n  }\n}\n\nconst summary = parsed.summary ?? null;\ndelete parsed.summary;\n\nconst extracted_data = {\n  document_type: parsed.document_type ?? 'other',\n  label: parsed.label ?? meta.title ?? 'Certificate',\n  certificate_number: parsed.certificate_number ?? null,\n  expiry_date: parsed.expiry_date ?? null,\n  issue_date: parsed.issue_date ?? null,\n  engineer_name: parsed.engineer_name ?? null,\n  address: parsed.address ?? null,\n};\n\nreturn [\n  {\n    json: {\n      extracted_data,\n      summary,\n      operational_document_id: meta.operational_document_id,\n      operational_object_id: meta.operational_object_id,\n      user_id: meta.user_id,\n      processed_at: new Date().toISOString(),\n    },\n  },\n];"
+      },
+      "id": "b1b2c3d4-0009-4000-8000-000000000009",
+      "name": "Structure Document Extraction",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { extracted_data: $json.extracted_data, summary: $json.summary } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "b1b2c3d4-000a-4000-8000-00000000000a",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1800,
+        320
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook – Document Extraction": {
+      "main": [
+        [
+          {
+            "node": "Normalize Webhook Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Webhook Input": {
+      "main": [
+        [
+          {
+            "node": "Is PDF?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is PDF?": {
+      "main": [
+        [
+          {
+            "node": "Extract PDF Text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Image for Vision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract PDF Text": {
+      "main": [
+        [
+          {
+            "node": "OpenAI – Extract (PDF text)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI – Extract (PDF text)": {
+      "main": [
+        [
+          {
+            "node": "Structure Document Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Image for Vision": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Vision – Extract (Image)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Vision – Extract (Image)": {
+      "main": [
+        [
+          {
+            "node": "Structure Document Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structure Document Extraction": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "ZapTask"
+    },
+    {
+      "name": "Document Extraction"
+    }
+  ],
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "active": false
+}

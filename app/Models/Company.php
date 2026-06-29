@@ -95,6 +95,16 @@ class Company extends Model
         return $this->hasMany(Client::class);
     }
 
+    public function operationalObjects(): HasMany
+    {
+        return $this->hasMany(OperationalObject::class);
+    }
+
+    public function complianceRequirements(): HasMany
+    {
+        return $this->hasMany(ComplianceRequirement::class);
+    }
+
     /**
      * Get visible projects based on subscription tier
      */

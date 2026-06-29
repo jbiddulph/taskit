@@ -3,6 +3,8 @@
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\InspectionController;
+use App\Http\Controllers\OperationalObjectController;
 use App\Http\Controllers\IndustryLandingController;
 use App\Http\Controllers\RedemptionController;
 use App\Http\Controllers\SitemapController;
@@ -93,6 +95,15 @@ Route::get('dashboard', function () {
 // Client and Company management routes
 Route::middleware(['auth', 'verified', 'subscription.access'])->group(function () {
     Route::resource('clients', ClientController::class);
+    Route::resource('sites', OperationalObjectController::class);
+    Route::post('sites/{site}/compliance-template', [OperationalObjectController::class, 'applyComplianceTemplate'])->name('sites.compliance-template');
+    Route::patch('sites/{site}/compliance/{requirement}', [OperationalObjectController::class, 'updateComplianceRequirement'])->name('sites.compliance.update');
+    Route::post('sites/{site}/compliance/{requirement}/complete', [OperationalObjectController::class, 'completeComplianceRequirement'])->name('sites.compliance.complete');
+    Route::get('sites/{site}/documents/{document}/download', [OperationalObjectController::class, 'downloadDocument'])->name('sites.documents.download');
+    Route::get('sites/{site}/inspections/create', [InspectionController::class, 'create'])->name('sites.inspections.create');
+    Route::get('inspections/{inspection}', [InspectionController::class, 'show'])->name('inspections.show');
+    Route::get('inspections/{inspection}/pdf', [InspectionController::class, 'downloadPdf'])->name('inspections.pdf');
+    Route::get('inspections/{inspection}/photos/{photo}', [InspectionController::class, 'showPhoto'])->name('inspections.photos.show');
     Route::get('companies/{company}', [CompanyController::class, 'show'])->name('companies.show');
     Route::get('companies/{company}/edit', [CompanyController::class, 'edit'])->name('companies.edit');
     Route::put('companies/{company}', [CompanyController::class, 'update'])->name('companies.update');

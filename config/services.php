@@ -52,7 +52,13 @@ return [
 
     'n8n' => [
         'meeting_notes_webhook_url' => env('N8N_MEETING_NOTES_WEBHOOK_URL'),
+        'document_extraction_webhook_url' => env('N8N_DOCUMENT_EXTRACTION_WEBHOOK_URL'),
         'webhook_secret' => env('N8N_WEBHOOK_SECRET'),
+    ],
+
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
+        'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
     ],
 
     'mapbox' => [

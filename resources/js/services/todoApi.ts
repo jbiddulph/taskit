@@ -49,11 +49,19 @@ export interface Todo {
     story_points?: number;
     status: 'todo' | 'in-progress' | 'qa-testing' | 'done';
     order?: number;
+    operational_object_id?: number | null;
+    compliance_requirement_id?: number | null;
+    source?: string | null;
     created_at: string;
     updated_at: string;
     comments?: TodoComment[];
     attachments?: TodoAttachment[];
     project?: Project;
+    operational_object?: {
+        id: number;
+        name: string;
+        type: string;
+    };
     is_new_assigned?: boolean;
     subtasks?: Todo[];
     parent_task?: Todo;

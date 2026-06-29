@@ -40,6 +40,10 @@ class Todo extends Model
         'status',
         'order',
         'company_id',
+        'operational_object_id',
+        'compliance_requirement_id',
+        'source',
+        'inspection_id',
     ];
 
     protected $casts = [
@@ -83,6 +87,21 @@ class Todo extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(TodoAttachment::class)->orderBy('created_at', 'desc');
+    }
+
+    public function operationalObject(): BelongsTo
+    {
+        return $this->belongsTo(OperationalObject::class);
+    }
+
+    public function complianceRequirement(): BelongsTo
+    {
+        return $this->belongsTo(ComplianceRequirement::class);
+    }
+
+    public function inspection(): BelongsTo
+    {
+        return $this->belongsTo(Inspection::class);
     }
 
     // Parent-child relationships for subtasks
@@ -165,6 +184,11 @@ class Todo extends Model
     public function scopeWithLocation(Builder $query): void
     {
         $query->whereNotNull('latitude')->whereNotNull('longitude');
+    }
+
+    public function scopeForOperationalObject(Builder $query, int $operationalObjectId): void
+    {
+        $query->where('operational_object_id', $operationalObjectId);
     }
 
     public function scopeSearch(Builder $query, string $search): void

@@ -5,6 +5,7 @@ import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import ChatWindow from '@/components/ChatWindow.vue';
 import MeetingNoteApprovalModal from '@/components/MeetingNoteApprovalModal.vue';
+import DocumentExtractionApprovalModal from '@/components/DocumentExtractionApprovalModal.vue';
 import MeetingNotesRecordingTips from '@/components/MeetingNotesRecordingTips.vue';
 import SkipToMain from '@/components/SkipToMain.vue';
 import { realtimeService } from '@/services/realtimeService';
@@ -90,6 +91,7 @@ onUnmounted(() => {
         </AppContent>
         <ChatWindow />
         <MeetingNoteApprovalModal />
+        <DocumentExtractionApprovalModal />
         <MeetingNotesRecordingTips />
     </AppShell>
 </template>

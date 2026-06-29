@@ -29,6 +29,7 @@
     "todos": "Todos",
     "projects": "Projects",
     "clients": "Clients",
+    "sites": "Sites & Assets",
     "companies": "Companies",
     "settings": "Settings",
     "profile": "Profile",
@@ -426,5 +427,98 @@
     "loading": "Loading comments...",
     "no_comments": "No comments yet.",
     "user": "User"
+  },
+  "operations": {
+    "tips": {
+      "examples_heading": "Examples",
+      "sites_index": {
+        "title": "How to use Sites & Assets",
+        "intro": "Sites are the properties, buildings, rooms, and equipment your team works on. Compliance and documents attach to each site.",
+        "items": [
+          "Add one site per property or address — use child sites for flats, rooms, or units inside a building.",
+          "Apply your industry compliance template when creating a site to auto-add gas safety, inspections, and renewals.",
+          "Watch the dashboard tiles: overdue and due-soon counts roll up across your whole portfolio.",
+          "Open any site to upload certificates, run inspections, and see linked tasks."
+        ],
+        "examples": [
+          "Building: Riverside Court → child units: Flat 1, Flat 2, Flat 3",
+          "Gas Safety — 24 High Street · due 14 Sep 2026",
+          "Fire Alarm Inspection · due soon · assigned to James"
+        ]
+      },
+      "sites_create": {
+        "title": "Tips for adding a site",
+        "intro": "A clear address helps map view, routing, and field check-ins.",
+        "items": [
+          "Use Property for a whole address, Unit / Room for something inside a parent site.",
+          "Tick Apply industry compliance template to seed checklist items (you set due dates next).",
+          "Pick a board where reminder tasks should appear when dates approach.",
+          "You can upload a gas safety or EPC certificate on the site page — AI can read the expiry date."
+        ],
+        "examples": [
+          "Name: 24 High Street · Type: Property · City: Leeds",
+          "Parent: Riverside Court · Name: Flat 12 (unit inside a block)"
+        ]
+      },
+      "sites_show": {
+        "title": "Documents, compliance & inspections",
+        "intro": "This page is the operational hub for one location.",
+        "items": [
+          "Upload a certificate (PDF or photo). Turn on AI extraction to pull expiry date and certificate number automatically.",
+          "Set due dates on compliance items — ZapTask creates reminder tasks ~30 days before (configurable per item).",
+          "Mark an item complete after work is done; the next due date is calculated from its frequency.",
+          "Start an inspection checklist with photos, then download a PDF report for your records or auditors.",
+          "Any failed checklist items automatically create follow-up tasks on your board (due in 3 days).",
+          "Tasks on your board can be linked to this site so location and assignee stay in sync."
+        ],
+        "examples": [
+          "Upload Gas Safety Certificate.pdf → AI finds expiry 14 Sep 2026 → Apply to site",
+          "Start Fire Alarm Inspection → Pass/Fail checklist + photos → Download PDF",
+          "Complete board task \"Annual gas safety\" → compliance item auto-renews for next year"
+        ]
+      },
+      "task_form": {
+        "title": "Link tasks to a site",
+        "intro": "In the Advanced tab, pick a site to attach field work to a property or asset.",
+        "items": [
+          "Selecting a site fills location name, address, and map coordinates from the site record.",
+          "Compliance-generated tasks are already linked — use this for ad-hoc maintenance, visits, and snagging.",
+          "Combine with map view and My Route Today to plan negotiator or inspector diaries.",
+          "Voice commands still work: say \"create task boiler repair at 24 High Street tomorrow\"."
+        ],
+        "examples": [
+          "Site: 24 High Street → task: Boiler repair · type: Maintenance",
+          "Site: Flat 12, Riverside Court → task: Check-in inspection"
+        ]
+      },
+      "inspection_create": {
+        "title": "Inspection checklist tips",
+        "intro": "Work through each item on site. Add photos as evidence.",
+        "items": [
+          "Use Pass / Fail / N/A for each checklist line — any Fail items automatically create high-priority follow-up tasks when you complete.",
+          "Failed items block compliance from being marked complete until resolved.",
+          "Add photos of panels, defects, or room condition — they appear in the PDF report.",
+          "Save draft anytime; complete when finished to generate the PDF.",
+          "On mobile, take photos directly from the camera when uploading."
+        ],
+        "examples": [
+          "Fire Alarm: Sounders ✗ Fail → creates \"Follow-up: Sounders audible — 24 High Street\" on your board",
+          "Room inspection: Damp/mould ✗ Fail → task due in 3 days, assigned to inspector"
+        ]
+      },
+      "inspection_show": {
+        "title": "Completed inspection",
+        "intro": "Download the PDF for landlords, auditors, or client files.",
+        "items": [
+          "Download the PDF for landlords, auditors, or client files.",
+          "Follow-up tasks listed below were auto-created for any failed checklist items.",
+          "If linked to compliance, it is only marked complete when no items failed.",
+          "Share the PDF externally — it does not expose your full ZapTask account."
+        ],
+        "examples": [
+          "Fire Alarm Inspection — 24 High Street — 29 Jun 2026.pdf"
+        ]
+      }
+    }
   }
 }

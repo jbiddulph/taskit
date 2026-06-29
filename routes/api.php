@@ -4,6 +4,8 @@ use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\MapboxController;
 use App\Http\Controllers\Api\MeetingNoteProposalController;
 use App\Http\Controllers\Api\MeetingNotesController;
+use App\Http\Controllers\Api\DocumentExtractionProposalController;
+use App\Http\Controllers\Api\N8nDocumentExtractionController;
 use App\Http\Controllers\Api\N8nMeetingNotesController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProjectController;
@@ -34,6 +36,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::middleware(['n8n.webhook', 'api.rate.limit:api,120,1'])->group(function () {
     Route::post('n8n/meeting-notes/proposals', [N8nMeetingNotesController::class, 'store']);
+    Route::post('n8n/document-extraction/proposals', [N8nDocumentExtractionController::class, 'store']);
 });
 
 // Todo routes
@@ -83,6 +86,20 @@ Route::middleware(['web', 'auth', 'subscription.access', 'api.rate.limit:api,60,
 
     // Client routes
     Route::get('clients', [App\Http\Controllers\Api\ClientController::class, 'index']);
+
+    // Sites & compliance routes
+    Route::get('sites', [App\Http\Controllers\Api\OperationalObjectController::class, 'index']);
+    Route::get('compliance/summary', [App\Http\Controllers\Api\OperationalObjectController::class, 'complianceSummary']);
+    Route::post('sites/{site}/documents', [App\Http\Controllers\Api\OperationalDocumentController::class, 'store']);
+    Route::get('sites/{site}/documents/{document}/download', [App\Http\Controllers\Api\OperationalDocumentController::class, 'download']);
+    Route::get('document-extraction/proposals/pending', [DocumentExtractionProposalController::class, 'pending']);
+    Route::post('document-extraction/proposals/{proposal}/approve', [DocumentExtractionProposalController::class, 'approve']);
+    Route::post('document-extraction/proposals/{proposal}/dismiss', [DocumentExtractionProposalController::class, 'dismiss']);
+
+    // Inspections
+    Route::patch('inspections/{inspection}', [App\Http\Controllers\Api\InspectionController::class, 'update']);
+    Route::post('inspections/{inspection}/photos', [App\Http\Controllers\Api\InspectionController::class, 'storePhoto']);
+    Route::post('inspections/{inspection}/complete', [App\Http\Controllers\Api\InspectionController::class, 'complete']);
 
     // Company users and messaging routes
     Route::get('company-users', [App\Http\Controllers\Api\CompanyUsersController::class, 'index']);

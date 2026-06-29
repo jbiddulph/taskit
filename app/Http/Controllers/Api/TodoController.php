@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\TodoWebSocketService;
 use App\Services\AssignmentNotificationService;
 use App\Services\CacheService;
+use App\Services\ComplianceRequirementService;
 use App\Support\TodoTypes;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -23,11 +24,16 @@ class TodoController extends Controller
 {
     protected TodoWebSocketService $webSocketService;
     protected AssignmentNotificationService $assignmentNotificationService;
+    protected ComplianceRequirementService $complianceRequirementService;
 
-    public function __construct(TodoWebSocketService $webSocketService, AssignmentNotificationService $assignmentNotificationService)
-    {
+    public function __construct(
+        TodoWebSocketService $webSocketService,
+        AssignmentNotificationService $assignmentNotificationService,
+        ComplianceRequirementService $complianceRequirementService,
+    ) {
         $this->webSocketService = $webSocketService;
         $this->assignmentNotificationService = $assignmentNotificationService;
+        $this->complianceRequirementService = $complianceRequirementService;
     }
 
     /**
@@ -58,7 +64,7 @@ class TodoController extends Controller
             if ($user->company_id) {
                 // Show all todos from the same company
                 $query = Todo::forCompany($user->company_id)
-                    ->with(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask'])
+                    ->with(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask', 'operationalObject'])
                     ->whereNull('parent_task_id') // Only load parent tasks, subtasks will be loaded via the 'subtasks' relationship
                     ->orderBy('created_at', 'desc');
             } else {
@@ -109,6 +115,10 @@ class TodoController extends Controller
 
             if ($request->boolean('has_location')) {
                 $query->withLocation();
+            }
+
+            if ($request->filled('operational_object_id')) {
+                $query->forOperationalObject((int) $request->operational_object_id);
             }
 
             $parents = $query->get();
@@ -240,6 +250,7 @@ class TodoController extends Controller
             'location_address' => 'nullable|string|max:500',
             'latitude' => 'nullable|numeric|between:-90,90|required_with:longitude',
             'longitude' => 'nullable|numeric|between:-180,180|required_with:latitude',
+            'operational_object_id' => 'nullable|exists:taskit_operational_objects,id',
             'story_points' => 'nullable|integer|min:1|max:21',
             'status' => 'required|in:todo,in-progress,qa-testing,done',
             'email_assignee' => 'sometimes|boolean',
@@ -304,6 +315,7 @@ class TodoController extends Controller
             'location_address' => $request->location_address,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
+            'operational_object_id' => $request->operational_object_id,
             'company_id' => $user->company_id,
             'story_points' => $request->story_points,
             'status' => $request->status,
@@ -410,6 +422,7 @@ class TodoController extends Controller
             'location_address' => 'nullable|string|max:500',
             'latitude' => 'nullable|numeric|between:-90,90|required_with:longitude',
             'longitude' => 'nullable|numeric|between:-180,180|required_with:latitude',
+            'operational_object_id' => 'nullable|exists:taskit_operational_objects,id',
             'story_points' => 'nullable|integer|min:1|max:21',
             'status' => 'sometimes|required|in:todo,in-progress,qa-testing,done',
             'project_group_id' => 'nullable|exists:taskit_project_groups,id',
@@ -679,8 +692,16 @@ class TodoController extends Controller
         $oldStatus = $todo->status;
         $todo->update(['status' => $request->status]);
 
+        if ($request->status === 'done' && $todo->compliance_requirement_id) {
+            $requirement = $todo->complianceRequirement;
+            if ($requirement) {
+                $completedAt = $todo->due_date ?? now();
+                $this->complianceRequirementService->markCompleted($requirement, $completedAt);
+            }
+        }
+
         // Load relationships to ensure complete data is returned
-        $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
+        $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask', 'operationalObject']);
 
         CacheService::invalidateUserCaches($user->id, $user->company_id);
         if ($todo->project_id) {
