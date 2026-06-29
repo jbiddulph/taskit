@@ -1604,7 +1604,12 @@ const saveTodo = async (todo: Todo) => {
     
     if (editingTodo.value && editingTodo.value.id > 0) {
       // Update existing todo
-      const updatedTodo = await todoApi.updateTodo(todo.id, todo);
+      const todoId = Number(editingTodo.value.id);
+      const updatedTodo = await todoApi.updateTodo(todoId, {
+        ...todo,
+        id: todoId,
+        operational_object_id: (todo as Todo).operational_object_id ?? null,
+      });
       const index = todosState.value.findIndex(t => t.id === todo.id);
       if (index !== -1) {
         const existingTodo = todosState.value[index];

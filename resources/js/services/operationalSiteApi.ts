@@ -54,7 +54,13 @@ class DocumentExtractionApi {
         const response = await axios.post(`/document-extraction/proposals/${proposalId}/approve`, {
             project_id: projectId,
         });
-        return response.data;
+        return response.data as {
+            success: boolean;
+            message: string;
+            data?: {
+                task?: { id: number; title: string; project_id: number } | null;
+            };
+        };
     }
 
     async dismiss(proposalId: number) {

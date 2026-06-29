@@ -42,10 +42,22 @@ class DocumentExtractionProposalController extends Controller
                 $request->input('project_id'),
             );
 
+            $message = $result['task']
+                ? 'Document details applied and reminder task created.'
+                : 'Document details applied.';
+
             return response()->json([
                 'success' => true,
-                'message' => 'Document details applied.',
-                'data' => $result,
+                'message' => $message,
+                'data' => [
+                    'document' => $result['document'],
+                    'requirement' => $result['requirement'],
+                    'task' => $result['task'] ? [
+                        'id' => $result['task']->id,
+                        'title' => $result['task']->title,
+                        'project_id' => $result['task']->project_id,
+                    ] : null,
+                ],
             ]);
         } catch (ValidationException $e) {
             return response()->json(['success' => false, 'errors' => $e->errors()], 422);

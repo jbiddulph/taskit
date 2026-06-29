@@ -54,11 +54,19 @@ const approve = async () => {
     if (!proposal.value) return;
     submitting.value = true;
     try {
-        await documentExtractionApi.approve(proposal.value.id, selectedProjectId.value ?? undefined);
-        notify('success', 'Applied', 'Certificate details saved and compliance updated.');
+        const result = await documentExtractionApi.approve(proposal.value.id, selectedProjectId.value ?? undefined);
+        const taskTitle = result?.data?.task?.title;
+        notify(
+            'success',
+            'Applied',
+            taskTitle
+                ? `Compliance updated. Reminder task "${taskTitle}" added to your board.`
+                : 'Certificate details saved and compliance updated.',
+        );
         isOpen.value = false;
         proposal.value = null;
         window.dispatchEvent(new CustomEvent('document-extraction-reviewed'));
+        window.dispatchEvent(new CustomEvent('todoChanged'));
     } catch (error: any) {
         notify('error', 'Failed', error.response?.data?.message || 'Could not apply extraction.');
     } finally {

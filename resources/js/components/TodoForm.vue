@@ -542,7 +542,7 @@ const handleSubmit = async () => {
     };
     
     if (props.isEditing) {
-      todoData.id = parseInt(form.value.id);
+      todoData.id = Number(props.todo?.id ?? form.value.id);
       delete todoData.email_assignee;
       delete todoData.assignee_email;
       // Track todo update event

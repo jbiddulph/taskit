@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ComplianceRequirement;
 use App\Models\DocumentExtractionProposal;
 use App\Models\User;
+use App\Services\CacheService;
 use Carbon\Carbon;
 
 class DocumentExtractionProposalService
@@ -27,7 +28,7 @@ class DocumentExtractionProposalService
         $object = $proposal->operationalObject;
         $data = $proposal->extracted_data;
 
-        $expiresAt = $this->parseDate($data['expiry_date'] ?? null);
+        $expiresAt = $this->parseDate($data['expiry_date'] ?? null) ?? $document->expires_at;
         $requirementType = $data['document_type'] ?? $data['requirement_type'] ?? 'other';
         $label = $data['label'] ?? $document->title;
 
@@ -54,20 +55,28 @@ class DocumentExtractionProposalService
             ],
         );
 
+        if ($projectId) {
+            $requirement->update(['project_id' => $projectId]);
+        }
+
         if ($expiresAt) {
-            $requirement->update([
-                'next_due_date' => $expiresAt,
-                'project_id' => $projectId ?? $requirement->project_id,
-            ]);
+            $requirement->update(['next_due_date' => $expiresAt]);
             $requirement->refreshStatus();
         }
 
         $document->update(['compliance_requirement_id' => $requirement->id]);
 
         $createdTask = null;
-        if ($requirement->shouldCreateTaskToday()) {
-            $this->taskGeneratorService->createTaskForRequirement($requirement);
+        $shouldCreateTask = $requirement->shouldCreateTaskToday()
+            || ($projectId && ! $requirement->hasOpenTask());
+
+        if ($shouldCreateTask && $this->taskGeneratorService->createTaskForRequirement($requirement)) {
             $createdTask = $requirement->todos()->latest()->first();
+
+            if ($createdTask) {
+                CacheService::invalidateUserCaches($user->id, $user->company_id);
+                CacheService::invalidateProjectCaches($createdTask->project_id, $user->company_id);
+            }
         }
 
         $proposal->update([
