@@ -14,8 +14,6 @@ const selectValue = computed({
 const sites = ref<OperationalSite[]>([]);
 const loading = ref(false);
 
-const selectedSite = computed(() => sites.value.find((s) => s.id === model.value) ?? null);
-
 const emit = defineEmits<{
     selected: [site: OperationalSite | null];
 }>();

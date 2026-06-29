@@ -82,7 +82,7 @@ const notify = (type: 'success' | 'error', title: string, message: string) => {
 async function saveDraft() {
   saving.value = true;
   try {
-    await axios.patch(`/api/inspections/${props.inspection.id}`, {
+    await axios.patch(`/inspections/${props.inspection.id}`, {
       responses: responses.value,
       summary: summary.value,
     });
@@ -105,7 +105,7 @@ async function uploadPhoto(event: Event) {
   if (photoItem.value) formData.append('item_key', photoItem.value.key);
 
   try {
-    const { data } = await axios.post(`/api/inspections/${props.inspection.id}/photos`, formData);
+    const { data } = await axios.post(`/inspections/${props.inspection.id}/photos`, formData);
     photos.value.push(data.data);
     input.value = '';
     notify('success', 'Photo added', 'Photo attached to inspection.');
@@ -119,11 +119,11 @@ async function uploadPhoto(event: Event) {
 async function completeInspection() {
   completing.value = true;
   try {
-    await axios.patch(`/api/inspections/${props.inspection.id}`, {
+    await axios.patch(`/inspections/${props.inspection.id}`, {
       responses: responses.value,
       summary: summary.value,
     });
-    const { data } = await axios.post(`/api/inspections/${props.inspection.id}/complete`, {
+    const { data } = await axios.post(`/inspections/${props.inspection.id}/complete`, {
       project_id: selectedProjectId.value,
     });
     notify('success', 'Complete', data.message || 'PDF report generated.');

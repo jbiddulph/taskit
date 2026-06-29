@@ -22,7 +22,7 @@ export interface DocumentExtractionProposal {
 
 class OperationalSiteApi {
     async list(): Promise<OperationalSite[]> {
-        const response = await axios.get('/api/sites');
+        const response = await axios.get('/sites');
         return response.data.data ?? [];
     }
 
@@ -37,7 +37,7 @@ class OperationalSiteApi {
         if (options.expires_at) formData.append('expires_at', options.expires_at);
         if (options.extract !== undefined) formData.append('extract', options.extract ? '1' : '0');
 
-        const response = await axios.post(`/api/sites/${siteId}/documents`, formData, {
+        const response = await axios.post(`/sites/${siteId}/documents`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
         return response.data;
@@ -46,19 +46,19 @@ class OperationalSiteApi {
 
 class DocumentExtractionApi {
     async getPending(): Promise<DocumentExtractionProposal[]> {
-        const response = await axios.get('/api/document-extraction/proposals/pending');
+        const response = await axios.get('/document-extraction/proposals/pending');
         return response.data.data ?? [];
     }
 
     async approve(proposalId: number, projectId?: number) {
-        const response = await axios.post(`/api/document-extraction/proposals/${proposalId}/approve`, {
+        const response = await axios.post(`/document-extraction/proposals/${proposalId}/approve`, {
             project_id: projectId,
         });
         return response.data;
     }
 
     async dismiss(proposalId: number) {
-        const response = await axios.post(`/api/document-extraction/proposals/${proposalId}/dismiss`);
+        const response = await axios.post(`/document-extraction/proposals/${proposalId}/dismiss`);
         return response.data;
     }
 }
