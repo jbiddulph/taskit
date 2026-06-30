@@ -66,4 +66,10 @@ class ProjectGroup extends Model
             ->orderBy('viewing_order')
             ->value('id');
     }
+
+    public static function resolveOrCreateForProject(Project $project): int
+    {
+        return static::resolveDefaultIdForProject($project->id)
+            ?? static::createDefaultForProject($project)->id;
+    }
 }

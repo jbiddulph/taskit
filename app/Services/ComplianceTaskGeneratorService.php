@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ComplianceRequirement;
 use App\Models\Company;
 use App\Models\Project;
+use App\Models\ProjectGroup;
 use App\Models\Todo;
 use App\Models\User;
 use App\Support\ComplianceTemplates;
@@ -80,11 +81,13 @@ class ComplianceTaskGeneratorService
 
         $dueDate = $requirement->next_due_date?->toDateString();
         $title = "{$requirement->label} — {$object->name}";
+        $projectGroupId = ProjectGroup::resolveOrCreateForProject($project);
 
         $todo = Todo::create([
             'user_id' => $owner->id,
             'company_id' => $requirement->company_id,
             'project_id' => $project->id,
+            'project_group_id' => $projectGroupId,
             'operational_object_id' => $object->id,
             'compliance_requirement_id' => $requirement->id,
             'source' => 'compliance_schedule',

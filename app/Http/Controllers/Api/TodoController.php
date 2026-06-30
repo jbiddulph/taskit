@@ -59,6 +59,21 @@ class TodoController extends Controller
             'per_page' => $request->get('per_page', 20)
         ];
 
+        // Tasks created by compliance/document flows may lack a board group and are hidden by group filters.
+        if ($request->filled('project_id')) {
+            $projectId = (int) $request->project_id;
+            $targetGroupId = $request->filled('project_group_id')
+                ? (int) $request->project_group_id
+                : ProjectGroup::resolveDefaultIdForProject($projectId);
+
+            if ($targetGroupId) {
+                Todo::query()
+                    ->where('project_id', $projectId)
+                    ->whereNull('project_group_id')
+                    ->update(['project_group_id' => $targetGroupId]);
+            }
+        }
+
         // Cache user todos (bypass with ?fresh=1 when the board needs a live DB read)
         $loadTodos = function () use ($user, $request) {
             if ($user->company_id) {

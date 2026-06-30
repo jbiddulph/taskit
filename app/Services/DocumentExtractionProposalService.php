@@ -6,6 +6,7 @@ use App\Models\ComplianceRequirement;
 use App\Models\DocumentExtractionProposal;
 use App\Models\OperationalObject;
 use App\Models\Project;
+use App\Models\ProjectGroup;
 use App\Models\Todo;
 use App\Models\User;
 use App\Support\ComplianceTemplates;
@@ -150,6 +151,7 @@ class DocumentExtractionProposalService
             return [];
         }
 
+        $projectGroupId = ProjectGroup::resolveOrCreateForProject($project);
         $location = $this->resolveLocation($object, $data);
         $industry = $user->company?->industry;
         $taskType = ComplianceTemplates::taskTypeFor(
@@ -169,6 +171,7 @@ class DocumentExtractionProposalService
                 'user_id' => $user->id,
                 'company_id' => $user->company_id,
                 'project_id' => $project->id,
+                'project_group_id' => $projectGroupId,
                 'operational_object_id' => $object->id,
                 'compliance_requirement_id' => $requirement->id,
                 'source' => 'document_extraction',

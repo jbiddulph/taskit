@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Inspection;
 use App\Models\Project;
+use App\Models\ProjectGroup;
 use App\Models\Todo;
 use App\Support\InspectionTemplates;
 
@@ -38,6 +39,7 @@ class InspectionFollowUpTaskService
 
         $object = $inspection->operationalObject;
         $created = [];
+        $projectGroupId = ProjectGroup::resolveOrCreateForProject($project);
 
         foreach ($failedItems as $item) {
             $title = "Follow-up: {$item['label']} — {$object->name}";
@@ -53,6 +55,7 @@ class InspectionFollowUpTaskService
                 'user_id' => $owner->id,
                 'company_id' => $inspection->company_id,
                 'project_id' => $project->id,
+                'project_group_id' => $projectGroupId,
                 'operational_object_id' => $object->id,
                 'inspection_id' => $inspection->id,
                 'compliance_requirement_id' => $inspection->compliance_requirement_id,
