@@ -67,6 +67,9 @@ class HandleInertiaRequests extends Middleware
             'todoTypeOptions' => Industries::typeOptionsFor($companyIndustry),
             'todoTypeIcons' => Industries::typeIconMap(),
             'industries' => Industries::choices(),
+            'features' => [
+                'sites' => (bool) ($user?->company?->canAccessSites()),
+            ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

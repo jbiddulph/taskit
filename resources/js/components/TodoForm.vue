@@ -149,7 +149,7 @@
             </div>
           </div>
 
-          <SiteSelector v-model="operationalObjectId" @selected="onSiteSelected" />
+          <SiteSelector v-if="canAccessSites" v-model="operationalObjectId" @selected="onSiteSelected" />
 
           <LocationPicker v-model="location" />
 
@@ -308,6 +308,10 @@ const emit = defineEmits<{
 const page = usePage();
 const currentUser = (page.props as any)?.auth?.user || null;
 const currentUserName = currentUser?.name || '';
+const canAccessSites = computed(() => {
+  const props = page.props as { features?: { sites?: boolean } };
+  return props.features?.sites === true;
+});
 const { trackTodoEvent } = useAnalytics();
 
 // Template selector state

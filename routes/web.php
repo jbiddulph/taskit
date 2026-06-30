@@ -95,6 +95,12 @@ Route::get('dashboard', function () {
 // Client and Company management routes
 Route::middleware(['auth', 'verified', 'subscription.access'])->group(function () {
     Route::resource('clients', ClientController::class);
+    Route::get('companies/{company}', [CompanyController::class, 'show'])->name('companies.show');
+    Route::get('companies/{company}/edit', [CompanyController::class, 'edit'])->name('companies.edit');
+    Route::put('companies/{company}', [CompanyController::class, 'update'])->name('companies.update');
+});
+
+Route::middleware(['auth', 'verified', 'subscription.access', 'sites.access'])->group(function () {
     Route::resource('sites', OperationalObjectController::class);
     Route::post('sites/{site}/compliance-template', [OperationalObjectController::class, 'applyComplianceTemplate'])->name('sites.compliance-template');
     Route::patch('sites/{site}/compliance/{requirement}', [OperationalObjectController::class, 'updateComplianceRequirement'])->name('sites.compliance.update');
@@ -107,9 +113,6 @@ Route::middleware(['auth', 'verified', 'subscription.access'])->group(function (
     Route::delete('inspections/{inspection}', [InspectionController::class, 'destroy'])->name('inspections.destroy');
     Route::get('inspections/{inspection}/pdf', [InspectionController::class, 'downloadPdf'])->name('inspections.pdf');
     Route::get('inspections/{inspection}/photos/{photo}', [InspectionController::class, 'showPhoto'])->name('inspections.photos.show');
-    Route::get('companies/{company}', [CompanyController::class, 'show'])->name('companies.show');
-    Route::get('companies/{company}/edit', [CompanyController::class, 'edit'])->name('companies.edit');
-    Route::put('companies/{company}', [CompanyController::class, 'update'])->name('companies.update');
 });
 
 require __DIR__.'/settings.php';

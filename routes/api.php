@@ -87,19 +87,21 @@ Route::middleware(['web', 'auth', 'subscription.access', 'api.rate.limit:api,60,
     // Client routes
     Route::get('clients', [App\Http\Controllers\Api\ClientController::class, 'index']);
 
-    // Sites & compliance routes
-    Route::get('sites', [App\Http\Controllers\Api\OperationalObjectController::class, 'index']);
-    Route::get('compliance/summary', [App\Http\Controllers\Api\OperationalObjectController::class, 'complianceSummary']);
-    Route::post('sites/{site}/documents', [App\Http\Controllers\Api\OperationalDocumentController::class, 'store']);
-    Route::get('sites/{site}/documents/{document}/download', [App\Http\Controllers\Api\OperationalDocumentController::class, 'download']);
-    Route::get('document-extraction/proposals/pending', [DocumentExtractionProposalController::class, 'pending']);
-    Route::post('document-extraction/proposals/{proposal}/approve', [DocumentExtractionProposalController::class, 'approve']);
-    Route::post('document-extraction/proposals/{proposal}/dismiss', [DocumentExtractionProposalController::class, 'dismiss']);
+    // Sites & compliance routes (MAXI, LTD Agency, LTD Business only)
+    Route::middleware('sites.access')->group(function () {
+        Route::get('sites', [App\Http\Controllers\Api\OperationalObjectController::class, 'index']);
+        Route::get('compliance/summary', [App\Http\Controllers\Api\OperationalObjectController::class, 'complianceSummary']);
+        Route::post('sites/{site}/documents', [App\Http\Controllers\Api\OperationalDocumentController::class, 'store']);
+        Route::get('sites/{site}/documents/{document}/download', [App\Http\Controllers\Api\OperationalDocumentController::class, 'download']);
+        Route::get('document-extraction/proposals/pending', [DocumentExtractionProposalController::class, 'pending']);
+        Route::post('document-extraction/proposals/{proposal}/approve', [DocumentExtractionProposalController::class, 'approve']);
+        Route::post('document-extraction/proposals/{proposal}/dismiss', [DocumentExtractionProposalController::class, 'dismiss']);
 
-    // Inspections
-    Route::patch('inspections/{inspection}', [App\Http\Controllers\Api\InspectionController::class, 'update']);
-    Route::post('inspections/{inspection}/photos', [App\Http\Controllers\Api\InspectionController::class, 'storePhoto']);
-    Route::post('inspections/{inspection}/complete', [App\Http\Controllers\Api\InspectionController::class, 'complete']);
+        // Inspections
+        Route::patch('inspections/{inspection}', [App\Http\Controllers\Api\InspectionController::class, 'update']);
+        Route::post('inspections/{inspection}/photos', [App\Http\Controllers\Api\InspectionController::class, 'storePhoto']);
+        Route::post('inspections/{inspection}/complete', [App\Http\Controllers\Api\InspectionController::class, 'complete']);
+    });
 
     // Company users and messaging routes
     Route::get('company-users', [App\Http\Controllers\Api\CompanyUsersController::class, 'index']);

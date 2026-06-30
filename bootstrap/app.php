@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckSitesAccess;
 use App\Http\Middleware\CheckSubscriptionAccess;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -50,6 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register middleware aliases
         $middleware->alias([
             'subscription.access' => CheckSubscriptionAccess::class,
+            'sites.access' => CheckSitesAccess::class,
             'api.rate.limit' => \App\Http\Middleware\ApiRateLimit::class,
             'subdomain' => SubdomainMiddleware::class,
             'n8n.webhook' => \App\Http\Middleware\VerifyN8nWebhookSecret::class,

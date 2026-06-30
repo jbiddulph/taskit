@@ -305,6 +305,21 @@ class Company extends Model
     }
 
     /**
+     * Subscription plans that can access Sites & Assets.
+     *
+     * @return list<string>
+     */
+    public static function sitesAccessPlans(): array
+    {
+        return ['MAXI', 'LTD_AGENCY', 'LTD_BUSINESS'];
+    }
+
+    public function canAccessSites(): bool
+    {
+        return in_array($this->subscription_type, self::sitesAccessPlans(), true);
+    }
+
+    /**
      * Check if company is near member limit (at warning threshold)
      */
     public function isNearMemberLimit(): bool

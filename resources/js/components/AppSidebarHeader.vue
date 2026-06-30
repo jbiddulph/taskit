@@ -48,6 +48,16 @@ const showRedemptionLink = computed(() => {
     const u: any = user.value;
     return u && (u.company_id === null || u.company_id === undefined);
 });
+
+const canAccessSites = computed(() => {
+    const props: any = page.props;
+    if (typeof props.features?.sites === 'boolean') {
+        return props.features.sites;
+    }
+
+    const subscriptionType = props.company?.subscription_type ?? user.value?.company?.subscription_type;
+    return ['MAXI', 'LTD_AGENCY', 'LTD_BUSINESS'].includes(subscriptionType);
+});
 </script>
 
 <template>
@@ -115,6 +125,7 @@ const showRedemptionLink = computed(() => {
 
                 <!-- Sites Link -->
                 <Link 
+                    v-if="canAccessSites"
                     href="/sites" 
                     class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
                     title="Sites & Assets"
@@ -216,6 +227,7 @@ const showRedemptionLink = computed(() => {
 
                             <!-- Sites Link -->
                             <Link 
+                                v-if="canAccessSites"
                                 href="/sites" 
                                 @click="closeMobileMenu"
                                 class="flex items-center gap-3 p-4 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600 min-h-[44px]"
