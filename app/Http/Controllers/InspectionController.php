@@ -154,8 +154,13 @@ class InspectionController extends Controller
         }
 
         $siteId = $inspection->operational_object_id;
-        $this->inspectionService->delete($inspection);
+        $linkedTodoCount = $this->inspectionService->delete($inspection);
 
-        return redirect()->route('sites.show', $siteId)->with('success', 'Inspection deleted.');
+        $message = 'Inspection deleted.';
+        if ($linkedTodoCount > 0) {
+            $message .= " {$linkedTodoCount} linked Kanban task(s) removed.";
+        }
+
+        return redirect()->route('sites.show', $siteId)->with('success', $message);
     }
 }

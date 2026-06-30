@@ -19,6 +19,7 @@ class InspectionService
         protected InspectionPdfService $pdfService,
         protected ComplianceRequirementService $complianceRequirementService,
         protected InspectionFollowUpTaskService $followUpTaskService,
+        protected OperationalLinkedTodoService $linkedTodoService,
     ) {}
 
     public function createDraft(
@@ -116,9 +117,11 @@ class InspectionService
         ];
     }
 
-    public function delete(Inspection $inspection): void
+    public function delete(Inspection $inspection): int
     {
         $inspection->load('photos');
+
+        $linkedTodoCount = $this->linkedTodoService->deleteForInspection($inspection);
 
         if ($inspection->pdf_path && Storage::disk('private')->exists($inspection->pdf_path)) {
             Storage::disk('private')->delete($inspection->pdf_path);
@@ -131,5 +134,7 @@ class InspectionService
         }
 
         $inspection->delete();
+
+        return $linkedTodoCount;
     }
 }

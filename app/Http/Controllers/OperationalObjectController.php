@@ -10,6 +10,7 @@ use App\Models\Project;
 use App\Services\ComplianceRequirementService;
 use App\Services\InspectionService;
 use App\Services\OperationalDocumentDeletionService;
+use App\Services\OperationalLinkedTodoService;
 use App\Services\OperationalObjectDeletionService;
 use App\Support\ComplianceTemplates;
 use App\Support\InspectionTemplates;
@@ -27,6 +28,7 @@ class OperationalObjectController extends Controller
         protected OperationalObjectDeletionService $deletionService,
         protected OperationalDocumentDeletionService $documentDeletionService,
         protected InspectionService $inspectionService,
+        protected OperationalLinkedTodoService $linkedTodoService,
     ) {}
 
     public function index(): Response
@@ -143,6 +145,7 @@ class OperationalObjectController extends Controller
         return Inertia::render('Sites/Edit', [
             'site' => array_merge($site->toArray(), [
                 'children_count' => $site->children()->count(),
+                'linked_todo_count' => $this->linkedTodoService->countForOperationalObjectTree($site),
             ]),
             'objectTypes' => OperationalObjectTypes::choices(),
             'parentOptions' => $this->parentOptions($user->company_id, $site->id),
@@ -185,11 +188,17 @@ class OperationalObjectController extends Controller
         $this->authorizeObject($site, $user);
 
         $childCount = $site->children()->count();
+        $linkedTodoCount = $this->linkedTodoService->countForOperationalObjectTree($site);
+        $this->linkedTodoService->deleteForOperationalObjectTree($site);
         $this->deletionService->deleteWithDescendants($site);
 
         $message = $childCount > 0
             ? "Site and {$childCount} child site(s) deleted."
             : 'Site deleted successfully.';
+
+        if ($linkedTodoCount > 0) {
+            $message .= " {$linkedTodoCount} linked Kanban task(s) removed.";
+        }
 
         return redirect()->route('sites.index')->with('success', $message);
     }
@@ -203,9 +212,16 @@ class OperationalObjectController extends Controller
             abort(404);
         }
 
+        $linkedTodoCount = $this->linkedTodoService->countForComplianceRequirement($requirement);
+        $this->linkedTodoService->deleteForComplianceRequirement($requirement);
         $requirement->delete();
 
-        return back()->with('success', 'Compliance item deleted.');
+        $message = 'Compliance item deleted.';
+        if ($linkedTodoCount > 0) {
+            $message .= " {$linkedTodoCount} linked Kanban task(s) removed.";
+        }
+
+        return back()->with('success', $message);
     }
 
     public function destroyDocument(OperationalObject $site, OperationalDocument $document)
@@ -368,6 +384,7 @@ class OperationalObjectController extends Controller
             'full_address' => $object->full_address,
             'parent_name' => $object->parent?->name,
             'children_count' => $object->children_count ?? $object->children()->count(),
+            'linked_todo_count' => $this->linkedTodoService->countForOperationalObjectTree($object),
             'compliance_counts' => [
                 'overdue' => $requirements->where('status', ComplianceRequirement::STATUS_OVERDUE)->count(),
                 'due_soon' => $requirements->where('status', ComplianceRequirement::STATUS_DUE_SOON)->count(),
@@ -381,6 +398,7 @@ class OperationalObjectController extends Controller
     {
         return [
             'id' => $object->id,
+            'linked_todo_count' => $this->linkedTodoService->countForOperationalObjectTree($object),
             'type' => $object->type,
             'type_label' => OperationalObjectTypes::label($object->type),
             'name' => $object->name,
@@ -421,6 +439,7 @@ class OperationalObjectController extends Controller
                     'auto_create_tasks' => $req->auto_create_tasks,
                     'project_id' => $req->project_id,
                     'has_open_task' => $req->hasOpenTask(),
+                    'linked_todo_count' => $this->linkedTodoService->countForComplianceRequirement($req),
                 ]),
             'documents' => $object->documents->map(fn ($doc) => [
                 'id' => $doc->id,
@@ -441,6 +460,7 @@ class OperationalObjectController extends Controller
                 'inspector' => $insp->inspector?->name,
                 'url' => route('inspections.show', $insp),
                 'pdf_url' => $insp->pdf_path ? route('inspections.pdf', $insp) : null,
+                'linked_todo_count' => $this->linkedTodoService->countForInspection($insp),
             ]),
             'created_by' => $object->createdBy?->name,
             'created_at' => $object->created_at->format('M j, Y'),

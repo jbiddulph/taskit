@@ -5,6 +5,7 @@ import Icon from '@/components/Icon.vue';
 import OperationsTips from '@/components/OperationsTips.vue';
 import SeoHead from '@/components/SeoHead.vue';
 import { useFormFieldClasses } from '@/composables/useFormFieldClasses';
+import { linkedTodoWarning } from '@/utils/linkedTodoWarning';
 
 interface ComplianceCounts {
   overdue: number;
@@ -23,6 +24,7 @@ interface Site {
   parent_name?: string;
   compliance_counts: ComplianceCounts;
   children_count?: number;
+  linked_todo_count?: number;
 }
 
 interface Props {
@@ -56,10 +58,12 @@ function deleteSite(site: Site) {
     site.children_count && site.children_count > 0
       ? ` This will also delete ${site.children_count} child site(s).`
       : '';
-  if (!confirm(`Delete "${site.name}"?${childNote} All documents, compliance items, and inspections will be removed. This cannot be undone.`)) {
+  if (!confirm(`Delete "${site.name}"?${childNote}${linkedTodoWarning(site.linked_todo_count)} All documents, compliance items, and inspections will be removed. This cannot be undone.`)) {
     return;
   }
-  router.delete(`/sites/${site.id}`);
+  router.delete(`/sites/${site.id}`, {
+    onSuccess: () => window.dispatchEvent(new CustomEvent('todoChanged')),
+  });
 }
 </script>
 

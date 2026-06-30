@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
 import SeoHead from '@/components/SeoHead.vue';
 import { useFormFieldClasses } from '@/composables/useFormFieldClasses';
+import { linkedTodoWarning } from '@/utils/linkedTodoWarning';
 
 interface Option {
   value: string;
@@ -30,6 +31,7 @@ interface Site {
   longitude?: number;
   notes?: string;
   children_count?: number;
+  linked_todo_count?: number;
 }
 
 interface Props {
@@ -77,11 +79,13 @@ const deleteSite = () => {
       ? ` This will also permanently delete ${props.site.children_count} child site(s) and all related documents, compliance items, and inspections.`
       : ' This will permanently delete all related documents, compliance items, and inspections.';
 
-  if (!confirm(`Delete "${props.site.name}"?${childNote} This cannot be undone.`)) {
+  if (!confirm(`Delete "${props.site.name}"?${childNote}${linkedTodoWarning(props.site.linked_todo_count)} This cannot be undone.`)) {
     return;
   }
 
-  router.delete(`/sites/${props.site.id}`);
+  router.delete(`/sites/${props.site.id}`, {
+    onSuccess: () => window.dispatchEvent(new CustomEvent('todoChanged')),
+  });
 };
 </script>
 
@@ -159,6 +163,7 @@ const deleteSite = () => {
               <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Deleting this site removes all documents, compliance items, and inspections
                 <span v-if="site.children_count">, including {{ site.children_count }} child site(s)</span>.
+                <span v-if="site.linked_todo_count"> {{ site.linked_todo_count }} linked Kanban task{{ site.linked_todo_count === 1 ? '' : 's' }} will also be removed.</span>
               </p>
               <button type="button" :class="btnDanger" @click="deleteSite">Delete site</button>
             </div>

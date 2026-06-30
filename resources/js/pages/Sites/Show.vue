@@ -6,6 +6,7 @@ import OperationsTips from '@/components/OperationsTips.vue';
 import SeoHead from '@/components/SeoHead.vue';
 import { useFormFieldClasses } from '@/composables/useFormFieldClasses';
 import { operationalSiteApi } from '@/services/operationalSiteApi';
+import { linkedTodoWarning } from '@/utils/linkedTodoWarning';
 import { onMounted, onUnmounted, ref } from 'vue';
 
 interface ComplianceRequirement {
@@ -18,6 +19,7 @@ interface ComplianceRequirement {
   assignee?: string;
   notes?: string;
   has_open_task: boolean;
+  linked_todo_count?: number;
 }
 
 interface SiteDocument {
@@ -51,6 +53,7 @@ interface SiteInspection {
   inspector?: string;
   url: string;
   pdf_url?: string | null;
+  linked_todo_count?: number;
 }
 
 interface Site {
@@ -60,6 +63,7 @@ interface Site {
   reference?: string;
   full_address: string;
   notes?: string;
+  linked_todo_count?: number;
   parent?: { id: number; name: string };
   children: Array<{ id: number; name: string; type_label: string }>;
   compliance_requirements: ComplianceRequirement[];
@@ -143,8 +147,10 @@ function completeRequirement(requirementId: number) {
 }
 
 function deleteRequirement(requirement: ComplianceRequirement) {
-  if (!confirm(`Delete compliance item "${requirement.label}"? This cannot be undone.`)) return;
-  router.delete(`/sites/${props.site.id}/compliance/${requirement.id}`);
+  if (!confirm(`Delete compliance item "${requirement.label}"?${linkedTodoWarning(requirement.linked_todo_count)} This cannot be undone.`)) return;
+  router.delete(`/sites/${props.site.id}/compliance/${requirement.id}`, {
+    onSuccess: () => window.dispatchEvent(new CustomEvent('todoChanged')),
+  });
 }
 
 function applyTemplate() {
@@ -186,8 +192,10 @@ function deleteDocument(doc: SiteDocument) {
 }
 
 function deleteInspection(insp: SiteInspection) {
-  if (!confirm(`Delete inspection "${insp.label}"? This cannot be undone.`)) return;
-  router.delete(`/inspections/${insp.id}`);
+  if (!confirm(`Delete inspection "${insp.label}"?${linkedTodoWarning(insp.linked_todo_count)} This cannot be undone.`)) return;
+  router.delete(`/inspections/${insp.id}`, {
+    onSuccess: () => window.dispatchEvent(new CustomEvent('todoChanged')),
+  });
 }
 
 function onFileChange(event: Event) {
