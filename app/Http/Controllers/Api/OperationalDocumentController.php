@@ -33,6 +33,7 @@ class OperationalDocumentController extends Controller
             'expires_at' => 'nullable|date',
             'notes' => 'nullable|string|max:2000',
             'extract' => 'sometimes|boolean',
+            'project_id' => 'nullable|exists:taskit_projects,id',
         ]);
 
         if ($validator->fails()) {
@@ -47,6 +48,7 @@ class OperationalDocumentController extends Controller
                 'title' => $request->input('title'),
                 'expires_at' => $request->input('expires_at'),
                 'notes' => $request->input('notes'),
+                'project_id' => $request->input('project_id'),
             ],
             $request->boolean('extract', true),
         );

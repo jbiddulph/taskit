@@ -41,7 +41,11 @@ class OperationalDocumentService
 
         $proposal = null;
         if ($runExtraction) {
-            $proposal = $this->extractionService->extractFromDocument($document, $user);
+            $proposal = $this->extractionService->extractFromDocument(
+                $document,
+                $user,
+                isset($attributes['project_id']) ? (int) $attributes['project_id'] : null,
+            );
         }
 
         return ['document' => $document, 'proposal' => $proposal];

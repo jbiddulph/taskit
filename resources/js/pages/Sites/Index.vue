@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
 import OperationsTips from '@/components/OperationsTips.vue';
 import SeoHead from '@/components/SeoHead.vue';
+import { useFormFieldClasses } from '@/composables/useFormFieldClasses';
 
 interface ComplianceCounts {
   overdue: number;
@@ -21,6 +22,7 @@ interface Site {
   full_address: string;
   parent_name?: string;
   compliance_counts: ComplianceCounts;
+  children_count?: number;
 }
 
 interface Props {
@@ -37,6 +39,7 @@ interface Props {
 }
 
 defineProps<Props>();
+const { btnSecondary, btnDangerSm } = useFormFieldClasses();
 
 function statusColor(status: keyof ComplianceCounts): string {
   const map: Record<string, string> = {
@@ -46,6 +49,17 @@ function statusColor(status: keyof ComplianceCounts): string {
     missing: 'text-gray-500 dark:text-gray-400',
   };
   return map[status] ?? 'text-gray-600';
+}
+
+function deleteSite(site: Site) {
+  const childNote =
+    site.children_count && site.children_count > 0
+      ? ` This will also delete ${site.children_count} child site(s).`
+      : '';
+  if (!confirm(`Delete "${site.name}"?${childNote} All documents, compliance items, and inspections will be removed. This cannot be undone.`)) {
+    return;
+  }
+  router.delete(`/sites/${site.id}`);
 }
 </script>
 
@@ -105,26 +119,31 @@ function statusColor(status: keyof ComplianceCounts): string {
             </div>
 
             <div v-if="sites.length > 0" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              <Link
+              <div
                 v-for="site in sites"
                 :key="site.id"
-                :href="`/sites/${site.id}`"
-                class="block rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+                class="rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
               >
                 <div class="flex items-start justify-between gap-3 mb-2">
-                  <div>
+                  <Link :href="`/sites/${site.id}`" class="block flex-1 min-w-0">
                     <div class="text-xs font-medium uppercase tracking-wide text-gray-500">{{ site.type_label }}</div>
-                    <h2 class="text-lg font-semibold">{{ site.name }}</h2>
+                    <h2 class="text-lg font-semibold hover:underline">{{ site.name }}</h2>
+                  </Link>
+                  <div class="flex gap-1 shrink-0">
+                    <Link :href="`/sites/${site.id}/edit`" :class="[btnSecondary, '!px-2 !py-1 text-xs']">Edit</Link>
+                    <button type="button" :class="btnDangerSm" @click="deleteSite(site)">Delete</button>
                   </div>
                 </div>
-                <p v-if="site.full_address" class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{ site.full_address }}</p>
-                <p v-if="site.parent_name" class="text-xs text-gray-500 mb-3">Inside {{ site.parent_name }}</p>
-                <div class="flex flex-wrap gap-3 text-xs">
-                  <span :class="statusColor('overdue')">{{ site.compliance_counts.overdue }} overdue</span>
-                  <span :class="statusColor('due_soon')">{{ site.compliance_counts.due_soon }} due soon</span>
-                  <span :class="statusColor('compliant')">{{ site.compliance_counts.compliant }} compliant</span>
-                </div>
-              </Link>
+                <Link :href="`/sites/${site.id}`" class="block">
+                  <p v-if="site.full_address" class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{ site.full_address }}</p>
+                  <p v-if="site.parent_name" class="text-xs text-gray-500 mb-3">Inside {{ site.parent_name }}</p>
+                  <div class="flex flex-wrap gap-3 text-xs">
+                    <span :class="statusColor('overdue')">{{ site.compliance_counts.overdue }} overdue</span>
+                    <span :class="statusColor('due_soon')">{{ site.compliance_counts.due_soon }} due soon</span>
+                    <span :class="statusColor('compliant')">{{ site.compliance_counts.compliant }} compliant</span>
+                  </div>
+                </Link>
+              </div>
             </div>
 
             <div v-else class="text-center py-12">

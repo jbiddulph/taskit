@@ -145,4 +145,17 @@ class InspectionController extends Controller
 
         return $user;
     }
+
+    public function destroy(Inspection $inspection)
+    {
+        $user = Auth::user();
+        if (! $inspection->canAccess($user)) {
+            abort(403);
+        }
+
+        $siteId = $inspection->operational_object_id;
+        $this->inspectionService->delete($inspection);
+
+        return redirect()->route('sites.show', $siteId)->with('success', 'Inspection deleted.');
+    }
 }

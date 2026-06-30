@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
 import OperationsTips from '@/components/OperationsTips.vue';
 import SeoHead from '@/components/SeoHead.vue';
+import { useFormFieldClasses } from '@/composables/useFormFieldClasses';
 
 interface Option {
   value: string;
@@ -26,6 +27,7 @@ interface Props {
   parentOptions: ParentOption[];
   projects: ProjectOption[];
   hasComplianceTemplates: boolean;
+  defaultParentId?: number | null;
   company?: {
     id: number;
     name: string;
@@ -34,13 +36,14 @@ interface Props {
   } | null;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
+const { label, input, select, textarea, error, btnPrimary, btnSecondary } = useFormFieldClasses();
 
 const form = useForm({
   type: 'property',
   name: '',
   reference: '',
-  parent_id: '' as string | number,
+  parent_id: (props.defaultParentId ?? '') as string | number,
   address_line_1: '',
   address_line_2: '',
   city: '',
@@ -73,55 +76,56 @@ const submit = () => {
         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6 text-gray-900 dark:text-gray-100">
             <div class="mb-6">
-              <Link href="/sites" class="text-sm flex items-center gap-2 mb-2">
+              <Link href="/sites" class="text-sm flex items-center gap-2 mb-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
                 <Icon name="ArrowLeft" class="w-4 h-4" />
                 Back to sites
               </Link>
               <h1 class="text-2xl font-semibold">Add site</h1>
+              <p class="text-gray-600 dark:text-gray-400 mt-1">Add a property, building, or asset to track compliance.</p>
             </div>
 
             <OperationsTips context="sites_create" class="mb-6" :default-open="true" />
 
-            <form @submit.prevent="submit" class="space-y-5">
+            <form @submit.prevent="submit" class="space-y-6">
               <div>
-                <label class="block text-sm font-medium mb-1">Type</label>
-                <select v-model="form.type" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900">
+                <label :class="label">Type</label>
+                <select v-model="form.type" :class="select">
                   <option v-for="option in objectTypes" :key="option.value" :value="option.value">{{ option.label }}</option>
                 </select>
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1">Name</label>
-                <input v-model="form.name" type="text" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" placeholder="24 High Street" required />
-                <p v-if="form.errors.name" class="text-sm text-red-600 mt-1">{{ form.errors.name }}</p>
+                <label :class="label">Name *</label>
+                <input v-model="form.name" type="text" :class="input" placeholder="24 High Street" required />
+                <p v-if="form.errors.name" :class="error">{{ form.errors.name }}</p>
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1">Reference (optional)</label>
-                <input v-model="form.reference" type="text" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" placeholder="Unit 4B" />
+                <label :class="label">Reference (optional)</label>
+                <input v-model="form.reference" type="text" :class="input" placeholder="Unit 4B" />
               </div>
 
               <div v-if="parentOptions.length">
-                <label class="block text-sm font-medium mb-1">Parent site (optional)</label>
-                <select v-model="form.parent_id" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900">
+                <label :class="label">Parent site (optional)</label>
+                <select v-model="form.parent_id" :class="select">
                   <option value="">None</option>
                   <option v-for="parent in parentOptions" :key="parent.id" :value="parent.id">{{ parent.label }}</option>
                 </select>
               </div>
 
-              <div class="grid grid-cols-1 gap-4">
+              <div class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium mb-1">Address line 1</label>
-                  <input v-model="form.address_line_1" type="text" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
+                  <label :class="label">Address line 1</label>
+                  <input v-model="form.address_line_1" type="text" :class="input" />
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label class="block text-sm font-medium mb-1">City</label>
-                    <input v-model="form.city" type="text" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
+                    <label :class="label">City</label>
+                    <input v-model="form.city" type="text" :class="input" />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium mb-1">Postcode</label>
-                    <input v-model="form.postal_code" type="text" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
+                    <label :class="label">Postcode</label>
+                    <input v-model="form.postal_code" type="text" :class="input" />
                   </div>
                 </div>
               </div>
@@ -135,8 +139,8 @@ const submit = () => {
                   </span>
                 </label>
                 <div v-if="form.apply_compliance_template && projects.length">
-                  <label class="block text-sm font-medium mb-1">Create reminder tasks on board</label>
-                  <select v-model="form.default_project_id" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900">
+                  <label :class="label">Create reminder tasks on board</label>
+                  <select v-model="form.default_project_id" :class="select">
                     <option value="">First available board</option>
                     <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.key }} — {{ project.name }}</option>
                   </select>
@@ -144,15 +148,13 @@ const submit = () => {
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1">Notes</label>
-                <textarea v-model="form.notes" rows="3" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
+                <label :class="label">Notes</label>
+                <textarea v-model="form.notes" rows="3" :class="textarea" />
               </div>
 
-              <div class="flex gap-3">
-                <button type="submit" :disabled="form.processing" class="rounded-md px-4 py-2 text-sm font-medium bg-black text-white dark:bg-white dark:text-black disabled:opacity-50">
-                  Create site
-                </button>
-                <Link href="/sites" class="rounded-md px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600">Cancel</Link>
+              <div class="flex gap-3 pt-2">
+                <button type="submit" :disabled="form.processing" :class="btnPrimary">Create site</button>
+                <Link href="/sites" :class="btnSecondary">Cancel</Link>
               </div>
             </form>
           </div>

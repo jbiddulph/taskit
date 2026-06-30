@@ -8,6 +8,9 @@ use App\Models\OperationalDocument;
 use App\Models\OperationalObject;
 use App\Models\Project;
 use App\Services\ComplianceRequirementService;
+use App\Services\InspectionService;
+use App\Services\OperationalDocumentDeletionService;
+use App\Services\OperationalObjectDeletionService;
 use App\Support\ComplianceTemplates;
 use App\Support\InspectionTemplates;
 use App\Support\OperationalObjectTypes;
@@ -21,6 +24,9 @@ class OperationalObjectController extends Controller
 {
     public function __construct(
         protected ComplianceRequirementService $complianceService,
+        protected OperationalObjectDeletionService $deletionService,
+        protected OperationalDocumentDeletionService $documentDeletionService,
+        protected InspectionService $inspectionService,
     ) {}
 
     public function index(): Response
@@ -29,6 +35,7 @@ class OperationalObjectController extends Controller
 
         $objects = OperationalObject::forCompany($user->company_id)
             ->with(['parent', 'complianceRequirements'])
+            ->withCount('children')
             ->whereNull('parent_id')
             ->orderBy('name')
             ->get()
@@ -42,7 +49,7 @@ class OperationalObjectController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
         $user = $this->requireCompanyUser();
 
@@ -51,6 +58,7 @@ class OperationalObjectController extends Controller
             'parentOptions' => $this->parentOptions($user->company_id),
             'projects' => $this->projectOptions($user->company_id),
             'hasComplianceTemplates' => ComplianceTemplates::hasTemplates($user->company?->industry),
+            'defaultParentId' => $request->integer('parent_id') ?: null,
             'company' => $this->companyPayload($user),
         ]);
     }
@@ -133,7 +141,9 @@ class OperationalObjectController extends Controller
         $this->authorizeObject($site, $user);
 
         return Inertia::render('Sites/Edit', [
-            'site' => $site,
+            'site' => array_merge($site->toArray(), [
+                'children_count' => $site->children()->count(),
+            ]),
             'objectTypes' => OperationalObjectTypes::choices(),
             'parentOptions' => $this->parentOptions($user->company_id, $site->id),
             'company' => $this->companyPayload($user),
@@ -174,9 +184,42 @@ class OperationalObjectController extends Controller
         $user = Auth::user();
         $this->authorizeObject($site, $user);
 
-        $site->update(['is_active' => false]);
+        $childCount = $site->children()->count();
+        $this->deletionService->deleteWithDescendants($site);
 
-        return redirect()->route('sites.index')->with('success', 'Site archived successfully!');
+        $message = $childCount > 0
+            ? "Site and {$childCount} child site(s) deleted."
+            : 'Site deleted successfully.';
+
+        return redirect()->route('sites.index')->with('success', $message);
+    }
+
+    public function destroyComplianceRequirement(OperationalObject $site, ComplianceRequirement $requirement)
+    {
+        $user = Auth::user();
+        $this->authorizeObject($site, $user);
+
+        if ($requirement->operational_object_id !== $site->id) {
+            abort(404);
+        }
+
+        $requirement->delete();
+
+        return back()->with('success', 'Compliance item deleted.');
+    }
+
+    public function destroyDocument(OperationalObject $site, OperationalDocument $document)
+    {
+        $user = Auth::user();
+        $this->authorizeObject($site, $user);
+
+        if ($document->operational_object_id !== $site->id || ! $document->canAccess($user)) {
+            abort(403);
+        }
+
+        $this->documentDeletionService->delete($document);
+
+        return back()->with('success', 'Document deleted.');
     }
 
     public function applyComplianceTemplate(Request $request, OperationalObject $site)
@@ -324,6 +367,7 @@ class OperationalObjectController extends Controller
             'reference' => $object->reference,
             'full_address' => $object->full_address,
             'parent_name' => $object->parent?->name,
+            'children_count' => $object->children_count ?? $object->children()->count(),
             'compliance_counts' => [
                 'overdue' => $requirements->where('status', ComplianceRequirement::STATUS_OVERDUE)->count(),
                 'due_soon' => $requirements->where('status', ComplianceRequirement::STATUS_DUE_SOON)->count(),

@@ -98,10 +98,13 @@ Route::middleware(['auth', 'verified', 'subscription.access'])->group(function (
     Route::resource('sites', OperationalObjectController::class);
     Route::post('sites/{site}/compliance-template', [OperationalObjectController::class, 'applyComplianceTemplate'])->name('sites.compliance-template');
     Route::patch('sites/{site}/compliance/{requirement}', [OperationalObjectController::class, 'updateComplianceRequirement'])->name('sites.compliance.update');
+    Route::delete('sites/{site}/compliance/{requirement}', [OperationalObjectController::class, 'destroyComplianceRequirement'])->name('sites.compliance.destroy');
     Route::post('sites/{site}/compliance/{requirement}/complete', [OperationalObjectController::class, 'completeComplianceRequirement'])->name('sites.compliance.complete');
+    Route::delete('sites/{site}/documents/{document}', [OperationalObjectController::class, 'destroyDocument'])->name('sites.documents.destroy');
     Route::get('sites/{site}/documents/{document}/download', [OperationalObjectController::class, 'downloadDocument'])->name('sites.documents.download');
     Route::get('sites/{site}/inspections/create', [InspectionController::class, 'create'])->name('sites.inspections.create');
     Route::get('inspections/{inspection}', [InspectionController::class, 'show'])->name('inspections.show');
+    Route::delete('inspections/{inspection}', [InspectionController::class, 'destroy'])->name('inspections.destroy');
     Route::get('inspections/{inspection}/pdf', [InspectionController::class, 'downloadPdf'])->name('inspections.pdf');
     Route::get('inspections/{inspection}/photos/{photo}', [InspectionController::class, 'showPhoto'])->name('inspections.photos.show');
     Route::get('companies/{company}', [CompanyController::class, 'show'])->name('companies.show');

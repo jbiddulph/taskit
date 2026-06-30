@@ -41,6 +41,10 @@ const openProposal = async (proposalId: number) => {
         if (!proposal.value) {
             throw new Error('Proposal not found');
         }
+
+        if (proposal.value.project_id) {
+            selectedProjectId.value = proposal.value.project_id;
+        }
     } catch (error: any) {
         notify('error', 'Load failed', error.message || 'Could not load extraction proposal.');
         isOpen.value = false;
@@ -52,17 +56,14 @@ const openProposal = async (proposalId: number) => {
 
 const approve = async () => {
     if (!proposal.value) return;
+    if (!selectedProjectId.value) {
+        notify('warning', 'Project required', 'Select a board for reminder tasks.');
+        return;
+    }
     submitting.value = true;
     try {
-        const result = await documentExtractionApi.approve(proposal.value.id, selectedProjectId.value ?? undefined);
-        const taskTitle = result?.data?.task?.title;
-        notify(
-            'success',
-            'Applied',
-            taskTitle
-                ? `Compliance updated. Reminder task "${taskTitle}" added to your board.`
-                : 'Certificate details saved and compliance updated.',
-        );
+        const result = await documentExtractionApi.approve(proposal.value.id, selectedProjectId.value);
+        notify('success', 'Applied', result.message || 'Certificate details saved and tasks created.');
         isOpen.value = false;
         proposal.value = null;
         window.dispatchEvent(new CustomEvent('document-extraction-reviewed'));
@@ -128,10 +129,11 @@ onUnmounted(() => {
                 </dl>
 
                 <div v-if="projects.length">
-                    <label class="block text-sm font-medium mb-1">Reminder tasks board</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reminder tasks board *</label>
                     <select
                         v-model="selectedProjectId"
-                        class="w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white text-sm"
+                        required
                     >
                         <option v-for="project in projects" :key="project.id" :value="project.id">
                             {{ project.key }} — {{ project.name }}

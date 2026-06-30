@@ -16,6 +16,7 @@ export interface DocumentExtractionProposal {
     status: string;
     extracted_data: Record<string, string | null>;
     summary?: string | null;
+    project_id?: number | null;
     site?: { id: number; name: string };
     document?: { id: number; title: string; original_filename: string };
 }
@@ -29,13 +30,14 @@ class OperationalSiteApi {
     async uploadDocument(
         siteId: number,
         file: File,
-        options: { title?: string; expires_at?: string; extract?: boolean } = {},
+        options: { title?: string; expires_at?: string; extract?: boolean; project_id?: number } = {},
     ) {
         const formData = new FormData();
         formData.append('file', file);
         if (options.title) formData.append('title', options.title);
         if (options.expires_at) formData.append('expires_at', options.expires_at);
         if (options.extract !== undefined) formData.append('extract', options.extract ? '1' : '0');
+        if (options.project_id) formData.append('project_id', String(options.project_id));
 
         const response = await axios.post(`/sites/${siteId}/documents`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
@@ -59,6 +61,7 @@ class DocumentExtractionApi {
             message: string;
             data?: {
                 task?: { id: number; title: string; project_id: number } | null;
+                tasks?: Array<{ id: number; title: string; project_id: number }>;
             };
         };
     }

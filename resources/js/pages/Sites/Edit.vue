@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { useForm, Link } from '@inertiajs/vue3';
+import { useForm, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
 import SeoHead from '@/components/SeoHead.vue';
+import { useFormFieldClasses } from '@/composables/useFormFieldClasses';
 
 interface Option {
   value: string;
@@ -28,6 +29,7 @@ interface Site {
   latitude?: number;
   longitude?: number;
   notes?: string;
+  children_count?: number;
 }
 
 interface Props {
@@ -43,6 +45,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { label, input, select, textarea, btnPrimary, btnSecondary, btnDanger } = useFormFieldClasses();
 
 const form = useForm({
   type: props.site.type,
@@ -67,6 +70,19 @@ const submit = () => {
     longitude: data.longitude === '' ? null : Number(data.longitude),
   })).put(`/sites/${props.site.id}`);
 };
+
+const deleteSite = () => {
+  const childNote =
+    props.site.children_count && props.site.children_count > 0
+      ? ` This will also permanently delete ${props.site.children_count} child site(s) and all related documents, compliance items, and inspections.`
+      : ' This will permanently delete all related documents, compliance items, and inspections.';
+
+  if (!confirm(`Delete "${props.site.name}"?${childNote} This cannot be undone.`)) {
+    return;
+  }
+
+  router.delete(`/sites/${props.site.id}`);
+};
 </script>
 
 <template>
@@ -78,67 +94,74 @@ const submit = () => {
         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6 text-gray-900 dark:text-gray-100">
             <div class="mb-6">
-              <Link :href="`/sites/${site.id}`" class="text-sm flex items-center gap-2 mb-2">
+              <Link :href="`/sites/${site.id}`" class="text-sm flex items-center gap-2 mb-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
                 <Icon name="ArrowLeft" class="w-4 h-4" />
                 Back to site
               </Link>
               <h1 class="text-2xl font-semibold">Edit site</h1>
             </div>
 
-            <form @submit.prevent="submit" class="space-y-5">
+            <form @submit.prevent="submit" class="space-y-6">
               <div>
-                <label class="block text-sm font-medium mb-1">Type</label>
-                <select v-model="form.type" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900">
+                <label :class="label">Type</label>
+                <select v-model="form.type" :class="select">
                   <option v-for="option in objectTypes" :key="option.value" :value="option.value">{{ option.label }}</option>
                 </select>
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1">Name</label>
-                <input v-model="form.name" type="text" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" required />
+                <label :class="label">Name *</label>
+                <input v-model="form.name" type="text" :class="input" required />
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1">Reference</label>
-                <input v-model="form.reference" type="text" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
+                <label :class="label">Reference</label>
+                <input v-model="form.reference" type="text" :class="input" />
               </div>
 
               <div v-if="parentOptions.length">
-                <label class="block text-sm font-medium mb-1">Parent site</label>
-                <select v-model="form.parent_id" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900">
+                <label :class="label">Parent site</label>
+                <select v-model="form.parent_id" :class="select">
                   <option value="">None</option>
                   <option v-for="parent in parentOptions" :key="parent.id" :value="parent.id">{{ parent.label }}</option>
                 </select>
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1">Address line 1</label>
-                <input v-model="form.address_line_1" type="text" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
+                <label :class="label">Address line 1</label>
+                <input v-model="form.address_line_1" type="text" :class="input" />
               </div>
 
-              <div class="grid grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-medium mb-1">City</label>
-                  <input v-model="form.city" type="text" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
+                  <label :class="label">City</label>
+                  <input v-model="form.city" type="text" :class="input" />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium mb-1">Postcode</label>
-                  <input v-model="form.postal_code" type="text" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
+                  <label :class="label">Postcode</label>
+                  <input v-model="form.postal_code" type="text" :class="input" />
                 </div>
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1">Notes</label>
-                <textarea v-model="form.notes" rows="3" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
+                <label :class="label">Notes</label>
+                <textarea v-model="form.notes" rows="3" :class="textarea" />
               </div>
 
-              <div class="flex gap-3">
-                <button type="submit" :disabled="form.processing" class="rounded-md px-4 py-2 text-sm font-medium bg-black text-white dark:bg-white dark:text-black disabled:opacity-50">
-                  Save changes
-                </button>
-                <Link :href="`/sites/${site.id}`" class="rounded-md px-4 py-2 text-sm font-medium border">Cancel</Link>
+              <div class="flex gap-3 pt-2">
+                <button type="submit" :disabled="form.processing" :class="btnPrimary">Save changes</button>
+                <Link :href="`/sites/${site.id}`" :class="btnSecondary">Cancel</Link>
               </div>
             </form>
+
+            <div class="mt-10 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <h2 class="text-sm font-semibold text-red-700 dark:text-red-400 mb-2">Danger zone</h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Deleting this site removes all documents, compliance items, and inspections
+                <span v-if="site.children_count">, including {{ site.children_count }} child site(s)</span>.
+              </p>
+              <button type="button" :class="btnDanger" @click="deleteSite">Delete site</button>
+            </div>
           </div>
         </div>
       </div>

@@ -115,4 +115,21 @@ class InspectionService
             'has_failures' => $hasFailures,
         ];
     }
+
+    public function delete(Inspection $inspection): void
+    {
+        $inspection->load('photos');
+
+        if ($inspection->pdf_path && Storage::disk('private')->exists($inspection->pdf_path)) {
+            Storage::disk('private')->delete($inspection->pdf_path);
+        }
+
+        foreach ($inspection->photos as $photo) {
+            if ($photo->file_path && Storage::disk('private')->exists($photo->file_path)) {
+                Storage::disk('private')->delete($photo->file_path);
+            }
+        }
+
+        $inspection->delete();
+    }
 }

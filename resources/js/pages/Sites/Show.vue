@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
 import OperationsTips from '@/components/OperationsTips.vue';
 import SeoHead from '@/components/SeoHead.vue';
+import { useFormFieldClasses } from '@/composables/useFormFieldClasses';
 import { operationalSiteApi } from '@/services/operationalSiteApi';
 import { onMounted, onUnmounted, ref } from 'vue';
 
@@ -87,18 +88,19 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { label, input, select, card, sectionTitle, btnPrimary, btnSecondary, btnDangerSm } = useFormFieldClasses();
 
 const editingId = ref<number | null>(null);
 const uploading = ref(false);
 const uploadFile = ref<File | null>(null);
 const manualExpiry = ref('');
 const extractWithAi = ref(true);
+const uploadProjectId = ref<number | ''>(props.projects[0]?.id ?? '');
 
 const editForm = useForm({
   next_due_date: '',
   assignee: '',
   notes: '',
-  project_id: '' as string | number,
 });
 
 function statusBadge(status: string): string {
@@ -140,7 +142,13 @@ function completeRequirement(requirementId: number) {
   router.post(`/sites/${props.site.id}/compliance/${requirementId}/complete`);
 }
 
+function deleteRequirement(requirement: ComplianceRequirement) {
+  if (!confirm(`Delete compliance item "${requirement.label}"? This cannot be undone.`)) return;
+  router.delete(`/sites/${props.site.id}/compliance/${requirement.id}`);
+}
+
 function applyTemplate() {
+  if (!confirm('Apply the industry compliance template to this site? New items will be added.')) return;
   router.post(`/sites/${props.site.id}/compliance-template`);
 }
 
@@ -155,6 +163,7 @@ async function uploadDocument() {
     const result = await operationalSiteApi.uploadDocument(props.site.id, uploadFile.value, {
       expires_at: manualExpiry.value || undefined,
       extract: extractWithAi.value,
+      project_id: uploadProjectId.value ? Number(uploadProjectId.value) : undefined,
     });
     uploadFile.value = null;
     manualExpiry.value = '';
@@ -169,6 +178,16 @@ async function uploadDocument() {
   } finally {
     uploading.value = false;
   }
+}
+
+function deleteDocument(doc: SiteDocument) {
+  if (!confirm(`Delete document "${doc.title}"? The file will be permanently removed.`)) return;
+  router.delete(`/sites/${props.site.id}/documents/${doc.id}`);
+}
+
+function deleteInspection(insp: SiteInspection) {
+  if (!confirm(`Delete inspection "${insp.label}"? This cannot be undone.`)) return;
+  router.delete(`/inspections/${insp.id}`);
 }
 
 function onFileChange(event: Event) {
@@ -199,7 +218,7 @@ onUnmounted(() => {
           <div class="p-6 text-gray-900 dark:text-gray-100">
             <div class="flex justify-between items-start gap-4 mb-8">
               <div>
-                <Link href="/sites" class="text-sm flex items-center gap-2 mb-2">
+                <Link href="/sites" class="text-sm flex items-center gap-2 mb-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
                   <Icon name="ArrowLeft" class="w-4 h-4" />
                   All sites
                 </Link>
@@ -208,7 +227,10 @@ onUnmounted(() => {
                 <p v-if="site.full_address" class="text-gray-600 dark:text-gray-400 mt-1">{{ site.full_address }}</p>
                 <p v-if="site.parent" class="text-sm text-gray-500 mt-1">Inside {{ site.parent.name }}</p>
               </div>
-              <Link :href="`/sites/${site.id}/edit`" class="rounded-md px-3 py-2 text-sm border border-gray-300 dark:border-gray-600">Edit</Link>
+              <div class="flex flex-wrap gap-2 shrink-0">
+                <Link :href="`/sites/create?parent_id=${site.id}`" :class="btnSecondary">Add child site</Link>
+                <Link :href="`/sites/${site.id}/edit`" :class="btnSecondary">Edit</Link>
+              </div>
             </div>
 
             <div v-if="site.children.length" class="mb-8">
@@ -227,8 +249,8 @@ onUnmounted(() => {
 
             <OperationsTips context="sites_show" class="mb-8" />
 
-            <div class="mt-2 mb-8">
-              <h2 class="text-lg font-semibold mb-4">Documents</h2>
+            <section class="mb-8">
+              <h2 :class="sectionTitle" class="mb-4">Documents</h2>
 
               <div
                 v-for="proposal in pendingDocumentProposals ?? []"
@@ -239,38 +261,35 @@ onUnmounted(() => {
                   <div class="font-medium text-sm">AI extraction ready</div>
                   <div class="text-xs text-gray-600 dark:text-gray-400">{{ proposal.document_title }}</div>
                 </div>
-                <button
-                  type="button"
-                  class="text-sm rounded-md px-3 py-1.5 bg-black text-white dark:bg-white dark:text-black"
-                  @click="openProposalReview(proposal.id)"
-                >
-                  Review
-                </button>
+                <button type="button" :class="btnPrimary" @click="openProposalReview(proposal.id)">Review</button>
               </div>
 
-              <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-4">
-                <div class="grid gap-3 md:grid-cols-2">
+              <div :class="card" class="mb-4">
+                <div class="grid gap-4 md:grid-cols-2">
                   <div class="md:col-span-2">
-                    <label class="block text-sm font-medium mb-1">Upload certificate or document</label>
+                    <label :class="label">Upload certificate or document</label>
                     <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="text-sm w-full" @change="onFileChange" />
                   </div>
+                  <div v-if="projects.length">
+                    <label :class="label">Tasks board for AI reminders</label>
+                    <select v-model="uploadProjectId" :class="select">
+                      <option v-for="project in projects" :key="project.id" :value="project.id">
+                        {{ project.key }} — {{ project.name }}
+                      </option>
+                    </select>
+                  </div>
                   <div>
-                    <label class="block text-sm font-medium mb-1">Expiry date (optional)</label>
-                    <input v-model="manualExpiry" type="date" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900 text-sm" />
+                    <label :class="label">Expiry date (optional)</label>
+                    <input v-model="manualExpiry" type="date" :class="input" />
                   </div>
                   <div class="flex items-end">
-                    <label class="flex items-center gap-2 text-sm">
+                    <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                       <input v-model="extractWithAi" type="checkbox" />
                       Extract details with AI
                     </label>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  class="mt-3 text-sm rounded-md px-4 py-2 bg-black text-white dark:bg-white dark:text-black disabled:opacity-50"
-                  :disabled="!uploadFile || uploading"
-                  @click="uploadDocument"
-                >
+                <button type="button" :class="[btnPrimary, 'mt-4']" :disabled="!uploadFile || uploading" @click="uploadDocument">
                   {{ uploading ? 'Uploading…' : 'Upload' }}
                 </button>
               </div>
@@ -288,20 +307,23 @@ onUnmounted(() => {
                       <span v-if="doc.expires_display"> · Expires {{ doc.expires_display }}</span>
                     </div>
                   </div>
-                  <a :href="doc.download_url" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">Download</a>
+                  <div class="flex items-center gap-3 shrink-0">
+                    <a :href="doc.download_url" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">Download</a>
+                    <button type="button" :class="btnDangerSm" @click="deleteDocument(doc)">Delete</button>
+                  </div>
                 </div>
               </div>
               <p v-else class="text-sm text-gray-500">No documents uploaded yet.</p>
-            </div>
+            </section>
 
-            <div class="mb-8">
-              <h2 class="text-lg font-semibold mb-4">Inspections</h2>
+            <section class="mb-8">
+              <h2 :class="sectionTitle" class="mb-4">Inspections</h2>
               <div v-if="inspectionTemplates?.length" class="flex flex-wrap gap-2 mb-4">
                 <Link
                   v-for="template in inspectionTemplates"
                   :key="template.key"
                   :href="`/sites/${site.id}/inspections/create?template=${template.key}`"
-                  class="text-sm rounded-md px-3 py-1.5 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900"
+                  :class="btnSecondary"
                 >
                   Start: {{ template.label }}
                 </Link>
@@ -319,86 +341,82 @@ onUnmounted(() => {
                       <span v-if="insp.inspector"> · {{ insp.inspector }}</span>
                     </div>
                   </div>
-                  <a v-if="insp.pdf_url" :href="insp.pdf_url" class="text-sm text-blue-600 dark:text-blue-400">PDF</a>
+                  <div class="flex items-center gap-3 shrink-0">
+                    <a v-if="insp.pdf_url" :href="insp.pdf_url" class="text-sm text-blue-600 dark:text-blue-400">PDF</a>
+                    <button type="button" :class="btnDangerSm" @click="deleteInspection(insp)">Delete</button>
+                  </div>
                 </div>
               </div>
               <p v-else class="text-sm text-gray-500">No inspections yet. Start one using the buttons above.</p>
-            </div>
+            </section>
 
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-lg font-semibold">Compliance</h2>
-              <button
-                v-if="hasComplianceTemplates"
-                type="button"
-                class="text-sm rounded-md px-3 py-1.5 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900"
-                @click="applyTemplate"
-              >
-                Apply industry template
-              </button>
-            </div>
+            <section>
+              <div class="flex items-center justify-between mb-4">
+                <h2 :class="sectionTitle">Compliance</h2>
+                <button v-if="hasComplianceTemplates" type="button" :class="btnSecondary" @click="applyTemplate">
+                  Apply industry template
+                </button>
+              </div>
 
-            <div v-if="site.compliance_requirements.length" class="space-y-3">
-              <div
-                v-for="requirement in site.compliance_requirements"
-                :key="requirement.id"
-                class="rounded-lg border border-gray-200 dark:border-gray-700 p-4"
-              >
-                <div class="flex items-start justify-between gap-4">
-                  <div>
-                    <div class="font-medium">{{ requirement.label }}</div>
-                    <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      <span v-if="requirement.next_due_display">Next due: {{ requirement.next_due_display }}</span>
-                      <span v-else>No due date set</span>
-                      <span v-if="requirement.last_completed_at"> · Last completed {{ requirement.last_completed_at }}</span>
+              <div v-if="site.compliance_requirements.length" class="space-y-3">
+                <div
+                  v-for="requirement in site.compliance_requirements"
+                  :key="requirement.id"
+                  :class="card"
+                >
+                  <div class="flex items-start justify-between gap-4">
+                    <div>
+                      <div class="font-medium">{{ requirement.label }}</div>
+                      <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        <span v-if="requirement.next_due_display">Next due: {{ requirement.next_due_display }}</span>
+                        <span v-else>No due date set</span>
+                        <span v-if="requirement.last_completed_at"> · Last completed {{ requirement.last_completed_at }}</span>
+                      </div>
+                      <div v-if="requirement.assignee" class="text-sm text-gray-500 mt-1">Assigned: {{ requirement.assignee }}</div>
+                      <div v-if="requirement.has_open_task" class="text-xs text-blue-600 dark:text-blue-400 mt-1">Open task on board</div>
                     </div>
-                    <div v-if="requirement.assignee" class="text-sm text-gray-500 mt-1">Assigned: {{ requirement.assignee }}</div>
-                    <div v-if="requirement.has_open_task" class="text-xs text-blue-600 dark:text-blue-400 mt-1">Open task on board</div>
+                    <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium" :class="statusBadge(requirement.status)">
+                      {{ statusLabel(requirement.status) }}
+                    </span>
                   </div>
-                  <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium" :class="statusBadge(requirement.status)">
-                    {{ statusLabel(requirement.status) }}
-                  </span>
-                </div>
 
-                <div v-if="editingId === requirement.id" class="mt-4 grid gap-3 md:grid-cols-2">
-                  <div>
-                    <label class="block text-xs font-medium mb-1">Due date</label>
-                    <input v-model="editForm.next_due_date" type="date" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900 text-sm" />
+                  <div v-if="editingId === requirement.id" class="mt-4 grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label :class="label">Due date</label>
+                      <input v-model="editForm.next_due_date" type="date" :class="input" />
+                    </div>
+                    <div>
+                      <label :class="label">Assignee</label>
+                      <input v-model="editForm.assignee" type="text" :class="input" />
+                    </div>
+                    <div class="md:col-span-2 flex gap-2">
+                      <button type="button" :class="btnPrimary" @click="saveRequirement(requirement.id)">Save</button>
+                      <button type="button" :class="btnSecondary" @click="editingId = null">Cancel</button>
+                    </div>
                   </div>
-                  <div>
-                    <label class="block text-xs font-medium mb-1">Assignee</label>
-                    <input v-model="editForm.assignee" type="text" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900 text-sm" />
-                  </div>
-                  <div class="md:col-span-2 flex gap-2">
-                    <button type="button" class="text-sm rounded-md px-3 py-1.5 bg-black text-white dark:bg-white dark:text-black" @click="saveRequirement(requirement.id)">Save</button>
-                    <button type="button" class="text-sm rounded-md px-3 py-1.5 border" @click="editingId = null">Cancel</button>
-                  </div>
-                </div>
 
-                <div v-else class="mt-3 flex flex-wrap gap-2">
-                  <button type="button" class="text-xs rounded-md px-2.5 py-1 border" @click="startEdit(requirement)">Set due date</button>
-                  <button
-                    v-if="requirement.next_due_date"
-                    type="button"
-                    class="text-xs rounded-md px-2.5 py-1 border border-green-300 text-green-700 dark:text-green-300"
-                    @click="completeRequirement(requirement.id)"
-                  >
-                    Mark complete
-                  </button>
+                  <div v-else class="mt-3 flex flex-wrap gap-2">
+                    <button type="button" :class="btnSecondary" class="!px-2.5 !py-1 text-xs" @click="startEdit(requirement)">Edit</button>
+                    <button
+                      v-if="requirement.next_due_date"
+                      type="button"
+                      class="text-xs rounded-md px-2.5 py-1 border border-green-300 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-950/30"
+                      @click="completeRequirement(requirement.id)"
+                    >
+                      Mark complete
+                    </button>
+                    <button type="button" :class="btnDangerSm" @click="deleteRequirement(requirement)">Delete</button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div v-else class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-8 text-center">
-              <p class="text-gray-600 dark:text-gray-400 mb-4">No compliance items yet.</p>
-              <button
-                v-if="hasComplianceTemplates"
-                type="button"
-                class="rounded-md px-4 py-2 text-sm bg-black text-white dark:bg-white dark:text-black"
-                @click="applyTemplate"
-              >
-                Apply industry template
-              </button>
-            </div>
+              <div v-else class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-8 text-center">
+                <p class="text-gray-600 dark:text-gray-400 mb-4">No compliance items yet.</p>
+                <button v-if="hasComplianceTemplates" type="button" :class="btnPrimary" @click="applyTemplate">
+                  Apply industry template
+                </button>
+              </div>
+            </section>
 
             <p v-if="site.notes" class="mt-8 text-sm text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-6">{{ site.notes }}</p>
           </div>

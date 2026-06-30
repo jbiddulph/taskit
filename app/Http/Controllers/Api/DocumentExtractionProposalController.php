@@ -42,9 +42,11 @@ class DocumentExtractionProposalController extends Controller
                 $request->input('project_id'),
             );
 
-            $message = $result['task']
-                ? 'Document details applied and reminder task created.'
-                : 'Document details applied.';
+            $message = count($result['tasks'] ?? []) > 0
+                ? count($result['tasks']).' reminder task(s) created on your board.'
+                : ($result['task']
+                    ? 'Document details applied and reminder task created.'
+                    : 'Document details applied.');
 
             return response()->json([
                 'success' => true,
@@ -57,6 +59,11 @@ class DocumentExtractionProposalController extends Controller
                         'title' => $result['task']->title,
                         'project_id' => $result['task']->project_id,
                     ] : null,
+                    'tasks' => collect($result['tasks'] ?? [])->map(fn ($task) => [
+                        'id' => $task->id,
+                        'title' => $task->title,
+                        'project_id' => $task->project_id,
+                    ])->values(),
                 ],
             ]);
         } catch (ValidationException $e) {
@@ -90,6 +97,7 @@ class DocumentExtractionProposalController extends Controller
                 'title' => $proposal->operationalDocument->title,
                 'original_filename' => $proposal->operationalDocument->original_filename,
             ] : null,
+            'project_id' => $proposal->metadata['project_id'] ?? null,
             'created_at' => $proposal->created_at->toIso8601String(),
         ];
     }
