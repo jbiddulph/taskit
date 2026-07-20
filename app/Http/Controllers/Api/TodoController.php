@@ -357,7 +357,7 @@ class TodoController extends Controller
         }
 
         try {
-            Http::post('https://n8n.neurohub.uk/webhook/new-task', $payload);
+            Http::post('https://n8njb-6378e565ae08.herokuapp.com/webhook/new-task', $payload);
         } catch (\Throwable $e) {
             logger()->warning('Failed to notify n8n webhook for todo creation', [
                 'todo_id' => $todo->id,
