@@ -11,6 +11,13 @@ import {
 
 const props = defineProps<{
     slug: string;
+    seo?: {
+        title: string;
+        description: string;
+        keywords: string;
+        canonical: string;
+        image: string;
+    };
 }>();
 
 const page = computed<IndustryLandingPage>(() => {
@@ -21,13 +28,20 @@ const page = computed<IndustryLandingPage>(() => {
     return match;
 });
 
+const seoTitle = computed(() => props.seo?.title || page.value.seoTitle);
+const seoDescription = computed(() => props.seo?.description || page.value.seoDescription);
+const seoKeywords = computed(() => props.seo?.keywords || page.value.keywords);
+const seoCanonical = computed(() => props.seo?.canonical || `https://www.zaptask.co.uk/${page.value.slug}`);
+const seoImage = computed(() => props.seo?.image || '/images/activity-feed.png');
+
 const jsonLd = computed(() => ({
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
     name: `ZapTask for ${page.value.label}`,
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
-    description: page.value.seoDescription,
+    description: seoDescription.value,
+    url: seoCanonical.value,
     offers: {
         '@type': 'Offer',
         price: '0',
@@ -45,12 +59,12 @@ const registerUrl = computed(() => `/register?industry=${encodeURIComponent(prop
 
 <template>
     <SeoHead
-        :title="page.seoTitle"
-        :description="page.seoDescription"
-        :keywords="page.keywords"
+        :title="seoTitle"
+        :description="seoDescription"
+        :keywords="seoKeywords"
         :json-ld="jsonLd"
-        :canonical="`https://www.zaptask.co.uk/${page.slug}`"
-        image="/images/activity-feed.png"
+        :canonical="seoCanonical"
+        :image="seoImage"
     />
     <Head>
         <link rel="preconnect" href="https://rsms.me/" />

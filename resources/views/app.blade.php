@@ -37,7 +37,35 @@
             }
         </style>
 
-        <title inertia>ZapTask</title>
+        @php($seo = $seo ?? null)
+        <title inertia>{{ $seo['title'] ?? 'ZapTask' }}</title>
+        @if (! empty($seo['description']))
+            <meta name="description" content="{{ $seo['description'] }}">
+        @endif
+        @if (! empty($seo['keywords']))
+            <meta name="keywords" content="{{ $seo['keywords'] }}">
+        @endif
+        @if (! empty($seo['canonical']))
+            <link rel="canonical" href="{{ $seo['canonical'] }}">
+            <meta property="og:url" content="{{ $seo['canonical'] }}">
+        @endif
+        @if (! empty($seo['title']))
+            <meta property="og:title" content="{{ $seo['title'] }}">
+            <meta name="twitter:title" content="{{ $seo['title'] }}">
+        @endif
+        @if (! empty($seo['description']))
+            <meta property="og:description" content="{{ $seo['description'] }}">
+            <meta name="twitter:description" content="{{ $seo['description'] }}">
+        @endif
+        @if (! empty($seo['image']))
+            <meta property="og:image" content="{{ $seo['image'] }}">
+            <meta name="twitter:image" content="{{ $seo['image'] }}">
+        @endif
+        @if (! empty($seo))
+            <meta property="og:type" content="website">
+            <meta property="og:site_name" content="ZapTask">
+            <meta name="twitter:card" content="summary_large_image">
+        @endif
 
         <link rel="icon" href="/favicon.ico" type="image/x-icon">
         <link rel="apple-touch-icon" href="/zap_icon.png">

@@ -77,7 +77,7 @@ const jsonLdPayload = computed(() => {
 </script>
 
 <template>
-    <Head :title="props.title">
+    <Head :title="fullTitle">
         <meta name="description" :content="normalizedDescription" />
         <meta v-if="props.keywords" name="keywords" :content="props.keywords" />
         <link rel="canonical" :href="canonicalUrl" />

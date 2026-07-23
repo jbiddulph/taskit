@@ -65,7 +65,7 @@ export const INDUSTRY_LANDING_PAGES: IndustryLandingPage[] = [
         subheadline:
             'ZapTask is simple task management with a map—not another bloated CRM. Pin tasks to properties, see today\'s viewings on a route, check in when you arrive, and keep sales progression visible on a clear Kanban board.',
         keywords:
-            'estate agent task management, property viewing planner, estate agency software UK, viewing route planner, property task app',
+            'estate agent task management, property viewing planner, estate agency software UK, viewing route planner, property task app, Kanban for estate agents',
         seoTitle: 'Task Management for Estate Agents | ZapTask',
         seoDescription:
             'Plan property viewings on a map, route your negotiators, and track every listing task. ZapTask is built for estate agents who work on the move.',
@@ -272,7 +272,7 @@ export const INDUSTRY_LANDING_PAGES: IndustryLandingPage[] = [
         subheadline:
             'Pin domestic and commercial jobs to addresses, plan your day on a map, and keep certification and follow-up work visible on a board your whole team can use from their phones.',
         keywords:
-            'electrician job management, electrical contractor scheduler, call-out route planner, electrician task app UK',
+            'electrician job management, electrical contractor scheduler, call-out route planner, electrician task app UK, PAT testing tracker',
         seoTitle: 'Task Management for Electricians | ZapTask',
         seoDescription:
             'Plan electrical call-outs on a map, route your vans, and track certification and follow-ups. ZapTask helps electricians run jobs without paperwork overload.',
