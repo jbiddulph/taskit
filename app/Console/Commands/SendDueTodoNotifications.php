@@ -87,6 +87,8 @@ class SendDueTodoNotifications extends Command
                     'project_id' => $todo->project_id,
                     'scope' => 'overdue',
                 ],
+                // Only notify once when a task becomes overdue — not again every day
+                onceOnly: true,
             );
         }
 
@@ -182,18 +184,28 @@ class SendDueTodoNotifications extends Command
         return "'{$todoTitle}' in {$projectName}{$projectKey} is due {$when} ({$dateStr}).";
     }
 
-    private function notifyIfNotExists(int $userId, string $type, string $title, string $message, array $data): int
-    {
-        // Avoid creating duplicate notifications for the same todo + scope on the same day
-        $exists = Notification::query()
+    private function notifyIfNotExists(
+        int $userId,
+        string $type,
+        string $title,
+        string $message,
+        array $data,
+        bool $onceOnly = false,
+    ): int {
+        // Avoid duplicate notifications for the same todo + scope.
+        // Reminder scopes (due tomorrow / 3 / 7 days) are limited to once per day.
+        // Overdue is once ever — not repeated each day while still overdue.
+        $query = Notification::query()
             ->where('user_id', $userId)
             ->where('type', $type)
-            ->whereDate('created_at', Carbon::now()->toDateString())
-            ->whereRaw("(data->>'todo_id') = ?", [(string)($data['todo_id'] ?? '')])
-            ->whereRaw("(data->>'scope') = ?", [(string)($data['scope'] ?? '')])
-            ->exists();
+            ->whereRaw("(data->>'todo_id') = ?", [(string) ($data['todo_id'] ?? '')])
+            ->whereRaw("(data->>'scope') = ?", [(string) ($data['scope'] ?? '')]);
 
-        if ($exists) {
+        if (! $onceOnly) {
+            $query->whereDate('created_at', Carbon::now()->toDateString());
+        }
+
+        if ($query->exists()) {
             return 0;
         }
 
@@ -208,5 +220,4 @@ class SendDueTodoNotifications extends Command
         return 1;
     }
 }
-
 
