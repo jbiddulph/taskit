@@ -1,9 +1,9 @@
-import { createTodo, getSettings } from './api.js';
+import { createTodo, getSettings, resolveProjectId } from './api.js';
 
 const MENU_PAGE = 'zaptask-add-page';
 const MENU_SELECTION = 'zaptask-add-selection';
 
-chrome.runtime.onInstalled.addListener(() => {
+function ensureContextMenus() {
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
       id: MENU_PAGE,
@@ -16,38 +16,39 @@ chrome.runtime.onInstalled.addListener(() => {
       contexts: ['selection'],
     });
   });
-});
+}
+
+chrome.runtime.onInstalled.addListener(ensureContextMenus);
+chrome.runtime.onStartup.addListener(ensureContextMenus);
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   try {
     const settings = await getSettings();
     if (!settings.apiToken) {
-      notify('Open ZapTask extension options and add your API token.');
+      notify('Add your API token in Options, then try again.');
       chrome.runtime.openOptionsPage();
       return;
     }
 
-    if (!settings.defaultProjectId) {
-      notify('Set a default project in ZapTask extension options first.');
-      chrome.runtime.openOptionsPage();
-      return;
-    }
+    const projectId = await resolveProjectId();
 
     let title = 'New task';
     let description = '';
+    const pageUrl = tab?.url || '';
+    const isBrowserPage = /^chrome:|^chrome-extension:|^about:|^edge:/.test(pageUrl);
 
     if (info.menuItemId === MENU_SELECTION) {
       title = (info.selectionText || '').trim().slice(0, 255) || 'New task';
-      description = tab?.url ? `From: ${tab.url}` : '';
+      description = pageUrl && !isBrowserPage ? `From: ${pageUrl}` : '';
     } else {
       title = (tab?.title || info.linkUrl || 'New task').trim().slice(0, 255);
-      const url = info.linkUrl || tab?.url || '';
+      const url = info.linkUrl || (isBrowserPage ? '' : pageUrl);
       description = url ? `Captured from: ${url}` : '';
     }
 
     await createTodo({
       title,
-      projectId: settings.defaultProjectId,
+      projectId,
       priority: settings.defaultPriority || 'Medium',
       description,
     });
@@ -63,6 +64,6 @@ function notify(message) {
     type: 'basic',
     iconUrl: 'icons/icon128.png',
     title: 'ZapTask',
-    message,
+    message: String(message).slice(0, 250),
   });
 }

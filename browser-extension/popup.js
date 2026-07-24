@@ -1,4 +1,4 @@
-import { createTodo, fetchProjects, getSettings } from './api.js';
+import { createTodo, fetchProjects, getSettings, saveSettings } from './api.js';
 
 const form = document.getElementById('task-form');
 const titleInput = document.getElementById('title');
@@ -47,8 +47,9 @@ async function init() {
       projectSelect.appendChild(option);
     }
 
-    if (settings.defaultProjectId) {
-      projectSelect.value = String(settings.defaultProjectId);
+    const preferredProject = settings.defaultProjectId || settings.lastUsedProjectId;
+    if (preferredProject) {
+      projectSelect.value = String(preferredProject);
     }
 
     const tab = await getActiveTab();
@@ -78,11 +79,19 @@ form.addEventListener('submit', async (event) => {
       }
     }
 
+    const projectId = Number(projectSelect.value);
+
     await createTodo({
       title: titleInput.value.trim(),
-      projectId: projectSelect.value,
+      projectId,
       priority: prioritySelect.value,
       description,
+    });
+
+    await saveSettings({
+      lastUsedProjectId: projectId,
+      defaultProjectId: projectId,
+      defaultPriority: prioritySelect.value,
     });
 
     setStatus('Task created.');

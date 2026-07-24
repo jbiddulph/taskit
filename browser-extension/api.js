@@ -2,8 +2,30 @@ const DEFAULTS = {
   apiBaseUrl: 'https://zaptask.co.uk/api',
   apiToken: '',
   defaultProjectId: null,
+  lastUsedProjectId: null,
   defaultPriority: 'Medium',
 };
+
+/**
+ * Prefer explicit default, then last project used in the popup, then first project.
+ */
+export async function resolveProjectId() {
+  const settings = await getSettings();
+  const preferred = settings.defaultProjectId || settings.lastUsedProjectId;
+
+  if (preferred) {
+    return Number(preferred);
+  }
+
+  const projects = await fetchProjects();
+  if (!projects.length) {
+    throw new Error('No projects found. Create a project in ZapTask first.');
+  }
+
+  const firstId = Number(projects[0].id);
+  await saveSettings({ defaultProjectId: firstId, lastUsedProjectId: firstId });
+  return firstId;
+}
 
 export async function getSettings() {
   const stored = await chrome.storage.sync.get(DEFAULTS);

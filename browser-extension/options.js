@@ -85,6 +85,15 @@ testBtn.addEventListener('click', async () => {
 
     const me = await fetchMe();
     await loadProjectsIntoSelect(defaultProjectId.value || null);
+
+    if (!defaultProjectId.value && defaultProjectId.options.length > 1) {
+      defaultProjectId.selectedIndex = 1;
+      await saveSettings({
+        defaultProjectId: Number(defaultProjectId.value),
+        lastUsedProjectId: Number(defaultProjectId.value),
+      });
+    }
+
     setStatus(`Connected as ${me?.data?.name || me?.data?.email || 'user'}.`);
   } catch (error) {
     setStatus(error.message || 'Connection failed.', true);
