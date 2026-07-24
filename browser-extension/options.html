@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ZapTask Extension Options</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="options">
+    <main>
+      <h1>ZapTask Extension</h1>
+      <p class="lede">
+        Create a token in ZapTask → Settings → API Tokens, then paste it here.
+      </p>
+
+      <form id="options-form">
+        <label>
+          API base URL
+          <input
+            id="apiBaseUrl"
+            type="url"
+            required
+            placeholder="https://zaptask.co.uk/api"
+          />
+        </label>
+
+        <label>
+          API token
+          <input id="apiToken" type="password" required placeholder="Paste your token" autocomplete="off" />
+        </label>
+
+        <label>
+          Default project (for right-click capture)
+          <select id="defaultProjectId">
+            <option value="">Load projects after saving token…</option>
+          </select>
+        </label>
+
+        <label>
+          Default priority
+          <select id="defaultPriority">
+            <option value="Low">Low</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="High">High</option>
+            <option value="Critical">Critical</option>
+          </select>
+        </label>
+
+        <div class="actions">
+          <button type="button" id="test" class="secondary">Test connection</button>
+          <button type="submit">Save</button>
+        </div>
+      </form>
+
+      <p id="status" class="status" role="status"></p>
+    </main>
+
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

@@ -46,6 +46,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->validateCsrfTokens(except: [
             'api/n8n/*',
+            // Bearer-token clients (Chrome extension) — does not affect cookie/session SPA routes
+            'api/extension/*',
         ]);
 
         // Register middleware aliases

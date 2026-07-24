@@ -34,6 +34,10 @@ const sidebarNavItems = computed(() => {
             title: 'Export & Import',
             href: '/settings/export-import',
         },
+        {
+            title: 'API Tokens',
+            href: '/settings/api-tokens',
+        },
     ];
 
     // Add Company settings for eligible paid / LTD plans

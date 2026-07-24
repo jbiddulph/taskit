@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ActivityController;
+use App\Http\Controllers\Api\ExtensionController;
 use App\Http\Controllers\Api\MapboxController;
 use App\Http\Controllers\Api\MeetingNoteProposalController;
 use App\Http\Controllers\Api\MeetingNotesController;
@@ -33,6 +34,23 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+/*
+|--------------------------------------------------------------------------
+| Chrome extension / PAT clients (Bearer token)
+|--------------------------------------------------------------------------
+|
+| Additive only — existing /api/todos and /api/projects session routes are unchanged.
+| CSRF is skipped for api/extension/* (see bootstrap/app.php).
+|
+*/
+Route::middleware(['auth:sanctum', 'subscription.access', 'api.rate.limit:api,60,1'])
+    ->prefix('extension')
+    ->group(function () {
+        Route::get('me', [ExtensionController::class, 'me']);
+        Route::get('projects', [ProjectController::class, 'index']);
+        Route::post('todos', [TodoController::class, 'store']);
+    });
 
 Route::middleware(['n8n.webhook', 'api.rate.limit:api,120,1'])->group(function () {
     Route::post('n8n/meeting-notes/proposals', [N8nMeetingNotesController::class, 'store']);

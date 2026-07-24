@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\ApiTokenController;
 use App\Http\Controllers\Settings\CompanyController;
 use App\Http\Controllers\Settings\DashboardController;
 use App\Http\Controllers\Settings\ExportImportController;
@@ -21,6 +22,14 @@ Route::middleware(['auth', 'subscription.access'])->group(function () {
     Route::put('settings/password', [PasswordController::class, 'update'])
         ->middleware('throttle:6,1')
         ->name('password.update');
+
+    Route::get('settings/api-tokens', [ApiTokenController::class, 'edit'])->name('api-tokens.edit');
+    Route::post('settings/api-tokens', [ApiTokenController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('api-tokens.store');
+    Route::delete('settings/api-tokens/{tokenId}', [ApiTokenController::class, 'destroy'])
+        ->middleware('throttle:20,1')
+        ->name('api-tokens.destroy');
 
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/Appearance');
