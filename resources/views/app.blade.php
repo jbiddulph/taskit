@@ -217,19 +217,30 @@
 
         @php
             $appAsset = \App\Helpers\RelativeViteHelper::asset('resources/js/app.ts');
-            $pageComponent = is_array($page ?? null) ? ($page['component'] ?? null) : null;
-            $pageAsset = $pageComponent
-                ? \App\Helpers\RelativeViteHelper::asset("resources/js/pages/{$pageComponent}.vue")
-                : null;
-            $appCssFiles = \App\Helpers\RelativeViteHelper::cssFiles('resources/js/app.ts');
+            $pageAsset = null;
+            $appCssFiles = [];
+
+            $pageComponent = data_get($page ?? null, 'component');
+            if (is_string($pageComponent) && $pageComponent !== '') {
+                $pageAsset = \App\Helpers\RelativeViteHelper::asset("resources/js/pages/{$pageComponent}.vue");
+            }
+
+            if (method_exists(\App\Helpers\RelativeViteHelper::class, 'cssFiles')) {
+                $appCssFiles = \App\Helpers\RelativeViteHelper::cssFiles('resources/js/app.ts');
+            } else {
+                $legacyCss = \App\Helpers\RelativeViteHelper::css('resources/js/app.ts');
+                $appCssFiles = $legacyCss !== '' ? preg_split('/\s+/', trim($legacyCss)) : [];
+            }
         @endphp
 
-        @foreach ($appCssFiles as $appCssFile)
-            <link rel="stylesheet" href="{{ $appCssFile }}">
+        @foreach (($appCssFiles ?? []) as $appCssFile)
+            @if ($appCssFile)
+                <link rel="stylesheet" href="{{ $appCssFile }}">
+            @endif
         @endforeach
 
         <script type="module" src="{{ $appAsset }}"></script>
-        @if ($pageAsset)
+        @if (! empty($pageAsset))
             <script type="module" src="{{ $pageAsset }}"></script>
         @endif
         @inertiaHead
