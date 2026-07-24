@@ -37,7 +37,7 @@
             }
         </style>
 
-        @php($seo = $seo ?? null)
+        <?php $seo = $seo ?? null; ?>
         <title inertia>{{ $seo['title'] ?? 'ZapTask' }}</title>
         @if (! empty($seo['description']))
             <meta name="description" content="{{ $seo['description'] }}">
@@ -215,33 +215,19 @@
             })();
         </script>
 
-        @php
-            $appAsset = \App\Helpers\RelativeViteHelper::asset('resources/js/app.ts');
-            $pageAsset = null;
-            $appCssFiles = [];
+        <?php
+            $viteAssets = \App\Helpers\RelativeViteHelper::forApp(
+                is_array($page ?? null) ? ($page['component'] ?? null) : null
+            );
+        ?>
 
-            $pageComponent = data_get($page ?? null, 'component');
-            if (is_string($pageComponent) && $pageComponent !== '') {
-                $pageAsset = \App\Helpers\RelativeViteHelper::asset("resources/js/pages/{$pageComponent}.vue");
-            }
-
-            if (method_exists(\App\Helpers\RelativeViteHelper::class, 'cssFiles')) {
-                $appCssFiles = \App\Helpers\RelativeViteHelper::cssFiles('resources/js/app.ts');
-            } else {
-                $legacyCss = \App\Helpers\RelativeViteHelper::css('resources/js/app.ts');
-                $appCssFiles = $legacyCss !== '' ? preg_split('/\s+/', trim($legacyCss)) : [];
-            }
-        @endphp
-
-        @foreach (($appCssFiles ?? []) as $appCssFile)
-            @if ($appCssFile)
-                <link rel="stylesheet" href="{{ $appCssFile }}">
-            @endif
+        @foreach ($viteAssets['css'] as $cssHref)
+            <link rel="stylesheet" href="{{ $cssHref }}">
         @endforeach
 
-        <script type="module" src="{{ $appAsset }}"></script>
-        @if (! empty($pageAsset))
-            <script type="module" src="{{ $pageAsset }}"></script>
+        <script type="module" src="{{ $viteAssets['app'] }}"></script>
+        @if (! empty($viteAssets['page']))
+            <script type="module" src="{{ $viteAssets['page'] }}"></script>
         @endif
         @inertiaHead
     </head>
