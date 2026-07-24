@@ -70,7 +70,7 @@ heroku config:set SUPABASE_ENDPOINT=https://your-project-id.supabase.co/storage/
 - **Company Logo Upload** for MIDI/MAXI plans only
 - **File Validation**: PNG, JPG, JPEG, SVG (2MB max)
 - **Auto Filename**: `CompanyName_CompanyCode.ext`
-- **Logo Display**: Replaces TaskIT branding when custom logo exists
+- **Logo Display**: Replaces ZapTask branding when custom logo exists
 - **Logo Management**: Upload, preview, and remove functionality
 - **Settings Integration**: Company Logo section in user settings
 
@@ -90,7 +90,7 @@ heroku config:set SUPABASE_ENDPOINT=https://your-project-id.supabase.co/storage/
 2. **Go to Settings** → **Company Logo**
 3. **Upload logo** (PNG, JPG, JPEG, SVG)
 4. **Logo appears** in sidebar and header
-5. **Switch back** to default TaskIT logo anytime
+5. **Switch back** to default ZapTask logo anytime
 
 ## 🐛 Troubleshooting
 

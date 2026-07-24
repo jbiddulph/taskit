@@ -18,7 +18,7 @@ class CheckStripeConfig extends Command
      *
      * @var string
      */
-    protected $description = 'Check Stripe configuration for TaskIT';
+    protected $description = 'Check Stripe configuration for ZapTask';
 
     /**
      * Execute the console command.

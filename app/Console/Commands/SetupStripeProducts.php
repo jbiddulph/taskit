@@ -19,7 +19,7 @@ class SetupStripeProducts extends Command
      *
      * @var string
      */
-    protected $description = 'Create Stripe products and prices for TaskIT subscription plans';
+    protected $description = 'Create Stripe products and prices for ZapTask subscription plans';
 
     protected StripeService $stripeService;
 

@@ -217,16 +217,21 @@
 
         @php
             $appAsset = \App\Helpers\RelativeViteHelper::asset('resources/js/app.ts');
-            $pageAsset = \App\Helpers\RelativeViteHelper::asset("resources/js/pages/{$page['component']}.vue");
-            $appCss = \App\Helpers\RelativeViteHelper::css('resources/js/app.ts');
+            $pageComponent = is_array($page ?? null) ? ($page['component'] ?? null) : null;
+            $pageAsset = $pageComponent
+                ? \App\Helpers\RelativeViteHelper::asset("resources/js/pages/{$pageComponent}.vue")
+                : null;
+            $appCssFiles = \App\Helpers\RelativeViteHelper::cssFiles('resources/js/app.ts');
         @endphp
-        
-        @if($appCss)
-            <link rel="stylesheet" href="{{ $appCss }}">
-        @endif
-        
+
+        @foreach ($appCssFiles as $appCssFile)
+            <link rel="stylesheet" href="{{ $appCssFile }}">
+        @endforeach
+
         <script type="module" src="{{ $appAsset }}"></script>
-        <script type="module" src="{{ $pageAsset }}"></script>
+        @if ($pageAsset)
+            <script type="module" src="{{ $pageAsset }}"></script>
+        @endif
         @inertiaHead
     </head>
     <body class="font-sans antialiased">

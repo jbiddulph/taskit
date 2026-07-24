@@ -288,7 +288,7 @@ class StripeService
             // Create product
             $product = Product::create([
                 'name' => $planData['name'],
-                'description' => "TaskIT {$planData['name']} - " . implode(', ', $planData['features']),
+                'description' => "ZapTask {$planData['name']} - " . implode(', ', $planData['features']),
                 'metadata' => [
                     'plan_type' => $planType
                 ]
