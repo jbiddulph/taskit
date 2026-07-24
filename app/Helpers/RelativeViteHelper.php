@@ -59,12 +59,22 @@ class RelativeViteHelper
     }
 
     /**
-     * Generate relative Vite CSS URLs for multi-domain support
+     * Resolve the main app Vite assets for the root Blade layout.
      *
-     * @deprecated Prefer cssFiles() and render one <link> per file
+     * @return array{app: string, page: ?string, css: list<string>}
      */
-    public static function css(string $path): string
+    public static function forApp(?string $pageComponent = null): array
     {
-        return implode(' ', self::cssFiles($path));
+        $pageAsset = null;
+
+        if (is_string($pageComponent) && $pageComponent !== '') {
+            $pageAsset = self::asset("resources/js/pages/{$pageComponent}.vue");
+        }
+
+        return [
+            'app' => self::asset('resources/js/app.ts'),
+            'page' => $pageAsset,
+            'css' => self::cssFiles('resources/js/app.ts'),
+        ];
     }
 }
