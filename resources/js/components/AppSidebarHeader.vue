@@ -94,7 +94,7 @@ const canAccessSites = computed(() => {
             </template>
             
             <!-- Desktop Navigation (hidden on mobile) -->
-            <div v-if="company" class="hidden md:flex items-center gap-3">
+            <div v-if="company" class="hidden xl:flex items-center gap-3">
                 <CompanyCodeDisplay 
                     :company-code="company.code" 
                     :company-name="company.name" 
@@ -151,7 +151,7 @@ const canAccessSites = computed(() => {
             <button
                 v-if="company"
                 @click="toggleMobileMenu"
-                class="md:hidden inline-flex items-center justify-center p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                class="xl:hidden inline-flex items-center justify-center p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
                 title="Company Menu"
             >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,7 +165,7 @@ const canAccessSites = computed(() => {
         <!-- Mobile Menu Overlay -->
         <div
             v-if="isMobileMenuOpen && company"
-            class="fixed inset-0 z-50 md:hidden"
+            class="fixed inset-0 z-50 xl:hidden"
             @click="closeMobileMenu"
         >
             <!-- Backdrop - 50% opacity -->
