@@ -10,6 +10,9 @@ Schedule::command('taskit:send-due-notifications')->hourly();
 // Create compliance reminder tasks daily
 Schedule::command('compliance:generate-upcoming-tasks')->daily();
 
+// Email and in-app expiry reminders for company users
+Schedule::command('compliance:send-expiry-reminders')->dailyAt('08:00');
+
 // Schedule subscription changes processing every 5 minutes
 Schedule::command('subscription:process-scheduled-changes')->everyFiveMinutes();
 

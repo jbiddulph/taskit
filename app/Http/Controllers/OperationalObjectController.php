@@ -122,7 +122,7 @@ class OperationalObjectController extends Controller
             'hasComplianceTemplates' => ComplianceTemplates::hasTemplates($user->company?->industry),
             'inspectionTemplates' => InspectionTemplates::choices($user->company?->industry),
             'pendingDocumentProposals' => DocumentExtractionProposal::query()
-                ->where('user_id', $user->id)
+                ->where('company_id', $user->company_id)
                 ->where('operational_object_id', $site->id)
                 ->where('status', DocumentExtractionProposal::STATUS_PENDING)
                 ->orderByDesc('created_at')

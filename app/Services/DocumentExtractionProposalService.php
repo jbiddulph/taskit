@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\ProjectGroup;
 use App\Models\Todo;
 use App\Models\User;
+use App\Support\CertificateTypes;
 use App\Support\ComplianceTemplates;
 use App\Support\Industries;
 use Carbon\Carbon;
@@ -24,9 +25,7 @@ class DocumentExtractionProposalService
 
     public function approve(User $user, DocumentExtractionProposal $proposal, ?int $projectId = null): array
     {
-        if ($proposal->user_id !== $user->id) {
-            abort(403);
-        }
+        $this->assertCompanyAccess($user, $proposal);
 
         if (! $proposal->isPending()) {
             abort(422, 'Proposal already reviewed.');
@@ -40,8 +39,8 @@ class DocumentExtractionProposalService
             ?? $proposal->metadata['project_id'] ?? null;
 
         $expiresAt = $this->parseDate($data['expiry_date'] ?? null) ?? $document->expires_at;
-        $requirementType = $data['document_type'] ?? $data['requirement_type'] ?? 'other';
-        $label = $data['label'] ?? $document->title;
+        $requirementType = CertificateTypes::normalize($data['document_type'] ?? $data['requirement_type'] ?? 'other');
+        $label = $data['label'] ?? $document->title ?: CertificateTypes::label($requirementType);
 
         $document->update([
             'document_type' => $requirementType,
@@ -61,9 +60,9 @@ class DocumentExtractionProposalService
             [
                 'company_id' => $object->company_id,
                 'project_id' => $projectId,
-                'label' => $label,
-                'frequency' => 'annual',
-                'lead_time_days' => 30,
+                'label' => $label ?: CertificateTypes::label($requirementType),
+                'frequency' => CertificateTypes::frequencyFor($requirementType),
+                'lead_time_days' => CertificateTypes::leadDaysFor($requirementType),
                 'auto_create_tasks' => true,
             ],
         );
@@ -120,9 +119,7 @@ class DocumentExtractionProposalService
 
     public function dismiss(User $user, DocumentExtractionProposal $proposal): void
     {
-        if ($proposal->user_id !== $user->id) {
-            abort(403);
-        }
+        $this->assertCompanyAccess($user, $proposal);
 
         $proposal->update([
             'status' => DocumentExtractionProposal::STATUS_DISMISSED,
@@ -328,6 +325,13 @@ class DocumentExtractionProposalService
             'latitude' => $best['latitude'] ?? $object->latitude,
             'longitude' => $best['longitude'] ?? $object->longitude,
         ];
+    }
+
+    protected function assertCompanyAccess(User $user, DocumentExtractionProposal $proposal): void
+    {
+        if (! $user->company_id || (int) $proposal->company_id !== (int) $user->company_id) {
+            abort(403);
+        }
     }
 
     protected function parseDate(?string $value): ?Carbon

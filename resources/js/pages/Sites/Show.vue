@@ -276,6 +276,7 @@ onUnmounted(() => {
                 <div class="grid gap-4 md:grid-cols-2">
                   <div class="md:col-span-2">
                     <label :class="label">Upload certificate or document</label>
+                    <p class="text-xs text-gray-500 mb-2">PDFs and photos: fire safety, PAT tests, boiler servicing, contracts, and similar. OpenAI reads expiry dates and notifies your company.</p>
                     <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="text-sm w-full" @change="onFileChange" />
                   </div>
                   <div v-if="projects.length">
@@ -311,6 +312,7 @@ onUnmounted(() => {
                   <div>
                     <div class="font-medium text-sm">{{ doc.title }}</div>
                     <div class="text-xs text-gray-500">
+                      <span v-if="doc.document_type" class="capitalize">{{ doc.document_type.replace(/_/g, ' ') }} · </span>
                       {{ doc.original_filename }}
                       <span v-if="doc.expires_display"> · Expires {{ doc.expires_display }}</span>
                     </div>

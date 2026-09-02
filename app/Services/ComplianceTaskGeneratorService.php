@@ -46,7 +46,7 @@ class ComplianceTaskGeneratorService
         $created = 0;
 
         Company::query()
-            ->whereNotNull('industry')
+            ->whereHas('complianceRequirements')
             ->chunkById(50, function ($companies) use (&$created) {
                 foreach ($companies as $company) {
                     $created += $this->generateForCompany($company);

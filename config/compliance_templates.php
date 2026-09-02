@@ -7,20 +7,27 @@ return [
     */
     'property-management' => [
         ['type' => 'gas_safety', 'label' => 'Gas Safety Certificate', 'frequency' => 'annual', 'lead_days' => 30, 'task_type' => 'Compliance'],
+        ['type' => 'boiler_service', 'label' => 'Boiler Servicing', 'frequency' => 'annual', 'lead_days' => 30, 'task_type' => 'Maintenance'],
         ['type' => 'pat_testing', 'label' => 'PAT Testing', 'frequency' => 'annual', 'lead_days' => 30, 'task_type' => 'Inspection'],
+        ['type' => 'fire_safety', 'label' => 'Fire Safety Assessment', 'frequency' => 'annual', 'lead_days' => 30, 'task_type' => 'Safety'],
         ['type' => 'fire_alarm', 'label' => 'Fire Alarm Inspection', 'frequency' => '6_months', 'lead_days' => 14, 'task_type' => 'Inspection'],
         ['type' => 'emergency_lighting', 'label' => 'Emergency Lighting', 'frequency' => '6_months', 'lead_days' => 14, 'task_type' => 'Inspection'],
         ['type' => 'legionella', 'label' => 'Legionella Assessment', 'frequency' => 'annual', 'lead_days' => 30, 'task_type' => 'Compliance'],
         ['type' => 'epc', 'label' => 'EPC', 'frequency' => '10_years', 'lead_days' => 90, 'task_type' => 'Compliance'],
+        ['type' => 'insurance', 'label' => 'Buildings Insurance', 'frequency' => 'annual', 'lead_days' => 30, 'task_type' => 'Compliance'],
+        ['type' => 'contract', 'label' => 'Contracts', 'frequency' => 'annual', 'lead_days' => 60, 'task_type' => 'Lease'],
     ],
 
     'estate-agents' => [
         ['type' => 'epc', 'label' => 'EPC', 'frequency' => '10_years', 'lead_days' => 90, 'task_type' => 'Compliance'],
         ['type' => 'gas_safety', 'label' => 'Gas Safety', 'frequency' => 'annual', 'lead_days' => 30, 'task_type' => 'Compliance'],
-        ['type' => 'electrical', 'label' => 'Electrical Certificate', 'frequency' => '5_years', 'lead_days' => 60, 'task_type' => 'Compliance'],
+        ['type' => 'boiler_service', 'label' => 'Boiler Servicing', 'frequency' => 'annual', 'lead_days' => 30, 'task_type' => 'Maintenance'],
+        ['type' => 'eicr', 'label' => 'Electrical Certificate (EICR)', 'frequency' => '5_years', 'lead_days' => 60, 'task_type' => 'Compliance'],
+        ['type' => 'pat_testing', 'label' => 'PAT Testing', 'frequency' => 'annual', 'lead_days' => 30, 'task_type' => 'Inspection'],
+        ['type' => 'fire_safety', 'label' => 'Fire Safety', 'frequency' => 'annual', 'lead_days' => 30, 'task_type' => 'Safety'],
         ['type' => 'smoke_alarm', 'label' => 'Smoke Alarm Check', 'frequency' => 'annual', 'lead_days' => 14, 'task_type' => 'Inspection'],
         ['type' => 'inventory', 'label' => 'Inventory', 'frequency' => 'annual', 'lead_days' => 14, 'task_type' => 'Inspection'],
-        ['type' => 'tenancy_renewal', 'label' => 'Tenancy Renewal', 'frequency' => 'annual', 'lead_days' => 60, 'task_type' => 'Lease'],
+        ['type' => 'contract', 'label' => 'Tenancy / Contracts', 'frequency' => 'annual', 'lead_days' => 60, 'task_type' => 'Lease'],
         ['type' => 'right_to_rent', 'label' => 'Right to Rent', 'frequency' => 'annual', 'lead_days' => 30, 'task_type' => 'Compliance'],
         ['type' => 'deposit_protection', 'label' => 'Deposit Protection', 'frequency' => 'annual', 'lead_days' => 14, 'task_type' => 'Compliance'],
     ],
@@ -36,10 +43,13 @@ return [
 
     'facilities-management' => [
         ['type' => 'gas_safety', 'label' => 'Gas Safety Certificate', 'frequency' => 'annual', 'lead_days' => 30, 'task_type' => 'Compliance'],
+        ['type' => 'boiler_service', 'label' => 'Boiler Servicing', 'frequency' => 'annual', 'lead_days' => 30, 'task_type' => 'Maintenance'],
+        ['type' => 'fire_safety', 'label' => 'Fire Safety Assessment', 'frequency' => 'annual', 'lead_days' => 30, 'task_type' => 'Safety'],
         ['type' => 'fire_alarm', 'label' => 'Fire Alarm Inspection', 'frequency' => '6_months', 'lead_days' => 14, 'task_type' => 'Inspection'],
         ['type' => 'emergency_lighting', 'label' => 'Emergency Lighting', 'frequency' => '6_months', 'lead_days' => 14, 'task_type' => 'Inspection'],
         ['type' => 'pat_testing', 'label' => 'PAT Testing', 'frequency' => 'annual', 'lead_days' => 30, 'task_type' => 'Inspection'],
         ['type' => 'legionella', 'label' => 'Legionella Assessment', 'frequency' => 'annual', 'lead_days' => 30, 'task_type' => 'Compliance'],
+        ['type' => 'contract', 'label' => 'Service Contracts', 'frequency' => 'annual', 'lead_days' => 60, 'task_type' => 'Lease'],
     ],
 
     'care-agencies' => [

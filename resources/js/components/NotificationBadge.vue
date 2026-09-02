@@ -265,6 +265,20 @@ const handleNotificationClick = async (notification: Notification) => {
     return;
   }
 
+  if (notification.type === 'document_extraction' && data.proposal_id) {
+    showNotifications.value = false;
+    window.dispatchEvent(new CustomEvent('open-document-extraction', {
+      detail: { proposalId: data.proposal_id }
+    }));
+    return;
+  }
+
+  if (data.operational_object_id && (data.requirement_id || data.document_id || data.scope)) {
+    showNotifications.value = false;
+    window.location.href = `/sites/${data.operational_object_id}`;
+    return;
+  }
+
   // Mention notifications - navigate to the Todo
   if (notification.type === 'mention' && data.todo_id) {
     // Close notification dropdown
@@ -318,7 +332,8 @@ const getNotificationIcon = (type: string): string => {
     'mention': 'AtSign',
     'comment': 'MessageSquare',
     'assignment': 'UserCheck',
-    'meeting_notes': 'Mic'
+    'meeting_notes': 'Mic',
+    'document_extraction': 'FileSearch',
   };
   return iconMap[type] || 'Bell';
 };

@@ -92,13 +92,21 @@ function deleteSite(site: Site) {
                   Properties, buildings, equipment, and compliance tracking
                 </p>
               </div>
-              <Link
+              <div class="flex gap-2">
+                <Link
+                  href="/compliance"
+                  class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Compliance
+                </Link>
+                <Link
                 href="/sites/create"
                 class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
               >
                 <Icon name="Plus" class="w-4 h-4" />
                 Add Site
               </Link>
+              </div>
             </div>
 
             <OperationsTips context="sites_index" class="mb-8" :default-open="sites.length === 0" />

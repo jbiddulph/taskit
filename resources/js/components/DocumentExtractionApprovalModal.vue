@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { documentExtractionApi, type DocumentExtractionProposal } from '@/services/operationalSiteApi';
 import { todoApi, type Project } from '@/services/todoApi';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 const isOpen = ref(false);
 const loading = ref(false);
@@ -24,6 +24,30 @@ const notify = (type: 'success' | 'error', title: string, message: string) => {
         (window as any).$notify({ type, title, message });
     }
 };
+
+const fieldRows = computed(() => {
+    const data = proposal.value?.extracted_data ?? {};
+    const skip = new Set(['suggested_tasks', 'summary', 'confidence', 'source']);
+    const order = ['document_type', 'label', 'expiry_date', 'issue_date', 'certificate_number', 'engineer_name', 'address'];
+    const keys = [
+        ...order.filter((key) => key in data),
+        ...Object.keys(data).filter((key) => !order.includes(key) && !skip.has(key)),
+    ];
+
+    return keys.map((key) => {
+        const value = data[key];
+        return {
+            key,
+            label: key.replace(/_/g, ' '),
+            value: value == null || value === '' ? '—' : typeof value === 'string' ? value : JSON.stringify(value),
+        };
+    });
+});
+
+const suggestedTasks = computed(() => {
+    const tasks = proposal.value?.extracted_data?.suggested_tasks;
+    return Array.isArray(tasks) ? tasks.filter((task) => task && typeof task === 'object' && 'title' in (task as object)) : [];
+});
 
 const openProposal = async (proposalId: number) => {
     loading.value = true;
@@ -112,21 +136,32 @@ onUnmounted(() => {
             <DialogHeader>
                 <DialogTitle>Review certificate extraction</DialogTitle>
                 <DialogDescription>
-                    AI read this document. Confirm the details before updating compliance.
+                    OpenAI read this document for your company. Confirm the details before updating compliance.
                 </DialogDescription>
             </DialogHeader>
 
             <div v-if="loading" class="py-8 text-center text-sm text-gray-500">Loading…</div>
 
             <div v-else-if="proposal" class="space-y-4">
+                <p v-if="proposal.site?.name" class="text-xs uppercase tracking-wide text-gray-500">{{ proposal.site.name }}</p>
                 <p v-if="proposal.summary" class="text-sm text-gray-600 dark:text-gray-400">{{ proposal.summary }}</p>
 
                 <dl class="grid grid-cols-1 gap-2 text-sm">
-                    <div v-for="(value, key) in proposal.extracted_data" :key="key" class="flex justify-between gap-4 border-b border-gray-100 dark:border-gray-800 py-2">
-                        <dt class="text-gray-500 capitalize">{{ String(key).replace(/_/g, ' ') }}</dt>
-                        <dd class="font-medium text-right">{{ value || '—' }}</dd>
+                    <div v-for="row in fieldRows" :key="row.key" class="flex justify-between gap-4 border-b border-gray-100 dark:border-gray-800 py-2">
+                        <dt class="text-gray-500 capitalize">{{ row.label }}</dt>
+                        <dd class="font-medium text-right">{{ row.value }}</dd>
                     </div>
                 </dl>
+
+                <div v-if="suggestedTasks.length" class="text-sm">
+                    <div class="font-medium mb-1">Suggested reminder tasks</div>
+                    <ul class="list-disc pl-5 space-y-1 text-gray-600 dark:text-gray-400">
+                        <li v-for="(task, index) in suggestedTasks" :key="index">
+                            {{ (task as any).title }}
+                            <span v-if="(task as any).due_date"> — {{ (task as any).due_date }}</span>
+                        </li>
+                    </ul>
+                </div>
 
                 <div v-if="projects.length">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reminder tasks board *</label>

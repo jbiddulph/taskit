@@ -7,7 +7,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { BreadcrumbItemType } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
-import { HeartHandshake, Building2 } from 'lucide-vue-next';
+import { HeartHandshake, Building2, ShieldCheck } from 'lucide-vue-next';
 
 withDefaults(
     defineProps<{
@@ -133,6 +133,16 @@ const canAccessSites = computed(() => {
                     <Building2 class="w-4 h-4" />
                     <span class="hidden sm:inline">Sites</span>
                 </Link>
+
+                <Link
+                    v-if="canAccessSites"
+                    href="/compliance"
+                    class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                    title="Compliance"
+                >
+                    <ShieldCheck class="w-4 h-4" />
+                    <span class="hidden sm:inline">Compliance</span>
+                </Link>
                 
                 <CompanyUsersDropdown />
             </div>
@@ -234,6 +244,16 @@ const canAccessSites = computed(() => {
                             >
                                 <Building2 class="w-5 h-5 flex-shrink-0" />
                                 <span class="font-medium">Sites & Assets</span>
+                            </Link>
+
+                            <Link
+                                v-if="canAccessSites"
+                                href="/compliance"
+                                @click="closeMobileMenu"
+                                class="flex items-center gap-3 p-4 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600 min-h-[44px]"
+                            >
+                                <ShieldCheck class="w-5 h-5 flex-shrink-0" />
+                                <span class="font-medium">Compliance</span>
                             </Link>
                             
                             <!-- Team Dropdown -->

@@ -28,7 +28,7 @@ class ComplianceTemplates
             }
         }
 
-        return 'Compliance';
+        return CertificateTypes::taskTypeFor($requirementType);
     }
 
     public static function frequencyDays(string $frequency): int

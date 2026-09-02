@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ComplianceController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CompanyController;
@@ -101,6 +102,7 @@ Route::middleware(['auth', 'verified', 'subscription.access'])->group(function (
 });
 
 Route::middleware(['auth', 'verified', 'subscription.access', 'sites.access'])->group(function () {
+    Route::get('compliance', [ComplianceController::class, 'index'])->name('compliance.index');
     Route::resource('sites', OperationalObjectController::class);
     Route::post('sites/{site}/compliance-template', [OperationalObjectController::class, 'applyComplianceTemplate'])->name('sites.compliance-template');
     Route::patch('sites/{site}/compliance/{requirement}', [OperationalObjectController::class, 'updateComplianceRequirement'])->name('sites.compliance.update');

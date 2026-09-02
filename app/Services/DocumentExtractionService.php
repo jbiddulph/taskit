@@ -5,32 +5,52 @@ namespace App\Services;
 use App\Models\DocumentExtractionProposal;
 use App\Models\OperationalDocument;
 use App\Models\User;
+use App\Support\CertificateFieldExtractor;
+use App\Support\CertificateTypes;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class DocumentExtractionService
 {
+    public function __construct(
+        protected ComplianceNotificationService $notificationService,
+    ) {}
+
     public function extractFromDocument(
         OperationalDocument $document,
         User $user,
         ?int $projectId = null,
     ): ?DocumentExtractionProposal {
+        $extracted = null;
+
+        if (config('services.openai.api_key') && ($document->is_image || $document->is_pdf)) {
+            $extracted = $this->extractWithOpenAi($document);
+        }
+
         $webhookUrl = config('services.n8n.document_extraction_webhook_url');
-
-        if ($webhookUrl) {
-            return $this->sendToN8n($document, $user, $webhookUrl, $projectId);
+        if (! $extracted && $webhookUrl) {
+            $extracted = $this->extractViaN8n($document, $user, $webhookUrl, $projectId);
         }
 
-        if (! config('services.openai.api_key')) {
+        if (! $extracted && $document->is_pdf) {
+            $text = $this->extractPdfText(Storage::disk('private')->path($document->file_path));
+            if (trim($text) !== '') {
+                $extracted = CertificateFieldExtractor::fromText($text);
+            }
+        }
+
+        if (! is_array($extracted) || ! CertificateFieldExtractor::hasUsefulFields($extracted)) {
             return null;
         }
 
-        if (! $document->is_image && ! $document->is_pdf) {
-            return null;
-        }
-
-        return $this->extractWithOpenAi($document, $user, $projectId);
+        return $this->createProposalFromExtraction(
+            $document,
+            $user,
+            $extracted,
+            $extracted['summary'] ?? null,
+            $projectId,
+        );
     }
 
     public function createProposalFromExtraction(
@@ -40,12 +60,15 @@ class DocumentExtractionService
         ?string $summary = null,
         ?int $projectId = null,
     ): DocumentExtractionProposal {
+        $extractedData = $this->normalizeExtractedData($extractedData);
         $summaryValue = $extractedData['summary'] ?? $summary;
-        unset($extractedData['summary']);
+        unset($extractedData['summary'], $extractedData['confidence'], $extractedData['source']);
 
-        return DocumentExtractionProposal::create([
+        $this->applyExtractionToDocument($document, $extractedData);
+
+        $proposal = DocumentExtractionProposal::create([
             'user_id' => $user->id,
-            'company_id' => $user->company_id,
+            'company_id' => $user->company_id ?? $document->company_id,
             'operational_document_id' => $document->id,
             'operational_object_id' => $document->operational_object_id,
             'status' => DocumentExtractionProposal::STATUS_PENDING,
@@ -57,6 +80,10 @@ class DocumentExtractionService
                 'project_id' => $projectId,
             ]),
         ]);
+
+        $this->notificationService->notifyCompanyOfExtraction($proposal);
+
+        return $proposal;
     }
 
     public function createFromN8n(array $payload): DocumentExtractionProposal
@@ -73,12 +100,12 @@ class DocumentExtractionService
         );
     }
 
-    protected function sendToN8n(
+    protected function extractViaN8n(
         OperationalDocument $document,
         User $user,
         string $webhookUrl,
         ?int $projectId = null,
-    ): ?DocumentExtractionProposal {
+    ): ?array {
         $path = Storage::disk('private')->path($document->file_path);
 
         try {
@@ -113,13 +140,13 @@ class DocumentExtractionService
                 return null;
             }
 
-            return $this->createProposalFromExtraction(
-                $document,
-                $user,
-                $data['extracted_data'],
-                $data['summary'] ?? null,
-                $projectId,
-            );
+            $extracted = $data['extracted_data'];
+            if (! empty($data['summary'])) {
+                $extracted['summary'] = $data['summary'];
+            }
+            $extracted['source'] = 'n8n';
+
+            return $extracted;
         } catch (\Throwable $e) {
             Log::warning('N8N document extraction request failed', [
                 'document_id' => $document->id,
@@ -130,33 +157,50 @@ class DocumentExtractionService
         }
     }
 
-    protected function extractWithOpenAi(
-        OperationalDocument $document,
-        User $user,
-        ?int $projectId = null,
-    ): ?DocumentExtractionProposal {
+    protected function extractWithOpenAi(OperationalDocument $document): ?array
+    {
         $apiKey = config('services.openai.api_key');
         $model = config('services.openai.model', 'gpt-4o-mini');
         $path = Storage::disk('private')->path($document->file_path);
         $prompt = $this->extractionPrompt();
+        $fallback = [
+            'document_type' => null,
+            'label' => null,
+            'certificate_number' => null,
+            'expiry_date' => null,
+            'issue_date' => null,
+            'engineer_name' => null,
+            'address' => null,
+            'summary' => null,
+            'suggested_tasks' => [],
+            'confidence' => 0,
+            'source' => 'rules',
+        ];
 
         try {
             if ($document->is_pdf) {
                 $text = $this->extractPdfText($path);
+                $fallback = CertificateFieldExtractor::fromText($text);
+
                 if (trim($text) === '') {
                     Log::warning('PDF text extraction returned empty', ['document_id' => $document->id]);
 
-                    return null;
+                    return CertificateFieldExtractor::hasUsefulFields($fallback) ? $fallback : null;
                 }
 
                 $response = Http::withToken($apiKey)
                     ->timeout(90)
                     ->post('https://api.openai.com/v1/chat/completions', [
                         'model' => $model,
+                        'temperature' => 0,
                         'messages' => [
                             [
+                                'role' => 'system',
+                                'content' => $prompt,
+                            ],
+                            [
                                 'role' => 'user',
-                                'content' => $prompt."\n\n--- DOCUMENT TEXT ---\n".$text,
+                                'content' => "Extract the certificate, service, or contract fields from this UK document text:\n\n".$text,
                             ],
                         ],
                         'response_format' => ['type' => 'json_object'],
@@ -169,7 +213,12 @@ class DocumentExtractionService
                     ->timeout(90)
                     ->post('https://api.openai.com/v1/chat/completions', [
                         'model' => $model,
+                        'temperature' => 0,
                         'messages' => [
+                            [
+                                'role' => 'system',
+                                'content' => $prompt,
+                            ],
                             [
                                 'role' => 'user',
                                 'content' => [
@@ -177,7 +226,7 @@ class DocumentExtractionService
                                         'type' => 'image_url',
                                         'image_url' => ['url' => "data:{$mime};base64,{$contents}"],
                                     ],
-                                    ['type' => 'text', 'text' => $prompt],
+                                    ['type' => 'text', 'text' => 'Extract the certificate, service, or contract fields from this document image.'],
                                 ],
                             ],
                         ],
@@ -194,43 +243,45 @@ class DocumentExtractionService
                     'body' => $response->body(),
                 ]);
 
-                return null;
+                return CertificateFieldExtractor::hasUsefulFields($fallback) ? $fallback : null;
             }
 
             $json = $response->json('choices.0.message.content');
             $extracted = json_decode($json, true);
 
             if (! is_array($extracted)) {
-                return null;
+                return CertificateFieldExtractor::hasUsefulFields($fallback) ? $fallback : null;
             }
 
-            $summary = $extracted['summary'] ?? null;
-            unset($extracted['summary']);
+            $extracted['source'] = 'openai';
+            $extracted['confidence'] = 0.86;
 
-            return $this->createProposalFromExtraction($document, $user, $extracted, $summary, $projectId);
+            return CertificateFieldExtractor::merge($extracted, $fallback);
         } catch (\Throwable $e) {
             Log::warning('OpenAI document extraction error', [
                 'document_id' => $document->id,
                 'error' => $e->getMessage(),
             ]);
 
-            return null;
+            return CertificateFieldExtractor::hasUsefulFields($fallback) ? $fallback : null;
         }
     }
 
     protected function extractionPrompt(): string
     {
-        return <<<'PROMPT'
-Extract certificate/compliance document fields from this UK property document. Return ONLY valid JSON:
+        $types = implode('|', CertificateTypes::ids());
+
+        return <<<PROMPT
+Extract UK property / facilities compliance fields from this document. Return ONLY valid JSON:
 {
-  "document_type": "gas_safety|epc|electrical|pat_testing|fire_alarm|other",
-  "label": "human readable name e.g. Gas Safety Certificate",
+  "document_type": "{$types}",
+  "label": "human readable name e.g. Gas Safety Certificate, PAT Test, Boiler Service, Fire Safety Assessment, Maintenance Contract",
   "certificate_number": "string or null",
   "expiry_date": "YYYY-MM-DD or null",
   "issue_date": "YYYY-MM-DD or null",
   "engineer_name": "string or null",
   "address": "full property address or null",
-  "summary": "one sentence summary",
+  "summary": "one sentence summary including the type and expiry if present",
   "suggested_tasks": [
     {
       "title": "actionable task title",
@@ -241,11 +292,81 @@ Extract certificate/compliance document fields from this UK property document. R
   ]
 }
 
+Document types:
+- gas_safety: landlord gas safety / CP12
+- boiler_service: annual boiler servicing
+- pat_testing: portable appliance testing
+- fire_safety: fire risk assessment / fire safety
+- fire_alarm: fire alarm inspection
+- eicr: electrical installation condition report
+- contract: tenancy, maintenance, or other contracts with an end date
+- insurance, legionella, asbestos, epc, emergency_lighting, inspection, other
+
 Rules:
 - Convert UK dates (DD/MM/YYYY) to ISO YYYY-MM-DD
+- Prefer labelled expiry / valid until / next due / contract end dates
 - suggested_tasks: include renewal reminders, engineer follow-ups, or compliance actions implied by the document
 - Use null when unknown — do not guess
 PROMPT;
+    }
+
+    protected function normalizeExtractedData(array $extractedData): array
+    {
+        if (! empty($extractedData['expiresOn']) && empty($extractedData['expiry_date'])) {
+            $extractedData['expiry_date'] = $extractedData['expiresOn'];
+        }
+        if (! empty($extractedData['issuedOn']) && empty($extractedData['issue_date'])) {
+            $extractedData['issue_date'] = $extractedData['issuedOn'];
+        }
+        if (! empty($extractedData['certificateNumber']) && empty($extractedData['certificate_number'])) {
+            $extractedData['certificate_number'] = $extractedData['certificateNumber'];
+        }
+        if (! empty($extractedData['contractorName']) && empty($extractedData['engineer_name'])) {
+            $extractedData['engineer_name'] = $extractedData['contractorName'];
+        }
+        if (! empty($extractedData['type']) && empty($extractedData['document_type'])) {
+            $extractedData['document_type'] = $extractedData['type'];
+        }
+
+        if (! empty($extractedData['document_type'])) {
+            $extractedData['document_type'] = CertificateTypes::normalize($extractedData['document_type']);
+            if (empty($extractedData['label'])) {
+                $extractedData['label'] = CertificateTypes::label($extractedData['document_type']);
+            }
+        }
+
+        foreach (['expiry_date', 'issue_date'] as $dateKey) {
+            if (! empty($extractedData[$dateKey])) {
+                $parsed = CertificateFieldExtractor::parseUkDate((string) $extractedData[$dateKey]);
+                if ($parsed) {
+                    $extractedData[$dateKey] = $parsed;
+                }
+            }
+        }
+
+        return $extractedData;
+    }
+
+    protected function applyExtractionToDocument(OperationalDocument $document, array $extractedData): void
+    {
+        $updates = [
+            'extracted_data' => $extractedData,
+        ];
+
+        if (! empty($extractedData['document_type'])) {
+            $updates['document_type'] = $extractedData['document_type'];
+        }
+
+        if (! empty($extractedData['label'])) {
+            $updates['title'] = $extractedData['label'];
+        }
+
+        if (! empty($extractedData['expiry_date']) && ! $document->expires_at) {
+            $updates['expires_at'] = $extractedData['expiry_date'];
+        }
+
+        $document->update($updates);
+        $document->refreshExpiryStatus();
     }
 
     protected function extractPdfText(string $path): string

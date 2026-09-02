@@ -14,7 +14,7 @@ export interface OperationalSite {
 export interface DocumentExtractionProposal {
     id: number;
     status: string;
-    extracted_data: Record<string, string | null>;
+    extracted_data: Record<string, unknown>;
     summary?: string | null;
     project_id?: number | null;
     site?: { id: number; name: string };

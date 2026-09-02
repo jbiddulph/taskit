@@ -18,8 +18,14 @@ class DocumentExtractionProposalController extends Controller
 
     public function pending(): JsonResponse
     {
+        $user = Auth::user();
+
+        if (! $user->company_id) {
+            return response()->json(['success' => true, 'data' => []]);
+        }
+
         $proposals = DocumentExtractionProposal::query()
-            ->where('user_id', Auth::id())
+            ->where('company_id', $user->company_id)
             ->where('status', DocumentExtractionProposal::STATUS_PENDING)
             ->with(['operationalDocument', 'operationalObject'])
             ->orderByDesc('created_at')

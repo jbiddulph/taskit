@@ -447,6 +447,21 @@ class RealtimeService {
           detail: { proposalId: notification.data.proposal_id }
         }));
       }
+
+      if (notification.type === 'document_extraction' && notification.data?.proposal_id) {
+        if ((window as any).$notify) {
+          (window as any).$notify({
+            type: 'info',
+            title: notification.title,
+            message: notification.message,
+            duration: 8000
+          });
+        }
+
+        window.dispatchEvent(new CustomEvent('open-document-extraction', {
+          detail: { proposalId: notification.data.proposal_id }
+        }));
+      }
     } else {
     }
   }
