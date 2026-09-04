@@ -60,6 +60,7 @@ class TodoController extends Controller
         ];
 
         // Tasks created by compliance/document flows may lack a board group and are hidden by group filters.
+        // Stale board IDs from another project must be rewritten before filtering or caching.
         if ($request->filled('project_id')) {
             $projectId = (int) $request->project_id;
             $requestedGroupId = $request->filled('project_group_id')
@@ -72,6 +73,11 @@ class TodoController extends Controller
                     ->where('project_id', $projectId)
                     ->whereNull('project_group_id')
                     ->update(['project_group_id' => $targetGroupId]);
+            }
+
+            if ($requestedGroupId !== null) {
+                $request->merge(['project_group_id' => $targetGroupId]);
+                $filters['project_group_id'] = $targetGroupId;
             }
         }
 
