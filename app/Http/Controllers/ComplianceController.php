@@ -21,18 +21,27 @@ class ComplianceController extends Controller
         }
 
         $requirements = ComplianceRequirement::forCompany($user->company_id)
-            ->with('operationalObject.client')
+            ->with(['operationalObject.client', 'documents', 'todos'])
             ->get();
 
         foreach ($requirements as $requirement) {
             $requirement->refreshStatus();
         }
 
-        $requirements = ComplianceRequirement::forCompany($user->company_id)
-            ->with('operationalObject.client')
-            ->orderByRaw("case status when 'overdue' then 1 when 'due_soon' then 2 when 'missing' then 3 else 4 end")
-            ->orderBy('next_due_date')
-            ->get();
+        $requirements = $requirements
+            ->filter(fn (ComplianceRequirement $requirement) => $requirement->isActiveOnSitePage())
+            ->sortBy(function (ComplianceRequirement $requirement) {
+                $rank = match ($requirement->status) {
+                    ComplianceRequirement::STATUS_OVERDUE => 1,
+                    ComplianceRequirement::STATUS_DUE_SOON => 2,
+                    ComplianceRequirement::STATUS_MISSING => 3,
+                    default => 4,
+                };
+                $date = $requirement->next_due_date?->format('Y-m-d') ?? '9999-12-31';
+
+                return sprintf('%d-%s-%s', $rank, $date, $requirement->label);
+            })
+            ->values();
 
         $documents = OperationalDocument::forCompany($user->company_id)
             ->with('operationalObject.client')
@@ -69,6 +78,9 @@ class ComplianceController extends Controller
                 'status' => $req->status,
                 'next_due_date' => $req->next_due_date?->format('Y-m-d'),
                 'next_due_display' => $req->next_due_date?->format('j M Y'),
+                'last_completed_at' => $req->last_completed_at?->format('Y-m-d'),
+                'has_document' => $req->documents->isNotEmpty(),
+                'has_linked_task' => $req->todos->isNotEmpty(),
                 'site' => $req->operationalObject ? [
                     'id' => $req->operationalObject->id,
                     'name' => $req->operationalObject->name,

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
@@ -18,6 +19,9 @@ interface Requirement {
   status: string;
   next_due_date?: string;
   next_due_display?: string;
+  last_completed_at?: string;
+  has_document?: boolean;
+  has_linked_task?: boolean;
   site?: SiteRef | null;
   client?: SiteRef | null;
 }
@@ -65,8 +69,14 @@ interface Props {
   } | null;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 const { btnPrimary, btnSecondary } = useFormFieldClasses();
+
+function isActiveRequirement(item: Requirement): boolean {
+  return Boolean(item.next_due_date || item.last_completed_at || item.has_document || item.has_linked_task);
+}
+
+const visibleRequirements = computed(() => props.requirements.filter(isActiveRequirement));
 
 function statusBadge(status: string): string {
   const map: Record<string, string> = {
@@ -124,7 +134,7 @@ function expiryValue(data: Record<string, unknown>): string {
                 </div>
                 <h1 class="text-2xl font-semibold">Compliance</h1>
                 <p class="text-gray-600 dark:text-gray-400 mt-1">
-                  Certificates and contracts for {{ company?.name }}. Upload PDFs on a site — OpenAI reads expiry dates and notifies everyone on the company code. Items are grouped by site and client.
+                  Certificates and contracts for {{ company?.name }}. Upload PDFs on a site — OpenAI reads expiry dates and notifies everyone on the company code. Only items with a due date, uploaded document, or linked task are listed here.
                 </p>
               </div>
               <div class="flex flex-wrap gap-2">
@@ -175,7 +185,7 @@ function expiryValue(data: Record<string, unknown>): string {
 
             <section class="mb-8">
               <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">Checks</h2>
-              <div v-if="requirements.length" class="overflow-x-auto">
+              <div v-if="visibleRequirements.length" class="overflow-x-auto">
                 <table class="min-w-full text-sm">
                   <thead>
                     <tr class="text-left text-xs uppercase tracking-wide text-gray-500 border-b border-gray-200 dark:border-gray-700">
@@ -187,7 +197,7 @@ function expiryValue(data: Record<string, unknown>): string {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="item in requirements" :key="item.id" class="border-b border-gray-100 dark:border-gray-800">
+                    <tr v-for="item in visibleRequirements" :key="item.id" class="border-b border-gray-100 dark:border-gray-800">
                       <td class="py-3 pr-4">
                         <div class="font-medium">{{ item.label }}</div>
                         <div class="text-xs text-gray-500">{{ item.type_label }}</div>
@@ -210,7 +220,7 @@ function expiryValue(data: Record<string, unknown>): string {
                   </tbody>
                 </table>
               </div>
-              <p v-else class="text-sm text-gray-500">No compliance items yet. Add a site and upload a certificate or apply an industry template.</p>
+              <p v-else class="text-sm text-gray-500">No dated compliance items yet. Apply an industry template on a site, then set a due date, upload a document, or link a task. Empty checklist items stay Unscheduled on the site until then.</p>
             </section>
 
             <section>

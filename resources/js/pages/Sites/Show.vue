@@ -390,7 +390,7 @@ onUnmounted(() => {
                 <div>
                   <h2 :class="sectionTitle">Compliance</h2>
                   <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-xl">
-                    Certificates and dates for this site. Checklist items without a date, document, or task stay under Unscheduled so you can set them up here.
+                    Certificates and dates for this site. Checklist items without a date, document, or task stay under Unscheduled on this page so you can set them up here.
                   </p>
                 </div>
                 <div v-if="hasComplianceTemplates" class="shrink-0 sm:text-right">
@@ -398,7 +398,7 @@ onUnmounted(() => {
                     Apply industry template
                   </button>
                   <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs sm:ml-auto">
-                    Seeds this site with your company's industry checklist (gas, EICR, contracts, and similar). Dated items appear above; the rest stay under Unscheduled until you add a due date.
+                    Seeds this site with your company's industry checklist (gas, EICR, contracts, and similar). Items stay Unscheduled here until they have a date, upload, or task. They will not appear on the company Compliance page until then.
                   </p>
                 </div>
               </div>
@@ -467,7 +467,7 @@ onUnmounted(() => {
               >
                 <p class="text-gray-600 dark:text-gray-400 mb-2">No scheduled compliance items yet.</p>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto">
-                  Apply the industry template to seed a checklist. Dated items appear here; unscheduled items stay below so you can set a due date.
+                  Apply the industry template to seed a checklist. Unscheduled items stay below so you can set a due date. They will not appear on the company Compliance page until then.
                 </p>
                 <button v-if="hasComplianceTemplates" type="button" :class="btnPrimary" @click="applyTemplate">
                   Apply industry template
@@ -481,7 +481,7 @@ onUnmounted(() => {
               <div v-if="site.unscheduled_compliance_requirements?.length" class="mt-8">
                 <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Unscheduled</h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-3 max-w-xl">
-                  Not yet dated — set a due date or assignee, or delete items you do not need. These do not count as overdue.
+                  Not yet dated — set a due date or assignee, or delete items you do not need. These do not count as overdue and do not appear on the company Compliance page.
                 </p>
                 <div class="space-y-3">
                   <div

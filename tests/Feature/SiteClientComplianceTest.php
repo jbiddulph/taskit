@@ -95,12 +95,17 @@ class SiteClientComplianceTest extends TestCase
 
         app(\App\Services\ComplianceRequirementService::class)->applyIndustryTemplate($site);
 
+        $eicr = $site->complianceRequirements()->where('requirement_type', 'eicr')->first();
+        $this->assertNotNull($eicr);
+        $eicr->update(['next_due_date' => '2027-06-01']);
+        $eicr->refreshStatus();
+
         $this->actingAs($user)
             ->get(route('compliance.index'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Compliance/Index')
-                ->has('requirements')
+                ->has('requirements', 1)
                 ->where('requirements.0.client.name', $client->name)
                 ->where('requirements.0.site.name', 'Unit 4')
             );
