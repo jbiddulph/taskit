@@ -19,6 +19,7 @@ interface Requirement {
   next_due_date?: string;
   next_due_display?: string;
   site?: SiteRef | null;
+  client?: SiteRef | null;
 }
 
 interface ComplianceDocument {
@@ -31,6 +32,7 @@ interface ComplianceDocument {
   expires_display?: string;
   original_filename: string;
   site?: SiteRef | null;
+  client?: SiteRef | null;
 }
 
 interface PendingProposal {
@@ -39,6 +41,7 @@ interface PendingProposal {
   extracted_data: Record<string, unknown>;
   document_title?: string;
   site?: SiteRef | null;
+  client?: SiteRef | null;
 }
 
 interface Props {
@@ -121,10 +124,13 @@ function expiryValue(data: Record<string, unknown>): string {
                 </div>
                 <h1 class="text-2xl font-semibold">Compliance</h1>
                 <p class="text-gray-600 dark:text-gray-400 mt-1">
-                  Certificates and contracts for {{ company?.name }}. Upload PDFs on a site — OpenAI reads expiry dates and notifies everyone on the company code.
+                  Certificates and contracts for {{ company?.name }}. Upload PDFs on a site — OpenAI reads expiry dates and notifies everyone on the company code. Items are grouped by site and client.
                 </p>
               </div>
-              <Link href="/sites" :class="btnSecondary">Sites &amp; uploads</Link>
+              <div class="flex flex-wrap gap-2">
+                <Link href="/clients" :class="btnSecondary">Clients</Link>
+                <Link href="/sites" :class="btnSecondary">Sites &amp; uploads</Link>
+              </div>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
@@ -175,6 +181,7 @@ function expiryValue(data: Record<string, unknown>): string {
                     <tr class="text-left text-xs uppercase tracking-wide text-gray-500 border-b border-gray-200 dark:border-gray-700">
                       <th class="py-2 pr-4">Item</th>
                       <th class="py-2 pr-4">Site</th>
+                      <th class="py-2 pr-4">Client</th>
                       <th class="py-2 pr-4">Due</th>
                       <th class="py-2">Status</th>
                     </tr>
@@ -187,6 +194,10 @@ function expiryValue(data: Record<string, unknown>): string {
                       </td>
                       <td class="py-3 pr-4">
                         <Link v-if="item.site" :href="`/sites/${item.site.id}`" class="hover:underline">{{ item.site.name }}</Link>
+                        <span v-else>—</span>
+                      </td>
+                      <td class="py-3 pr-4">
+                        <Link v-if="item.client" :href="`/clients/${item.client.id}`" class="hover:underline">{{ item.client.name }}</Link>
                         <span v-else>—</span>
                       </td>
                       <td class="py-3 pr-4">{{ item.next_due_display || 'Not set' }}</td>
@@ -215,6 +226,7 @@ function expiryValue(data: Record<string, unknown>): string {
                     <div class="text-xs text-gray-500">
                       {{ doc.type_label }}
                       <span v-if="doc.site"> · {{ doc.site.name }}</span>
+                      <span v-if="doc.client"> · {{ doc.client.name }}</span>
                       <span v-if="doc.expires_display"> · Expires {{ doc.expires_display }}</span>
                     </div>
                   </div>

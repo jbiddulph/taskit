@@ -4,13 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inspection;
-use App\Models\InspectionPhoto;
 use App\Models\Todo;
 use App\Services\InspectionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class InspectionController extends Controller
@@ -83,12 +81,16 @@ class InspectionController extends Controller
 
         $request->validate([
             'project_id' => 'nullable|integer|exists:taskit_projects,id',
+            'create_follow_up_tasks' => 'sometimes|boolean',
         ]);
+
+        $createFollowUpTasks = $request->boolean('create_follow_up_tasks');
 
         $result = $this->inspectionService->complete(
             $inspection,
             $user->company?->industry,
-            $request->input('project_id'),
+            $createFollowUpTasks ? $request->integer('project_id') ?: null : null,
+            $createFollowUpTasks,
         );
 
         $completed = $result['inspection'];

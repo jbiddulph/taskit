@@ -25,32 +25,40 @@ class CertificateFieldExtractor
     {
         $type = self::detectType($text);
         $expiresOn = self::firstDate($text, [
-            '/(?:valid until|expiry date|expires(?:\s+on)?|next (?:inspection|test|service) due|due date|renewal date|contract (?:ends|expiry))[:\s]+([0-9]{1,2}[\/.\-][0-9]{1,2}[\/.\-][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{2,4}|[0-9]{4}-[0-9]{2}-[0-9]{2})/i',
+            '/(?:valid until|expiry date|expires(?:\s+on)?|next (?:inspection|test|service|review) due|due date|renewal date|renew by|contract (?:ends|expiry)|cover (?:ends|expiry)|next due)[:\s]+([0-9]{1,2}[\/.\-][0-9]{1,2}[\/.\-][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{2,4}|[0-9]{4}-[0-9]{2}-[0-9]{2})/i',
             '/(?:certificate expires)[:\s]+([0-9]{1,2}[\/.\-][0-9]{1,2}[\/.\-][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{2,4})/i',
         ]);
         $issuedOn = self::firstDate($text, [
-            '/(?:date of (?:inspection|check|issue|service)|issue date|inspected on|serviced on|dated)[:\s]+([0-9]{1,2}[\/.\-][0-9]{1,2}[\/.\-][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{2,4}|[0-9]{4}-[0-9]{2}-[0-9]{2})/i',
+            '/(?:date of (?:inspection|check|issue|service)|issue date|issued on|inspected on|serviced on|dated)[:\s]+([0-9]{1,2}[\/.\-][0-9]{1,2}[\/.\-][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{2,4}|[0-9]{4}-[0-9]{2}-[0-9]{2})/i',
+        ]);
+        $renewalOn = self::firstDate($text, [
+            '/(?:renewal date|renew by|next renewal)[:\s]+([0-9]{1,2}[\/.\-][0-9]{1,2}[\/.\-][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{2,4}|[0-9]{4}-[0-9]{2}-[0-9]{2})/i',
         ]);
 
         $numberMatch = [];
         preg_match(
-            '/\b(?:certificate|cert|job|policy|contract)\s*(?:no\.?|number|#)[:\s]+([A-Z0-9][A-Z0-9\-\/]{3,})/i',
+            '/\b(?:certificate|cert|job|policy|contract|registration|reference)\s*(?:no\.?|number|#)[:\s]+([A-Z0-9][A-Z0-9\-\/]{3,})/i',
             $text,
             $numberMatch
         );
 
         $contractorMatch = [];
         preg_match(
-            '/(?:engineer|inspector|issued by|contractor|company|serviced by)[:\s]+([A-Za-z0-9][A-Za-z0-9&.,\' \-]{2,60})/i',
+            '/(?:engineer|inspector|issued by|issuer|contractor|company|serviced by|assessor)[:\s]+([A-Za-z0-9][A-Za-z0-9&.,\' \-]{2,60})/i',
             $text,
             $contractorMatch
         );
+
+        $result = self::detectResult($text);
+        $category = $type ? CertificateTypes::categoryFor($type) : null;
 
         $confidence = 0.35;
         if ($type) {
             $confidence += 0.25;
         }
         if ($expiresOn) {
+            $confidence += 0.3;
+        } elseif ($renewalOn) {
             $confidence += 0.3;
         }
         if ($issuedOn) {
@@ -61,18 +69,25 @@ class CertificateFieldExtractor
         }
 
         $label = $type ? CertificateTypes::label($type) : null;
+        $category = $type ? CertificateTypes::categoryFor($type) : null;
+        $effectiveExpiry = $expiresOn ?: $renewalOn;
         $summary = $label
-            ? ($expiresOn ? "{$label} — expires {$expiresOn}." : "{$label} document detected.")
-            : ($expiresOn ? "Document expires {$expiresOn}." : null);
+            ? ($effectiveExpiry ? "{$label} — expires {$effectiveExpiry}." : "{$label} document detected.")
+            : ($effectiveExpiry ? "Document expires {$effectiveExpiry}." : null);
 
         return [
             'document_type' => $type,
+            'category' => $category,
             'label' => $label,
             'certificate_number' => $numberMatch[1] ?? null,
-            'expiry_date' => $expiresOn,
+            'expiry_date' => $effectiveExpiry,
+            'renewal_date' => $renewalOn,
             'issue_date' => $issuedOn,
             'engineer_name' => isset($contractorMatch[1]) ? trim($contractorMatch[1], " \t\n\r\0\x0B.,") : null,
+            'issuer' => null,
             'address' => null,
+            'result' => $result,
+            'findings' => null,
             'summary' => $summary,
             'suggested_tasks' => [],
             'confidence' => min($confidence, 0.95),
@@ -84,6 +99,7 @@ class CertificateFieldExtractor
     {
         return filled($extracted['document_type'] ?? null)
             || filled($extracted['expiry_date'] ?? null)
+            || filled($extracted['renewal_date'] ?? null)
             || filled($extracted['issue_date'] ?? null)
             || filled($extracted['certificate_number'] ?? null)
             || filled($extracted['label'] ?? null);
@@ -96,7 +112,7 @@ class CertificateFieldExtractor
         }
 
         $merged = $fallback;
-        foreach (['document_type', 'label', 'certificate_number', 'expiry_date', 'issue_date', 'engineer_name', 'address', 'summary'] as $key) {
+        foreach (['document_type', 'category', 'label', 'certificate_number', 'expiry_date', 'renewal_date', 'issue_date', 'engineer_name', 'issuer', 'address', 'result', 'findings', 'summary'] as $key) {
             if (filled($primary[$key] ?? null)) {
                 $merged[$key] = $primary[$key];
             }
@@ -114,9 +130,14 @@ class CertificateFieldExtractor
 
         if (! empty($primary['document_type'])) {
             $merged['document_type'] = CertificateTypes::normalize($primary['document_type']);
+            $merged['category'] = CertificateTypes::categoryFor($merged['document_type']);
             if (empty($merged['label'])) {
                 $merged['label'] = CertificateTypes::label($merged['document_type']);
             }
+        }
+
+        if (empty($merged['expiry_date']) && ! empty($merged['renewal_date'])) {
+            $merged['expiry_date'] = $merged['renewal_date'];
         }
 
         return $merged;
@@ -129,14 +150,34 @@ class CertificateFieldExtractor
             'boiler_service' => ['/boiler (?:service|servicing|annual service)/i', '/gas boiler/i'],
             'eicr' => ['/\beicr\b/i', '/electrical installation condition/i', '/bs\s*7671/i'],
             'pat_testing' => ['/\bpat\b/i', '/portable appliance/i'],
-            'fire_safety' => ['/fire (?:risk )?assessment/i', '/\bfra\b/i', '/fire safety/i'],
             'fire_alarm' => ['/fire alarm/i', '/bs\s*5839/i', '/fire detection/i'],
+            'fire_safety' => ['/fire (?:risk )?assessment/i', '/\bfra\b/i', '/fire safety/i'],
             'emergency_lighting' => ['/emergency lighting/i', '/bs\s*5266/i'],
-            'insurance' => ['/insurance/i', '/policy schedule/i', '/cover note/i'],
-            'contract' => ['/tenancy agreement/i', '/maintenance contract/i', '/service contract/i', '/contract (?:term|expiry|ends)/i'],
+            'pi_insurance' => ['/professional indemnity/i', '/\bpi insurance\b/i'],
+            'cyber_insurance' => ['/cyber insurance/i', '/cyber liability/i'],
+            'insurance' => ['/insurance/i', '/policy schedule/i', '/cover note/i', '/public liability/i', '/employers.? liability/i'],
+            'contract' => ['/tenancy agreement/i', '/maintenance contract/i', '/service contract/i', '/contract (?:term|expiry|ends)/i', '/engagement letter/i'],
             'legionella' => ['/legionella/i'],
             'asbestos' => ['/asbestos/i'],
             'epc' => ['/\bepc\b/i', '/energy performance/i'],
+            'dbs' => ['/\bdbs\b/i', '/disclosure and barring/i', '/criminal record check/i'],
+            'gdpr' => ['/\bgdpr\b/i', '/data protection/i', '/uk gdpr/i'],
+            'ico_registration' => ['/\bico\b/i', '/information commissioner/i'],
+            'iso27001' => ['/iso\s*27001/i', '/information security management/i'],
+            'iso9001' => ['/iso\s*9001/i'],
+            'food_hygiene' => ['/food hygiene/i', '/food safety/i', '/fhia/i'],
+            'allergen' => ['/allergen/i'],
+            'safeguarding' => ['/safeguarding/i'],
+            'right_to_work' => ['/right to work/i'],
+            'coshh' => ['/\bcoshh\b/i'],
+            'rams' => ['/\brams\b/i', '/risk assessment and method statement/i'],
+            'unvented_cylinder' => ['/unvented cylinder/i', '/\bg3\b/i'],
+            'water_regulations' => ['/water regulations/i', '/water regs/i'],
+            'cscs' => ['/\bcscs\b/i'],
+            'aml' => ['/\baml\b/i', '/anti.?money laundering/i'],
+            'cpd' => ['/\bcpd\b/i', '/practising certificate/i'],
+            'ppe_checks' => ['/\bppe\b/i', '/personal protective equipment/i'],
+            'health_safety' => ['/health (?:and|&) safety/i', '/\bh&s\b/i'],
             'inspection' => ['/inspection (report|certificate)/i', '/\bmot\b/i', '/service inspection/i'],
         ];
 
@@ -146,6 +187,18 @@ class CertificateFieldExtractor
                     return $type;
                 }
             }
+        }
+
+        return null;
+    }
+
+    protected static function detectResult(string $text): ?string
+    {
+        if (preg_match('/\b(unsatisfactory|failed|fail)\b/i', $text)) {
+            return 'fail';
+        }
+        if (preg_match('/\b(satisfactory|passed|pass)\b/i', $text)) {
+            return 'pass';
         }
 
         return null;

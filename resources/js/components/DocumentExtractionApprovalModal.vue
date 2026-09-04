@@ -27,21 +27,47 @@ const notify = (type: 'success' | 'error', title: string, message: string) => {
 
 const fieldRows = computed(() => {
     const data = proposal.value?.extracted_data ?? {};
-    const skip = new Set(['suggested_tasks', 'summary', 'confidence', 'source']);
-    const order = ['document_type', 'label', 'expiry_date', 'issue_date', 'certificate_number', 'engineer_name', 'address'];
+    const skip = new Set(['suggested_tasks', 'summary', 'confidence', 'source', 'category']);
+    const labels: Record<string, string> = {
+        document_type: 'Certificate type',
+        label: 'Title',
+        expiry_date: 'Expiry / valid until',
+        renewal_date: 'Renewal date',
+        issue_date: 'Issue date',
+        certificate_number: 'Certificate / policy no.',
+        engineer_name: 'Engineer / inspector',
+        issuer: 'Issued by',
+        address: 'Address on document',
+        result: 'Result',
+        findings: 'Findings / notes',
+    };
+    const order = ['document_type', 'label', 'expiry_date', 'renewal_date', 'issue_date', 'certificate_number', 'engineer_name', 'issuer', 'result', 'findings', 'address'];
     const keys = [
-        ...order.filter((key) => key in data),
-        ...Object.keys(data).filter((key) => !order.includes(key) && !skip.has(key)),
+        ...order.filter((key) => key in data && data[key] != null && data[key] !== ''),
+        ...Object.keys(data).filter((key) => !order.includes(key) && !skip.has(key) && data[key] != null && data[key] !== ''),
     ];
 
     return keys.map((key) => {
         const value = data[key];
+        let display = value == null || value === '' ? '—' : typeof value === 'string' ? value : JSON.stringify(value);
+        if (key === 'document_type' && typeof value === 'string') {
+            display = value.replace(/_/g, ' ');
+        }
         return {
             key,
-            label: key.replace(/_/g, ' '),
-            value: value == null || value === '' ? '—' : typeof value === 'string' ? value : JSON.stringify(value),
+            label: labels[key] ?? key.replace(/_/g, ' '),
+            value: display,
         };
     });
+});
+
+const categoryLabel = computed(() => {
+    const data = proposal.value?.extracted_data ?? {};
+    const category = data.category;
+    if (typeof category === 'string' && category) {
+        return category.replace(/_/g, ' ');
+    }
+    return null;
 });
 
 const suggestedTasks = computed(() => {
@@ -136,7 +162,7 @@ onUnmounted(() => {
             <DialogHeader>
                 <DialogTitle>Review certificate extraction</DialogTitle>
                 <DialogDescription>
-                    OpenAI read this document for your company. Confirm the details before updating compliance.
+                    AI detected the document type, category, and key dates. Confirm before updating compliance.
                 </DialogDescription>
             </DialogHeader>
 
@@ -144,6 +170,9 @@ onUnmounted(() => {
 
             <div v-else-if="proposal" class="space-y-4">
                 <p v-if="proposal.site?.name" class="text-xs uppercase tracking-wide text-gray-500">{{ proposal.site.name }}</p>
+                <p v-if="categoryLabel" class="text-xs font-medium uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                    {{ categoryLabel }}
+                </p>
                 <p v-if="proposal.summary" class="text-sm text-gray-600 dark:text-gray-400">{{ proposal.summary }}</p>
 
                 <dl class="grid grid-cols-1 gap-2 text-sm">

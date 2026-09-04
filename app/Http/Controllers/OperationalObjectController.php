@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\ComplianceRequirement;
 use App\Models\DocumentExtractionProposal;
 use App\Models\OperationalDocument;
@@ -31,21 +32,25 @@ class OperationalObjectController extends Controller
         protected OperationalLinkedTodoService $linkedTodoService,
     ) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $user = $this->requireCompanyUser();
+        $clientId = $request->integer('client_id') ?: null;
 
         $objects = OperationalObject::forCompany($user->company_id)
-            ->with(['parent', 'complianceRequirements'])
+            ->with(['parent', 'client', 'complianceRequirements'])
             ->withCount('children')
             ->whereNull('parent_id')
+            ->when($clientId, fn ($query) => $query->where('client_id', $clientId))
             ->orderBy('name')
             ->get()
             ->map(fn ($object) => $this->serializeObject($object));
 
         return Inertia::render('Sites/Index', [
             'sites' => $objects,
-            'complianceSummary' => $this->complianceSummary($user->company_id),
+            'clients' => $this->clientOptions($user->company_id),
+            'selectedClientId' => $clientId,
+            'complianceSummary' => $this->complianceSummary($user->company_id, $clientId),
             'hasComplianceTemplates' => ComplianceTemplates::hasTemplates($user->company?->industry),
             'company' => $this->companyPayload($user),
         ]);
@@ -58,9 +63,11 @@ class OperationalObjectController extends Controller
         return Inertia::render('Sites/Create', [
             'objectTypes' => OperationalObjectTypes::choices(),
             'parentOptions' => $this->parentOptions($user->company_id),
+            'clients' => $this->clientOptions($user->company_id),
             'projects' => $this->projectOptions($user->company_id),
             'hasComplianceTemplates' => ComplianceTemplates::hasTemplates($user->company?->industry),
             'defaultParentId' => $request->integer('parent_id') ?: null,
+            'defaultClientId' => $request->integer('client_id') ?: null,
             'company' => $this->companyPayload($user),
         ]);
     }
@@ -82,6 +89,7 @@ class OperationalObjectController extends Controller
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'notes' => 'nullable|string|max:2000',
+            'client_id' => 'nullable|exists:taskit_clients,id',
             'apply_compliance_template' => 'sometimes|boolean',
             'default_project_id' => 'nullable|exists:taskit_projects,id',
         ]);
@@ -91,7 +99,12 @@ class OperationalObjectController extends Controller
             if ($parent->company_id !== $user->company_id) {
                 abort(403);
             }
+            if (empty($validated['client_id']) && $parent->client_id) {
+                $validated['client_id'] = $parent->client_id;
+            }
         }
+
+        $this->assertClientBelongsToCompany($validated['client_id'] ?? null, $user->company_id);
 
         $object = OperationalObject::create([
             ...collect($validated)->except(['apply_compliance_template', 'default_project_id'])->all(),
@@ -114,7 +127,7 @@ class OperationalObjectController extends Controller
         $user = Auth::user();
         $this->authorizeObject($site, $user);
 
-        $site->load(['parent', 'children', 'complianceRequirements', 'createdBy', 'documents', 'inspections.inspector']);
+        $site->load(['parent', 'children', 'client', 'complianceRequirements', 'createdBy', 'documents', 'inspections.inspector']);
 
         return Inertia::render('Sites/Show', [
             'site' => $this->serializeObjectDetail($site),
@@ -149,6 +162,7 @@ class OperationalObjectController extends Controller
             ]),
             'objectTypes' => OperationalObjectTypes::choices(),
             'parentOptions' => $this->parentOptions($user->company_id, $site->id),
+            'clients' => $this->clientOptions($user->company_id),
             'company' => $this->companyPayload($user),
         ]);
     }
@@ -170,12 +184,15 @@ class OperationalObjectController extends Controller
             'country' => 'nullable|string|max:100',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+            'client_id' => 'nullable|exists:taskit_clients,id',
             'notes' => 'nullable|string|max:2000',
         ]);
 
         if (! empty($validated['parent_id']) && (int) $validated['parent_id'] === $site->id) {
             return back()->withErrors(['parent_id' => 'A site cannot be its own parent.']);
         }
+
+        $this->assertClientBelongsToCompany($validated['client_id'] ?? null, $user->company_id);
 
         $site->update($validated);
 
@@ -356,6 +373,30 @@ class OperationalObjectController extends Controller
             ->all();
     }
 
+    protected function clientOptions(int $companyId): array
+    {
+        return Client::forCompany($companyId)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn ($client) => [
+                'id' => $client->id,
+                'name' => $client->name,
+            ])
+            ->all();
+    }
+
+    protected function assertClientBelongsToCompany(?int $clientId, int $companyId): void
+    {
+        if (! $clientId) {
+            return;
+        }
+
+        $client = Client::findOrFail($clientId);
+        if ($client->company_id !== $companyId) {
+            abort(403, 'Access denied.');
+        }
+    }
+
     protected function projectOptions(int $companyId): array
     {
         return Project::query()
@@ -383,6 +424,10 @@ class OperationalObjectController extends Controller
             'reference' => $object->reference,
             'full_address' => $object->full_address,
             'parent_name' => $object->parent?->name,
+            'client' => $object->client ? [
+                'id' => $object->client->id,
+                'name' => $object->client->name,
+            ] : null,
             'children_count' => $object->children_count ?? $object->children()->count(),
             'linked_todo_count' => $this->linkedTodoService->countForOperationalObjectTree($object),
             'compliance_counts' => [
@@ -416,6 +461,11 @@ class OperationalObjectController extends Controller
                 'id' => $object->parent->id,
                 'name' => $object->parent->name,
             ] : null,
+            'client' => $object->client ? [
+                'id' => $object->client->id,
+                'name' => $object->client->name,
+            ] : null,
+            'client_id' => $object->client_id,
             'children' => $object->children->map(fn ($child) => [
                 'id' => $child->id,
                 'name' => $child->name,
@@ -467,15 +517,18 @@ class OperationalObjectController extends Controller
         ];
     }
 
-    protected function complianceSummary(int $companyId): array
+    protected function complianceSummary(int $companyId, ?int $clientId = null): array
     {
-        $requirements = ComplianceRequirement::forCompany($companyId)->get();
+        $requirementsQuery = fn () => ComplianceRequirement::forCompany($companyId)
+            ->when($clientId, function ($query) use ($clientId) {
+                $query->whereHas('operationalObject', fn ($q) => $q->where('client_id', $clientId));
+            });
 
-        foreach ($requirements as $requirement) {
+        foreach ($requirementsQuery()->get() as $requirement) {
             $requirement->refreshStatus();
         }
 
-        $requirements = ComplianceRequirement::forCompany($companyId)->get();
+        $requirements = $requirementsQuery()->get();
 
         return [
             'overdue' => $requirements->where('status', ComplianceRequirement::STATUS_OVERDUE)->count(),

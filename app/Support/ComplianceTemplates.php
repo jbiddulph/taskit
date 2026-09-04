@@ -2,15 +2,18 @@
 
 namespace App\Support;
 
-use App\Support\Industries;
-
 class ComplianceTemplates
 {
     public static function forIndustry(?string $industry): array
     {
         $industry = Industries::resolve($industry);
+        $templates = config("compliance_templates.{$industry}", []);
 
-        return config("compliance_templates.{$industry}", []);
+        if ($templates === []) {
+            return config('compliance_templates.general', []);
+        }
+
+        return $templates;
     }
 
     public static function hasTemplates(?string $industry): bool

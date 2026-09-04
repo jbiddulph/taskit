@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Link, useForm } from '@inertiajs/vue3';
+import { Link, useForm, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
 import { index, edit, destroy } from '@/routes/clients/index.ts';
 import SeoHead from '@/components/SeoHead.vue';
+import { computed } from 'vue';
 
 interface Client {
   id: number;
@@ -39,6 +40,17 @@ interface Client {
       completion_rate: number;
     };
   }>;
+  sites?: Array<{
+    id: number;
+    name: string;
+    type_label: string;
+    full_address: string;
+    compliance_counts: {
+      overdue: number;
+      due_soon: number;
+      compliant: number;
+    };
+  }>;
 }
 
 interface Props {
@@ -52,6 +64,9 @@ interface Props {
 }
 
 const { client } = defineProps<Props>();
+
+const page = usePage();
+const canAccessSites = computed(() => (page.props as { features?: { sites?: boolean } }).features?.sites === true);
 
 // Project filter state (for future expansion if needed)
 // Currently this page already shows only this client's projects,
@@ -105,6 +120,14 @@ deleteForm.delete(destroy.url(client.id));
             </div>
             
             <div class="flex gap-3">
+              <Link
+                v-if="canAccessSites"
+                :href="`/sites/create?client_id=${client.id}`"
+                class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                <Icon name="Plus" class="w-4 h-4" />
+                Add site
+              </Link>
               <Link
                 :href="edit.url(client.id)"
                 class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black text-white hover:bg-gray-900 hover:border-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300"
@@ -258,6 +281,53 @@ deleteForm.delete(destroy.url(client.id));
                 </div>
               </div>
             </div>
+
+            <div v-if="canAccessSites" class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+              <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                  <h2 class="text-lg font-semibold">Sites &amp; compliance</h2>
+                  <Link
+                    :href="`/sites?client_id=${client.id}`"
+                    class="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    View on Sites
+                  </Link>
+                </div>
+
+                <div v-if="client.sites?.length" class="space-y-3">
+                  <Link
+                    v-for="site in client.sites"
+                    :key="site.id"
+                    :href="`/sites/${site.id}`"
+                    class="block p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div>
+                        <div class="text-xs uppercase tracking-wide text-gray-500">{{ site.type_label }}</div>
+                        <div class="font-medium">{{ site.name }}</div>
+                        <div v-if="site.full_address" class="text-sm text-gray-500">{{ site.full_address }}</div>
+                      </div>
+                      <div class="text-xs text-right shrink-0">
+                        <div class="text-red-600 dark:text-red-400">{{ site.compliance_counts.overdue }} overdue</div>
+                        <div class="text-amber-600 dark:text-amber-400">{{ site.compliance_counts.due_soon }} due soon</div>
+                        <div class="text-green-600 dark:text-green-400">{{ site.compliance_counts.compliant }} compliant</div>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+                <div v-else class="text-center py-8 text-gray-500">
+                  No sites linked to this client yet.
+                  <div class="mt-3">
+                    <Link
+                      :href="`/sites/create?client_id=${client.id}`"
+                      class="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      Add a site
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Stats Sidebar -->
@@ -270,6 +340,11 @@ deleteForm.delete(destroy.url(client.id));
                   <div class="text-center">
                     <div class="text-3xl font-bold text-blue-600">{{ client.stats.total_projects }}</div>
                     <div class="text-sm text-gray-500">Projects</div>
+                  </div>
+                  
+                  <div class="text-center">
+                    <div class="text-3xl font-bold text-slate-600">{{ client.sites?.length ?? 0 }}</div>
+                    <div class="text-sm text-gray-500">Sites</div>
                   </div>
                   
                   <div class="text-center">

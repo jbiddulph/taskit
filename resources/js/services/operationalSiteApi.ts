@@ -7,6 +7,8 @@ export interface OperationalSite {
     type_label: string;
     full_address: string;
     parent_id?: number | null;
+    client_id?: number | null;
+    client_name?: string | null;
     latitude?: number | null;
     longitude?: number | null;
 }

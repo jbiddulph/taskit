@@ -116,6 +116,20 @@ class InspectionFollowUpTaskService
             }
         }
 
+        $clientId = $inspection->operationalObject?->client_id;
+        if ($clientId) {
+            $clientProject = Project::query()
+                ->where('company_id', $inspection->company_id)
+                ->where('client_id', $clientId)
+                ->where('is_active', true)
+                ->orderBy('viewing_order')
+                ->first();
+
+            if ($clientProject) {
+                return $clientProject;
+            }
+        }
+
         return Project::query()
             ->where('company_id', $inspection->company_id)
             ->where('is_active', true)

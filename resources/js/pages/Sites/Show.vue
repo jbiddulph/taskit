@@ -65,6 +65,7 @@ interface Site {
   notes?: string;
   linked_todo_count?: number;
   parent?: { id: number; name: string };
+  client?: { id: number; name: string } | null;
   children: Array<{ id: number; name: string; type_label: string }>;
   compliance_requirements: ComplianceRequirement[];
   documents: SiteDocument[];
@@ -233,9 +234,14 @@ onUnmounted(() => {
                 <div class="text-xs uppercase tracking-wide text-gray-500">{{ site.type_label }}</div>
                 <h1 class="text-2xl font-semibold">{{ site.name }}</h1>
                 <p v-if="site.full_address" class="text-gray-600 dark:text-gray-400 mt-1">{{ site.full_address }}</p>
+                <p v-if="site.client" class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Client:
+                  <Link :href="`/clients/${site.client.id}`" class="hover:underline">{{ site.client.name }}</Link>
+                </p>
                 <p v-if="site.parent" class="text-sm text-gray-500 mt-1">Inside {{ site.parent.name }}</p>
               </div>
               <div class="flex flex-wrap gap-2 shrink-0">
+                <Link href="/compliance" :class="btnSecondary">Compliance</Link>
                 <Link :href="`/sites/create?parent_id=${site.id}`" :class="btnSecondary">Add child site</Link>
                 <Link :href="`/sites/${site.id}/edit`" :class="btnSecondary">Edit</Link>
               </div>

@@ -13,7 +13,6 @@ use App\Support\CertificateTypes;
 use App\Support\ComplianceTemplates;
 use App\Support\Industries;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class DocumentExtractionProposalService
 {
@@ -38,7 +37,9 @@ class DocumentExtractionProposalService
         $projectId = $projectId
             ?? $proposal->metadata['project_id'] ?? null;
 
-        $expiresAt = $this->parseDate($data['expiry_date'] ?? null) ?? $document->expires_at;
+        $expiresAt = $this->parseDate($data['expiry_date'] ?? null)
+            ?? $this->parseDate($data['renewal_date'] ?? null)
+            ?? $document->expires_at;
         $requirementType = CertificateTypes::normalize($data['document_type'] ?? $data['requirement_type'] ?? 'other');
         $label = $data['label'] ?? $document->title ?: CertificateTypes::label($requirementType);
 
@@ -270,6 +271,9 @@ class DocumentExtractionProposalService
             $summary,
             ! empty($data['certificate_number']) ? 'Certificate #: '.$data['certificate_number'] : null,
             ! empty($data['engineer_name']) ? 'Engineer: '.$data['engineer_name'] : null,
+            ! empty($data['issuer']) ? 'Issued by: '.$data['issuer'] : null,
+            ! empty($data['result']) ? 'Result: '.$data['result'] : null,
+            ! empty($data['findings']) ? 'Findings: '.$data['findings'] : null,
             ! empty($data['address']) ? 'Address: '.$data['address'] : null,
         ]);
 

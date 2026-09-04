@@ -438,7 +438,8 @@
           "Add one site per property or address — use child sites for flats, rooms, or units inside a building.",
           "Apply your industry compliance template when creating a site to auto-add gas safety, inspections, and renewals.",
           "Watch the dashboard tiles: overdue and due-soon counts roll up across your whole portfolio.",
-          "Open any site to upload certificates, run inspections, and see linked tasks."
+          "Open any site to upload certificates, run inspections, and see linked tasks.",
+          "Link a site to a client so compliance and documents appear on that client's record."
         ],
         "examples": [
           "Building: Riverside Court → child units: Flat 1, Flat 2, Flat 3",
@@ -451,6 +452,7 @@
         "intro": "A clear address helps map view, routing, and field check-ins.",
         "items": [
           "Use Property for a whole address, Unit / Room for something inside a parent site.",
+          "Optionally link the site to a client so your team can see whose property it is.",
           "Tick Apply industry compliance template to seed checklist items (you set due dates next).",
           "Pick a board where reminder tasks should appear when dates approach.",
           "You can upload a gas safety or EPC certificate on the site page — AI can read the expiry date."
@@ -468,7 +470,7 @@
           "Set due dates on compliance items — ZapTask creates reminder tasks ~30 days before (configurable per item).",
           "Mark an item complete after work is done; the next due date is calculated from its frequency.",
           "Start an inspection checklist with photos, then download a PDF report for your records or auditors.",
-          "Any failed checklist items automatically create follow-up tasks on your board (due in 3 days).",
+          "Any failed checklist items can create follow-up tasks on your board if you tick that option (due in 3 days).",
           "Tasks on your board can be linked to this site so location and assignee stay in sync."
         ],
         "examples": [
@@ -495,7 +497,7 @@
         "title": "Inspection checklist tips",
         "intro": "Work through each item on site. Add photos as evidence.",
         "items": [
-          "Use Pass / Fail / N/A for each checklist line — any Fail items automatically create high-priority follow-up tasks when you complete.",
+          "Use Pass / Fail / N/A for each checklist line — tick Create follow-up tasks on board if you want high-priority tasks for Fail items.",
           "Failed items block compliance from being marked complete until resolved.",
           "Add photos of panels, defects, or room condition — they appear in the PDF report.",
           "Save draft anytime; complete when finished to generate the PDF.",
@@ -511,7 +513,7 @@
         "intro": "Download the PDF for landlords, auditors, or client files.",
         "items": [
           "Download the PDF for landlords, auditors, or client files.",
-          "Follow-up tasks listed below were auto-created for any failed checklist items.",
+          "Follow-up tasks listed below were created only if that option was ticked for failed checklist items.",
           "If linked to compliance, it is only marked complete when no items failed.",
           "Share the PDF externally — it does not expose your full ZapTask account."
         ],
