@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Builder;
 
 class ComplianceRequirement extends Model
 {
@@ -66,6 +66,11 @@ class ComplianceRequirement extends Model
         return $this->hasMany(Todo::class);
     }
 
+    public function documents(): HasMany
+    {
+        return $this->hasMany(OperationalDocument::class);
+    }
+
     public function scopeForCompany(Builder $query, int $companyId): void
     {
         $query->where('company_id', $companyId);
@@ -100,7 +105,48 @@ class ComplianceRequirement extends Model
 
     public function hasOpenTask(): bool
     {
-        return $this->todos()->where('status', '!=', 'done')->exists();
+        return $this->latestOpenTodo() !== null;
+    }
+
+    public function latestOpenTodo(): ?Todo
+    {
+        if ($this->relationLoaded('todos')) {
+            return $this->todos
+                ->where('status', '!=', 'done')
+                ->sortByDesc('id')
+                ->first();
+        }
+
+        return $this->todos()->where('status', '!=', 'done')->latest('id')->first();
+    }
+
+    /**
+     * Site Compliance list hides empty industry-template stubs until they have
+     * a date, an uploaded document, or a linked board task.
+     */
+    public function isActiveOnSitePage(): bool
+    {
+        if ($this->next_due_date || $this->last_completed_at) {
+            return true;
+        }
+
+        if ($this->relationLoaded('documents')) {
+            if ($this->documents->isNotEmpty()) {
+                return true;
+            }
+        } elseif ($this->documents()->exists()) {
+            return true;
+        }
+
+        if ($this->relationLoaded('todos')) {
+            if ($this->todos->isNotEmpty()) {
+                return true;
+            }
+        } elseif ($this->todos()->exists()) {
+            return true;
+        }
+
+        return false;
     }
 
     public function taskDueDate(): ?Carbon
