@@ -58,6 +58,38 @@ const canAccessSites = computed(() => {
     const subscriptionType = props.company?.subscription_type ?? user.value?.company?.subscription_type;
     return ['MAXI', 'LTD_AGENCY', 'LTD_BUSINESS'].includes(subscriptionType);
 });
+
+const currentPath = computed(() => {
+    const url = String(page.url ?? '');
+    return url.split(/[?#]/)[0];
+});
+
+const pathMatches = (prefix: string) => {
+    const path = currentPath.value;
+    return path === prefix || path.startsWith(`${prefix}/`);
+};
+
+const headerNavActive = computed(() => ({
+    company: pathMatches('/companies') || pathMatches('/settings/company'),
+    clients: pathMatches('/clients'),
+    sites: pathMatches('/sites'),
+    compliance: pathMatches('/compliance'),
+    team: pathMatches('/team'),
+}));
+
+const desktopNavClass = (active: boolean) => [
+    'flex items-center gap-1 px-3 py-1.5 text-sm rounded-md transition-colors',
+    active
+        ? 'font-semibold text-gray-900 bg-gray-100 ring-1 ring-inset ring-gray-300 dark:text-gray-100 dark:bg-gray-800 dark:ring-gray-600'
+        : 'font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800',
+];
+
+const mobileNavClass = (active: boolean) => [
+    'flex items-center gap-3 p-4 rounded-lg transition-colors border min-h-[44px]',
+    active
+        ? 'font-semibold text-gray-900 bg-gray-100 border-gray-400 dark:text-gray-100 dark:bg-gray-700 dark:border-gray-500'
+        : 'font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 border-gray-200 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-700 dark:border-gray-600',
+];
 </script>
 
 <template>
@@ -101,9 +133,10 @@ const canAccessSites = computed(() => {
                 />
                 
                 <!-- Company Info Link -->
-                <Link 
-                    :href="`/companies/${company.id}`" 
-                    class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                <Link
+                    :href="`/companies/${company.id}`"
+                    :class="desktopNavClass(headerNavActive.company)"
+                    :aria-current="headerNavActive.company ? 'page' : undefined"
                     title="Company Information"
                 >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,9 +146,10 @@ const canAccessSites = computed(() => {
                 </Link>
                 
                 <!-- Clients Link -->
-                <Link 
-                    href="/clients" 
-                    class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                <Link
+                    href="/clients"
+                    :class="desktopNavClass(headerNavActive.clients)"
+                    :aria-current="headerNavActive.clients ? 'page' : undefined"
                     title="Clients"
                 >
                     <HeartHandshake class="w-4 h-4" />
@@ -123,10 +157,11 @@ const canAccessSites = computed(() => {
                 </Link>
 
                 <!-- Sites Link -->
-                <Link 
+                <Link
                     v-if="canAccessSites"
-                    href="/sites" 
-                    class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                    href="/sites"
+                    :class="desktopNavClass(headerNavActive.sites)"
+                    :aria-current="headerNavActive.sites ? 'page' : undefined"
                     title="Sites & Assets"
                 >
                     <Building2 class="w-4 h-4" />
@@ -136,14 +171,15 @@ const canAccessSites = computed(() => {
                 <Link
                     v-if="canAccessSites"
                     href="/compliance"
-                    class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                    :class="desktopNavClass(headerNavActive.compliance)"
+                    :aria-current="headerNavActive.compliance ? 'page' : undefined"
                     title="Compliance"
                 >
                     <ShieldCheck class="w-4 h-4" />
                     <span class="hidden sm:inline">Compliance</span>
                 </Link>
                 
-                <CompanyUsersDropdown />
+                <CompanyUsersDropdown :is-active="headerNavActive.team" />
             </div>
             
             <!-- Mobile Menu Button (only show if user has company) -->
@@ -212,54 +248,63 @@ const canAccessSites = computed(() => {
                             </div>
                             
                             <!-- Company Info Link -->
-                            <Link 
-                                :href="`/companies/${company.id}`" 
+                            <Link
+                                :href="`/companies/${company.id}`"
                                 @click="closeMobileMenu"
-                                class="flex items-center gap-3 p-4 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600 min-h-[44px]"
+                                :class="mobileNavClass(headerNavActive.company)"
+                                :aria-current="headerNavActive.company ? 'page' : undefined"
                             >
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                                 </svg>
-                                <span class="font-medium">Company Information</span>
+                                <span>Company Information</span>
                             </Link>
                             
                             <!-- Clients Link -->
-                            <Link 
-                                href="/clients" 
+                            <Link
+                                href="/clients"
                                 @click="closeMobileMenu"
-                                class="flex items-center gap-3 p-4 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600 min-h-[44px]"
+                                :class="mobileNavClass(headerNavActive.clients)"
+                                :aria-current="headerNavActive.clients ? 'page' : undefined"
                             >
                                 <HeartHandshake class="w-5 h-5 flex-shrink-0" />
-                                <span class="font-medium">Clients</span>
+                                <span>Clients</span>
                             </Link>
 
                             <!-- Sites Link -->
-                            <Link 
+                            <Link
                                 v-if="canAccessSites"
-                                href="/sites" 
+                                href="/sites"
                                 @click="closeMobileMenu"
-                                class="flex items-center gap-3 p-4 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600 min-h-[44px]"
+                                :class="mobileNavClass(headerNavActive.sites)"
+                                :aria-current="headerNavActive.sites ? 'page' : undefined"
                             >
                                 <Building2 class="w-5 h-5 flex-shrink-0" />
-                                <span class="font-medium">Sites & Assets</span>
+                                <span>Sites & Assets</span>
                             </Link>
 
                             <Link
                                 v-if="canAccessSites"
                                 href="/compliance"
                                 @click="closeMobileMenu"
-                                class="flex items-center gap-3 p-4 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600 min-h-[44px]"
+                                :class="mobileNavClass(headerNavActive.compliance)"
+                                :aria-current="headerNavActive.compliance ? 'page' : undefined"
                             >
                                 <ShieldCheck class="w-5 h-5 flex-shrink-0" />
-                                <span class="font-medium">Compliance</span>
+                                <span>Compliance</span>
                             </Link>
                             
                             <!-- Team Dropdown -->
-                            <div class="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                            <div
+                                class="p-4 border rounded-lg"
+                                :class="headerNavActive.team
+                                    ? 'border-gray-400 bg-gray-100 dark:border-gray-500 dark:bg-gray-700'
+                                    : 'border-gray-200 dark:border-gray-600'"
+                            >
                                 <div class="mb-2">
                                     <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Team</span>
                                 </div>
-                                <CompanyUsersDropdown />
+                                <CompanyUsersDropdown :is-active="headerNavActive.team" />
                             </div>
                         </div>
                     </div>
