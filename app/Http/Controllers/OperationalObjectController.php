@@ -38,7 +38,7 @@ class OperationalObjectController extends Controller
         $clientId = $request->integer('client_id') ?: null;
 
         $objects = OperationalObject::forCompany($user->company_id)
-            ->with(['parent', 'client', 'complianceRequirements'])
+            ->with(['parent', 'client', 'complianceRequirements.documents', 'complianceRequirements.todos'])
             ->withCount('children')
             ->whereNull('parent_id')
             ->when($clientId, fn ($query) => $query->where('client_id', $clientId))
@@ -429,7 +429,8 @@ class OperationalObjectController extends Controller
 
     protected function serializeObject(OperationalObject $object): array
     {
-        $requirements = $object->complianceRequirements;
+        $trackedRequirements = $object->complianceRequirements
+            ->filter(fn ($req) => $req->isActiveOnSitePage());
 
         return [
             'id' => $object->id,
@@ -446,10 +447,10 @@ class OperationalObjectController extends Controller
             'children_count' => $object->children_count ?? $object->children()->count(),
             'linked_todo_count' => $this->linkedTodoService->countForOperationalObjectTree($object),
             'compliance_counts' => [
-                'overdue' => $requirements->where('status', ComplianceRequirement::STATUS_OVERDUE)->count(),
-                'due_soon' => $requirements->where('status', ComplianceRequirement::STATUS_DUE_SOON)->count(),
-                'compliant' => $requirements->where('status', ComplianceRequirement::STATUS_COMPLIANT)->count(),
-                'missing' => $requirements->where('status', ComplianceRequirement::STATUS_MISSING)->count(),
+                'overdue' => $trackedRequirements->where('status', ComplianceRequirement::STATUS_OVERDUE)->count(),
+                'due_soon' => $trackedRequirements->where('status', ComplianceRequirement::STATUS_DUE_SOON)->count(),
+                'compliant' => $trackedRequirements->where('status', ComplianceRequirement::STATUS_COMPLIANT)->count(),
+                'missing' => $trackedRequirements->where('status', ComplianceRequirement::STATUS_MISSING)->count(),
             ],
         ];
     }
@@ -561,11 +562,14 @@ class OperationalObjectController extends Controller
                 $query->whereHas('operationalObject', fn ($q) => $q->where('client_id', $clientId));
             });
 
-        foreach ($requirementsQuery()->get() as $requirement) {
+        foreach ($requirementsQuery()->with(['documents', 'todos'])->get() as $requirement) {
             $requirement->refreshStatus();
         }
 
-        $requirements = $requirementsQuery()->get();
+        $requirements = $requirementsQuery()
+            ->with(['documents', 'todos'])
+            ->get()
+            ->filter(fn ($requirement) => $requirement->isActiveOnSitePage());
 
         return [
             'overdue' => $requirements->where('status', ComplianceRequirement::STATUS_OVERDUE)->count(),
