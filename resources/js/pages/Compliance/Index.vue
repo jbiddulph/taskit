@@ -65,7 +65,7 @@ interface Props {
   } | null;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 const { btnPrimary, btnSecondary } = useFormFieldClasses();
 
 function statusBadge(status: string): string {
