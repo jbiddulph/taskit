@@ -8,8 +8,10 @@ import type { BreadcrumbItemType } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { HeartHandshake, Building2, ShieldCheck } from 'lucide-vue-next';
+import { cn } from '@/lib/utils';
+import { isNavSectionActive } from '@/lib/activeNavSection';
 
-withDefaults(
+const props = withDefaults(
     defineProps<{
         breadcrumbs?: BreadcrumbItemType[];
         company?: {
@@ -39,8 +41,8 @@ const closeMobileMenu = () => {
 // Access user data to check if they have a company_id
 const page = usePage();
 const user = computed(() => {
-    const props: any = page.props;
-    return props.user ?? (props.auth as any)?.user ?? null;
+    const pageProps: any = page.props;
+    return pageProps.user ?? (pageProps.auth as any)?.user ?? null;
 });
 
 // Show redemption code link only if user doesn't have a company_id
@@ -50,14 +52,55 @@ const showRedemptionLink = computed(() => {
 });
 
 const canAccessSites = computed(() => {
-    const props: any = page.props;
-    if (typeof props.features?.sites === 'boolean') {
-        return props.features.sites;
+    const pageProps: any = page.props;
+    if (typeof pageProps.features?.sites === 'boolean') {
+        return pageProps.features.sites;
     }
 
-    const subscriptionType = props.company?.subscription_type ?? user.value?.company?.subscription_type;
+    const subscriptionType = pageProps.company?.subscription_type ?? user.value?.company?.subscription_type;
     return ['MAXI', 'LTD_AGENCY', 'LTD_BUSINESS'].includes(subscriptionType);
 });
+
+const navCompany = computed(() => {
+    if (props.company) {
+        return props.company;
+    }
+
+    const pageProps: any = page.props;
+    const source = pageProps.company ?? user.value?.company ?? null;
+    if (!source?.id) {
+        return null;
+    }
+
+    return {
+        id: source.id,
+        name: source.name,
+        code: source.code,
+        subscription_type: source.subscription_type ?? 'FREE',
+    };
+});
+
+const isCompanyActive = computed(() => isNavSectionActive(page.url, 'company'));
+const isClientsActive = computed(() => isNavSectionActive(page.url, 'clients'));
+const isSitesActive = computed(() => isNavSectionActive(page.url, 'sites'));
+const isComplianceActive = computed(() => isNavSectionActive(page.url, 'compliance'));
+const isTeamActive = computed(() => isNavSectionActive(page.url, 'team'));
+
+const desktopNavClass = (active: boolean) =>
+    cn(
+        'flex items-center gap-1 px-3 py-1.5 text-sm rounded-md transition-colors',
+        active
+            ? 'font-semibold text-gray-900 bg-gray-200 ring-1 ring-gray-300 dark:bg-gray-700 dark:text-white dark:ring-gray-500'
+            : 'font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800',
+    );
+
+const mobileNavClass = (active: boolean) =>
+    cn(
+        'flex items-center gap-3 p-4 rounded-lg transition-colors border min-h-[44px]',
+        active
+            ? 'font-semibold text-gray-900 bg-gray-100 border-gray-900 dark:bg-gray-700 dark:text-white dark:border-gray-300'
+            : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100 border-gray-200 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-700 dark:border-gray-600',
+    );
 </script>
 
 <template>
@@ -94,16 +137,17 @@ const canAccessSites = computed(() => {
             </template>
             
             <!-- Desktop Navigation (hidden on mobile) -->
-            <div v-if="company" class="hidden xl:flex items-center gap-3">
+            <div v-if="navCompany" class="hidden xl:flex items-center gap-3">
                 <CompanyCodeDisplay
-                    :company-code="company.code"
-                    :company-name="company.name"
+                    :company-code="navCompany.code"
+                    :company-name="navCompany.name"
                 />
                 
                 <!-- Company Info Link -->
                 <Link 
-                    :href="`/companies/${company.id}`" 
-                    class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                    :href="`/companies/${navCompany.id}`" 
+                    :class="desktopNavClass(isCompanyActive)"
+                    :aria-current="isCompanyActive ? 'page' : undefined"
                     title="Company Information"
                 >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,7 +159,8 @@ const canAccessSites = computed(() => {
                 <!-- Clients Link -->
                 <Link 
                     href="/clients" 
-                    class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                    :class="desktopNavClass(isClientsActive)"
+                    :aria-current="isClientsActive ? 'page' : undefined"
                     title="Clients"
                 >
                     <HeartHandshake class="w-4 h-4" />
@@ -126,7 +171,8 @@ const canAccessSites = computed(() => {
                 <Link 
                     v-if="canAccessSites"
                     href="/sites" 
-                    class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                    :class="desktopNavClass(isSitesActive)"
+                    :aria-current="isSitesActive ? 'page' : undefined"
                     title="Sites & Assets"
                 >
                     <Building2 class="w-4 h-4" />
@@ -136,19 +182,20 @@ const canAccessSites = computed(() => {
                 <Link
                     v-if="canAccessSites"
                     href="/compliance"
-                    class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                    :class="desktopNavClass(isComplianceActive)"
+                    :aria-current="isComplianceActive ? 'page' : undefined"
                     title="Compliance"
                 >
                     <ShieldCheck class="w-4 h-4" />
                     <span class="hidden sm:inline">Compliance</span>
                 </Link>
                 
-                <CompanyUsersDropdown />
+                <CompanyUsersDropdown :is-active="isTeamActive" />
             </div>
             
             <!-- Mobile Menu Button (only show if user has company) -->
             <button
-                v-if="company"
+                v-if="navCompany"
                 @click="toggleMobileMenu"
                 class="xl:hidden inline-flex items-center justify-center p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
                 title="Company Menu"
@@ -163,7 +210,7 @@ const canAccessSites = computed(() => {
         
         <!-- Mobile Menu Overlay -->
         <div
-            v-if="isMobileMenuOpen && company"
+            v-if="isMobileMenuOpen && navCompany"
             class="fixed inset-0 z-50 xl:hidden"
             @click="closeMobileMenu"
         >
@@ -196,8 +243,8 @@ const canAccessSites = computed(() => {
                             <!-- Company Code -->
                             <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
                                 <CompanyCodeDisplay
-                                    :company-code="company.code"
-                                    :company-name="company.name"
+                                    :company-code="navCompany.code"
+                                    :company-name="navCompany.name"
                                 />
                             </div>
                             
@@ -207,15 +254,16 @@ const canAccessSites = computed(() => {
                                     <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Plan</span>
                                 </div>
                                 <div class="text-base font-semibold text-gray-900 dark:text-white">
-                                    {{ company.subscription_type }}
+                                    {{ navCompany.subscription_type }}
                                 </div>
                             </div>
                             
                             <!-- Company Info Link -->
                             <Link 
-                                :href="`/companies/${company.id}`" 
+                                :href="`/companies/${navCompany.id}`" 
                                 @click="closeMobileMenu"
-                                class="flex items-center gap-3 p-4 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600 min-h-[44px]"
+                                :class="mobileNavClass(isCompanyActive)"
+                                :aria-current="isCompanyActive ? 'page' : undefined"
                             >
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
@@ -227,7 +275,8 @@ const canAccessSites = computed(() => {
                             <Link 
                                 href="/clients" 
                                 @click="closeMobileMenu"
-                                class="flex items-center gap-3 p-4 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600 min-h-[44px]"
+                                :class="mobileNavClass(isClientsActive)"
+                                :aria-current="isClientsActive ? 'page' : undefined"
                             >
                                 <HeartHandshake class="w-5 h-5 flex-shrink-0" />
                                 <span class="font-medium">Clients</span>
@@ -238,7 +287,8 @@ const canAccessSites = computed(() => {
                                 v-if="canAccessSites"
                                 href="/sites" 
                                 @click="closeMobileMenu"
-                                class="flex items-center gap-3 p-4 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600 min-h-[44px]"
+                                :class="mobileNavClass(isSitesActive)"
+                                :aria-current="isSitesActive ? 'page' : undefined"
                             >
                                 <Building2 class="w-5 h-5 flex-shrink-0" />
                                 <span class="font-medium">Sites & Assets</span>
@@ -248,18 +298,26 @@ const canAccessSites = computed(() => {
                                 v-if="canAccessSites"
                                 href="/compliance"
                                 @click="closeMobileMenu"
-                                class="flex items-center gap-3 p-4 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600 min-h-[44px]"
+                                :class="mobileNavClass(isComplianceActive)"
+                                :aria-current="isComplianceActive ? 'page' : undefined"
                             >
                                 <ShieldCheck class="w-5 h-5 flex-shrink-0" />
                                 <span class="font-medium">Compliance</span>
                             </Link>
                             
                             <!-- Team Dropdown -->
-                            <div class="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                            <div
+                                :class="cn(
+                                    'p-4 rounded-lg border',
+                                    isTeamActive
+                                        ? 'border-gray-900 bg-gray-100 dark:border-gray-300 dark:bg-gray-700'
+                                        : 'border-gray-200 dark:border-gray-600',
+                                )"
+                            >
                                 <div class="mb-2">
                                     <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Team</span>
                                 </div>
-                                <CompanyUsersDropdown />
+                                <CompanyUsersDropdown :is-active="isTeamActive" />
                             </div>
                         </div>
                     </div>
