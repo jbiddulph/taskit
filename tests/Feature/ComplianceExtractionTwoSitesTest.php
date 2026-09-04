@@ -119,7 +119,9 @@ class ComplianceExtractionTwoSitesTest extends TestCase
             mkdir(dirname($path), 0755, true);
         }
 
-        file_put_contents($path, $this->minimalPdf('FIRE ALARM INSPECTION Certificate No. FA-TEST-9 Next Service Due 04/03/2027 Premises 10 High Street, Worthing, BN11 2AB'));
+        file_put_contents($path, $this->minimalPdf(
+            'FIRE ALARM INSPECTION Certificate No. FA-TEST-9 Next Service Due 04/03/2027 Premises 10 High Street BN11 2AB'
+        ));
 
         $service = app(DocumentExtractionService::class);
         $method = (new \ReflectionClass($service))->getMethod('extractPdfText');
@@ -169,7 +171,7 @@ class ComplianceExtractionTwoSitesTest extends TestCase
     protected function minimalPdf(string $text): string
     {
         $safe = str_replace(['(', ')'], ['\\(', '\\)'], $text);
-        $stream = "BT /F1 12 Tf 50 700 Td ({$safe}) Tj ET";
+        $stream = "BT /F1 8 Tf 20 750 Td ({$safe}) Tj ET";
         $length = strlen($stream);
 
         return <<<PDF
