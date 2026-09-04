@@ -168,51 +168,55 @@ onUnmounted(() => {
 
 <template>
     <Dialog v-model:open="isOpen">
-        <DialogContent class="flex max-h-[calc(100vh-80px)] max-w-lg flex-col overflow-hidden">
+        <DialogContent class="flex max-h-[calc(100vh-80px)] min-h-0 max-w-lg flex-col overflow-hidden">
             <DialogHeader class="shrink-0">
                 <DialogTitle>Review certificate extraction</DialogTitle>
                 <DialogDescription> AI detected the document type, category, and key dates. Confirm before updating compliance. </DialogDescription>
             </DialogHeader>
 
-            <div v-if="loading" class="min-h-0 flex-1 overflow-y-auto py-8 text-center text-sm text-gray-500 dark:text-gray-400">Loading…</div>
+            <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                <div v-if="loading" class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">Loading…</div>
 
-            <div v-else-if="proposal" class="min-h-0 flex-1 space-y-4 overflow-y-auto">
-                <p v-if="proposal.site?.name" class="text-xs tracking-wide text-gray-500 uppercase dark:text-gray-400">{{ proposal.site.name }}</p>
-                <p v-if="categoryLabel" class="text-xs font-medium tracking-wide text-blue-700 uppercase dark:text-blue-300">
-                    {{ categoryLabel }}
-                </p>
-                <p v-if="proposal.summary" class="text-sm text-gray-600 dark:text-gray-400">{{ proposal.summary }}</p>
+                <div v-else-if="proposal" class="space-y-4">
+                    <p v-if="proposal.site?.name" class="text-xs tracking-wide text-gray-500 uppercase dark:text-gray-400">
+                        {{ proposal.site.name }}
+                    </p>
+                    <p v-if="categoryLabel" class="text-xs font-medium tracking-wide text-blue-700 uppercase dark:text-blue-300">
+                        {{ categoryLabel }}
+                    </p>
+                    <p v-if="proposal.summary" class="text-sm text-gray-600 dark:text-gray-400">{{ proposal.summary }}</p>
 
-                <dl class="grid grid-cols-1 gap-2 text-sm">
-                    <div
-                        v-for="row in fieldRows"
-                        :key="row.key"
-                        class="flex justify-between gap-4 border-b border-gray-100 py-2 dark:border-gray-800"
-                    >
-                        <dt class="text-gray-500 capitalize dark:text-gray-400">{{ row.label }}</dt>
-                        <dd class="text-right font-medium">{{ row.value }}</dd>
+                    <dl class="grid grid-cols-1 gap-2 text-sm">
+                        <div
+                            v-for="row in fieldRows"
+                            :key="row.key"
+                            class="flex justify-between gap-4 border-b border-gray-100 py-2 dark:border-gray-800"
+                        >
+                            <dt class="text-gray-500 capitalize dark:text-gray-400">{{ row.label }}</dt>
+                            <dd class="text-right font-medium">{{ row.value }}</dd>
+                        </div>
+                    </dl>
+
+                    <div v-if="suggestedTasks.length" class="text-sm">
+                        <div class="mb-1 font-medium">Suggested reminder tasks</div>
+                        <ul class="list-disc space-y-1 pl-5 text-gray-600 dark:text-gray-400">
+                            <li v-for="(task, index) in suggestedTasks" :key="index">
+                                {{ (task as any).title }}
+                                <span v-if="(task as any).due_date"> — {{ (task as any).due_date }}</span>
+                            </li>
+                        </ul>
                     </div>
-                </dl>
 
-                <div v-if="suggestedTasks.length" class="text-sm">
-                    <div class="mb-1 font-medium">Suggested reminder tasks</div>
-                    <ul class="list-disc space-y-1 pl-5 text-gray-600 dark:text-gray-400">
-                        <li v-for="(task, index) in suggestedTasks" :key="index">
-                            {{ (task as any).title }}
-                            <span v-if="(task as any).due_date"> — {{ (task as any).due_date }}</span>
-                        </li>
-                    </ul>
-                </div>
-
-                <div v-if="projects.length">
-                    <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Reminder tasks board *</label>
-                    <select
-                        v-model="selectedProjectId"
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                        required
-                    >
-                        <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.key }} — {{ project.name }}</option>
-                    </select>
+                    <div v-if="projects.length">
+                        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Reminder tasks board *</label>
+                        <select
+                            v-model="selectedProjectId"
+                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            required
+                        >
+                            <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.key }} — {{ project.name }}</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
