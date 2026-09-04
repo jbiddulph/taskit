@@ -9,6 +9,13 @@ import { operationalSiteApi } from '@/services/operationalSiteApi';
 import { linkedTodoWarning } from '@/utils/linkedTodoWarning';
 import { onMounted, onUnmounted, ref } from 'vue';
 
+interface OpenTodo {
+  id: number;
+  url: string;
+  assignee?: string | null;
+  project_id?: number | null;
+}
+
 interface ComplianceRequirement {
   id: number;
   label: string;
@@ -19,6 +26,7 @@ interface ComplianceRequirement {
   assignee?: string;
   notes?: string;
   has_open_task: boolean;
+  open_todo?: OpenTodo | null;
   linked_todo_count?: number;
 }
 
@@ -67,6 +75,7 @@ interface Site {
   parent?: { id: number; name: string };
   client?: { id: number; name: string } | null;
   children: Array<{ id: number; name: string; type_label: string }>;
+  unscheduled_compliance_count?: number;
   compliance_requirements: ComplianceRequirement[];
   documents: SiteDocument[];
   inspections: SiteInspection[];
@@ -367,11 +376,21 @@ onUnmounted(() => {
             </section>
 
             <section>
-              <div class="flex items-center justify-between mb-4">
-                <h2 :class="sectionTitle">Compliance</h2>
-                <button v-if="hasComplianceTemplates" type="button" :class="btnSecondary" @click="applyTemplate">
-                  Apply industry template
-                </button>
+              <div class="flex flex-col gap-1 mb-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 :class="sectionTitle">Compliance</h2>
+                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-xl">
+                    Certificates and dates for this site. Empty industry-checklist items stay on the Compliance page until they have a due date, an uploaded document, or a linked task.
+                  </p>
+                </div>
+                <div v-if="hasComplianceTemplates" class="shrink-0 sm:text-right">
+                  <button type="button" :class="btnSecondary" @click="applyTemplate">
+                    Apply industry template
+                  </button>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs sm:ml-auto">
+                    Seeds this site with your company's industry checklist (gas, EICR, contracts, and similar). Items appear here once they have a date, upload, or task.
+                  </p>
+                </div>
               </div>
 
               <div v-if="site.compliance_requirements.length" class="space-y-3">
@@ -389,7 +408,13 @@ onUnmounted(() => {
                         <span v-if="requirement.last_completed_at"> · Last completed {{ requirement.last_completed_at }}</span>
                       </div>
                       <div v-if="requirement.assignee" class="text-sm text-gray-500 mt-1">Assigned: {{ requirement.assignee }}</div>
-                      <div v-if="requirement.has_open_task" class="text-xs text-blue-600 dark:text-blue-400 mt-1">Open task on board</div>
+                      <Link
+                        v-if="requirement.open_todo?.url"
+                        :href="requirement.open_todo.url"
+                        class="text-xs text-blue-600 dark:text-blue-400 mt-1 inline-flex hover:underline"
+                      >
+                        Open task on board
+                      </Link>
                     </div>
                     <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium" :class="statusBadge(requirement.status)">
                       {{ statusLabel(requirement.status) }}
@@ -427,11 +452,20 @@ onUnmounted(() => {
               </div>
 
               <div v-else class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-8 text-center">
-                <p class="text-gray-600 dark:text-gray-400 mb-4">No compliance items yet.</p>
+                <p class="text-gray-600 dark:text-gray-400 mb-2">No scheduled compliance items yet.</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto">
+                  Apply the industry template to seed a checklist. Items appear here once they have a due date, an uploaded document, or a linked task.
+                </p>
                 <button v-if="hasComplianceTemplates" type="button" :class="btnPrimary" @click="applyTemplate">
                   Apply industry template
                 </button>
               </div>
+
+              <p v-if="site.unscheduled_compliance_count" class="text-sm text-gray-500 dark:text-gray-400 mt-3">
+                {{ site.unscheduled_compliance_count }} unscheduled checklist item{{ site.unscheduled_compliance_count === 1 ? '' : 's' }}
+                {{ site.unscheduled_compliance_count === 1 ? 'is' : 'are' }} waiting for a date, document, or task.
+                The <Link href="/compliance" class="underline hover:text-gray-700 dark:hover:text-gray-200">Compliance</Link> page lists them as a backlog.
+              </p>
             </section>
 
             <p v-if="site.notes" class="mt-8 text-sm text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-6">{{ site.notes }}</p>

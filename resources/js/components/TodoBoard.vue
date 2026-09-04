@@ -1332,22 +1332,50 @@ const handleOpenTodoById = async (e: any) => {
   try {
     const id = e?.detail?.todoId;
     if (!id) return;
-    if (todosState.value.length === 0) {
-      await loadTodos();
-    }
+
     let todo = todosState.value.find(t => t.id === id) as unknown as Todo | undefined;
     if (!todo) {
       const fetched = await todoApi.getTodo(id);
       todo = fetched as unknown as Todo;
     }
-    if (todo) {
-      await editTodo(todo as unknown as Todo);
-      const highlight = e?.detail?.highlight || null;
-      if (highlight) {
-        window.dispatchEvent(new CustomEvent('highlightComment', { detail: { commentId: highlight } }));
-      }
+    if (!todo) return;
+
+    const projectId = todo.project_id || e?.detail?.projectId;
+    if (projectId && projectId !== currentProject.value?.id) {
+      await ensureCurrentProjectForTodos(projectId);
+      await loadTodos();
+    } else if (todosState.value.length === 0) {
+      await loadTodos();
+    }
+
+    await editTodo(todo as unknown as Todo);
+    const highlight = e?.detail?.highlight || null;
+    if (highlight) {
+      window.dispatchEvent(new CustomEvent('highlightComment', { detail: { commentId: highlight } }));
     }
   } catch {}
+};
+
+const openTodoFromDashboardQuery = async () => {
+  if (typeof window === 'undefined') return;
+
+  const params = new URLSearchParams(window.location.search);
+  const todoId = Number(params.get('todo'));
+  if (!todoId) return;
+
+  const projectId = Number(params.get('project'));
+  await handleOpenTodoById({
+    detail: {
+      todoId,
+      projectId: projectId || undefined,
+    },
+  });
+
+  params.delete('todo');
+  params.delete('project');
+  const query = params.toString();
+  const next = `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
+  window.history.replaceState({}, '', next);
 };
 
 const scopedSavedViews = computed(() => {
@@ -3403,6 +3431,13 @@ onMounted(async () => {
   
   // Load clients for project creation
   await loadClients();
+
+  if (typeof window !== 'undefined') {
+    const projectFromQuery = Number(new URLSearchParams(window.location.search).get('project'));
+    if (projectFromQuery) {
+      localStorage.setItem('currentProjectId', projectFromQuery.toString());
+    }
+  }
   
   // Then load current project from localStorage
   await loadCurrentProject();
@@ -3412,6 +3447,7 @@ onMounted(async () => {
   
   // Finally load todosState for the current project
   await loadTodos();
+  await openTodoFromDashboardQuery();
   
   // Initialize voice recording
   if (!props.isReadOnly) {

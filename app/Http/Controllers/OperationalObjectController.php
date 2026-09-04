@@ -127,7 +127,16 @@ class OperationalObjectController extends Controller
         $user = Auth::user();
         $this->authorizeObject($site, $user);
 
-        $site->load(['parent', 'children', 'client', 'complianceRequirements', 'createdBy', 'documents', 'inspections.inspector']);
+        $site->load([
+            'parent',
+            'children',
+            'client',
+            'complianceRequirements.todos',
+            'complianceRequirements.documents',
+            'createdBy',
+            'documents',
+            'inspections.inspector',
+        ]);
 
         return Inertia::render('Sites/Show', [
             'site' => $this->serializeObjectDetail($site),
@@ -291,6 +300,12 @@ class OperationalObjectController extends Controller
 
         $requirement->update($validated);
         $requirement->refreshStatus();
+
+        if (array_key_exists('assignee', $validated)) {
+            $requirement->todos()->where('status', '!=', 'done')->update([
+                'assignee' => $validated['assignee'] ?: null,
+            ]);
+        }
 
         return back()->with('success', 'Compliance item updated.');
     }
@@ -471,26 +486,14 @@ class OperationalObjectController extends Controller
                 'name' => $child->name,
                 'type_label' => OperationalObjectTypes::label($child->type),
             ]),
+            'unscheduled_compliance_count' => $object->complianceRequirements
+                ->filter(fn ($req) => ! $req->isActiveOnSitePage())
+                ->count(),
             'compliance_requirements' => $object->complianceRequirements
+                ->filter(fn ($req) => $req->isActiveOnSitePage())
                 ->sortBy('label')
                 ->values()
-                ->map(fn ($req) => [
-                    'id' => $req->id,
-                    'requirement_type' => $req->requirement_type,
-                    'label' => $req->label,
-                    'frequency' => $req->frequency,
-                    'lead_time_days' => $req->lead_time_days,
-                    'next_due_date' => $req->next_due_date?->format('Y-m-d'),
-                    'next_due_display' => $req->next_due_date?->format('j M Y'),
-                    'last_completed_at' => $req->last_completed_at?->format('j M Y'),
-                    'assignee' => $req->assignee,
-                    'status' => $req->status,
-                    'notes' => $req->notes,
-                    'auto_create_tasks' => $req->auto_create_tasks,
-                    'project_id' => $req->project_id,
-                    'has_open_task' => $req->hasOpenTask(),
-                    'linked_todo_count' => $this->linkedTodoService->countForComplianceRequirement($req),
-                ]),
+                ->map(fn ($req) => $this->serializeSiteRequirement($req)),
             'documents' => $object->documents->map(fn ($doc) => [
                 'id' => $doc->id,
                 'title' => $doc->title,
@@ -514,6 +517,35 @@ class OperationalObjectController extends Controller
             ]),
             'created_by' => $object->createdBy?->name,
             'created_at' => $object->created_at->format('M j, Y'),
+        ];
+    }
+
+    protected function serializeSiteRequirement(ComplianceRequirement $req): array
+    {
+        $openTodo = $req->latestOpenTodo();
+
+        return [
+            'id' => $req->id,
+            'requirement_type' => $req->requirement_type,
+            'label' => $req->label,
+            'frequency' => $req->frequency,
+            'lead_time_days' => $req->lead_time_days,
+            'next_due_date' => $req->next_due_date?->format('Y-m-d'),
+            'next_due_display' => $req->next_due_date?->format('j M Y'),
+            'last_completed_at' => $req->last_completed_at?->format('j M Y'),
+            'assignee' => $openTodo?->assignee ?: $req->assignee,
+            'status' => $req->status,
+            'notes' => $req->notes,
+            'auto_create_tasks' => $req->auto_create_tasks,
+            'project_id' => $req->project_id,
+            'has_open_task' => $openTodo !== null,
+            'open_todo' => $openTodo ? [
+                'id' => $openTodo->id,
+                'url' => $openTodo->dashboardUrl(),
+                'assignee' => $openTodo->assignee,
+                'project_id' => $openTodo->project_id,
+            ] : null,
+            'linked_todo_count' => $this->linkedTodoService->countForComplianceRequirement($req),
         ];
     }
 

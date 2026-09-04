@@ -2,12 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Log;
 
 class Todo extends Model
 {
@@ -99,6 +98,16 @@ class Todo extends Model
         return $this->belongsTo(ComplianceRequirement::class);
     }
 
+    public function dashboardUrl(): string
+    {
+        $query = array_filter([
+            'todo' => $this->id,
+            'project' => $this->project_id,
+        ]);
+
+        return '/dashboard'.($query !== [] ? '?'.http_build_query($query) : '');
+    }
+
     public function inspection(): BelongsTo
     {
         return $this->belongsTo(Inspection::class);
@@ -118,7 +127,7 @@ class Todo extends Model
     // Check if this todo is a subtask
     public function isSubtask(): bool
     {
-        return !is_null($this->parent_task_id);
+        return ! is_null($this->parent_task_id);
     }
 
     // Check if this todo has subtasks
@@ -176,7 +185,7 @@ class Todo extends Model
     public function scopeOverdue(Builder $query): void
     {
         $query->where('due_date', '<', now()->startOfDay())
-              ->where('status', '!=', 'done');
+            ->where('status', '!=', 'done');
     }
 
     public function scopeDueToday(Builder $query): void
@@ -198,8 +207,8 @@ class Todo extends Model
     {
         $query->where(function ($q) use ($search) {
             $q->where('title', 'like', "%{$search}%")
-              ->orWhere('description', 'like', "%{$search}%")
-              ->orWhereJsonContains('tags', $search);
+                ->orWhere('description', 'like', "%{$search}%")
+                ->orWhereJsonContains('tags', $search);
         });
     }
 
@@ -211,11 +220,12 @@ class Todo extends Model
 
     public function getDaysUntilDueAttribute(): ?int
     {
-        if (!$this->due_date) {
+        if (! $this->due_date) {
             return null;
         }
 
         $days = now()->diffInDays($this->due_date, false);
+
         return $days;
     }
 
@@ -240,35 +250,35 @@ class Todo extends Model
     {
         // Try to parse structured mentions first: @[Name](ID)
         preg_match_all('/@\[([^\]]+)\]\((\d+)\)/', $content, $structuredMatches);
-        
+
         // Also try to parse plain mentions: @Name (capture only immediate name tokens)
         // This captures the shortest reasonable name segment after '@' (1-3 tokens)
         preg_match_all('/@([A-Za-z0-9_]+(?:\s+[A-Za-z0-9_]+){0,2})\b/', $content, $plainMatches);
-        
+
         \Log::info('Mention parsing', [
             'content' => $content,
             'structured_matches' => $structuredMatches,
             'plain_matches' => $plainMatches,
-            'company_id' => $this->user->company_id
+            'company_id' => $this->user->company_id,
         ]);
-        
+
         // Process structured mentions first
-        if (!empty($structuredMatches[2])) {
+        if (! empty($structuredMatches[2])) {
             foreach ($structuredMatches[2] as $index => $mentionedUserId) {
                 $mentionedName = $structuredMatches[1][$index] ?? '';
                 $this->createNotificationForUser($mentionedUserId, $mentionedName, $commenter, $comment, $webSocketService);
             }
         }
-        
+
         // Process plain mentions
-        if (!empty($plainMatches[1])) {
+        if (! empty($plainMatches[1])) {
             // Get all company users for matching
             $query = User::query();
             if ($this->user->company_id) {
                 $query->where('company_id', $this->user->company_id);
             }
             $companyUsers = $query->where('id', '!=', $commenter->id)->get();
-            
+
             foreach ($plainMatches[1] as $mentionedRaw) {
                 $mentionedName = trim($mentionedRaw);
                 $cleanMention = strtolower(preg_replace('/\s+/', ' ', $mentionedName));
@@ -276,41 +286,43 @@ class Todo extends Model
                 // Prefer prefix match (the mention text should start with the user's name)
                 $mentionedUser = $companyUsers->first(function ($u) use ($cleanMention) {
                     $userNameClean = strtolower(preg_replace('/\s+/', ' ', $u->name));
+
                     return str_starts_with($cleanMention, $userNameClean);
                 })
                 // Fallback to contains if no prefix match found
                 ?: $companyUsers->first(function ($u) use ($cleanMention) {
                     $userNameClean = strtolower(preg_replace('/\s+/', ' ', $u->name));
+
                     return str_contains($cleanMention, $userNameClean);
                 });
-                
+
                 if ($mentionedUser) {
                     $this->createNotificationForUser($mentionedUser->id, $mentionedUser->name, $commenter, $comment, $webSocketService);
                 } else {
                     \Log::info('User not found for mention', [
                         'mentioned_name' => $mentionedName,
-                        'available_users' => $companyUsers->pluck('name')->toArray()
+                        'available_users' => $companyUsers->pluck('name')->toArray(),
                     ]);
                 }
             }
         }
     }
-    
+
     /**
      * Create a notification for a mentioned user
      */
     protected function createNotificationForUser($userId, $userName, User $commenter, TodoComment $comment, $webSocketService = null): void
     {
         $mentionedUser = User::find($userId);
-        
+
         if ($mentionedUser) {
             \Log::info('Creating mention notification', [
                 'mentioned_user_id' => $mentionedUser->id,
                 'mentioned_user_name' => $mentionedUser->name,
                 'comment_id' => $comment->id,
-                'todo_id' => $this->id
+                'todo_id' => $this->id,
             ]);
-            
+
             $notification = Notification::create([
                 'user_id' => $mentionedUser->id, // The mentioned user receives the notification
                 'mentioned_user_id' => $mentionedUser->id, // Store who was mentioned
@@ -326,7 +338,7 @@ class Todo extends Model
                     'mentioned_user_id' => $mentionedUser->id,
                 ],
             ]);
-            
+
             // Send Pusher notification if webSocketService is available
             if ($webSocketService && method_exists($webSocketService, 'mentionAdded')) {
                 $webSocketService->mentionAdded($notification, $mentionedUser->id); // Send to mentioned user
@@ -351,10 +363,10 @@ class Todo extends Model
      */
     public function canAccess(User $user): bool
     {
-        if (!$user->company_id) {
+        if (! $user->company_id) {
             return $this->user_id === $user->id;
         }
-        
+
         // User can access if they created it OR if they're in the same company as the creator
         return $this->user_id === $user->id || $this->user->company_id === $user->company_id;
     }

@@ -157,6 +157,11 @@ class DocumentExtractionProposalService
             $requirement->requirement_type,
         );
 
+        $assignee = $requirement->assignee ?: $user->name;
+        if ($assignee && $requirement->assignee !== $assignee) {
+            $requirement->update(['assignee' => $assignee]);
+        }
+
         $definitions = $this->buildTaskDefinitions($object, $label, $data, $summary);
         $created = [];
 
@@ -177,7 +182,7 @@ class DocumentExtractionProposalService
                 'description' => $definition['description'],
                 'priority' => $definition['priority'],
                 'type' => $taskType,
-                'assignee' => $requirement->assignee,
+                'assignee' => $assignee,
                 'due_date' => $definition['due_date'],
                 'location_name' => $location['location_name'],
                 'location_address' => $location['location_address'],
