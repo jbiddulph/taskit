@@ -265,7 +265,7 @@ async function completeInspection() {
             </div>
 
             <div v-if="!readOnly && projects?.length" class="mt-6">
-              <label class="block text-sm font-medium mb-2">Create follow-up tasks on board</label>
+              <label for="create-follow-up-tasks" class="block text-sm font-medium mb-2">Create follow-up tasks on board</label>
               <div class="flex items-center gap-3 max-w-xl">
                 <input
                   id="create-follow-up-tasks"
