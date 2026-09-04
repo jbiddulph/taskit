@@ -168,16 +168,16 @@ onUnmounted(() => {
 
 <template>
     <Dialog v-model:open="isOpen">
-        <DialogContent class="max-w-lg">
-            <DialogHeader>
+        <DialogContent class="flex max-h-[calc(100vh-80px)] max-w-lg flex-col overflow-hidden">
+            <DialogHeader class="shrink-0">
                 <DialogTitle>Review certificate extraction</DialogTitle>
                 <DialogDescription> AI detected the document type, category, and key dates. Confirm before updating compliance. </DialogDescription>
             </DialogHeader>
 
-            <div v-if="loading" class="py-8 text-center text-sm text-gray-500">Loading…</div>
+            <div v-if="loading" class="min-h-0 flex-1 overflow-y-auto py-8 text-center text-sm text-gray-500 dark:text-gray-400">Loading…</div>
 
-            <div v-else-if="proposal" class="space-y-4">
-                <p v-if="proposal.site?.name" class="text-xs tracking-wide text-gray-500 uppercase">{{ proposal.site.name }}</p>
+            <div v-else-if="proposal" class="min-h-0 flex-1 space-y-4 overflow-y-auto">
+                <p v-if="proposal.site?.name" class="text-xs tracking-wide text-gray-500 uppercase dark:text-gray-400">{{ proposal.site.name }}</p>
                 <p v-if="categoryLabel" class="text-xs font-medium tracking-wide text-blue-700 uppercase dark:text-blue-300">
                     {{ categoryLabel }}
                 </p>
@@ -189,7 +189,7 @@ onUnmounted(() => {
                         :key="row.key"
                         class="flex justify-between gap-4 border-b border-gray-100 py-2 dark:border-gray-800"
                     >
-                        <dt class="text-gray-500 capitalize">{{ row.label }}</dt>
+                        <dt class="text-gray-500 capitalize dark:text-gray-400">{{ row.label }}</dt>
                         <dd class="text-right font-medium">{{ row.value }}</dd>
                     </div>
                 </dl>
@@ -216,7 +216,7 @@ onUnmounted(() => {
                 </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter class="shrink-0">
                 <Button variant="outline" :disabled="submitting" @click="dismiss">Dismiss</Button>
                 <Button :disabled="submitting || !proposal" @click="approve">Apply to site</Button>
             </DialogFooter>
