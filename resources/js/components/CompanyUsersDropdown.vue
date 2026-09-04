@@ -2,6 +2,16 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import Icon from '@/components/Icon.vue';
 import { realtimeService } from '@/services/realtimeService';
+import { cn } from '@/lib/utils';
+
+withDefaults(
+    defineProps<{
+        isActive?: boolean;
+    }>(),
+    {
+        isActive: false,
+    },
+);
 
 interface CompanyUser {
   id: number;
@@ -116,7 +126,13 @@ onUnmounted(() => {
   <div class="relative" id="company-users-dropdown">
     <button
       @click="toggleDropdown"
-      class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+      :class="cn(
+        'flex items-center gap-1 px-3 py-1.5 text-sm rounded-md transition-colors',
+        isActive
+          ? 'font-semibold text-gray-900 bg-gray-200 ring-1 ring-gray-300 dark:bg-gray-700 dark:text-white dark:ring-gray-500'
+          : 'font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800',
+      )"
+      :aria-current="isActive ? 'page' : undefined"
       title="Company Users"
     >
       <Icon name="Users" class="w-4 h-4" />

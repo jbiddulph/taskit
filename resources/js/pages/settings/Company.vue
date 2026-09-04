@@ -439,7 +439,7 @@ const homepageBackgroundMode = computed(() => props.company?.homepage_background
         image="/zap_icon.png"
     />
     
-    <AppLayout>
+    <AppLayout :company="company ?? null">
         <SettingsLayout>
         <div class="space-y-6">
             <div>
