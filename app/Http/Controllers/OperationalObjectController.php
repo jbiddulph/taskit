@@ -557,19 +557,20 @@ class OperationalObjectController extends Controller
 
     protected function complianceSummary(int $companyId, ?int $clientId = null): array
     {
-        $requirementsQuery = fn () => ComplianceRequirement::forCompany($companyId)
+        $requirements = ComplianceRequirement::forCompany($companyId)
             ->when($clientId, function ($query) use ($clientId) {
                 $query->whereHas('operationalObject', fn ($q) => $q->where('client_id', $clientId));
-            });
+            })
+            ->with(['documents', 'todos'])
+            ->get();
 
-        foreach ($requirementsQuery()->with(['documents', 'todos'])->get() as $requirement) {
+        foreach ($requirements as $requirement) {
             $requirement->refreshStatus();
         }
 
-        $requirements = $requirementsQuery()
-            ->with(['documents', 'todos'])
-            ->get()
-            ->filter(fn ($requirement) => $requirement->isActiveOnSitePage());
+        $requirements = $requirements->filter(
+            fn (ComplianceRequirement $requirement) => $requirement->isActiveOnSitePage()
+        );
 
         return [
             'overdue' => $requirements->where('status', ComplianceRequirement::STATUS_OVERDUE)->count(),
