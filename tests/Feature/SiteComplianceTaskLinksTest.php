@@ -127,6 +127,15 @@ class SiteComplianceTaskLinksTest extends TestCase
                 ->where('summary.total', 1)
                 ->where('summary.missing', 0)
             );
+
+        $this->actingAs($user)
+            ->get(route('sites.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Sites/Index')
+                ->where('complianceSummary.total', 1)
+                ->where('complianceSummary.missing', 0)
+            );
     }
 
     public function test_unscheduled_compliance_item_can_be_given_a_due_date_from_the_site_page(): void
@@ -216,6 +225,15 @@ class SiteComplianceTaskLinksTest extends TestCase
                 ->where('summary.missing', 0)
             );
 
+        $this->actingAs($user)
+            ->get(route('sites.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Sites/Index')
+                ->where('complianceSummary.total', 0)
+                ->where('complianceSummary.missing', 0)
+            );
+
         $iso = $site->complianceRequirements()->where('requirement_type', 'iso27001')->first();
         $this->assertNotNull($iso);
         $iso->update(['next_due_date' => '2027-04-01']);
@@ -229,6 +247,15 @@ class SiteComplianceTaskLinksTest extends TestCase
                 ->has('requirements', 1)
                 ->where('requirements.0.label', 'ISO 27001 / Information Security Review')
                 ->where('summary.total', 1)
+            );
+
+        $this->actingAs($user)
+            ->get(route('sites.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Sites/Index')
+                ->where('complianceSummary.total', 1)
+                ->where('complianceSummary.missing', 0)
             );
     }
 
