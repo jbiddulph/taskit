@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import Icon from '@/components/Icon.vue';
 import { realtimeService } from '@/services/realtimeService';
 import { cn } from '@/lib/utils';
 
-withDefaults(
+const props = withDefaults(
     defineProps<{
         isActive?: boolean;
     }>(),
@@ -12,6 +12,10 @@ withDefaults(
         isActive: false,
     },
 );
+
+const emit = defineEmits<{
+    'update:open': [open: boolean];
+}>();
 
 interface CompanyUser {
   id: number;
@@ -22,6 +26,8 @@ interface CompanyUser {
 }
 
 const showDropdown = ref(false);
+const isHighlighted = computed(() => props.isActive || showDropdown.value);
+const dropdownRoot = ref<HTMLElement | null>(null);
 const companyUsers = ref<CompanyUser[]>([]);
 const loading = ref(false);
 const isChatOpen = ref(false);
@@ -64,6 +70,10 @@ const openChat = (user: CompanyUser) => {
   showDropdown.value = false;
 };
 
+watch(showDropdown, (open) => {
+  emit('update:open', open);
+});
+
 const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value;
   if (showDropdown.value) {
@@ -73,9 +83,8 @@ const toggleDropdown = () => {
 
 // Close dropdown when clicking outside
 const handleClickOutside = (event: Event) => {
-  const target = event.target as HTMLElement;
-  const dropdown = document.getElementById('company-users-dropdown');
-  if (dropdown && !dropdown.contains(target)) {
+  const target = event.target as Node | null;
+  if (dropdownRoot.value && target && !dropdownRoot.value.contains(target)) {
     showDropdown.value = false;
   }
 };
@@ -119,20 +128,24 @@ onMounted(() => {
 onUnmounted(() => {
   cleanup();
   window.removeEventListener('chatStateChange', handleChatStateChange as EventListener);
+  if (showDropdown.value) {
+    emit('update:open', false);
+  }
 });
 </script>
 
 <template>
-  <div class="relative" id="company-users-dropdown">
+  <div ref="dropdownRoot" class="relative">
     <button
       @click="toggleDropdown"
       :class="cn(
         'flex items-center gap-1 px-3 py-1.5 text-sm rounded-md transition-colors',
-        isActive
+        isHighlighted
           ? 'font-semibold text-gray-900 bg-gray-200 ring-1 ring-gray-300 dark:bg-gray-700 dark:text-white dark:ring-gray-500'
           : 'font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800',
       )"
-      :aria-current="isActive ? 'page' : undefined"
+      :aria-expanded="showDropdown"
+      :aria-current="isHighlighted ? 'page' : undefined"
       title="Company Users"
     >
       <Icon name="Users" class="w-4 h-4" />

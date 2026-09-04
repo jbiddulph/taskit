@@ -3,7 +3,7 @@ export type NavSection = 'company' | 'clients' | 'sites' | 'compliance' | 'team'
 const SECTION_PREFIXES: Record<NavSection, readonly string[]> = {
     company: ['/companies', '/settings/company', '/settings/company-logo'],
     clients: ['/clients'],
-    sites: ['/sites'],
+    sites: ['/sites', '/inspections'],
     compliance: ['/compliance'],
     team: ['/team'],
 };

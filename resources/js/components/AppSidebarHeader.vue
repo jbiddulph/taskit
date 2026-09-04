@@ -84,7 +84,9 @@ const isCompanyActive = computed(() => isNavSectionActive(page.url, 'company'));
 const isClientsActive = computed(() => isNavSectionActive(page.url, 'clients'));
 const isSitesActive = computed(() => isNavSectionActive(page.url, 'sites'));
 const isComplianceActive = computed(() => isNavSectionActive(page.url, 'compliance'));
-const isTeamActive = computed(() => isNavSectionActive(page.url, 'team'));
+const isTeamUrlActive = computed(() => isNavSectionActive(page.url, 'team'));
+const isTeamDropdownOpen = ref(false);
+const isTeamActive = computed(() => isTeamUrlActive.value || isTeamDropdownOpen.value);
 
 const desktopNavClass = (active: boolean) =>
     cn(
@@ -190,7 +192,7 @@ const mobileNavClass = (active: boolean) =>
                     <span class="hidden sm:inline">Compliance</span>
                 </Link>
                 
-                <CompanyUsersDropdown :is-active="isTeamActive" />
+                <CompanyUsersDropdown :is-active="isTeamUrlActive" @update:open="isTeamDropdownOpen = $event" />
             </div>
             
             <!-- Mobile Menu Button (only show if user has company) -->
@@ -317,7 +319,7 @@ const mobileNavClass = (active: boolean) =>
                                 <div class="mb-2">
                                     <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Team</span>
                                 </div>
-                                <CompanyUsersDropdown :is-active="isTeamActive" />
+                                <CompanyUsersDropdown :is-active="isTeamUrlActive" @update:open="isTeamDropdownOpen = $event" />
                             </div>
                         </div>
                     </div>
