@@ -60,6 +60,7 @@ const responses = ref<Record<string, string>>({ ...props.inspection.responses })
 const summary = ref(props.inspection.summary ?? '');
 const photos = ref<InspectionPhoto[]>([...props.inspection.photos]);
 const selectedProjectId = ref<number | null>(props.projects?.[0]?.id ?? null);
+const createFollowUpTasks = ref(false);
 const saving = ref(false);
 const completing = ref(false);
 const uploading = ref(false);
@@ -124,7 +125,8 @@ async function completeInspection() {
       summary: summary.value,
     });
     const { data } = await axios.post(`/inspections/${props.inspection.id}/complete`, {
-      project_id: selectedProjectId.value,
+      project_id: createFollowUpTasks.value ? selectedProjectId.value : null,
+      create_follow_up_tasks: createFollowUpTasks.value,
     });
     notify('success', 'Complete', data.message || 'PDF report generated.');
     if (data.data?.redirect) {
@@ -163,7 +165,7 @@ async function completeInspection() {
               v-if="!readOnly && failedCount > 0"
               class="mt-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 p-3 text-sm text-amber-900 dark:text-amber-200"
             >
-              {{ failedCount }} failed item(s) — completing will create high-priority follow-up tasks on your board (due in 3 days). Linked compliance will not be marked complete until failures are resolved.
+              {{ failedCount }} failed item(s) — tick “Create follow-up tasks on board” below if you want high-priority tasks (due in 3 days). Linked compliance will not be marked complete until failures are resolved.
             </div>
 
             <div class="mt-6 space-y-4">
@@ -263,15 +265,27 @@ async function completeInspection() {
             </div>
 
             <div v-if="!readOnly && projects?.length" class="mt-6">
-              <label class="block text-sm font-medium mb-1">Create follow-up tasks on board</label>
-              <select
-                v-model="selectedProjectId"
-                class="w-full max-w-md rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900 text-sm"
-              >
-                <option v-for="project in projects" :key="project.id" :value="project.id">
-                  {{ project.key }} — {{ project.name }}
-                </option>
-              </select>
+              <label for="create-follow-up-tasks" class="block text-sm font-medium mb-2">Create follow-up tasks on board</label>
+              <div class="flex items-center gap-3 max-w-xl">
+                <input
+                  id="create-follow-up-tasks"
+                  v-model="createFollowUpTasks"
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-gray-300 text-black focus:ring-black dark:border-gray-600 dark:bg-gray-900"
+                />
+                <select
+                  v-model="selectedProjectId"
+                  :disabled="!createFollowUpTasks"
+                  class="flex-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900 text-sm disabled:opacity-50"
+                >
+                  <option v-for="project in projects" :key="project.id" :value="project.id">
+                    {{ project.key }} — {{ project.name }}
+                  </option>
+                </select>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">
+                Optional. Tick the box to create board tasks for failed checklist items on the selected board.
+              </p>
             </div>
 
             <div class="mt-8 flex flex-wrap gap-3">

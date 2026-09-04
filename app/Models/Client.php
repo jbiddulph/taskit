@@ -60,6 +60,14 @@ class Client extends Model
     }
 
     /**
+     * Get sites and assets linked to this client
+     */
+    public function operationalObjects(): HasMany
+    {
+        return $this->hasMany(OperationalObject::class);
+    }
+
+    /**
      * Get active projects for this client
      */
     public function activeProjects(): HasMany
@@ -121,7 +129,7 @@ class Client extends Model
     public function canAccess(int $userId): bool
     {
         $user = User::find($userId);
-        if (!$user || !$user->company_id) {
+        if (! $user || ! $user->company_id) {
             return false;
         }
 

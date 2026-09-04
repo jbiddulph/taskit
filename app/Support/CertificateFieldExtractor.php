@@ -23,34 +23,42 @@ class CertificateFieldExtractor
      */
     public static function fromText(string $text): array
     {
+        $text = self::normalizeText($text);
+        $dateToken = '([0-9]{1,2}[\/.\-][0-9]{1,2}[\/.\-][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{2,4}|[0-9]{4}-[0-9]{2}-[0-9]{2})';
+
         $type = self::detectType($text);
         $expiresOn = self::firstDate($text, [
-            '/(?:valid until|expiry date|expires(?:\s+on)?|next (?:inspection|test|service) due|due date|renewal date|contract (?:ends|expiry))[:\s]+([0-9]{1,2}[\/.\-][0-9]{1,2}[\/.\-][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{2,4}|[0-9]{4}-[0-9]{2}-[0-9]{2})/i',
-            '/(?:certificate expires)[:\s]+([0-9]{1,2}[\/.\-][0-9]{1,2}[\/.\-][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{2,4})/i',
+            '/(?:valid until|expiry date|expires(?:\s+on)?|certificate expires)[:\s]+'.$dateToken.'/i',
+            '/(?:next (?:inspection|test|service|review|check) due|next review recommended|next review|due date|next due)[:\s]+'.$dateToken.'/i',
+            '/(?:renewal date|renew by|contract (?:ends|expiry)|cover (?:ends|expiry))[:\s]+'.$dateToken.'/i',
         ]);
         $issuedOn = self::firstDate($text, [
-            '/(?:date of (?:inspection|check|issue|service)|issue date|inspected on|serviced on|dated)[:\s]+([0-9]{1,2}[\/.\-][0-9]{1,2}[\/.\-][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{2,4}|[0-9]{4}-[0-9]{2}-[0-9]{2})/i',
+            '/(?:date of (?:inspection|check|issue|service)|(?:inspection|service|test|issue) date|issued on|inspected on|serviced on|dated)[:\s]+'.$dateToken.'/i',
+        ]);
+        $renewalOn = self::firstDate($text, [
+            '/(?:renewal date|renew by|next renewal|next (?:inspection|test|service|review|check) due|next review recommended|next review)[:\s]+'.$dateToken.'/i',
         ]);
 
         $numberMatch = [];
         preg_match(
-            '/\b(?:certificate|cert|job|policy|contract)\s*(?:no\.?|number|#)[:\s]+([A-Z0-9][A-Z0-9\-\/]{3,})/i',
+            '/\b(?:certificate|cert|job|policy|contract|registration|reference|report)\s*(?:no\.?|number|#)[:\s]+([A-Z0-9][A-Z0-9\-\/]{3,})/i',
             $text,
             $numberMatch
         );
 
-        $contractorMatch = [];
-        preg_match(
-            '/(?:engineer|inspector|issued by|contractor|company|serviced by)[:\s]+([A-Za-z0-9][A-Za-z0-9&.,\' \-]{2,60})/i',
-            $text,
-            $contractorMatch
-        );
+        $engineer = self::extractEngineer($text);
+        $issuer = self::extractIssuer($text);
+        $address = self::extractAddress($text);
+        $result = self::detectResult($text);
+        $findings = self::extractFindings($text);
 
         $confidence = 0.35;
         if ($type) {
             $confidence += 0.25;
         }
         if ($expiresOn) {
+            $confidence += 0.3;
+        } elseif ($renewalOn) {
             $confidence += 0.3;
         }
         if ($issuedOn) {
@@ -61,18 +69,26 @@ class CertificateFieldExtractor
         }
 
         $label = $type ? CertificateTypes::label($type) : null;
+        $category = $type ? CertificateTypes::categoryFor($type) : null;
+        $effectiveExpiry = $expiresOn ?: $renewalOn;
         $summary = $label
-            ? ($expiresOn ? "{$label} — expires {$expiresOn}." : "{$label} document detected.")
-            : ($expiresOn ? "Document expires {$expiresOn}." : null);
+            ? ($effectiveExpiry ? "{$label} — expires {$effectiveExpiry}." : "{$label} document detected.")
+            : ($effectiveExpiry ? "Document expires {$effectiveExpiry}." : null);
 
         return [
             'document_type' => $type,
+            'category' => $category,
+            'category_label' => $type ? CertificateTypes::categoryLabel($type) : null,
             'label' => $label,
             'certificate_number' => $numberMatch[1] ?? null,
-            'expiry_date' => $expiresOn,
+            'expiry_date' => $effectiveExpiry,
+            'renewal_date' => $renewalOn,
             'issue_date' => $issuedOn,
-            'engineer_name' => isset($contractorMatch[1]) ? trim($contractorMatch[1], " \t\n\r\0\x0B.,") : null,
-            'address' => null,
+            'engineer_name' => $engineer,
+            'issuer' => $issuer,
+            'address' => $address,
+            'result' => $result,
+            'findings' => $findings,
             'summary' => $summary,
             'suggested_tasks' => [],
             'confidence' => min($confidence, 0.95),
@@ -84,6 +100,7 @@ class CertificateFieldExtractor
     {
         return filled($extracted['document_type'] ?? null)
             || filled($extracted['expiry_date'] ?? null)
+            || filled($extracted['renewal_date'] ?? null)
             || filled($extracted['issue_date'] ?? null)
             || filled($extracted['certificate_number'] ?? null)
             || filled($extracted['label'] ?? null);
@@ -96,7 +113,7 @@ class CertificateFieldExtractor
         }
 
         $merged = $fallback;
-        foreach (['document_type', 'label', 'certificate_number', 'expiry_date', 'issue_date', 'engineer_name', 'address', 'summary'] as $key) {
+        foreach (['document_type', 'category', 'category_label', 'label', 'certificate_number', 'expiry_date', 'renewal_date', 'issue_date', 'engineer_name', 'issuer', 'address', 'result', 'findings', 'summary'] as $key) {
             if (filled($primary[$key] ?? null)) {
                 $merged[$key] = $primary[$key];
             }
@@ -114,12 +131,25 @@ class CertificateFieldExtractor
 
         if (! empty($primary['document_type'])) {
             $merged['document_type'] = CertificateTypes::normalize($primary['document_type']);
+            $merged['category'] = CertificateTypes::categoryFor($merged['document_type']);
+            $merged['category_label'] = CertificateTypes::categoryLabel($merged['document_type']);
             if (empty($merged['label'])) {
                 $merged['label'] = CertificateTypes::label($merged['document_type']);
             }
         }
 
+        if (empty($merged['expiry_date']) && ! empty($merged['renewal_date'])) {
+            $merged['expiry_date'] = $merged['renewal_date'];
+        }
+
         return $merged;
+    }
+
+    public static function normalizeText(string $text): string
+    {
+        $normalized = preg_replace('/\s+/', ' ', $text) ?? $text;
+
+        return trim($normalized);
     }
 
     protected static function detectType(string $text): ?string
@@ -129,14 +159,40 @@ class CertificateFieldExtractor
             'boiler_service' => ['/boiler (?:service|servicing|annual service)/i', '/gas boiler/i'],
             'eicr' => ['/\beicr\b/i', '/electrical installation condition/i', '/bs\s*7671/i'],
             'pat_testing' => ['/\bpat\b/i', '/portable appliance/i'],
-            'fire_safety' => ['/fire (?:risk )?assessment/i', '/\bfra\b/i', '/fire safety/i'],
             'fire_alarm' => ['/fire alarm/i', '/bs\s*5839/i', '/fire detection/i'],
+            'fire_door' => ['/fire door/i'],
+            'smoke_alarm' => ['/smoke alarm/i', '/smoke detector/i'],
+            'fire_safety' => ['/fire (?:risk )?assessment/i', '/\bfra\b/i', '/fire safety/i'],
             'emergency_lighting' => ['/emergency lighting/i', '/bs\s*5266/i'],
-            'insurance' => ['/insurance/i', '/policy schedule/i', '/cover note/i'],
-            'contract' => ['/tenancy agreement/i', '/maintenance contract/i', '/service contract/i', '/contract (?:term|expiry|ends)/i'],
+            'pi_insurance' => ['/professional indemnity/i', '/\bpi insurance\b/i'],
+            'cyber_insurance' => ['/cyber insurance/i', '/cyber liability/i'],
+            'insurance' => ['/insurance/i', '/policy schedule/i', '/cover note/i', '/public liability/i', '/employers.? liability/i'],
+            'contract' => ['/tenancy agreement/i', '/maintenance contract/i', '/service contract/i', '/contract (?:term|expiry|ends)/i', '/engagement letter/i'],
             'legionella' => ['/legionella/i'],
             'asbestos' => ['/asbestos/i'],
             'epc' => ['/\bepc\b/i', '/energy performance/i'],
+            'dbs' => ['/\bdbs\b/i', '/disclosure and barring/i', '/criminal record check/i'],
+            'gdpr' => ['/\bgdpr\b/i', '/data protection/i', '/uk gdpr/i'],
+            'ico_registration' => ['/\bico\b/i', '/information commissioner/i'],
+            'iso27001' => ['/iso\s*27001/i', '/information security management/i'],
+            'iso9001' => ['/iso\s*9001/i'],
+            'food_hygiene' => ['/food hygiene/i', '/food safety/i', '/fhia/i'],
+            'allergen' => ['/allergen/i'],
+            'safeguarding' => ['/safeguarding/i'],
+            'right_to_work' => ['/right to work/i'],
+            'right_to_rent' => ['/right to rent/i'],
+            'deposit_protection' => ['/deposit protection/i', '/\btds\b/i', '/tenancy deposit/i'],
+            'scaffold_inspection' => ['/scaffold(?:ing)? inspection/i'],
+            'air_conditioning' => ['/air conditioning/i', '/\bac service\b/i'],
+            'coshh' => ['/\bcoshh\b/i'],
+            'rams' => ['/\brams\b/i', '/risk assessment and method statement/i'],
+            'unvented_cylinder' => ['/unvented cylinder/i', '/\bg3\b/i'],
+            'water_regulations' => ['/water regulations/i', '/water regs/i'],
+            'cscs' => ['/\bcscs\b/i'],
+            'aml' => ['/\baml\b/i', '/anti.?money laundering/i'],
+            'cpd' => ['/\bcpd\b/i', '/practising certificate/i'],
+            'ppe_checks' => ['/\bppe\b/i', '/personal protective equipment/i'],
+            'health_safety' => ['/health (?:and|&) safety/i', '/\bh&s\b/i'],
             'inspection' => ['/inspection (report|certificate)/i', '/\bmot\b/i', '/service inspection/i'],
         ];
 
@@ -144,6 +200,112 @@ class CertificateFieldExtractor
             foreach ($patterns as $pattern) {
                 if (preg_match($pattern, $text)) {
                     return $type;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    protected static function detectResult(string $text): ?string
+    {
+        if (preg_match('/overall (?:condition|assessment)[:\s\-]+(unsatisfactory|satisfactory|passed|pass|failed|fail)/i', $text, $match)) {
+            return self::normalizeResult($match[1]);
+        }
+
+        if (preg_match('/system status on completion[:\s]+(normal|operational|fault)/i', $text, $match)) {
+            return str_contains(strtolower($match[1]), 'fault') ? 'fail' : 'pass';
+        }
+
+        if (preg_match('/\bfailed[:\s]+(\d+)/i', $text, $match) && (int) $match[1] > 0) {
+            return 'fail';
+        }
+
+        if (preg_match('/\b(unsatisfactory|failed|fail)\b/i', $text)) {
+            return 'fail';
+        }
+        if (preg_match('/\b(satisfactory|passed|pass|safe to use)\b/i', $text)) {
+            return 'pass';
+        }
+
+        return null;
+    }
+
+    protected static function normalizeResult(string $raw): string
+    {
+        $value = strtolower(trim($raw));
+
+        return in_array($value, ['unsatisfactory', 'failed', 'fail'], true) ? 'fail' : 'pass';
+    }
+
+    protected static function extractEngineer(string $text): ?string
+    {
+        if (preg_match(
+            '/(?i:engineer(?:\s+name)?|inspector|tester|serviced by|assessor)[:\s]+(?!(?i:engineer|inspector|declaration|signature|ref\.?|details|name|id|company)\b)([A-Z][a-zA-Z\'\-]+(?:\s+[A-Z][a-zA-Z\'\-]+){1,2})(?=\s+(?:Company|Ltd|Limited|Telephone|Engineer|Inspector|Date|Client|Appliance|Registration|Gas Safe)|\s*[-.,;]|$)/',
+            $text,
+            $match
+        )) {
+            return trim($match[1], " \t\n\r\0\x0B.,");
+        }
+
+        return null;
+    }
+
+    protected static function extractIssuer(string $text): ?string
+    {
+        if (preg_match(
+            '/(?i:issued by|issuer|awarding body|insurance company|insurer|company)[:\s]+(.+?)(?=\s+(?i:engineer ref|telephone|email|registration|scheme no|gas safe|date|inspector details|client|appliance|engineer declaration)|[.;]|$)/',
+            $text,
+            $match
+        )) {
+            return trim($match[1], " \t\n\r\0\x0B.,");
+        }
+
+        if (preg_match(
+            '/(?i:tester|engineer(?:\s+name)?|inspector)[:\s]+[A-Z][a-zA-Z\'\-]+(?:\s+[A-Z][a-zA-Z\'\-]+){1,2}\s*[-–]\s*([A-Z][A-Za-z0-9 &.\'\-]{3,80}?)(?=\s+(?:Appliance|Client|Telephone|Date|Inspection)|$)/',
+            $text,
+            $match
+        )) {
+            return trim($match[1], " \t\n\r\0\x0B.,");
+        }
+
+        return null;
+    }
+
+    protected static function extractAddress(string $text): ?string
+    {
+        $postcode = '[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}';
+        $patterns = [
+            '/(?:installation address|property address|site address)[:\s]+(.{8,180}?\b'.$postcode.'\b)/i',
+            '/\bpremises[:\s]+(?!and\b)(.{8,180}?\b'.$postcode.'\b)/i',
+            '/\bsite(?!\s+(?:ref\.?|details|contact))\s+(.{8,180}?\b'.$postcode.'\b)/i',
+            '/(?:installation address|property address|site address|address)[:\s]+(.+?)(?:\.\s+(?:engineer|inspector|assessor|contractor|address|expiry|expires|issued)|;|$)/i',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text, $match) && ! empty($match[1])) {
+                $address = trim($match[1], " \t\n\r\0\x0B.,");
+                if ($address !== '' && ! preg_match('/^able\b/i', $address)) {
+                    return $address;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    protected static function extractFindings(string $text): ?string
+    {
+        $patterns = [
+            '/defects?\s+identified[:\s]+(.{3,240}?)(?=\s+(?:recommendations?|classification|action taken|system status|engineer declaration|general checks)|$)/i',
+            '/\bdefect[:\s]+(.{12,240}?)(?=\s+(?:action|summary|engineer declaration)|$)/i',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text, $match) && ! empty($match[1])) {
+                $findings = trim($match[1], " \t\n\r\0\x0B.,");
+                if ($findings !== '') {
+                    return $findings;
                 }
             }
         }

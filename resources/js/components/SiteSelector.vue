@@ -45,6 +45,7 @@ watch(model, (id) => {
             <option value="">None</option>
             <option v-for="site in sites" :key="site.id" :value="site.id">
                 {{ site.type_label }} — {{ site.name }}
+                <template v-if="site.client_name"> · {{ site.client_name }}</template>
                 <template v-if="site.full_address"> ({{ site.full_address }})</template>
             </option>
         </select>

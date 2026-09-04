@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
 import { create, show } from '@/routes/clients/index.ts';
 import SeoHead from '@/components/SeoHead.vue';
+import { computed } from 'vue';
 
 interface Client {
   id: number;
@@ -22,6 +23,7 @@ interface Client {
     completed_todos: number;
     completion_rate: number;
   };
+  sites_count?: number;
 }
 
 interface Props {
@@ -35,6 +37,9 @@ interface Props {
 }
 
 defineProps<Props>();
+
+const page = usePage();
+const canAccessSites = computed(() => (page.props as { features?: { sites?: boolean } }).features?.sites === true);
 </script>
 
 <template>
@@ -63,16 +68,32 @@ defineProps<Props>();
                 </div>
                 <h1 class="text-2xl font-semibold">Clients</h1>
                 <p class="text-gray-600 dark:text-gray-400 mt-1">
-                  Manage your client relationships and projects
+                  Manage your client relationships, sites, and projects
                 </p>
               </div>
-              <Link
+              <div class="flex flex-wrap gap-2">
+                <Link
+                  v-if="canAccessSites"
+                  href="/sites"
+                  class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Sites
+                </Link>
+                <Link
+                  v-if="canAccessSites"
+                  href="/compliance"
+                  class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Compliance
+                </Link>
+                <Link
                 :href="create.url()"
                 class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black text-white hover:bg-gray-900 hover:border-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:border-gray-300"
               >
                 <Icon name="Plus" class="w-4 h-4" />
                 Add Client
               </Link>
+              </div>
             </div>
 
             <!-- Clients Grid -->
@@ -133,8 +154,8 @@ defineProps<Props>();
                       <div class="text-xs text-gray-500">Projects</div>
                     </div>
                     <div>
-                      <div class="text-xl font-semibold">{{ client.stats.total_todos }}</div>
-                      <div class="text-xs text-gray-500">Tasks</div>
+                      <div class="text-xl font-semibold">{{ client.sites_count ?? 0 }}</div>
+                      <div class="text-xs text-gray-500">Sites</div>
                     </div>
                     <div>
                       <div class="text-xl font-semibold">{{ client.stats.completion_rate }}%</div>

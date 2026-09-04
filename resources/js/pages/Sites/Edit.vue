@@ -22,6 +22,7 @@ interface Site {
   name: string;
   reference?: string;
   parent_id?: number;
+  client_id?: number | null;
   address_line_1?: string;
   address_line_2?: string;
   city?: string;
@@ -38,6 +39,7 @@ interface Props {
   site: Site;
   objectTypes: Option[];
   parentOptions: ParentOption[];
+  clients?: { id: number; name: string }[];
   company?: {
     id: number;
     name: string;
@@ -54,6 +56,7 @@ const form = useForm({
   name: props.site.name,
   reference: props.site.reference ?? '',
   parent_id: props.site.parent_id ?? '',
+  client_id: props.site.client_id ?? '',
   address_line_1: props.site.address_line_1 ?? '',
   address_line_2: props.site.address_line_2 ?? '',
   city: props.site.city ?? '',
@@ -68,6 +71,7 @@ const submit = () => {
   form.transform((data) => ({
     ...data,
     parent_id: data.parent_id || null,
+    client_id: data.client_id || null,
     latitude: data.latitude === '' ? null : Number(data.latitude),
     longitude: data.longitude === '' ? null : Number(data.longitude),
   })).put(`/sites/${props.site.id}`);
@@ -121,6 +125,14 @@ const deleteSite = () => {
               <div>
                 <label :class="label">Reference</label>
                 <input v-model="form.reference" type="text" :class="input" />
+              </div>
+
+              <div v-if="clients?.length">
+                <label :class="label">Client</label>
+                <select v-model="form.client_id" :class="select">
+                  <option value="">No client</option>
+                  <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
+                </select>
               </div>
 
               <div v-if="parentOptions.length">

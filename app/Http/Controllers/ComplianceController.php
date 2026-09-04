@@ -21,7 +21,7 @@ class ComplianceController extends Controller
         }
 
         $requirements = ComplianceRequirement::forCompany($user->company_id)
-            ->with('operationalObject')
+            ->with('operationalObject.client')
             ->get();
 
         foreach ($requirements as $requirement) {
@@ -29,13 +29,13 @@ class ComplianceController extends Controller
         }
 
         $requirements = ComplianceRequirement::forCompany($user->company_id)
-            ->with('operationalObject')
+            ->with('operationalObject.client')
             ->orderByRaw("case status when 'overdue' then 1 when 'due_soon' then 2 when 'missing' then 3 else 4 end")
             ->orderBy('next_due_date')
             ->get();
 
         $documents = OperationalDocument::forCompany($user->company_id)
-            ->with('operationalObject')
+            ->with('operationalObject.client')
             ->where('status', '!=', OperationalDocument::STATUS_ARCHIVED)
             ->orderByRaw('case when expires_at is null then 1 else 0 end')
             ->orderBy('expires_at')
@@ -45,7 +45,7 @@ class ComplianceController extends Controller
         $pendingProposals = DocumentExtractionProposal::query()
             ->where('company_id', $user->company_id)
             ->where('status', DocumentExtractionProposal::STATUS_PENDING)
-            ->with(['operationalObject', 'operationalDocument'])
+            ->with(['operationalObject.client', 'operationalDocument'])
             ->orderByDesc('created_at')
             ->get();
 
@@ -73,6 +73,10 @@ class ComplianceController extends Controller
                     'id' => $req->operationalObject->id,
                     'name' => $req->operationalObject->name,
                 ] : null,
+                'client' => $req->operationalObject?->client ? [
+                    'id' => $req->operationalObject->client->id,
+                    'name' => $req->operationalObject->client->name,
+                ] : null,
             ]),
             'documents' => $documents->map(fn ($doc) => [
                 'id' => $doc->id,
@@ -87,6 +91,10 @@ class ComplianceController extends Controller
                     'id' => $doc->operationalObject->id,
                     'name' => $doc->operationalObject->name,
                 ] : null,
+                'client' => $doc->operationalObject?->client ? [
+                    'id' => $doc->operationalObject->client->id,
+                    'name' => $doc->operationalObject->client->name,
+                ] : null,
             ]),
             'pendingProposals' => $pendingProposals->map(fn ($proposal) => [
                 'id' => $proposal->id,
@@ -96,6 +104,10 @@ class ComplianceController extends Controller
                 'site' => $proposal->operationalObject ? [
                     'id' => $proposal->operationalObject->id,
                     'name' => $proposal->operationalObject->name,
+                ] : null,
+                'client' => $proposal->operationalObject?->client ? [
+                    'id' => $proposal->operationalObject->client->id,
+                    'name' => $proposal->operationalObject->client->name,
                 ] : null,
             ]),
             'company' => $company ? [

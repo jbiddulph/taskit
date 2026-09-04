@@ -20,6 +20,7 @@ class OperationalObjectController extends Controller
         }
 
         $objects = OperationalObject::forCompany($user->company_id)
+            ->with('client')
             ->orderBy('name')
             ->get()
             ->map(fn ($object) => [
@@ -29,6 +30,8 @@ class OperationalObjectController extends Controller
                 'type_label' => OperationalObjectTypes::label($object->type),
                 'full_address' => $object->full_address,
                 'parent_id' => $object->parent_id,
+                'client_id' => $object->client_id,
+                'client_name' => $object->client?->name,
                 'latitude' => $object->latitude,
                 'longitude' => $object->longitude,
             ]);
@@ -51,7 +54,7 @@ class OperationalObjectController extends Controller
         }
 
         $requirements = ComplianceRequirement::forCompany($user->company_id)
-            ->with('operationalObject')
+            ->with('operationalObject.client')
             ->get();
 
         return response()->json([
@@ -89,6 +92,10 @@ class OperationalObjectController extends Controller
             'site' => $requirement->operationalObject ? [
                 'id' => $requirement->operationalObject->id,
                 'name' => $requirement->operationalObject->name,
+            ] : null,
+            'client' => $requirement->operationalObject?->client ? [
+                'id' => $requirement->operationalObject->client->id,
+                'name' => $requirement->operationalObject->client->name,
             ] : null,
         ];
     }

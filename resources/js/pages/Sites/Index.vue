@@ -22,13 +22,21 @@ interface Site {
   reference?: string;
   full_address: string;
   parent_name?: string;
+  client?: { id: number; name: string } | null;
   compliance_counts: ComplianceCounts;
   children_count?: number;
   linked_todo_count?: number;
 }
 
+interface ClientOption {
+  id: number;
+  name: string;
+}
+
 interface Props {
   sites: Site[];
+  clients?: ClientOption[];
+  selectedClientId?: number | null;
   complianceSummary: ComplianceCounts & { total: number };
   hasComplianceTemplates: boolean;
   company?: {
@@ -42,6 +50,11 @@ interface Props {
 
 defineProps<Props>();
 const { btnSecondary, btnDangerSm } = useFormFieldClasses();
+
+function filterByClient(event: Event) {
+  const value = (event.target as HTMLSelectElement).value;
+  router.get('/sites', value ? { client_id: value } : {}, { preserveState: true, replace: true });
+}
 
 function statusColor(status: keyof ComplianceCounts): string {
   const map: Record<string, string> = {
@@ -89,10 +102,16 @@ function deleteSite(site: Site) {
                 </div>
                 <h1 class="text-2xl font-semibold">Sites & Assets</h1>
                 <p class="text-gray-600 dark:text-gray-400 mt-1">
-                  Properties, buildings, equipment, and compliance tracking
+                  Properties, buildings, equipment, and compliance tracking — linked to your clients
                 </p>
               </div>
-              <div class="flex gap-2">
+              <div class="flex flex-wrap gap-2">
+                <Link
+                  href="/clients"
+                  class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Clients
+                </Link>
                 <Link
                   href="/compliance"
                   class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -110,6 +129,18 @@ function deleteSite(site: Site) {
             </div>
 
             <OperationsTips context="sites_index" class="mb-8" :default-open="sites.length === 0" />
+
+            <div v-if="clients?.length" class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Filter by client</label>
+              <select
+                :value="selectedClientId ?? ''"
+                class="max-w-xs rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900 text-sm"
+                @change="filterByClient"
+              >
+                <option value="">All clients</option>
+                <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
+              </select>
+            </div>
 
             <div v-if="complianceSummary.total > 0" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
               <div class="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30 p-4">
@@ -146,8 +177,14 @@ function deleteSite(site: Site) {
                     <button type="button" :class="btnDangerSm" @click="deleteSite(site)">Delete</button>
                   </div>
                 </div>
+                <p v-if="site.full_address" class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  <Link :href="`/sites/${site.id}`">{{ site.full_address }}</Link>
+                </p>
+                <p v-if="site.client" class="text-xs text-gray-500 mb-2">
+                  Client:
+                  <Link :href="`/clients/${site.client.id}`" class="hover:underline">{{ site.client.name }}</Link>
+                </p>
                 <Link :href="`/sites/${site.id}`" class="block">
-                  <p v-if="site.full_address" class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{ site.full_address }}</p>
                   <p v-if="site.parent_name" class="text-xs text-gray-500 mb-3">Inside {{ site.parent_name }}</p>
                   <div class="flex flex-wrap gap-3 text-xs">
                     <span :class="statusColor('overdue')">{{ site.compliance_counts.overdue }} overdue</span>

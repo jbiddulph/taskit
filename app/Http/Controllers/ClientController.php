@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\ComplianceRequirement;
+use App\Support\OperationalObjectTypes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -16,13 +18,14 @@ class ClientController extends Controller
     public function index(): Response
     {
         $user = Auth::user();
-        
-        if (!$user->company_id) {
+
+        if (! $user->company_id) {
             abort(403, 'Access denied. Only company users can manage clients.');
         }
 
         $clients = Client::forCompany($user->company_id)
             ->with(['createdBy', 'activeProjects'])
+            ->withCount('operationalObjects')
             ->orderBy('name')
             ->get()
             ->map(function ($client) {
@@ -38,6 +41,7 @@ class ClientController extends Controller
                     'created_by' => $client->createdBy->name,
                     'created_at' => $client->created_at->format('M j, Y'),
                     'stats' => $client->getStats(),
+                    'sites_count' => $client->operational_objects_count,
                 ];
             });
 
@@ -58,8 +62,8 @@ class ClientController extends Controller
     public function create(): Response
     {
         $user = Auth::user();
-        
-        if (!$user->company_id) {
+
+        if (! $user->company_id) {
             abort(403, 'Access denied. Only company users can manage clients.');
         }
 
@@ -79,8 +83,8 @@ class ClientController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
-        
-        if (!$user->company_id) {
+
+        if (! $user->company_id) {
             abort(403, 'Access denied. Only company users can manage clients.');
         }
 
@@ -109,8 +113,8 @@ class ClientController extends Controller
 
                 return redirect()
                     .back()
-                    ->withErrors(['name' => $message])
-                    ->withInput();
+                        ->withErrors(['name' => $message])
+                        ->withInput();
             }
         }
 
@@ -144,13 +148,13 @@ class ClientController extends Controller
     public function show(Client $client): Response
     {
         $user = Auth::user();
-        
-        if (!$client->canAccess($user->id)) {
+
+        if (! $client->canAccess($user->id)) {
             abort(403, 'Access denied.');
         }
 
-        $client->load(['createdBy', 'activeProjects.todos']);
-        
+        $client->load(['createdBy', 'activeProjects.todos', 'operationalObjects.complianceRequirements']);
+
         $clientData = [
             'id' => $client->id,
             'name' => $client->name,
@@ -179,6 +183,21 @@ class ClientController extends Controller
                     'stats' => $project->getStats(),
                 ];
             }),
+            'sites' => $client->operationalObjects->map(function ($site) {
+                $requirements = $site->complianceRequirements;
+
+                return [
+                    'id' => $site->id,
+                    'name' => $site->name,
+                    'type_label' => OperationalObjectTypes::label($site->type),
+                    'full_address' => $site->full_address,
+                    'compliance_counts' => [
+                        'overdue' => $requirements->where('status', ComplianceRequirement::STATUS_OVERDUE)->count(),
+                        'due_soon' => $requirements->where('status', ComplianceRequirement::STATUS_DUE_SOON)->count(),
+                        'compliant' => $requirements->where('status', ComplianceRequirement::STATUS_COMPLIANT)->count(),
+                    ],
+                ];
+            }),
         ];
 
         return Inertia::render('Clients/Show', [
@@ -198,8 +217,8 @@ class ClientController extends Controller
     public function edit(Client $client): Response
     {
         $user = Auth::user();
-        
-        if (!$client->canAccess($user->id)) {
+
+        if (! $client->canAccess($user->id)) {
             abort(403, 'Access denied.');
         }
 
@@ -220,8 +239,8 @@ class ClientController extends Controller
     public function update(Request $request, Client $client)
     {
         $user = Auth::user();
-        
-        if (!$client->canAccess($user->id)) {
+
+        if (! $client->canAccess($user->id)) {
             abort(403, 'Access denied.');
         }
 
@@ -251,14 +270,15 @@ class ClientController extends Controller
     public function destroy(Client $client)
     {
         $user = Auth::user();
-        
-        if (!$client->canAccess($user->id)) {
+
+        if (! $client->canAccess($user->id)) {
             abort(403, 'Access denied.');
         }
 
         // Set client_id to null for all associated projects instead of deleting them
         $client->projects()->update(['client_id' => null]);
-        
+        $client->operationalObjects()->update(['client_id' => null]);
+
         $client->delete();
 
         return redirect()->route('clients.index')->with('success', 'Client deleted successfully!');

@@ -1,13 +1,6 @@
 <script setup lang="ts">
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { documentExtractionApi, type DocumentExtractionProposal } from '@/services/operationalSiteApi';
 import { todoApi, type Project } from '@/services/todoApi';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
@@ -27,21 +20,64 @@ const notify = (type: 'success' | 'error', title: string, message: string) => {
 
 const fieldRows = computed(() => {
     const data = proposal.value?.extracted_data ?? {};
-    const skip = new Set(['suggested_tasks', 'summary', 'confidence', 'source']);
-    const order = ['document_type', 'label', 'expiry_date', 'issue_date', 'certificate_number', 'engineer_name', 'address'];
+    const skip = new Set(['suggested_tasks', 'summary', 'confidence', 'source', 'category']);
+    const labels: Record<string, string> = {
+        document_type: 'Certificate type',
+        category_label: 'Category',
+        label: 'Title',
+        expiry_date: 'Expiry / valid until',
+        renewal_date: 'Renewal date',
+        issue_date: 'Issue date',
+        certificate_number: 'Certificate / policy no.',
+        engineer_name: 'Engineer / inspector',
+        issuer: 'Issued by',
+        address: 'Address on document',
+        result: 'Result',
+        findings: 'Findings / notes',
+    };
+    const order = [
+        'document_type',
+        'category_label',
+        'label',
+        'expiry_date',
+        'renewal_date',
+        'issue_date',
+        'certificate_number',
+        'engineer_name',
+        'issuer',
+        'result',
+        'findings',
+        'address',
+    ];
     const keys = [
-        ...order.filter((key) => key in data),
-        ...Object.keys(data).filter((key) => !order.includes(key) && !skip.has(key)),
+        ...order.filter((key) => key in data && data[key] != null && data[key] !== ''),
+        ...Object.keys(data).filter((key) => !order.includes(key) && !skip.has(key) && data[key] != null && data[key] !== ''),
     ];
 
     return keys.map((key) => {
         const value = data[key];
+        let display = value == null || value === '' ? '—' : typeof value === 'string' ? value : JSON.stringify(value);
+        if (key === 'document_type' && typeof value === 'string') {
+            display = value.replace(/_/g, ' ');
+        }
         return {
             key,
-            label: key.replace(/_/g, ' '),
-            value: value == null || value === '' ? '—' : typeof value === 'string' ? value : JSON.stringify(value),
+            label: labels[key] ?? key.replace(/_/g, ' '),
+            value: display,
         };
     });
+});
+
+const categoryLabel = computed(() => {
+    const data = proposal.value?.extracted_data ?? {};
+    if (typeof data.category_label === 'string' && data.category_label) {
+        return data.category_label;
+    }
+    const category = data.category;
+    if (typeof category === 'string' && category) {
+        return category.replace(/_/g, ' ');
+    }
+    return null;
 });
 
 const suggestedTasks = computed(() => {
@@ -135,27 +171,32 @@ onUnmounted(() => {
         <DialogContent class="max-w-lg">
             <DialogHeader>
                 <DialogTitle>Review certificate extraction</DialogTitle>
-                <DialogDescription>
-                    OpenAI read this document for your company. Confirm the details before updating compliance.
-                </DialogDescription>
+                <DialogDescription> AI detected the document type, category, and key dates. Confirm before updating compliance. </DialogDescription>
             </DialogHeader>
 
             <div v-if="loading" class="py-8 text-center text-sm text-gray-500">Loading…</div>
 
             <div v-else-if="proposal" class="space-y-4">
-                <p v-if="proposal.site?.name" class="text-xs uppercase tracking-wide text-gray-500">{{ proposal.site.name }}</p>
+                <p v-if="proposal.site?.name" class="text-xs tracking-wide text-gray-500 uppercase">{{ proposal.site.name }}</p>
+                <p v-if="categoryLabel" class="text-xs font-medium tracking-wide text-blue-700 uppercase dark:text-blue-300">
+                    {{ categoryLabel }}
+                </p>
                 <p v-if="proposal.summary" class="text-sm text-gray-600 dark:text-gray-400">{{ proposal.summary }}</p>
 
                 <dl class="grid grid-cols-1 gap-2 text-sm">
-                    <div v-for="row in fieldRows" :key="row.key" class="flex justify-between gap-4 border-b border-gray-100 dark:border-gray-800 py-2">
+                    <div
+                        v-for="row in fieldRows"
+                        :key="row.key"
+                        class="flex justify-between gap-4 border-b border-gray-100 py-2 dark:border-gray-800"
+                    >
                         <dt class="text-gray-500 capitalize">{{ row.label }}</dt>
-                        <dd class="font-medium text-right">{{ row.value }}</dd>
+                        <dd class="text-right font-medium">{{ row.value }}</dd>
                     </div>
                 </dl>
 
                 <div v-if="suggestedTasks.length" class="text-sm">
-                    <div class="font-medium mb-1">Suggested reminder tasks</div>
-                    <ul class="list-disc pl-5 space-y-1 text-gray-600 dark:text-gray-400">
+                    <div class="mb-1 font-medium">Suggested reminder tasks</div>
+                    <ul class="list-disc space-y-1 pl-5 text-gray-600 dark:text-gray-400">
                         <li v-for="(task, index) in suggestedTasks" :key="index">
                             {{ (task as any).title }}
                             <span v-if="(task as any).due_date"> — {{ (task as any).due_date }}</span>
@@ -164,15 +205,13 @@ onUnmounted(() => {
                 </div>
 
                 <div v-if="projects.length">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reminder tasks board *</label>
+                    <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Reminder tasks board *</label>
                     <select
                         v-model="selectedProjectId"
-                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white text-sm"
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                         required
                     >
-                        <option v-for="project in projects" :key="project.id" :value="project.id">
-                            {{ project.key }} — {{ project.name }}
-                        </option>
+                        <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.key }} — {{ project.name }}</option>
                     </select>
                 </div>
             </div>

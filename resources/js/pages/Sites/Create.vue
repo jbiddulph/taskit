@@ -25,9 +25,11 @@ interface ProjectOption {
 interface Props {
   objectTypes: Option[];
   parentOptions: ParentOption[];
+  clients?: { id: number; name: string }[];
   projects: ProjectOption[];
   hasComplianceTemplates: boolean;
   defaultParentId?: number | null;
+  defaultClientId?: number | null;
   company?: {
     id: number;
     name: string;
@@ -44,6 +46,7 @@ const form = useForm({
   name: '',
   reference: '',
   parent_id: (props.defaultParentId ?? '') as string | number,
+  client_id: (props.defaultClientId ?? '') as string | number,
   address_line_1: '',
   address_line_2: '',
   city: '',
@@ -60,6 +63,7 @@ const submit = () => {
   form.transform((data) => ({
     ...data,
     parent_id: data.parent_id || null,
+    client_id: data.client_id || null,
     default_project_id: data.default_project_id || null,
     latitude: data.latitude === '' ? null : Number(data.latitude),
     longitude: data.longitude === '' ? null : Number(data.longitude),
@@ -103,6 +107,15 @@ const submit = () => {
               <div>
                 <label :class="label">Reference (optional)</label>
                 <input v-model="form.reference" type="text" :class="input" placeholder="Unit 4B" />
+              </div>
+
+              <div v-if="clients?.length">
+                <label :class="label">Client (optional)</label>
+                <select v-model="form.client_id" :class="select">
+                  <option value="">No client</option>
+                  <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Link this site to a client so compliance rolls up on their record.</p>
               </div>
 
               <div v-if="parentOptions.length">

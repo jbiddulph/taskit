@@ -87,7 +87,7 @@ class InspectionService
         ]);
     }
 
-    public function complete(Inspection $inspection, ?string $industry = null, ?int $projectId = null): array
+    public function complete(Inspection $inspection, ?string $industry = null, ?int $projectId = null, bool $createFollowUpTasks = false): array
     {
         $industry = $industry ?? $inspection->operationalObject?->company?->industry;
         $pdfPath = $this->pdfService->generate($inspection, $industry);
@@ -99,7 +99,11 @@ class InspectionService
         ]);
 
         $hasFailures = $this->followUpTaskService->hasFailedItems($inspection, $industry);
-        $followUpTasks = $this->followUpTaskService->createForFailedItems($inspection, $projectId);
+        $followUpTasks = [];
+
+        if ($createFollowUpTasks) {
+            $followUpTasks = $this->followUpTaskService->createForFailedItems($inspection, $projectId);
+        }
 
         if ($inspection->compliance_requirement_id && ! $hasFailures) {
             $requirement = $inspection->complianceRequirement;

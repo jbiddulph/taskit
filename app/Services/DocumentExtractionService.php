@@ -9,6 +9,7 @@ use App\Support\CertificateFieldExtractor;
 use App\Support\CertificateTypes;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 
 class DocumentExtractionService
@@ -168,9 +169,14 @@ class DocumentExtractionService
             'label' => null,
             'certificate_number' => null,
             'expiry_date' => null,
+            'renewal_date' => null,
             'issue_date' => null,
             'engineer_name' => null,
+            'issuer' => null,
             'address' => null,
+            'result' => null,
+            'findings' => null,
+            'category' => null,
             'summary' => null,
             'suggested_tasks' => [],
             'confidence' => 0,
@@ -200,7 +206,7 @@ class DocumentExtractionService
                             ],
                             [
                                 'role' => 'user',
-                                'content' => "Extract the certificate, service, or contract fields from this UK document text:\n\n".$text,
+                                'content' => "Identify the certificate type, categorise it, and extract expiry/renewal dates and other key fields from this UK document text:\n\n".$text,
                             ],
                         ],
                         'response_format' => ['type' => 'json_object'],
@@ -226,7 +232,7 @@ class DocumentExtractionService
                                         'type' => 'image_url',
                                         'image_url' => ['url' => "data:{$mime};base64,{$contents}"],
                                     ],
-                                    ['type' => 'text', 'text' => 'Extract the certificate, service, or contract fields from this document image.'],
+                                    ['type' => 'text', 'text' => 'Identify the certificate type, categorise it, and extract expiry/renewal dates and other key fields from this document image.'],
                                 ],
                             ],
                         ],
@@ -270,18 +276,23 @@ class DocumentExtractionService
     protected function extractionPrompt(): string
     {
         $types = implode('|', CertificateTypes::ids());
+        $catalogue = CertificateTypes::promptCatalogue();
 
         return <<<PROMPT
-Extract UK property / facilities compliance fields from this document. Return ONLY valid JSON:
+You classify UK compliance documents (certificates, inspections, insurance, contracts, DBS, food hygiene, ISO, and similar) for any industry. Detect the document type, categorise it, and extract the important fields. Return ONLY valid JSON:
 {
   "document_type": "{$types}",
-  "label": "human readable name e.g. Gas Safety Certificate, PAT Test, Boiler Service, Fire Safety Assessment, Maintenance Contract",
-  "certificate_number": "string or null",
-  "expiry_date": "YYYY-MM-DD or null",
+  "label": "human readable name matching the type, e.g. Gas Safety Certificate, PAT Test, DBS Check, Professional Indemnity Insurance",
+  "certificate_number": "certificate / policy / registration / contract number or null",
+  "expiry_date": "YYYY-MM-DD or null — when cover, certificate, or check ceases to be valid",
+  "renewal_date": "YYYY-MM-DD or null — renewal / next due if different from expiry",
   "issue_date": "YYYY-MM-DD or null",
-  "engineer_name": "string or null",
-  "address": "full property address or null",
-  "summary": "one sentence summary including the type and expiry if present",
+  "engineer_name": "engineer, inspector, or named professional or null",
+  "issuer": "issuing body, insurer, or company name or null",
+  "address": "full property / site address on the document or null",
+  "result": "pass|fail|satisfactory|unsatisfactory|null",
+  "findings": "short notes of defects, observations, or coverage limits or null",
+  "summary": "one sentence: type, site if present, and expiry/renewal date",
   "suggested_tasks": [
     {
       "title": "actionable task title",
@@ -292,21 +303,22 @@ Extract UK property / facilities compliance fields from this document. Return ON
   ]
 }
 
-Document types:
-- gas_safety: landlord gas safety / CP12
-- boiler_service: annual boiler servicing
-- pat_testing: portable appliance testing
-- fire_safety: fire risk assessment / fire safety
-- fire_alarm: fire alarm inspection
-- eicr: electrical installation condition report
-- contract: tenancy, maintenance, or other contracts with an end date
-- insurance, legionella, asbestos, epc, emergency_lighting, inspection, other
+Document types by category:
+{$catalogue}
 
 Rules:
-- Convert UK dates (DD/MM/YYYY) to ISO YYYY-MM-DD
-- Prefer labelled expiry / valid until / next due / contract end dates
-- suggested_tasks: include renewal reminders, engineer follow-ups, or compliance actions implied by the document
-- Use null when unknown — do not guess
+- Pick the single closest document_type. Use "other" only if nothing fits.
+- Fire alarm inspection / service / BS 5839 records are fire_alarm, not fire_safety or FRA.
+- Landlord gas safety records (including CP12) are gas_safety. Portable appliance reports are pat_testing. Electrical installation condition reports are eicr.
+- Convert UK dates (DD/MM/YYYY or 12 March 2027) to ISO YYYY-MM-DD.
+- Prefer labelled expiry / valid until / next due / next service due / next check due / next review recommended / renewal / contract end / cover end dates.
+- If only a renewal or next-due date is present, also set expiry_date to that date.
+- certificate_number includes Certificate No. and Report No. values (e.g. FA-2026-00321, PAT-2026-00451, EICR-2026-00182, GS-2026-001245).
+- address must be the installation / property / premises / site address — never the landlord, agent, or contractor office if both appear.
+- Keep site identity exact; do not mix addresses from other properties mentioned on the same document.
+- If a PAT report lists any failed appliance, result is fail. Prefer an overall assessment (satisfactory/unsatisfactory) when present.
+- suggested_tasks: include a renewal reminder ~30 days before expiry, plus any remedial work implied by fails/defects.
+- Use null when unknown — do not guess dates or numbers.
 PROMPT;
     }
 
@@ -314,6 +326,12 @@ PROMPT;
     {
         if (! empty($extractedData['expiresOn']) && empty($extractedData['expiry_date'])) {
             $extractedData['expiry_date'] = $extractedData['expiresOn'];
+        }
+        if (! empty($extractedData['renewalDate']) && empty($extractedData['renewal_date'])) {
+            $extractedData['renewal_date'] = $extractedData['renewalDate'];
+        }
+        if (! empty($extractedData['next_due_date']) && empty($extractedData['expiry_date'])) {
+            $extractedData['expiry_date'] = $extractedData['next_due_date'];
         }
         if (! empty($extractedData['issuedOn']) && empty($extractedData['issue_date'])) {
             $extractedData['issue_date'] = $extractedData['issuedOn'];
@@ -324,24 +342,33 @@ PROMPT;
         if (! empty($extractedData['contractorName']) && empty($extractedData['engineer_name'])) {
             $extractedData['engineer_name'] = $extractedData['contractorName'];
         }
+        if (! empty($extractedData['issued_by']) && empty($extractedData['issuer'])) {
+            $extractedData['issuer'] = $extractedData['issued_by'];
+        }
         if (! empty($extractedData['type']) && empty($extractedData['document_type'])) {
             $extractedData['document_type'] = $extractedData['type'];
         }
 
         if (! empty($extractedData['document_type'])) {
             $extractedData['document_type'] = CertificateTypes::normalize($extractedData['document_type']);
+            $extractedData['category'] = CertificateTypes::categoryFor($extractedData['document_type']);
+            $extractedData['category_label'] = CertificateTypes::categoryLabel($extractedData['document_type']);
             if (empty($extractedData['label'])) {
                 $extractedData['label'] = CertificateTypes::label($extractedData['document_type']);
             }
         }
 
-        foreach (['expiry_date', 'issue_date'] as $dateKey) {
+        foreach (['expiry_date', 'renewal_date', 'issue_date'] as $dateKey) {
             if (! empty($extractedData[$dateKey])) {
                 $parsed = CertificateFieldExtractor::parseUkDate((string) $extractedData[$dateKey]);
                 if ($parsed) {
                     $extractedData[$dateKey] = $parsed;
                 }
             }
+        }
+
+        if (empty($extractedData['expiry_date']) && ! empty($extractedData['renewal_date'])) {
+            $extractedData['expiry_date'] = $extractedData['renewal_date'];
         }
 
         return $extractedData;
@@ -371,6 +398,11 @@ PROMPT;
 
     protected function extractPdfText(string $path): string
     {
+        $fromBinary = $this->extractPdfTextWithPdftotext($path);
+        if ($fromBinary !== '') {
+            return $fromBinary;
+        }
+
         $content = file_get_contents($path);
         if ($content === false) {
             return '';
@@ -390,6 +422,25 @@ PROMPT;
             }
         }
 
-        return trim(preg_replace('/\s+/', ' ', $text));
+        return trim(preg_replace('/\s+/', ' ', $text) ?? $text);
+    }
+
+    protected function extractPdfTextWithPdftotext(string $path): string
+    {
+        if (! is_file($path)) {
+            return '';
+        }
+
+        try {
+            $result = Process::timeout(20)->run(['pdftotext', '-layout', '-enc', 'UTF-8', $path, '-']);
+        } catch (\Throwable) {
+            return '';
+        }
+
+        if (! $result->successful()) {
+            return '';
+        }
+
+        return trim($result->output());
     }
 }

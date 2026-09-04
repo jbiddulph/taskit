@@ -50,6 +50,6 @@ class RegistrationTest extends TestCase
 
         $types = \App\Support\Industries::typesFor($company->industry);
 
-        $this->assertSame(['Bug', 'Feature', 'Task', 'Story', 'Epic', 'Other'], $types);
+        $this->assertSame(['Bug', 'Feature', 'Task', 'Story', 'Epic', 'Compliance', 'Other'], $types);
     }
 }
