@@ -41,28 +41,39 @@ class CacheService
      */
     public static function cacheUserTodos(int $userId, array $filters, callable $callback)
     {
-        $filterHash = md5(serialize($filters));
-        $key = self::USER_TODOS_KEY . $userId . ':' . $filterHash;
-        
+        $key = self::userTodosKey($userId, $filters);
+
         // Use cache tags if Redis is available for better invalidation
         if (config('cache.default') === 'redis' && method_exists(Cache::store(), 'tags')) {
-            $companyId = $filters['company_id'] ?? null;
-            $tags = ['user:' . $userId];
-            if ($companyId) {
-                $tags[] = 'company:' . $companyId;
-            }
-            if (isset($filters['project_id'])) {
-                $tags[] = 'project:' . $filters['project_id'];
-            }
-            
-            return Cache::tags($tags)->remember(
+            return Cache::tags(self::userTodosTags($userId, $filters))->remember(
                 self::CACHE_PREFIX . $key,
                 self::DEFAULT_TTL,
                 $callback
             );
         }
-        
+
         return self::remember($key, self::DEFAULT_TTL, $callback);
+    }
+
+    /**
+     * Drop a cached user todo listing for the given filters (tagged and untagged).
+     */
+    public static function forgetUserTodos(int $userId, array $filters): void
+    {
+        $fullKey = self::CACHE_PREFIX . self::userTodosKey($userId, $filters);
+
+        Cache::forget($fullKey);
+
+        if (method_exists(Cache::store(), 'tags') && Cache::store()->supportsTags()) {
+            try {
+                Cache::tags(self::userTodosTags($userId, $filters))->forget($fullKey);
+            } catch (\Exception $e) {
+                Log::error('Failed to forget tagged user todos', [
+                    'user_id' => $userId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 
     /**
@@ -248,6 +259,31 @@ class CacheService
     {
         Cache::flush();
         Log::info('Invalidated all caches');
+    }
+
+    /**
+     * Cache key for a filtered user todo listing.
+     */
+    private static function userTodosKey(int $userId, array $filters): string
+    {
+        return self::USER_TODOS_KEY . $userId . ':' . md5(serialize($filters));
+    }
+
+    /**
+     * Cache tags used when Redis-backed user todo listings are stored.
+     */
+    private static function userTodosTags(int $userId, array $filters): array
+    {
+        $tags = ['user:' . $userId];
+        $companyId = $filters['company_id'] ?? null;
+        if ($companyId) {
+            $tags[] = 'company:' . $companyId;
+        }
+        if (isset($filters['project_id'])) {
+            $tags[] = 'project:' . $filters['project_id'];
+        }
+
+        return $tags;
     }
 
     /**

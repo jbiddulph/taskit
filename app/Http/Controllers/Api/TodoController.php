@@ -86,6 +86,7 @@ class TodoController extends Controller
             if ($repairedUngroupedCount > 0) {
                 CacheService::invalidateUserCaches($user->id, $user->company_id);
                 CacheService::invalidateProjectCaches($projectId, $user->company_id);
+                CacheService::forgetUserTodos($user->id, $filters);
             }
         }
 
