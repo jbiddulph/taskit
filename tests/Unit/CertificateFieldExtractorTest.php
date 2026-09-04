@@ -94,5 +94,30 @@ class CertificateFieldExtractorTest extends TestCase
         $this->assertSame('2027-02-01', $merged['expiry_date']);
         $this->assertSame('openai', $merged['source']);
         $this->assertSame('gas_safety', $merged['document_type']);
+        $this->assertSame('property_safety', $merged['category']);
+        $this->assertSame('Property & fire safety', $merged['category_label']);
+    }
+
+    public function test_it_extracts_issuer_and_address(): void
+    {
+        $extracted = CertificateFieldExtractor::fromText(
+            'Gas safety certificate. Issued by Gas Safe Ltd. Engineer: Jane Smith. Address: 14 Oak Lane, Manchester. Expiry date 01/01/2027.'
+        );
+
+        $this->assertSame('gas_safety', $extracted['document_type']);
+        $this->assertSame('Gas Safe Ltd', $extracted['issuer']);
+        $this->assertSame('Jane Smith', $extracted['engineer_name']);
+        $this->assertSame('14 Oak Lane, Manchester', $extracted['address']);
+    }
+
+    public function test_it_detects_right_to_rent_and_fire_door(): void
+    {
+        $rent = CertificateFieldExtractor::fromText('Right to Rent check. Valid until 12/12/2027.');
+        $this->assertSame('right_to_rent', $rent['document_type']);
+        $this->assertSame('people', $rent['category']);
+
+        $door = CertificateFieldExtractor::fromText('Fire door inspection. Next inspection due 03 March 2027.');
+        $this->assertSame('fire_door', $door['document_type']);
+        $this->assertSame('property_safety', $door['category']);
     }
 }

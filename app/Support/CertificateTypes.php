@@ -313,6 +313,104 @@ class CertificateTypes
                 'lead_days' => 14,
                 'task_type' => 'Safety',
             ],
+            'smoke_alarm' => [
+                'label' => 'Smoke Alarm Check',
+                'short' => 'Smoke alarm',
+                'frequency' => 'annual',
+                'lead_days' => 14,
+                'task_type' => 'Inspection',
+            ],
+            'inventory' => [
+                'label' => 'Inventory',
+                'short' => 'Inventory',
+                'frequency' => 'annual',
+                'lead_days' => 14,
+                'task_type' => 'Inspection',
+            ],
+            'right_to_rent' => [
+                'label' => 'Right to Rent',
+                'short' => 'Right to rent',
+                'frequency' => 'annual',
+                'lead_days' => 30,
+                'task_type' => 'Compliance',
+            ],
+            'deposit_protection' => [
+                'label' => 'Deposit Protection',
+                'short' => 'Deposit',
+                'frequency' => 'annual',
+                'lead_days' => 14,
+                'task_type' => 'Compliance',
+            ],
+            'toolbox_talk' => [
+                'label' => 'Toolbox Talk',
+                'short' => 'Toolbox',
+                'frequency' => 'monthly',
+                'lead_days' => 7,
+                'task_type' => 'Safety',
+            ],
+            'scaffold_inspection' => [
+                'label' => 'Scaffold Inspection',
+                'short' => 'Scaffold',
+                'frequency' => 'weekly',
+                'lead_days' => 3,
+                'task_type' => 'Inspection',
+            ],
+            'site_induction' => [
+                'label' => 'Site Induction',
+                'short' => 'Induction',
+                'frequency' => 'annual',
+                'lead_days' => 14,
+                'task_type' => 'Safety',
+            ],
+            'monthly_review' => [
+                'label' => 'Monthly Review',
+                'short' => 'Review',
+                'frequency' => 'monthly',
+                'lead_days' => 7,
+                'task_type' => 'Assessment',
+            ],
+            'room_inspection' => [
+                'label' => 'Room Inspection',
+                'short' => 'Room',
+                'frequency' => 'monthly',
+                'lead_days' => 7,
+                'task_type' => 'Inspection',
+            ],
+            'equipment_service' => [
+                'label' => 'Equipment Servicing',
+                'short' => 'Servicing',
+                'frequency' => 'annual',
+                'lead_days' => 30,
+                'task_type' => 'Maintenance',
+            ],
+            'deep_clean' => [
+                'label' => 'Deep Clean',
+                'short' => 'Deep clean',
+                'frequency' => 'quarterly',
+                'lead_days' => 7,
+                'task_type' => 'Deep Clean',
+            ],
+            'mattress_rotation' => [
+                'label' => 'Mattress Rotation',
+                'short' => 'Mattress',
+                'frequency' => 'quarterly',
+                'lead_days' => 7,
+                'task_type' => 'Housekeeping',
+            ],
+            'fire_door' => [
+                'label' => 'Fire Door Inspection',
+                'short' => 'Fire door',
+                'frequency' => '6_months',
+                'lead_days' => 14,
+                'task_type' => 'Inspection',
+            ],
+            'air_conditioning' => [
+                'label' => 'Air Conditioning Service',
+                'short' => 'AC',
+                'frequency' => 'annual',
+                'lead_days' => 30,
+                'task_type' => 'Maintenance',
+            ],
         ];
     }
 
@@ -377,6 +475,18 @@ class CertificateTypes
             'g3' => 'unvented_cylinder',
             'niceic' => 'qualifications',
             'napit' => 'qualifications',
+            'smoke' => 'smoke_alarm',
+            'smoke_alarms' => 'smoke_alarm',
+            'right_to_rent_check' => 'right_to_rent',
+            'deposit' => 'deposit_protection',
+            'tds' => 'deposit_protection',
+            'dps' => 'deposit_protection',
+            'scaffold' => 'scaffold_inspection',
+            'scaffolding' => 'scaffold_inspection',
+            'induction' => 'site_induction',
+            'fire_doors' => 'fire_door',
+            'ac' => 'air_conditioning',
+            'aircon' => 'air_conditioning',
         ];
 
         $canonical = $aliases[$type] ?? $type;
@@ -409,7 +519,7 @@ class CertificateTypes
         return [
             'property_safety' => [
                 'label' => 'Property & fire safety',
-                'types' => ['gas_safety', 'boiler_service', 'fire_safety', 'fire_alarm', 'emergency_lighting', 'fire_drill', 'legionella', 'asbestos', 'epc'],
+                'types' => ['gas_safety', 'boiler_service', 'fire_safety', 'fire_alarm', 'emergency_lighting', 'fire_drill', 'fire_door', 'smoke_alarm', 'legionella', 'asbestos', 'epc', 'air_conditioning'],
             ],
             'electrical' => [
                 'label' => 'Electrical',
@@ -417,15 +527,15 @@ class CertificateTypes
             ],
             'inspections' => [
                 'label' => 'Inspections & equipment',
-                'types' => ['inspection', 'equipment_inspection', 'machinery_inspection', 'working_at_height', 'unvented_cylinder', 'water_regulations', 'pest_control'],
+                'types' => ['inspection', 'equipment_inspection', 'machinery_inspection', 'working_at_height', 'unvented_cylinder', 'water_regulations', 'pest_control', 'scaffold_inspection', 'room_inspection', 'equipment_service', 'inventory', 'deep_clean', 'mattress_rotation'],
             ],
             'insurance_legal' => [
                 'label' => 'Insurance & contracts',
-                'types' => ['insurance', 'pi_insurance', 'cyber_insurance', 'contract'],
+                'types' => ['insurance', 'pi_insurance', 'cyber_insurance', 'contract', 'deposit_protection'],
             ],
             'people' => [
                 'label' => 'People & safeguarding',
-                'types' => ['dbs', 'safeguarding', 'right_to_work', 'first_aid', 'cpd', 'qualifications', 'cscs'],
+                'types' => ['dbs', 'safeguarding', 'right_to_work', 'right_to_rent', 'first_aid', 'cpd', 'qualifications', 'cscs', 'site_induction', 'toolbox_talk', 'monthly_review'],
             ],
             'food' => [
                 'label' => 'Food & hospitality',

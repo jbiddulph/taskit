@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Support\CertificateTypes;
 use App\Support\ComplianceTemplates;
 use App\Support\Industries;
 use App\Support\InspectionTemplates;
@@ -48,6 +49,22 @@ class ComplianceTemplatesTest extends TestCase
                 "Expected inspection templates for industry [{$slug}].",
             );
             $this->assertArrayHasKey('general_inspection', $templates);
+        }
+    }
+
+    public function test_every_compliance_template_type_is_a_known_certificate_type(): void
+    {
+        $known = CertificateTypes::ids();
+
+        foreach (config('compliance_templates') as $industry => $templates) {
+            foreach ($templates as $template) {
+                $type = $template['type'] ?? null;
+                $this->assertContains(
+                    $type,
+                    $known,
+                    "Compliance template [{$industry}] uses unknown certificate type [{$type}].",
+                );
+            }
         }
     }
 }

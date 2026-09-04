@@ -105,7 +105,7 @@ return [
     ],
 
     'industry_types' => [
-        'general' => ['Task', 'Project', 'Meeting', 'Follow-up', 'Other'],
+        'general' => ['Task', 'Project', 'Meeting', 'Follow-up', 'Compliance', 'Other'],
         'estate-agents' => ['Property', 'Lead', 'Viewing', 'Offer', 'Maintenance', 'Compliance', 'Other'],
         'property-management' => ['Property', 'Tenant', 'Maintenance', 'Inspection', 'Compliance', 'Lease', 'Other'],
         'construction' => ['Site Visit', 'Task', 'Snagging', 'Safety', 'Material', 'Subcontractor', 'Compliance', 'Other'],

@@ -42,15 +42,31 @@ class CertificateFieldExtractor
             $numberMatch
         );
 
-        $contractorMatch = [];
+        $nameStop = '(?:\.\s+(?:engineer|inspector|assessor|contractor|address|expiry|expires|issued)|,|;|$)';
+        $addressStop = '(?:\.\s+(?:engineer|inspector|assessor|contractor|address|expiry|expires|issued)|;|$)';
+
+        $engineerMatch = [];
         preg_match(
-            '/(?:engineer|inspector|issued by|issuer|contractor|company|serviced by|assessor)[:\s]+([A-Za-z0-9][A-Za-z0-9&.,\' \-]{2,60})/i',
+            '/(?:engineer|inspector|serviced by|assessor|contractor)[:\s]+(.+?)'.$nameStop.'/i',
             $text,
-            $contractorMatch
+            $engineerMatch
+        );
+
+        $issuerMatch = [];
+        preg_match(
+            '/(?:issued by|issuer|awarding body|insurance company|insurer)[:\s]+(.+?)'.$nameStop.'/i',
+            $text,
+            $issuerMatch
+        );
+
+        $addressMatch = [];
+        preg_match(
+            '/(?:installation address|property address|site address|address)[:\s]+(.+?)'.$addressStop.'/i',
+            $text,
+            $addressMatch
         );
 
         $result = self::detectResult($text);
-        $category = $type ? CertificateTypes::categoryFor($type) : null;
 
         $confidence = 0.35;
         if ($type) {
@@ -84,9 +100,9 @@ class CertificateFieldExtractor
             'expiry_date' => $effectiveExpiry,
             'renewal_date' => $renewalOn,
             'issue_date' => $issuedOn,
-            'engineer_name' => isset($contractorMatch[1]) ? trim($contractorMatch[1], " \t\n\r\0\x0B.,") : null,
-            'issuer' => null,
-            'address' => null,
+            'engineer_name' => isset($engineerMatch[1]) ? trim($engineerMatch[1], " \t\n\r\0\x0B.,") : null,
+            'issuer' => isset($issuerMatch[1]) ? trim($issuerMatch[1], " \t\n\r\0\x0B.,") : null,
+            'address' => isset($addressMatch[1]) ? trim($addressMatch[1], " \t\n\r\0\x0B.,") : null,
             'result' => $result,
             'findings' => null,
             'summary' => $summary,
@@ -153,6 +169,8 @@ class CertificateFieldExtractor
             'eicr' => ['/\beicr\b/i', '/electrical installation condition/i', '/bs\s*7671/i'],
             'pat_testing' => ['/\bpat\b/i', '/portable appliance/i'],
             'fire_alarm' => ['/fire alarm/i', '/bs\s*5839/i', '/fire detection/i'],
+            'fire_door' => ['/fire door/i'],
+            'smoke_alarm' => ['/smoke alarm/i', '/smoke detector/i'],
             'fire_safety' => ['/fire (?:risk )?assessment/i', '/\bfra\b/i', '/fire safety/i'],
             'emergency_lighting' => ['/emergency lighting/i', '/bs\s*5266/i'],
             'pi_insurance' => ['/professional indemnity/i', '/\bpi insurance\b/i'],
@@ -171,6 +189,10 @@ class CertificateFieldExtractor
             'allergen' => ['/allergen/i'],
             'safeguarding' => ['/safeguarding/i'],
             'right_to_work' => ['/right to work/i'],
+            'right_to_rent' => ['/right to rent/i'],
+            'deposit_protection' => ['/deposit protection/i', '/\btds\b/i', '/tenancy deposit/i'],
+            'scaffold_inspection' => ['/scaffold(?:ing)? inspection/i'],
+            'air_conditioning' => ['/air conditioning/i', '/\bac service\b/i'],
             'coshh' => ['/\bcoshh\b/i'],
             'rams' => ['/\brams\b/i', '/risk assessment and method statement/i'],
             'unvented_cylinder' => ['/unvented cylinder/i', '/\bg3\b/i'],
