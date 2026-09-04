@@ -9,6 +9,7 @@ use App\Support\CertificateFieldExtractor;
 use App\Support\CertificateTypes;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 
 class DocumentExtractionService
@@ -307,9 +308,15 @@ Document types by category:
 
 Rules:
 - Pick the single closest document_type. Use "other" only if nothing fits.
+- Fire alarm inspection / service / BS 5839 records are fire_alarm, not fire_safety or FRA.
+- Landlord gas safety records (including CP12) are gas_safety. Portable appliance reports are pat_testing. Electrical installation condition reports are eicr.
 - Convert UK dates (DD/MM/YYYY or 12 March 2027) to ISO YYYY-MM-DD.
-- Prefer labelled expiry / valid until / next due / renewal / contract end / cover end dates.
-- If only a renewal date is present, also set expiry_date to that date.
+- Prefer labelled expiry / valid until / next due / next service due / next check due / next review recommended / renewal / contract end / cover end dates.
+- If only a renewal or next-due date is present, also set expiry_date to that date.
+- certificate_number includes Certificate No. and Report No. values (e.g. FA-2026-00321, PAT-2026-00451, EICR-2026-00182, GS-2026-001245).
+- address must be the installation / property / premises / site address — never the landlord, agent, or contractor office if both appear.
+- Keep site identity exact; do not mix addresses from other properties mentioned on the same document.
+- If a PAT report lists any failed appliance, result is fail. Prefer an overall assessment (satisfactory/unsatisfactory) when present.
 - suggested_tasks: include a renewal reminder ~30 days before expiry, plus any remedial work implied by fails/defects.
 - Use null when unknown — do not guess dates or numbers.
 PROMPT;
@@ -391,6 +398,11 @@ PROMPT;
 
     protected function extractPdfText(string $path): string
     {
+        $fromBinary = $this->extractPdfTextWithPdftotext($path);
+        if ($fromBinary !== '') {
+            return $fromBinary;
+        }
+
         $content = file_get_contents($path);
         if ($content === false) {
             return '';
@@ -410,6 +422,25 @@ PROMPT;
             }
         }
 
-        return trim(preg_replace('/\s+/', ' ', $text));
+        return trim(preg_replace('/\s+/', ' ', $text) ?? $text);
+    }
+
+    protected function extractPdfTextWithPdftotext(string $path): string
+    {
+        if (! is_file($path)) {
+            return '';
+        }
+
+        try {
+            $result = Process::timeout(20)->run(['pdftotext', '-layout', '-enc', 'UTF-8', $path, '-']);
+        } catch (\Throwable) {
+            return '';
+        }
+
+        if (! $result->successful()) {
+            return '';
+        }
+
+        return trim($result->output());
     }
 }

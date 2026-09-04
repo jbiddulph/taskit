@@ -23,50 +23,34 @@ class CertificateFieldExtractor
      */
     public static function fromText(string $text): array
     {
+        $text = self::normalizeText($text);
+        $dateToken = '([0-9]{1,2}[\/.\-][0-9]{1,2}[\/.\-][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{2,4}|[0-9]{4}-[0-9]{2}-[0-9]{2})';
+
         $type = self::detectType($text);
         $expiresOn = self::firstDate($text, [
-            '/(?:valid until|expiry date|expires(?:\s+on)?|next (?:inspection|test|service|review) due|due date|renewal date|renew by|contract (?:ends|expiry)|cover (?:ends|expiry)|next due)[:\s]+([0-9]{1,2}[\/.\-][0-9]{1,2}[\/.\-][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{2,4}|[0-9]{4}-[0-9]{2}-[0-9]{2})/i',
-            '/(?:certificate expires)[:\s]+([0-9]{1,2}[\/.\-][0-9]{1,2}[\/.\-][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{2,4})/i',
+            '/(?:valid until|expiry date|expires(?:\s+on)?|certificate expires)[:\s]+'.$dateToken.'/i',
+            '/(?:next (?:inspection|test|service|review|check) due|next review recommended|next review|due date|next due)[:\s]+'.$dateToken.'/i',
+            '/(?:renewal date|renew by|contract (?:ends|expiry)|cover (?:ends|expiry))[:\s]+'.$dateToken.'/i',
         ]);
         $issuedOn = self::firstDate($text, [
-            '/(?:date of (?:inspection|check|issue|service)|issue date|issued on|inspected on|serviced on|dated)[:\s]+([0-9]{1,2}[\/.\-][0-9]{1,2}[\/.\-][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{2,4}|[0-9]{4}-[0-9]{2}-[0-9]{2})/i',
+            '/(?:date of (?:inspection|check|issue|service)|(?:inspection|service|test|issue) date|issued on|inspected on|serviced on|dated)[:\s]+'.$dateToken.'/i',
         ]);
         $renewalOn = self::firstDate($text, [
-            '/(?:renewal date|renew by|next renewal)[:\s]+([0-9]{1,2}[\/.\-][0-9]{1,2}[\/.\-][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{2,4}|[0-9]{4}-[0-9]{2}-[0-9]{2})/i',
+            '/(?:renewal date|renew by|next renewal|next (?:inspection|test|service|review|check) due|next review recommended|next review)[:\s]+'.$dateToken.'/i',
         ]);
 
         $numberMatch = [];
         preg_match(
-            '/\b(?:certificate|cert|job|policy|contract|registration|reference)\s*(?:no\.?|number|#)[:\s]+([A-Z0-9][A-Z0-9\-\/]{3,})/i',
+            '/\b(?:certificate|cert|job|policy|contract|registration|reference|report)\s*(?:no\.?|number|#)[:\s]+([A-Z0-9][A-Z0-9\-\/]{3,})/i',
             $text,
             $numberMatch
         );
 
-        $nameStop = '(?:\.\s+(?:engineer|inspector|assessor|contractor|address|expiry|expires|issued)|,|;|$)';
-        $addressStop = '(?:\.\s+(?:engineer|inspector|assessor|contractor|address|expiry|expires|issued)|;|$)';
-
-        $engineerMatch = [];
-        preg_match(
-            '/(?:engineer|inspector|serviced by|assessor|contractor)[:\s]+(.+?)'.$nameStop.'/i',
-            $text,
-            $engineerMatch
-        );
-
-        $issuerMatch = [];
-        preg_match(
-            '/(?:issued by|issuer|awarding body|insurance company|insurer)[:\s]+(.+?)'.$nameStop.'/i',
-            $text,
-            $issuerMatch
-        );
-
-        $addressMatch = [];
-        preg_match(
-            '/(?:installation address|property address|site address|address)[:\s]+(.+?)'.$addressStop.'/i',
-            $text,
-            $addressMatch
-        );
-
+        $engineer = self::extractEngineer($text);
+        $issuer = self::extractIssuer($text);
+        $address = self::extractAddress($text);
         $result = self::detectResult($text);
+        $findings = self::extractFindings($text);
 
         $confidence = 0.35;
         if ($type) {
@@ -100,11 +84,11 @@ class CertificateFieldExtractor
             'expiry_date' => $effectiveExpiry,
             'renewal_date' => $renewalOn,
             'issue_date' => $issuedOn,
-            'engineer_name' => isset($engineerMatch[1]) ? trim($engineerMatch[1], " \t\n\r\0\x0B.,") : null,
-            'issuer' => isset($issuerMatch[1]) ? trim($issuerMatch[1], " \t\n\r\0\x0B.,") : null,
-            'address' => isset($addressMatch[1]) ? trim($addressMatch[1], " \t\n\r\0\x0B.,") : null,
+            'engineer_name' => $engineer,
+            'issuer' => $issuer,
+            'address' => $address,
             'result' => $result,
-            'findings' => null,
+            'findings' => $findings,
             'summary' => $summary,
             'suggested_tasks' => [],
             'confidence' => min($confidence, 0.95),
@@ -159,6 +143,13 @@ class CertificateFieldExtractor
         }
 
         return $merged;
+    }
+
+    public static function normalizeText(string $text): string
+    {
+        $normalized = preg_replace('/\s+/', ' ', $text) ?? $text;
+
+        return trim($normalized);
     }
 
     protected static function detectType(string $text): ?string
@@ -218,11 +209,105 @@ class CertificateFieldExtractor
 
     protected static function detectResult(string $text): ?string
     {
+        if (preg_match('/overall (?:condition|assessment)[:\s\-]+(unsatisfactory|satisfactory|passed|pass|failed|fail)/i', $text, $match)) {
+            return self::normalizeResult($match[1]);
+        }
+
+        if (preg_match('/system status on completion[:\s]+(normal|operational|fault)/i', $text, $match)) {
+            return str_contains(strtolower($match[1]), 'fault') ? 'fail' : 'pass';
+        }
+
+        if (preg_match('/\bfailed[:\s]+(\d+)/i', $text, $match) && (int) $match[1] > 0) {
+            return 'fail';
+        }
+
         if (preg_match('/\b(unsatisfactory|failed|fail)\b/i', $text)) {
             return 'fail';
         }
-        if (preg_match('/\b(satisfactory|passed|pass)\b/i', $text)) {
+        if (preg_match('/\b(satisfactory|passed|pass|safe to use)\b/i', $text)) {
             return 'pass';
+        }
+
+        return null;
+    }
+
+    protected static function normalizeResult(string $raw): string
+    {
+        $value = strtolower(trim($raw));
+
+        return in_array($value, ['unsatisfactory', 'failed', 'fail'], true) ? 'fail' : 'pass';
+    }
+
+    protected static function extractEngineer(string $text): ?string
+    {
+        if (preg_match(
+            '/(?i:engineer(?:\s+name)?|inspector|tester|serviced by|assessor)[:\s]+(?!(?i:engineer|inspector|declaration|signature|ref\.?|details|name|id|company)\b)([A-Z][a-zA-Z\'\-]+(?:\s+[A-Z][a-zA-Z\'\-]+){1,2})(?=\s+(?:Company|Ltd|Limited|Telephone|Engineer|Inspector|Date|Client|Appliance|Registration|Gas Safe)|\s*[-.,;]|$)/',
+            $text,
+            $match
+        )) {
+            return trim($match[1], " \t\n\r\0\x0B.,");
+        }
+
+        return null;
+    }
+
+    protected static function extractIssuer(string $text): ?string
+    {
+        if (preg_match(
+            '/(?i:issued by|issuer|awarding body|insurance company|insurer|company)[:\s]+(.+?)(?=\s+(?i:engineer ref|telephone|email|registration|scheme no|gas safe|date|inspector details|client|appliance|engineer declaration)|[.;]|$)/',
+            $text,
+            $match
+        )) {
+            return trim($match[1], " \t\n\r\0\x0B.,");
+        }
+
+        if (preg_match(
+            '/(?i:tester|engineer(?:\s+name)?|inspector)[:\s]+[A-Z][a-zA-Z\'\-]+(?:\s+[A-Z][a-zA-Z\'\-]+){1,2}\s*[-–]\s*([A-Z][A-Za-z0-9 &.\'\-]{3,80}?)(?=\s+(?:Appliance|Client|Telephone|Date|Inspection)|$)/',
+            $text,
+            $match
+        )) {
+            return trim($match[1], " \t\n\r\0\x0B.,");
+        }
+
+        return null;
+    }
+
+    protected static function extractAddress(string $text): ?string
+    {
+        $postcode = '[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}';
+        $patterns = [
+            '/(?:installation address|property address|site address)[:\s]+(.{8,180}?\b'.$postcode.'\b)/i',
+            '/\bpremises[:\s]+(?!and\b)(.{8,180}?\b'.$postcode.'\b)/i',
+            '/\bsite(?!\s+(?:ref\.?|details|contact))\s+(.{8,180}?\b'.$postcode.'\b)/i',
+            '/(?:installation address|property address|site address|address)[:\s]+(.+?)(?:\.\s+(?:engineer|inspector|assessor|contractor|address|expiry|expires|issued)|;|$)/i',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text, $match) && ! empty($match[1])) {
+                $address = trim($match[1], " \t\n\r\0\x0B.,");
+                if ($address !== '' && ! preg_match('/^able\b/i', $address)) {
+                    return $address;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    protected static function extractFindings(string $text): ?string
+    {
+        $patterns = [
+            '/defects?\s+identified[:\s]+(.{3,240}?)(?=\s+(?:recommendations?|classification|action taken|system status|engineer declaration|general checks)|$)/i',
+            '/\bdefect[:\s]+(.{12,240}?)(?=\s+(?:action|summary|engineer declaration)|$)/i',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text, $match) && ! empty($match[1])) {
+                $findings = trim($match[1], " \t\n\r\0\x0B.,");
+                if ($findings !== '') {
+                    return $findings;
+                }
+            }
         }
 
         return null;

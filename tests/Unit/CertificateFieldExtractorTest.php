@@ -70,9 +70,13 @@ class CertificateFieldExtractorTest extends TestCase
     public function test_normalize_aliases(): void
     {
         $this->assertSame('pat_testing', CertificateTypes::normalize('pat'));
+        $this->assertSame('pat_testing', CertificateTypes::normalize('pat_report'));
         $this->assertSame('boiler_service', CertificateTypes::normalize('boiler'));
         $this->assertSame('eicr', CertificateTypes::normalize('electrical'));
+        $this->assertSame('eicr', CertificateTypes::normalize('electrical_installation_condition_report'));
         $this->assertSame('fire_safety', CertificateTypes::normalize('fra'));
+        $this->assertSame('fire_alarm', CertificateTypes::normalize('fire_alarm_inspection'));
+        $this->assertSame('gas_safety', CertificateTypes::normalize('landlord_gas_safety'));
         $this->assertSame('contract', CertificateTypes::normalize('tenancy'));
         $this->assertSame('dbs', CertificateTypes::normalize('dbs_check'));
         $this->assertSame('gdpr', CertificateTypes::normalize('data_protection'));
@@ -119,5 +123,95 @@ class CertificateFieldExtractorTest extends TestCase
         $door = CertificateFieldExtractor::fromText('Fire door inspection. Next inspection due 03 March 2027.');
         $this->assertSame('fire_door', $door['document_type']);
         $this->assertSame('property_safety', $door['category']);
+    }
+
+    public function test_it_extracts_real_uk_fire_alarm_certificate_text(): void
+    {
+        $extracted = CertificateFieldExtractor::fromText($this->fixture('fire_alarm.txt'));
+
+        $this->assertSame('fire_alarm', $extracted['document_type']);
+        $this->assertSame('property_safety', $extracted['category']);
+        $this->assertSame('Property & fire safety', $extracted['category_label']);
+        $this->assertSame('FA-2026-00321', $extracted['certificate_number']);
+        $this->assertSame('2027-03-04', $extracted['expiry_date']);
+        $this->assertSame('2027-03-04', $extracted['renewal_date']);
+        $this->assertSame('2026-09-04', $extracted['issue_date']);
+        $this->assertSame('Chris Green', $extracted['engineer_name']);
+        $this->assertSame('Example Fire Systems Ltd', $extracted['issuer']);
+        $this->assertSame('Example Office, 10 High Street, Worthing, BN11 2AB', $extracted['address']);
+        $this->assertSame('pass', $extracted['result']);
+        $this->assertStringContainsString('None affecting system operation', (string) $extracted['findings']);
+    }
+
+    public function test_it_extracts_real_uk_pat_report_text(): void
+    {
+        $extracted = CertificateFieldExtractor::fromText($this->fixture('pat_testing.txt'));
+
+        $this->assertSame('pat_testing', $extracted['document_type']);
+        $this->assertSame('electrical', $extracted['category']);
+        $this->assertSame('PAT-2026-00451', $extracted['certificate_number']);
+        $this->assertSame('2027-09-04', $extracted['expiry_date']);
+        $this->assertSame('2026-09-04', $extracted['issue_date']);
+        $this->assertSame('Jamie Brown', $extracted['engineer_name']);
+        $this->assertSame('Example Testing Services', $extracted['issuer']);
+        $this->assertSame('Example Office, 10 High Street, Worthing, BN11 2AB', $extracted['address']);
+        $this->assertSame('fail', $extracted['result']);
+        $this->assertStringContainsString('Damaged mains flex', (string) $extracted['findings']);
+    }
+
+    public function test_it_extracts_real_uk_eicr_text(): void
+    {
+        $extracted = CertificateFieldExtractor::fromText($this->fixture('eicr.txt'));
+
+        $this->assertSame('eicr', $extracted['document_type']);
+        $this->assertSame('electrical', $extracted['category']);
+        $this->assertSame('EICR-2026-00182', $extracted['certificate_number']);
+        $this->assertSame('2031-09-04', $extracted['expiry_date']);
+        $this->assertSame('2026-09-04', $extracted['issue_date']);
+        $this->assertSame('Alex Taylor', $extracted['engineer_name']);
+        $this->assertSame('Example Electrical Ltd', $extracted['issuer']);
+        $this->assertSame('24 Example Road, Worthing, West Sussex, BN11 1AA', $extracted['address']);
+        $this->assertSame('pass', $extracted['result']);
+    }
+
+    public function test_it_extracts_real_uk_landlord_gas_safety_text(): void
+    {
+        $extracted = CertificateFieldExtractor::fromText($this->fixture('gas_safety.txt'));
+
+        $this->assertSame('gas_safety', $extracted['document_type']);
+        $this->assertSame('property_safety', $extracted['category']);
+        $this->assertSame('GS-2026-001245', $extracted['certificate_number']);
+        $this->assertSame('2027-09-04', $extracted['expiry_date']);
+        $this->assertSame('2026-09-04', $extracted['issue_date']);
+        $this->assertSame('James Smith', $extracted['engineer_name']);
+        $this->assertSame('SafeGas Services Ltd', $extracted['issuer']);
+        $this->assertSame('24 Example Road, Worthing, West Sussex, BN11 1AA', $extracted['address']);
+        $this->assertSame('pass', $extracted['result']);
+    }
+
+    public function test_two_site_addresses_are_not_mixed_across_certificates(): void
+    {
+        $office = CertificateFieldExtractor::fromText($this->fixture('fire_alarm.txt'));
+        $pat = CertificateFieldExtractor::fromText($this->fixture('pat_testing.txt'));
+        $eicr = CertificateFieldExtractor::fromText($this->fixture('eicr.txt'));
+        $gas = CertificateFieldExtractor::fromText($this->fixture('gas_safety.txt'));
+
+        $this->assertSame($office['address'], $pat['address']);
+        $this->assertSame($eicr['address'], $gas['address']);
+        $this->assertNotSame($office['address'], $eicr['address']);
+        $this->assertStringContainsString('10 High Street', (string) $office['address']);
+        $this->assertStringContainsString('BN11 2AB', (string) $pat['address']);
+        $this->assertStringContainsString('24 Example Road', (string) $eicr['address']);
+        $this->assertStringContainsString('BN11 1AA', (string) $gas['address']);
+        $this->assertStringNotContainsString('10 High Street', (string) $eicr['address']);
+        $this->assertStringNotContainsString('24 Example Road', (string) $office['address']);
+    }
+
+    protected function fixture(string $filename): string
+    {
+        $path = dirname(__DIR__).'/fixtures/certificates/'.$filename;
+        $this->assertFileExists($path);
+
+        return (string) file_get_contents($path);
     }
 }
