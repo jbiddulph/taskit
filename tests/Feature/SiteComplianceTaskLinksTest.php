@@ -229,6 +229,54 @@ class SiteComplianceTaskLinksTest extends TestCase
                 ->has('requirements', 1)
                 ->where('requirements.0.label', 'ISO 27001 / Information Security Review')
                 ->where('summary.total', 1)
+                ->where('requirements.0.has_document', false)
+                ->where('requirements.0.has_linked_task', false)
+            );
+    }
+
+    public function test_company_compliance_includes_undated_items_with_a_document_or_task(): void
+    {
+        [$user, $company] = $this->createMaxiUser('software-development');
+        $site = $this->makeSite($company, $user, 'Shakespere');
+        $project = $this->makeProject($company, $user);
+
+        app(ComplianceRequirementService::class)->applyIndustryTemplate($site, $project->id);
+
+        $gdpr = $site->complianceRequirements()->where('requirement_type', 'gdpr')->first();
+        $cyber = $site->complianceRequirements()->where('requirement_type', 'cyber_insurance')->first();
+        $this->assertNotNull($gdpr);
+        $this->assertNotNull($cyber);
+        $this->assertFalse($gdpr->isActiveOnSitePage());
+        $this->assertFalse($cyber->isActiveOnSitePage());
+
+        $document = $this->makeDocument($company, $site, $user);
+        $document->update(['compliance_requirement_id' => $gdpr->id]);
+
+        Todo::create([
+            'user_id' => $user->id,
+            'company_id' => $company->id,
+            'project_id' => $project->id,
+            'operational_object_id' => $site->id,
+            'compliance_requirement_id' => $cyber->id,
+            'source' => 'compliance_schedule',
+            'title' => 'Cyber Insurance — Shakespere',
+            'assignee' => 'johnb',
+            'status' => 'todo',
+        ]);
+
+        $this->assertTrue($gdpr->fresh()->isActiveOnSitePage());
+        $this->assertTrue($cyber->fresh()->isActiveOnSitePage());
+
+        $this->actingAs($user)
+            ->get(route('compliance.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Compliance/Index')
+                ->has('requirements', 2)
+                ->where('summary.total', 2)
+                ->where('requirements', fn ($items) => collect($items)->pluck('id')->sort()->values()->all() === collect([$gdpr->id, $cyber->id])->sort()->values()->all())
+                ->where('requirements', fn ($items) => collect($items)->firstWhere('id', $gdpr->id)['has_document'] === true)
+                ->where('requirements', fn ($items) => collect($items)->firstWhere('id', $cyber->id)['has_linked_task'] === true)
             );
     }
 
