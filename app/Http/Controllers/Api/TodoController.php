@@ -87,6 +87,7 @@ class TodoController extends Controller
                 CacheService::invalidateUserCaches($user->id, $user->company_id);
                 CacheService::invalidateProjectCaches($projectId, $user->company_id);
                 CacheService::forgetUserTodos($user->id, $filters);
+                CacheService::flushUserTodoTags($projectId, $user->company_id);
             }
         }
 

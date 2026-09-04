@@ -183,6 +183,9 @@ class CacheService
     {
         try {
             if (config('cache.default') === 'redis') {
+                // Tagged listings use a tag namespace, so zaptask:user_todos:* scans miss them.
+                self::flushUserTodoTags($projectId, $companyId);
+
                 // Use Redis pattern matching
                 $patterns = [
                     self::CACHE_PREFIX . self::PROJECT_TODOS_KEY . $projectId,
@@ -259,6 +262,35 @@ class CacheService
     {
         Cache::flush();
         Log::info('Invalidated all caches');
+    }
+
+    /**
+     * Flush tagged user-todo listings for a project (and company, if given).
+     *
+     * Redis cacheUserTodos() stores entries under tags `project:{id}` and
+     * `company:{id}` (see userTodosTags()). Laravel prepends a tag namespace
+     * to those physical keys, so `zaptask:user_todos:*` pattern scans never
+     * match. Flushing these tags drops every filter variant for every user
+     * that listed this project's todos — including after ungrouped repair.
+     */
+    public static function flushUserTodoTags(int $projectId, ?int $companyId = null): void
+    {
+        if (! method_exists(Cache::store(), 'tags') || ! Cache::store()->supportsTags()) {
+            return;
+        }
+
+        try {
+            Cache::tags(['project:' . $projectId])->flush();
+            if ($companyId) {
+                Cache::tags(['company:' . $companyId])->flush();
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to flush user todo tags', [
+                'project_id' => $projectId,
+                'company_id' => $companyId,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
