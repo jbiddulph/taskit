@@ -67,6 +67,26 @@ class ProjectGroup extends Model
             ->value('id');
     }
 
+    /**
+     * Resolve a board group for a project. Ignores group IDs that belong to
+     * a different project so ungrouped todos are never stamped onto the wrong board.
+     */
+    public static function resolveIdForProject(int $projectId, ?int $requestedGroupId): ?int
+    {
+        if ($requestedGroupId) {
+            $matchingId = static::query()
+                ->where('id', $requestedGroupId)
+                ->where('project_id', $projectId)
+                ->value('id');
+
+            if ($matchingId) {
+                return (int) $matchingId;
+            }
+        }
+
+        return static::resolveDefaultIdForProject($projectId);
+    }
+
     public static function resolveOrCreateForProject(Project $project): int
     {
         return static::resolveDefaultIdForProject($project->id)

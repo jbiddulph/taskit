@@ -1040,6 +1040,7 @@ import BulkOperationsBar from './BulkOperationsBar.vue';
 import KeyboardShortcutsHelp from './KeyboardShortcutsHelp.vue';
 import { todoApi, type Project, type Todo } from '@/services/todoApi';
 import { projectGroupApi, type ProjectGroup } from '@/services/projectGroupApi';
+import { todoListFiltersForProject } from '@/lib/todoBoardFilters';
 import { todoHasLocation } from '@/services/mapboxApi';
 import { realtimeService } from '@/services/realtimeService';
 import { deleteImagesInHtml } from '@/services/supabaseClient';
@@ -1344,6 +1345,11 @@ const handleOpenTodoById = async (e: any) => {
     if (projectId && projectId !== currentProject.value?.id) {
       await ensureCurrentProjectForTodos(projectId);
       await loadTodos();
+    } else if (projectId) {
+      await ensureCurrentProjectForTodos(projectId);
+      if (todosState.value.length === 0) {
+        await loadTodos();
+      }
     } else if (todosState.value.length === 0) {
       await loadTodos();
     }
@@ -3137,14 +3143,10 @@ const loadCurrentProject = async () => {
 // Load todosState from API
 const loadTodos = async () => {
   try {
-    const filters: any = {};
-    if (currentProject.value) {
-      filters.project_id = currentProject.value.id;
-      if (currentGroup.value) {
-        filters.project_group_id = currentGroup.value.id;
-      }
-    } else {
-    }
+    const filters: any = todoListFiltersForProject(
+      currentProject.value?.id ?? null,
+      currentGroup.value,
+    );
     const response = await todoApi.getTodos(filters);
     
     // Check specific todosState
@@ -3185,6 +3187,9 @@ const loadTodos = async () => {
 // Watch for project changes and reload todosState
 watch(currentProject, async (newProject, oldProject) => {
   if (newProject?.id !== oldProject?.id) {
+    if (!newProject || currentGroup.value?.project_id !== newProject.id) {
+      currentGroup.value = null;
+    }
     await loadProjectGroups(newProject?.id ?? null);
   }
 
@@ -3284,8 +3289,14 @@ const ingestCreatedTodo = (newTodo: Todo): boolean => {
 
 const ensureCurrentProjectForTodos = async (projectId: number) => {
   if (currentProject.value?.id === projectId) {
+    if (!currentGroup.value || currentGroup.value.project_id !== projectId) {
+      await loadProjectGroups(projectId);
+    }
     return;
   }
+
+  currentGroup.value = null;
+  projectGroups.value = [];
 
   selectedProjectId.value = projectId.toString();
   const project = projectsState.value.find(p => p.id === projectId)
@@ -3297,6 +3308,7 @@ const ensureCurrentProjectForTodos = async (projectId: number) => {
     detail: { projectId },
   }));
   todosState.value = [];
+  await loadProjectGroups(projectId);
 };
 
 const handleMeetingNotesTodosCreated = async (event: Event) => {

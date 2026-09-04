@@ -494,6 +494,11 @@ class OperationalObjectController extends Controller
                 ->sortBy('label')
                 ->values()
                 ->map(fn ($req) => $this->serializeSiteRequirement($req)),
+            'unscheduled_compliance_requirements' => $object->complianceRequirements
+                ->filter(fn ($req) => ! $req->isActiveOnSitePage())
+                ->sortBy('label')
+                ->values()
+                ->map(fn ($req) => $this->serializeSiteRequirement($req)),
             'documents' => $object->documents->map(fn ($doc) => [
                 'id' => $doc->id,
                 'title' => $doc->title,

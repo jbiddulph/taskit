@@ -121,8 +121,9 @@ class ComplianceRequirement extends Model
     }
 
     /**
-     * Site Compliance list hides empty industry-template stubs until they have
-     * a date, an uploaded document, or a linked board task.
+     * Scheduled site Compliance items have a date, an uploaded document, or a
+     * linked board task. Empty industry-template stubs stay editable in a
+     * quieter Unscheduled subsection instead of the overdue/compliant list.
      */
     public function isActiveOnSitePage(): bool
     {
