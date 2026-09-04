@@ -148,7 +148,7 @@ const submit = () => {
                   <input v-model="form.apply_compliance_template" type="checkbox" class="mt-1" />
                   <span>
                     <span class="font-medium block">Apply industry compliance template</span>
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Seeds this site with your company's industry checklist (gas, EICR, contracts, and similar). Items appear on the site Compliance list once they have a due date, an uploaded document, or a linked task.</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Seeds this site with your company's industry checklist (gas, EICR, contracts, and similar). Items stay Unscheduled on the site until they have a date, upload, or task. They will not appear on the company Compliance page until then.</span>
                   </span>
                 </label>
                 <div v-if="form.apply_compliance_template && projects.length">

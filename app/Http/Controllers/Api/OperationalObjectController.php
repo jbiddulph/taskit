@@ -47,15 +47,17 @@ class OperationalObjectController extends Controller
             return response()->json(['success' => true, 'data' => []]);
         }
 
-        $requirements = ComplianceRequirement::forCompany($user->company_id)->get();
+        $requirements = ComplianceRequirement::forCompany($user->company_id)
+            ->with(['operationalObject.client', 'documents', 'todos'])
+            ->get();
 
         foreach ($requirements as $requirement) {
             $requirement->refreshStatus();
         }
 
-        $requirements = ComplianceRequirement::forCompany($user->company_id)
-            ->with('operationalObject.client')
-            ->get();
+        $requirements = $requirements->filter(
+            fn (ComplianceRequirement $requirement) => $requirement->isActiveOnSitePage()
+        );
 
         return response()->json([
             'success' => true,

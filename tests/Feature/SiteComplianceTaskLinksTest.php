@@ -122,7 +122,10 @@ class SiteComplianceTaskLinksTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Compliance/Index')
-                ->where('summary.total', $site->complianceRequirements()->count())
+                ->has('requirements', 1)
+                ->where('requirements.0.label', 'Fire Alarm Inspection')
+                ->where('summary.total', 1)
+                ->where('summary.missing', 0)
             );
     }
 
@@ -160,6 +163,72 @@ class SiteComplianceTaskLinksTest extends TestCase
                 ->where('site.unscheduled_compliance_requirements', fn ($items) => collect($items)->every(
                     fn ($item) => $item['id'] !== $stub->id
                 ))
+            );
+
+        $this->actingAs($user)
+            ->get(route('compliance.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Compliance/Index')
+                ->has('requirements', 1)
+                ->where('requirements.0.id', $stub->id)
+                ->where('requirements.0.site.id', $site->id)
+            );
+    }
+
+    public function test_company_compliance_hides_empty_software_template_stubs(): void
+    {
+        [$user, $company] = $this->createMaxiUser('software-development');
+        $site = $this->makeSite($company, $user, 'Shakespere');
+        $project = $this->makeProject($company, $user);
+
+        app(ComplianceRequirementService::class)->applyIndustryTemplate($site, $project->id);
+
+        $stubLabels = $site->complianceRequirements()
+            ->whereIn('requirement_type', [
+                'iso27001',
+                'gdpr',
+                'cyber_insurance',
+                'pi_insurance',
+                'disaster_recovery',
+                'contract',
+            ])
+            ->pluck('label');
+
+        $this->assertGreaterThanOrEqual(6, $stubLabels->count());
+
+        $this->actingAs($user)
+            ->get(route('sites.show', $site))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Sites/Show')
+                ->has('site.compliance_requirements', 0)
+                ->has('site.unscheduled_compliance_requirements', $site->complianceRequirements()->count())
+            );
+
+        $this->actingAs($user)
+            ->get(route('compliance.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Compliance/Index')
+                ->has('requirements', 0)
+                ->where('summary.total', 0)
+                ->where('summary.missing', 0)
+            );
+
+        $iso = $site->complianceRequirements()->where('requirement_type', 'iso27001')->first();
+        $this->assertNotNull($iso);
+        $iso->update(['next_due_date' => '2027-04-01']);
+        $iso->refreshStatus();
+
+        $this->actingAs($user)
+            ->get(route('compliance.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Compliance/Index')
+                ->has('requirements', 1)
+                ->where('requirements.0.label', 'ISO 27001 / Information Security Review')
+                ->where('summary.total', 1)
             );
     }
 
