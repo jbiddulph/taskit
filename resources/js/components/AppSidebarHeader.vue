@@ -95,10 +95,9 @@ const canAccessSites = computed(() => {
             
             <!-- Desktop Navigation (hidden on mobile) -->
             <div v-if="company" class="hidden xl:flex items-center gap-3">
-                <CompanyCodeDisplay 
-                    :company-code="company.code" 
-                    :company-name="company.name" 
-                    :subscription-type="company.subscription_type"
+                <CompanyCodeDisplay
+                    :company-code="company.code"
+                    :company-name="company.name"
                 />
                 
                 <!-- Company Info Link -->
@@ -196,10 +195,9 @@ const canAccessSites = computed(() => {
                         <div class="flex flex-col gap-4">
                             <!-- Company Code -->
                             <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                                <CompanyCodeDisplay 
-                                    :company-code="company.code" 
-                                    :company-name="company.name" 
-                                    :subscription-type="company.subscription_type"
+                                <CompanyCodeDisplay
+                                    :company-code="company.code"
+                                    :company-name="company.name"
                                 />
                             </div>
                             
