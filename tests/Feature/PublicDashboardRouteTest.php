@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Company;
 use App\Models\User;
+use App\Services\CloudflareService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -60,6 +61,8 @@ class PublicDashboardRouteTest extends TestCase
                 ->where('company.is_public', false)
                 ->where('company.subdomain_url', 'https://johnb.zaptask.co.uk')
             );
+
+        $this->mock(CloudflareService::class);
 
         $this->actingAs($user)
             ->patch(route('company.public.toggle'), [
