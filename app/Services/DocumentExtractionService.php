@@ -345,6 +345,7 @@ PROMPT;
         if (! empty($extractedData['document_type'])) {
             $extractedData['document_type'] = CertificateTypes::normalize($extractedData['document_type']);
             $extractedData['category'] = CertificateTypes::categoryFor($extractedData['document_type']);
+            $extractedData['category_label'] = CertificateTypes::categoryLabel($extractedData['document_type']);
             if (empty($extractedData['label'])) {
                 $extractedData['label'] = CertificateTypes::label($extractedData['document_type']);
             }

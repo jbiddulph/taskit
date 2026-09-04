@@ -42,6 +42,31 @@ class CertificateFieldExtractorTest extends TestCase
         $this->assertSame('2026-11-30', $extracted['expiry_date']);
     }
 
+    public function test_it_categorizes_dbs_and_gdpr_documents(): void
+    {
+        $dbs = CertificateFieldExtractor::fromText('Enhanced DBS check. Disclosure and Barring Service. Expiry date 04/08/2027.');
+        $this->assertSame('dbs', $dbs['document_type']);
+        $this->assertSame('people', $dbs['category']);
+        $this->assertSame('2027-08-04', $dbs['expiry_date']);
+
+        $gdpr = CertificateFieldExtractor::fromText('GDPR / data protection review. Next review due 01 January 2028.');
+        $this->assertSame('gdpr', $gdpr['document_type']);
+        $this->assertSame('data_quality', $gdpr['category']);
+        $this->assertSame('2028-01-01', $gdpr['expiry_date']);
+    }
+
+    public function test_renewal_date_is_used_when_expiry_is_missing(): void
+    {
+        $extracted = CertificateFieldExtractor::fromText(
+            'Professional indemnity insurance. Policy no PI-900. Renewal date 22/04/2027.'
+        );
+
+        $this->assertSame('pi_insurance', $extracted['document_type']);
+        $this->assertSame('2027-04-22', $extracted['expiry_date']);
+        $this->assertSame('2027-04-22', $extracted['renewal_date']);
+        $this->assertSame('insurance_legal', $extracted['category']);
+    }
+
     public function test_normalize_aliases(): void
     {
         $this->assertSame('pat_testing', CertificateTypes::normalize('pat'));
@@ -49,6 +74,10 @@ class CertificateFieldExtractorTest extends TestCase
         $this->assertSame('eicr', CertificateTypes::normalize('electrical'));
         $this->assertSame('fire_safety', CertificateTypes::normalize('fra'));
         $this->assertSame('contract', CertificateTypes::normalize('tenancy'));
+        $this->assertSame('dbs', CertificateTypes::normalize('dbs_check'));
+        $this->assertSame('gdpr', CertificateTypes::normalize('data_protection'));
+        $this->assertSame('pi_insurance', CertificateTypes::normalize('professional_indemnity'));
+        $this->assertSame('People & safeguarding', CertificateTypes::categoryLabel('dbs'));
     }
 
     public function test_openai_result_is_merged_over_rules(): void

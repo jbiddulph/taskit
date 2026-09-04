@@ -30,6 +30,7 @@ const fieldRows = computed(() => {
     const skip = new Set(['suggested_tasks', 'summary', 'confidence', 'source', 'category']);
     const labels: Record<string, string> = {
         document_type: 'Certificate type',
+        category_label: 'Category',
         label: 'Title',
         expiry_date: 'Expiry / valid until',
         renewal_date: 'Renewal date',
@@ -41,7 +42,7 @@ const fieldRows = computed(() => {
         result: 'Result',
         findings: 'Findings / notes',
     };
-    const order = ['document_type', 'label', 'expiry_date', 'renewal_date', 'issue_date', 'certificate_number', 'engineer_name', 'issuer', 'result', 'findings', 'address'];
+    const order = ['document_type', 'category_label', 'label', 'expiry_date', 'renewal_date', 'issue_date', 'certificate_number', 'engineer_name', 'issuer', 'result', 'findings', 'address'];
     const keys = [
         ...order.filter((key) => key in data && data[key] != null && data[key] !== ''),
         ...Object.keys(data).filter((key) => !order.includes(key) && !skip.has(key) && data[key] != null && data[key] !== ''),
@@ -63,6 +64,9 @@ const fieldRows = computed(() => {
 
 const categoryLabel = computed(() => {
     const data = proposal.value?.extracted_data ?? {};
+    if (typeof data.category_label === 'string' && data.category_label) {
+        return data.category_label;
+    }
     const category = data.category;
     if (typeof category === 'string' && category) {
         return category.replace(/_/g, ' ');

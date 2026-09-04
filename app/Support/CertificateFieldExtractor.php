@@ -78,6 +78,7 @@ class CertificateFieldExtractor
         return [
             'document_type' => $type,
             'category' => $category,
+            'category_label' => $type ? CertificateTypes::categoryLabel($type) : null,
             'label' => $label,
             'certificate_number' => $numberMatch[1] ?? null,
             'expiry_date' => $effectiveExpiry,
@@ -112,7 +113,7 @@ class CertificateFieldExtractor
         }
 
         $merged = $fallback;
-        foreach (['document_type', 'category', 'label', 'certificate_number', 'expiry_date', 'renewal_date', 'issue_date', 'engineer_name', 'issuer', 'address', 'result', 'findings', 'summary'] as $key) {
+        foreach (['document_type', 'category', 'category_label', 'label', 'certificate_number', 'expiry_date', 'renewal_date', 'issue_date', 'engineer_name', 'issuer', 'address', 'result', 'findings', 'summary'] as $key) {
             if (filled($primary[$key] ?? null)) {
                 $merged[$key] = $primary[$key];
             }
@@ -131,6 +132,7 @@ class CertificateFieldExtractor
         if (! empty($primary['document_type'])) {
             $merged['document_type'] = CertificateTypes::normalize($primary['document_type']);
             $merged['category'] = CertificateTypes::categoryFor($merged['document_type']);
+            $merged['category_label'] = CertificateTypes::categoryLabel($merged['document_type']);
             if (empty($merged['label'])) {
                 $merged['label'] = CertificateTypes::label($merged['document_type']);
             }
