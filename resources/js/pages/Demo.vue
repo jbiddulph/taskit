@@ -324,7 +324,7 @@ defineOptions({
                                     <ul class="space-y-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">
                                         <li class="flex items-center gap-2">
                                             <span class="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
-                                            <strong>Location:</strong> Company code appears next to your plan type (e.g., "Plan: FREE • ABC12XY9")
+                                            <strong>Location:</strong> Company code appears in the top header — hover it for an instant "Click to copy Company Code" tip
                                         </li>
                                         <li class="flex items-center gap-2">
                                             <span class="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
