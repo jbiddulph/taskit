@@ -77,6 +77,7 @@ interface Site {
   children: Array<{ id: number; name: string; type_label: string }>;
   unscheduled_compliance_count?: number;
   compliance_requirements: ComplianceRequirement[];
+  unscheduled_compliance_requirements?: ComplianceRequirement[];
   documents: SiteDocument[];
   inspections: SiteInspection[];
 }
@@ -127,7 +128,10 @@ function statusBadge(status: string): string {
   return map[status] ?? map.missing;
 }
 
-function statusLabel(status: string): string {
+function statusLabel(status: string, quiet = false): string {
+  if (quiet) {
+    return 'Not yet dated';
+  }
   const map: Record<string, string> = {
     overdue: 'Overdue',
     due_soon: 'Due soon',
@@ -135,6 +139,12 @@ function statusLabel(status: string): string {
     missing: 'Missing date',
   };
   return map[status] ?? status;
+}
+
+function requirementCardClass(quiet = false): string {
+  return quiet
+    ? 'rounded-lg border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40 p-4 md:p-5'
+    : card;
 }
 
 function startEdit(requirement: ComplianceRequirement) {
@@ -380,7 +390,7 @@ onUnmounted(() => {
                 <div>
                   <h2 :class="sectionTitle">Compliance</h2>
                   <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-xl">
-                    Certificates and dates for this site. Empty industry-checklist items stay on the Compliance page until they have a due date, an uploaded document, or a linked task.
+                    Certificates and dates for this site. Checklist items without a date, document, or task stay under Unscheduled so you can set them up here.
                   </p>
                 </div>
                 <div v-if="hasComplianceTemplates" class="shrink-0 sm:text-right">
@@ -388,7 +398,7 @@ onUnmounted(() => {
                     Apply industry template
                   </button>
                   <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs sm:ml-auto">
-                    Seeds this site with your company's industry checklist (gas, EICR, contracts, and similar). Items appear here once they have a date, upload, or task.
+                    Seeds this site with your company's industry checklist (gas, EICR, contracts, and similar). Dated items appear above; the rest stay under Unscheduled until you add a due date.
                   </p>
                 </div>
               </div>
@@ -397,7 +407,7 @@ onUnmounted(() => {
                 <div
                   v-for="requirement in site.compliance_requirements"
                   :key="requirement.id"
-                  :class="card"
+                  :class="requirementCardClass(false)"
                 >
                   <div class="flex items-start justify-between gap-4">
                     <div>
@@ -451,21 +461,69 @@ onUnmounted(() => {
                 </div>
               </div>
 
-              <div v-else class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-8 text-center">
+              <div
+                v-else-if="!(site.unscheduled_compliance_requirements?.length)"
+                class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-8 text-center"
+              >
                 <p class="text-gray-600 dark:text-gray-400 mb-2">No scheduled compliance items yet.</p>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto">
-                  Apply the industry template to seed a checklist. Items appear here once they have a due date, an uploaded document, or a linked task.
+                  Apply the industry template to seed a checklist. Dated items appear here; unscheduled items stay below so you can set a due date.
                 </p>
                 <button v-if="hasComplianceTemplates" type="button" :class="btnPrimary" @click="applyTemplate">
                   Apply industry template
                 </button>
               </div>
 
-              <p v-if="site.unscheduled_compliance_count" class="text-sm text-gray-500 dark:text-gray-400 mt-3">
-                {{ site.unscheduled_compliance_count }} unscheduled checklist item{{ site.unscheduled_compliance_count === 1 ? '' : 's' }}
-                {{ site.unscheduled_compliance_count === 1 ? 'is' : 'are' }} waiting for a date, document, or task.
-                The <Link href="/compliance" class="underline hover:text-gray-700 dark:hover:text-gray-200">Compliance</Link> page lists them as a backlog.
+              <p v-else class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                No dated compliance items yet. Set a due date on an unscheduled item below to move it here.
               </p>
+
+              <div v-if="site.unscheduled_compliance_requirements?.length" class="mt-8">
+                <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Unscheduled</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-3 max-w-xl">
+                  Not yet dated — set a due date or assignee, or delete items you do not need. These do not count as overdue.
+                </p>
+                <div class="space-y-3">
+                  <div
+                    v-for="requirement in site.unscheduled_compliance_requirements"
+                    :key="requirement.id"
+                    :class="requirementCardClass(true)"
+                  >
+                    <div class="flex items-start justify-between gap-4">
+                      <div>
+                        <div class="font-medium text-gray-800 dark:text-gray-200">{{ requirement.label }}</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">No due date set</div>
+                      </div>
+                      <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                        {{ statusLabel(requirement.status, true) }}
+                      </span>
+                    </div>
+
+                    <div v-if="editingId === requirement.id" class="mt-4 grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label :class="label">Due date</label>
+                        <input v-model="editForm.next_due_date" type="date" :class="input" />
+                      </div>
+                      <div>
+                        <label :class="label">Assignee</label>
+                        <input v-model="editForm.assignee" type="text" :class="input" />
+                      </div>
+                      <div class="md:col-span-2 flex gap-2">
+                        <button type="button" :class="btnPrimary" @click="saveRequirement(requirement.id)">Save</button>
+                        <button type="button" :class="btnSecondary" @click="editingId = null">Cancel</button>
+                      </div>
+                    </div>
+
+                    <div v-else class="mt-3 flex flex-wrap gap-2">
+                      <button type="button" :class="btnSecondary" class="!px-2.5 !py-1 text-xs" @click="startEdit(requirement)">
+                        Set due date
+                      </button>
+                      <button type="button" :class="btnSecondary" class="!px-2.5 !py-1 text-xs" @click="startEdit(requirement)">Edit</button>
+                      <button type="button" :class="btnDangerSm" @click="deleteRequirement(requirement)">Delete</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </section>
 
             <p v-if="site.notes" class="mt-8 text-sm text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-6">{{ site.notes }}</p>

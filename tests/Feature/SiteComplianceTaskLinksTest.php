@@ -74,7 +74,7 @@ class SiteComplianceTaskLinksTest extends TestCase
             );
     }
 
-    public function test_site_show_hides_empty_template_stubs_but_keeps_dated_items(): void
+    public function test_site_show_lists_unscheduled_template_stubs_separately_from_dated_items(): void
     {
         [$user, $company] = $this->createMaxiUser('property-management');
         $site = $this->makeSite($company, $user, '24 High Street');
@@ -92,11 +92,14 @@ class SiteComplianceTaskLinksTest extends TestCase
         ]);
         $fireAlarm->refreshStatus();
 
-        $unscheduledCount = $site->fresh()
+        $unscheduled = $site->fresh()
             ->complianceRequirements()
             ->get()
             ->filter(fn ($requirement) => ! $requirement->isActiveOnSitePage())
-            ->count();
+            ->sortBy('label')
+            ->values();
+
+        $this->assertGreaterThan(0, $unscheduled->count());
 
         $this->actingAs($user)
             ->get(route('sites.show', $site))
@@ -107,7 +110,11 @@ class SiteComplianceTaskLinksTest extends TestCase
                 ->where('site.compliance_requirements.0.label', 'Fire Alarm Inspection')
                 ->where('site.compliance_requirements.0.has_open_task', false)
                 ->where('site.compliance_requirements.0.open_todo', null)
-                ->where('site.unscheduled_compliance_count', $unscheduledCount)
+                ->where('site.unscheduled_compliance_count', $unscheduled->count())
+                ->has('site.unscheduled_compliance_requirements', $unscheduled->count())
+                ->where('site.unscheduled_compliance_requirements.0.id', $unscheduled[0]->id)
+                ->where('site.unscheduled_compliance_requirements.0.label', $unscheduled[0]->label)
+                ->where('site.unscheduled_compliance_requirements.0.next_due_date', null)
             );
 
         $this->actingAs($user)
@@ -116,6 +123,43 @@ class SiteComplianceTaskLinksTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Compliance/Index')
                 ->where('summary.total', $site->complianceRequirements()->count())
+            );
+    }
+
+    public function test_unscheduled_compliance_item_can_be_given_a_due_date_from_the_site_page(): void
+    {
+        [$user, $company] = $this->createMaxiUser('property-management');
+        $site = $this->makeSite($company, $user, 'Unit 9');
+        $project = $this->makeProject($company, $user);
+
+        app(ComplianceRequirementService::class)->applyIndustryTemplate($site, $project->id);
+
+        $stub = $site->complianceRequirements()->where('requirement_type', 'gas_safety')->first();
+        $this->assertNotNull($stub);
+        $this->assertFalse($stub->isActiveOnSitePage());
+
+        $this->actingAs($user)
+            ->from(route('sites.show', $site))
+            ->patch(route('sites.compliance.update', [$site, $stub]), [
+                'next_due_date' => '2027-09-01',
+                'assignee' => 'johnb',
+            ])
+            ->assertRedirect();
+
+        $stub->refresh();
+        $this->assertTrue($stub->isActiveOnSitePage());
+        $this->assertSame('2027-09-01', $stub->next_due_date->format('Y-m-d'));
+
+        $this->actingAs($user)
+            ->get(route('sites.show', $site))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Sites/Show')
+                ->where('site.compliance_requirements.0.id', $stub->id)
+                ->where('site.compliance_requirements.0.assignee', 'johnb')
+                ->where('site.unscheduled_compliance_requirements', fn ($items) => collect($items)->every(
+                    fn ($item) => $item['id'] !== $stub->id
+                ))
             );
     }
 

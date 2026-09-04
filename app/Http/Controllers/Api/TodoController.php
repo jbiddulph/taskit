@@ -62,9 +62,10 @@ class TodoController extends Controller
         // Tasks created by compliance/document flows may lack a board group and are hidden by group filters.
         if ($request->filled('project_id')) {
             $projectId = (int) $request->project_id;
-            $targetGroupId = $request->filled('project_group_id')
+            $requestedGroupId = $request->filled('project_group_id')
                 ? (int) $request->project_group_id
-                : ProjectGroup::resolveDefaultIdForProject($projectId);
+                : null;
+            $targetGroupId = ProjectGroup::resolveIdForProject($projectId, $requestedGroupId);
 
             if ($targetGroupId) {
                 Todo::query()
