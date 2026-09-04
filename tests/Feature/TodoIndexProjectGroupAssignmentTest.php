@@ -129,6 +129,87 @@ class TodoIndexProjectGroupAssignmentTest extends TestCase
         $this->assertNotContains($otherProjectTodo->id, $cachedIds);
     }
 
+    public function test_repairing_ungrouped_todos_bypasses_stale_resolved_group_cache(): void
+    {
+        $user = User::factory()->create();
+        $currentProject = $this->makeProject($user, 'Current', 'CUR');
+        $targetProject = $this->makeProject($user, 'Target', 'TGT');
+        $staleGroup = ProjectGroup::createDefaultForProject($currentProject);
+        $targetGroup = ProjectGroup::createDefaultForProject($targetProject);
+
+        $alreadyOnBoard = Todo::create([
+            'user_id' => $user->id,
+            'project_id' => $targetProject->id,
+            'project_group_id' => $targetGroup->id,
+            'title' => 'Existing board task',
+            'priority' => 'Medium',
+            'type' => 'Task',
+            'status' => 'todo',
+        ]);
+
+        $resolvedQuery = http_build_query([
+            'project_id' => $targetProject->id,
+            'project_group_id' => $targetGroup->id,
+        ]);
+
+        $warmedResponse = $this->actingAs($user)
+            ->getJson('/api/todos?'.$resolvedQuery)
+            ->assertOk();
+
+        $warmedIds = collect($warmedResponse->json('data'))
+            ->flatten(1)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $this->assertContains($alreadyOnBoard->id, $warmedIds);
+
+        $ungrouped = Todo::create([
+            'user_id' => $user->id,
+            'project_id' => $targetProject->id,
+            'project_group_id' => null,
+            'title' => 'Imported without a group',
+            'priority' => 'Medium',
+            'type' => 'Task',
+            'status' => 'todo',
+        ]);
+
+        $repairResponse = $this->actingAs($user)
+            ->getJson('/api/todos?'.http_build_query([
+                'project_id' => $targetProject->id,
+                'project_group_id' => $staleGroup->id,
+            ]))
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $repairedIds = collect($repairResponse->json('data'))
+            ->flatten(1)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $this->assertContains($ungrouped->id, $repairedIds);
+        $this->assertContains($alreadyOnBoard->id, $repairedIds);
+
+        $this->assertDatabaseHas('taskit_todos', [
+            'id' => $ungrouped->id,
+            'project_group_id' => $targetGroup->id,
+        ]);
+
+        $afterResponse = $this->actingAs($user)
+            ->getJson('/api/todos?'.$resolvedQuery)
+            ->assertOk();
+
+        $afterIds = collect($afterResponse->json('data'))
+            ->flatten(1)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $this->assertContains($ungrouped->id, $afterIds);
+        $this->assertContains($alreadyOnBoard->id, $afterIds);
+    }
+
     public function test_listing_todos_still_assigns_ungrouped_tasks_to_the_requested_project_group(): void
     {
         $user = User::factory()->create();
