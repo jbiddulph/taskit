@@ -145,7 +145,7 @@ onUnmounted(() => {
           : 'font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800',
       )"
       :aria-expanded="showDropdown"
-      :aria-current="isHighlighted ? 'page' : undefined"
+      :aria-current="isActive ? 'page' : undefined"
       title="Company Users"
     >
       <Icon name="Users" class="w-4 h-4" />
