@@ -201,16 +201,6 @@ const canAccessSites = computed(() => {
                                 />
                             </div>
                             
-                            <!-- Company Plan Display -->
-                            <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Plan</span>
-                                </div>
-                                <div class="text-base font-semibold text-gray-900 dark:text-white">
-                                    {{ company.subscription_type }}
-                                </div>
-                            </div>
-                            
                             <!-- Company Info Link -->
                             <Link 
                                 :href="`/companies/${company.id}`" 
