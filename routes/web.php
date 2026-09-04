@@ -1,25 +1,31 @@
 <?php
 
-use App\Http\Controllers\ComplianceController;
-use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\ComplianceController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\IndustryLandingController;
 use App\Http\Controllers\InspectionController;
 use App\Http\Controllers\OperationalObjectController;
-use App\Http\Controllers\IndustryLandingController;
 use App\Http\Controllers\RedemptionController;
 use App\Http\Controllers\SitemapController;
-use App\Http\Controllers\SubdomainController;
 use App\Http\Middleware\SubdomainMiddleware;
+use App\Models\Todo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Models\Todo;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
+
+// Legacy public-dashboard URL. On company subdomains, SubdomainMiddleware
+// redirects this to the company homepage. On the apex domain it 404s so
+// middleware can still run (web middleware only wraps matched routes).
+Route::get('/public', function () {
+    abort(404);
+})->name('legacy.public-dashboard');
 
 Route::get('/demo', function () {
     return Inertia::render('Demo');
@@ -77,7 +83,7 @@ Route::middleware(['auth'])->group(function () {
 Route::get('dashboard', function () {
     $user = Auth::user();
     $company = $user->company;
-    
+
     return Inertia::render('Dashboard', [
         'user' => $user,
         'company' => $company ? [
@@ -147,6 +153,7 @@ Route::get('/debug-www', function (Request $request) {
 // Debug route to test subdomain and public route
 Route::get('/debug-public', function (Request $request) {
     $company = \App\Models\Company::where('subdomain', 'moe')->first();
+
     return response()->json([
         'host' => $request->getHost(),
         'path' => $request->path(),
@@ -155,9 +162,9 @@ Route::get('/debug-public', function (Request $request) {
             'id' => $company->id,
             'name' => $company->name,
             'subdomain' => $company->subdomain,
-            'is_public' => $company->is_public
+            'is_public' => $company->is_public,
         ] : null,
-        'middleware_processed' => $request->attributes->has('company')
+        'middleware_processed' => $request->attributes->has('company'),
     ]);
 });
 
@@ -175,9 +182,10 @@ Route::get('/todos/{todo}', function (Request $request, Todo $todo) {
         $host = $request->getHost();
         // Build subdomain host (handles www/apex)
         $baseHost = preg_replace('/^(www\.)?/i', '', $host);
-        $targetHost = $company->subdomain . '.' . $baseHost;
+        $targetHost = $company->subdomain.'.'.$baseHost;
         $scheme = $request->isSecure() ? 'https' : 'http';
-        $path = "/todos/{$todo->id}" . ($highlight ? "?highlight=" . urlencode($highlight) : '');
+        $path = "/todos/{$todo->id}".($highlight ? '?highlight='.urlencode($highlight) : '');
+
         return redirect()->away("{$scheme}://{$targetHost}{$path}");
     }
 
@@ -193,6 +201,6 @@ Route::get('/debug-env', function () {
         'heroku_app_name_config' => config('services.heroku.app_name'),
         'heroku_api_length' => strlen(env('HEROKU_API')),
         'cloudflare_zone_id' => env('CLOUDFLARE_ZONE_ID'),
-        'cloudflare_api_length' => strlen(env('CLOUDFLARE_API'))
+        'cloudflare_api_length' => strlen(env('CLOUDFLARE_API')),
     ]);
 });

@@ -8,3 +8,4 @@ Route::get('/', [SubdomainController::class, 'company'])->name('subdomain.compan
 Route::get('/login', [SubdomainController::class, 'login'])->name('subdomain.login');
 Route::post('/login', [SubdomainController::class, 'authenticate'])->name('subdomain.authenticate');
 Route::get('/dashboard', [SubdomainController::class, 'dashboard'])->name('subdomain.dashboard');
+// /public is a legacy alias: SubdomainMiddleware redirects it to / (this file is not loaded).
