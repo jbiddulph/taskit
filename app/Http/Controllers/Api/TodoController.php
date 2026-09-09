@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use function Illuminate\Support\defer;
 
 class TodoController extends Controller
 {
@@ -363,14 +364,7 @@ class TodoController extends Controller
             unset($payload['assignee_email']);
         }
 
-        try {
-            Http::post('https://n8njb-6378e565ae08.herokuapp.com/webhook/new-task', $payload);
-        } catch (\Throwable $e) {
-            logger()->warning('Failed to notify n8n webhook for todo creation', [
-                'todo_id' => $todo->id,
-                'error'   => $e->getMessage(),
-            ]);
-        }
+        $this->notifyN8nOfNewTask($payload);
 
         $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
 
@@ -1330,5 +1324,37 @@ class TodoController extends Controller
         }
 
         return ProjectGroup::createDefaultForProject($project)->id;
+    }
+
+    /**
+     * Fire-and-forget n8n notification. Must not delay or fail task creation.
+     */
+    private function notifyN8nOfNewTask(array $payload): void
+    {
+        $webhookUrl = config('services.n8n.new_task_webhook_url');
+
+        if (empty($webhookUrl)) {
+            return;
+        }
+
+        defer(function () use ($webhookUrl, $payload) {
+            try {
+                $response = Http::timeout(5)
+                    ->connectTimeout(2)
+                    ->post($webhookUrl, $payload);
+
+                if (! $response->successful()) {
+                    logger()->warning('n8n new-task webhook returned an error', [
+                        'todo_id' => $payload['id'] ?? null,
+                        'status' => $response->status(),
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                logger()->warning('Failed to notify n8n webhook for todo creation', [
+                    'todo_id' => $payload['id'] ?? null,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        });
     }
 }

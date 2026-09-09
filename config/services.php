@@ -53,6 +53,8 @@ return [
     'n8n' => [
         'meeting_notes_webhook_url' => env('N8N_MEETING_NOTES_WEBHOOK_URL'),
         'document_extraction_webhook_url' => env('N8N_DOCUMENT_EXTRACTION_WEBHOOK_URL'),
+        // Optional: notify n8n when a task is created. Never block task creation on this call.
+        'new_task_webhook_url' => env('N8N_NEW_TASK_WEBHOOK_URL', 'https://n8njb-6378e565ae08.herokuapp.com/webhook/new-task'),
         'webhook_secret' => env('N8N_WEBHOOK_SECRET'),
     ],
 
