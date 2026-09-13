@@ -2,20 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Company;
 use App\Models\User;
 use App\Services\UnsplashService;
 use App\Support\Industries;
-use Inertia\Inertia;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Inertia\Inertia;
 
 class SubdomainController extends Controller
 {
-    public function __construct(protected UnsplashService $unsplashService)
-    {
-    }
+    public function __construct(protected UnsplashService $unsplashService) {}
 
     /**
      * Show the subdomain dashboard
@@ -23,21 +21,22 @@ class SubdomainController extends Controller
     public function dashboard(Request $request)
     {
         $company = $request->attributes->get('company');
-        
+
         \Log::info('Subdomain dashboard accessed', [
             'company' => $company ? $company->name : 'null',
             'user_authenticated' => Auth::check(),
             'user_id' => Auth::id(),
-            'session_id' => $request->session()->getId()
+            'session_id' => $request->session()->getId(),
         ]);
-        
-        if (!$company) {
+
+        if (! $company) {
             return redirect('https://www.zaptask.co.uk');
         }
 
         // Check if user is authenticated
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             \Log::info('User not authenticated, redirecting to login');
+
             return redirect('/login');
         }
 
@@ -52,12 +51,13 @@ class SubdomainController extends Controller
                 'target_company_id' => $company->id,
                 'target_company_name' => $company->name,
                 'subdomain' => $request->getHost(),
-                'action' => 'forced_logout_and_redirect'
+                'action' => 'forced_logout_and_redirect',
             ]);
-            
+
             Auth::logout();
+
             return redirect('/login')->withErrors([
-                'email' => 'You are not authorized to access this company portal.'
+                'email' => 'You are not authorized to access this company portal.',
             ]);
         }
 
@@ -83,14 +83,14 @@ class SubdomainController extends Controller
     public function login(Request $request)
     {
         $company = $request->attributes->get('company');
-        
-        if (!$company) {
+
+        if (! $company) {
             return redirect('https://www.zaptask.co.uk');
         }
 
         return Inertia::render('Subdomain/Login', [
             'company' => $company,
-            'isSubdomain' => true
+            'isSubdomain' => true,
         ]);
     }
 
@@ -100,8 +100,8 @@ class SubdomainController extends Controller
     public function authenticate(Request $request)
     {
         $company = $request->attributes->get('company');
-        
-        if (!$company) {
+
+        if (! $company) {
             return redirect('https://www.zaptask.co.uk');
         }
 
@@ -112,8 +112,8 @@ class SubdomainController extends Controller
 
         // Only allow users from this company to login
         $user = User::where('email', $credentials['email'])
-                   ->where('company_id', $company->id)
-                   ->first();
+            ->where('company_id', $company->id)
+            ->first();
 
         \Log::info('Subdomain authentication attempt', [
             'email' => $credentials['email'],
@@ -122,24 +122,24 @@ class SubdomainController extends Controller
             'user_found' => $user ? $user->id : 'null',
             'user_company_id' => $user ? $user->company_id : 'null',
             'password_check' => $user ? Hash::check($credentials['password'], $user->password) : 'no_user',
-            'subdomain' => $request->getHost()
+            'subdomain' => $request->getHost(),
         ]);
 
         if ($user && Hash::check($credentials['password'], $user->password)) {
             // Manually log in the user
             Auth::login($user, $request->boolean('remember'));
             $request->session()->regenerate();
-            
+
             // Force session to be saved
             $request->session()->save();
-            
+
             \Log::info('Subdomain authentication successful', [
                 'user_id' => $user->id,
                 'company_id' => $company->id,
-                'session_id' => $request->session()->getId()
+                'session_id' => $request->session()->getId(),
             ]);
-            
-            return redirect()->intended('https://' . $request->getHost() . '/dashboard');
+
+            return redirect()->intended('https://'.$request->getHost().'/dashboard');
         }
 
         // Log failed authentication attempts for security monitoring
@@ -148,7 +148,7 @@ class SubdomainController extends Controller
             'company_id' => $company->id,
             'company_name' => $company->name,
             'subdomain' => $request->getHost(),
-            'reason' => $user ? 'invalid_password' : 'user_not_found_in_company'
+            'reason' => $user ? 'invalid_password' : 'user_not_found_in_company',
         ]);
 
         return back()->withErrors([
@@ -162,14 +162,14 @@ class SubdomainController extends Controller
     public function company(Request $request)
     {
         $company = $request->attributes->get('company');
-        
+
         \Log::info('SubdomainController::company called', [
             'company' => $company ? $company->name : 'null',
             'path' => $request->path(),
-            'is_public' => $company ? $company->is_public : false
+            'is_public' => $company ? $company->is_public : false,
         ]);
-        
-        if (!$company) {
+
+        if (! $company) {
             return redirect('https://www.zaptask.co.uk');
         }
 
@@ -209,7 +209,7 @@ class SubdomainController extends Controller
                         'type' => $activity->type,
                         'description' => $activity->description,
                         'actor_name' => $activity->actor ? $activity->actor->name : 'System',
-                        'created_at' => $activity->created_at->toISOString()
+                        'created_at' => $activity->created_at->toISOString(),
                     ];
                 });
 
@@ -217,49 +217,10 @@ class SubdomainController extends Controller
                 'todos' => $todos,
                 'projects' => $projects,
                 'activities' => $activities,
-                'selectedProject' => $projects->first()
+                'selectedProject' => $projects->first(),
             ]);
         }
 
         return Inertia::render('Subdomain/Company', $data);
     }
-
-    /**
-     * Show the public dashboard for guests
-     */
-    public function publicDashboard(Request $request)
-    {
-        $company = $request->attributes->get('company');
-        
-        \Log::info('Public dashboard accessed', [
-            'company' => $company ? $company->name : 'null',
-            'is_public' => $company ? $company->is_public : false
-        ]);
-        
-        if (!$company) {
-            return redirect('https://www.zaptask.co.uk');
-        }
-
-        // Check if company is actually public
-        if (!$company->is_public) {
-            return redirect('https://www.zaptask.co.uk');
-        }
-
-        // Get all projects and todos for this company
-        $projects = $company->projects()->with(['todos' => function($query) {
-            $query->orderBy('created_at', 'desc');
-        }])->get();
-
-        // Get all todos for this company
-        $todos = $company->todos()->with(['user', 'project'])->get();
-
-        return Inertia::render('Subdomain/PublicDashboard', [
-            'company' => $company,
-            'projects' => $projects,
-            'todos' => $todos,
-            'isSubdomain' => true,
-            'isGuest' => true
-        ]);
-    }
-
 }

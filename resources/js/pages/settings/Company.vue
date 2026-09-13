@@ -1103,7 +1103,7 @@ const homepageBackgroundMode = computed(() => props.company?.homepage_background
                         Public Dashboard
                     </CardTitle>
                     <CardDescription>
-                        Allow guests to view your company's dashboard without logging in. They can see projects and todos but cannot create, edit, or delete anything.
+                        Allow guests to view a read-only board on your company subdomain. They can see projects and todos but cannot create, edit, or delete anything.
                     </CardDescription>
                 </CardHeader>
                 <CardContent class="space-y-4">
@@ -1111,7 +1111,7 @@ const homepageBackgroundMode = computed(() => props.company?.homepage_background
                         <div class="space-y-1">
                             <Label class="text-sm font-medium">Enable Public Dashboard</Label>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                When enabled, anyone can view your dashboard at your subdomain without logging in.
+                                When enabled, visitors can view the public board on your company subdomain. Share your company code for access.
                             </p>
                         </div>
                         <Button
@@ -1124,38 +1124,23 @@ const homepageBackgroundMode = computed(() => props.company?.homepage_background
                         </Button>
                     </div>
                     
-                    <div v-if="publicForm.is_public && company?.subdomain_url" class="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <div v-if="publicForm.is_public && subdomainUrl" class="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                         <div class="flex items-center gap-2 text-green-700 dark:text-green-300 mb-2">
                             <CheckCircle class="w-5 h-5" />
                             <span class="font-medium">Public Dashboard Active</span>
                         </div>
-                        <div class="space-y-2">
-                            <div class="flex items-center gap-2">
-                                <span class="text-sm text-green-600 dark:text-green-400">
-                                    Company page: 
-                                </span>
-                                <a 
-                                    :href="company.subdomain_url" 
-                                    target="_blank"
-                                    class="inline-flex items-center gap-1 text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
-                                >
-                                    {{ company.subdomain_url }}
-                                    <ExternalLink class="w-3 h-3" />
-                                </a>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-sm text-green-600 dark:text-green-400">
-                                    Public dashboard: 
-                                </span>
-                                <a 
-                                    :href="`${company.subdomain_url}/public`" 
-                                    target="_blank"
-                                    class="inline-flex items-center gap-1 text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
-                                >
-                                    {{ company.subdomain_url }}/public
-                                    <ExternalLink class="w-3 h-3" />
-                                </a>
-                            </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-green-600 dark:text-green-400">
+                                Public board:
+                            </span>
+                            <a
+                                :href="subdomainUrl"
+                                target="_blank"
+                                class="inline-flex items-center gap-1 text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
+                            >
+                                {{ subdomainUrl }}
+                                <ExternalLink class="w-3 h-3" />
+                            </a>
                         </div>
                     </div>
                 </CardContent>
