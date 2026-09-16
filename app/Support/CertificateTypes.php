@@ -424,6 +424,11 @@ class CertificateTypes
         return self::list()[$type]['label'] ?? ucfirst(str_replace('_', ' ', $type));
     }
 
+    public static function short(string $type): string
+    {
+        return self::meta($type)['short'] ?? self::label($type);
+    }
+
     public static function meta(string $type): array
     {
         return self::list()[$type] ?? self::list()['other'];
@@ -596,5 +601,21 @@ class CertificateTypes
         }
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * Core landlord / estate-agent certificate types highlighted on Property Compliance Manager.
+     *
+     * @return list<array{type: string, label: string, short: string}>
+     */
+    public static function propertyManagerTypes(): array
+    {
+        $types = ['gas_safety', 'eicr', 'epc', 'insurance', 'boiler_service'];
+
+        return array_map(fn (string $type) => [
+            'type' => $type,
+            'label' => self::label($type),
+            'short' => self::short($type),
+        ], $types);
     }
 }

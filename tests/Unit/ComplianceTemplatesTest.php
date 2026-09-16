@@ -39,6 +39,27 @@ class ComplianceTemplatesTest extends TestCase
         );
     }
 
+    public function test_property_management_and_estate_agents_cover_core_landlord_certificates(): void
+    {
+        foreach (['property-management', 'estate-agents'] as $industry) {
+            $types = array_column(ComplianceTemplates::forIndustry($industry), 'type');
+
+            foreach (['gas_safety', 'eicr', 'epc', 'insurance', 'boiler_service'] as $required) {
+                $this->assertContains(
+                    $required,
+                    $types,
+                    "Expected [{$required}] in [{$industry}] compliance template.",
+                );
+            }
+        }
+
+        $managerTypes = array_column(CertificateTypes::propertyManagerTypes(), 'type');
+        $this->assertSame(
+            ['gas_safety', 'eicr', 'epc', 'insurance', 'boiler_service'],
+            $managerTypes,
+        );
+    }
+
     public function test_every_industry_has_inspection_checklists(): void
     {
         foreach (array_keys(Industries::list()) as $slug) {
