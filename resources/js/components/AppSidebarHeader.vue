@@ -184,7 +184,7 @@ const mobileNavClass = (active: boolean) =>
                     href="/compliance"
                     :class="desktopNavClass(isComplianceActive)"
                     :aria-current="isComplianceActive ? 'page' : undefined"
-                    title="Compliance"
+                    title="Property Compliance Manager"
                 >
                     <ShieldCheck class="w-4 h-4" />
                     <span class="hidden sm:inline">Compliance</span>
@@ -302,7 +302,7 @@ const mobileNavClass = (active: boolean) =>
                                 :aria-current="isComplianceActive ? 'page' : undefined"
                             >
                                 <ShieldCheck class="w-5 h-5 flex-shrink-0" />
-                                <span class="font-medium">Compliance</span>
+                                <span class="font-medium">Property Compliance</span>
                             </Link>
                             
                             <!-- Team Dropdown -->

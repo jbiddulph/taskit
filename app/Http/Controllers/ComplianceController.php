@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\ComplianceRequirement;
 use App\Models\DocumentExtractionProposal;
 use App\Models\OperationalDocument;
+use App\Models\OperationalObject;
+use App\Models\Project;
 use App\Support\CertificateTypes;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -57,6 +59,18 @@ class ComplianceController extends Controller
             ->with(['operationalObject.client', 'operationalDocument'])
             ->orderByDesc('created_at')
             ->get();
+
+        $sites = OperationalObject::forCompany($user->company_id)
+            ->where('is_active', true)
+            ->with('client')
+            ->orderBy('name')
+            ->get(['id', 'name', 'client_id', 'address_line_1', 'city', 'postal_code']);
+
+        $projects = Project::query()
+            ->where('company_id', $user->company_id)
+            ->where('is_active', true)
+            ->orderBy('viewing_order')
+            ->get(['id', 'name', 'key']);
 
         $company = $user->company;
 
@@ -122,6 +136,20 @@ class ComplianceController extends Controller
                     'name' => $proposal->operationalObject->client->name,
                 ] : null,
             ]),
+            'sites' => $sites->map(fn (OperationalObject $site) => [
+                'id' => $site->id,
+                'name' => $site->name,
+                'address' => collect([$site->address_line_1, $site->city, $site->postal_code])
+                    ->filter()
+                    ->implode(', '),
+                'client_name' => $site->client?->name,
+            ]),
+            'projects' => $projects->map(fn (Project $project) => [
+                'id' => $project->id,
+                'name' => $project->name,
+                'key' => $project->key,
+            ]),
+            'certificateTypes' => CertificateTypes::propertyManagerTypes(),
             'company' => $company ? [
                 'id' => $company->id,
                 'name' => $company->name,
