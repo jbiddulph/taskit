@@ -123,11 +123,11 @@
               <button
                 v-if="isFutureOnly(cell.date) && !props.isReadOnly"
                 @click="$emit('addTodo', cell.date)"
-                class="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors flex items-center justify-center gap-0.5 min-w-[30px] min-h-[30px]"
+                class="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors flex items-center justify-center gap-0.5"
                 title="Add todo for this date"
-                aria-label="Add todo for this date"
               >
-                <Icon name="Plus" class="w-3 h-3" />
+                <Icon name="Plus" class="w-2.5 h-2.5" />
+                Add
               </button>
             </div>
           </div>
