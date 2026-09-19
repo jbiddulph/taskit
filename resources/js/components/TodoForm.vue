@@ -73,6 +73,67 @@
               />
             </div>
 
+            <!-- Project move / copy — kept above the description so it's visible without scrolling -->
+            <div
+              v-if="canManageProject"
+              class="rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-950/30 p-3 space-y-3"
+            >
+              <div>
+                <label for="todo-project" class="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1">
+                  {{ t('todos.project') }}
+                </label>
+                <select
+                  id="todo-project"
+                  v-model="selectedProjectId"
+                  :disabled="!canChangeProject"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-70"
+                >
+                  <option v-for="project in selectableProjects" :key="project.id" :value="project.id">
+                    {{ project.name }}
+                  </option>
+                </select>
+                <p v-if="isMovingToAnotherProject && targetProject" class="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                  {{ t('todos.move_to_project_hint', { project: targetProject.name }) }}
+                </p>
+                <p v-else-if="!canChangeProject" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {{ t('todos.need_another_project_to_move') }}
+                </p>
+                <p v-else class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {{ t('todos.change_project_to_move') }}
+                </p>
+              </div>
+
+              <div v-if="canCopyTodo" class="border-t border-blue-200 dark:border-blue-800 pt-3">
+                <label for="todo-copy-project" class="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1">
+                  {{ t('todos.copy_to_project') }}
+                </label>
+                <div class="flex flex-col sm:flex-row gap-2">
+                  <select
+                    id="todo-copy-project"
+                    v-model="copyTargetProjectId"
+                    :disabled="copying"
+                    class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-60"
+                  >
+                    <option v-for="project in selectableProjects" :key="project.id" :value="project.id">
+                      {{ project.name }}<template v-if="project.id === originalProjectId"> {{ t('todos.current_project_suffix') }}</template>
+                    </option>
+                  </select>
+                  <button
+                    type="button"
+                    :disabled="copying || copyTargetProjectId === null"
+                    @click="handleCopy"
+                    class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    <Icon name="Copy" class="w-4 h-4" />
+                    {{ copying ? t('todos.copying') : t('todos.copy') }}
+                  </button>
+                </div>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {{ t('todos.copy_to_project_hint') }}
+                </p>
+              </div>
+            </div>
+
             <!-- Description -->
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -86,59 +147,6 @@
           <template v-if="!isEditing ? activeTab === 'advanced' : true">
 
           <OperationsTips v-if="activeTab === 'advanced' || isEditing" context="task_form" class="mb-4" />
-
-          <!-- Project (move to a different project, edit mode only) -->
-          <div v-if="canChangeProject">
-            <label for="todo-project" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{ t('todos.project') }}
-            </label>
-            <select
-              id="todo-project"
-              v-model="selectedProjectId"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option v-for="project in selectableProjects" :key="project.id" :value="project.id">
-                {{ project.name }}
-              </option>
-            </select>
-            <p v-if="isMovingToAnotherProject && targetProject" class="mt-1 text-xs text-amber-600 dark:text-amber-400">
-              {{ t('todos.move_to_project_hint', { project: targetProject.name }) }}
-            </p>
-          </div>
-
-          <!-- Copy to another project (edit mode only) -->
-          <div
-            v-if="canCopyTodo"
-            class="rounded-md border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-800/50"
-          >
-            <label for="todo-copy-project" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{ t('todos.copy_to_project') }}
-            </label>
-            <div class="flex flex-col sm:flex-row gap-2">
-              <select
-                id="todo-copy-project"
-                v-model="copyTargetProjectId"
-                :disabled="copying"
-                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-60"
-              >
-                <option v-for="project in selectableProjects" :key="project.id" :value="project.id">
-                  {{ project.name }}<template v-if="project.id === originalProjectId"> {{ t('todos.current_project_suffix') }}</template>
-                </option>
-              </select>
-              <button
-                type="button"
-                :disabled="copying || copyTargetProjectId === null"
-                @click="handleCopy"
-                class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black/30 text-black dark:bg-white/30 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                <Icon name="Copy" class="w-4 h-4" />
-                {{ copying ? t('todos.copying') : t('todos.copy') }}
-              </button>
-            </div>
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {{ t('todos.copy_to_project_hint') }}
-            </p>
-          </div>
 
           <!-- Priority and Type -->
           <div class="grid grid-cols-2 gap-4">
@@ -474,6 +482,15 @@ const canChangeProject = computed(() => {
     && !!props.todo?.id
     && !props.todo?.parent_task_id
     && selectableProjects.value.length > 1;
+});
+
+// Show the Project section whenever an existing top-level todo is being edited,
+// even if there is only one project (move disabled; copy still available).
+const canManageProject = computed(() => {
+  return props.isEditing
+    && !!props.todo?.id
+    && !props.todo?.parent_task_id
+    && selectableProjects.value.length > 0;
 });
 
 const targetProject = computed<Project | null>(() => {

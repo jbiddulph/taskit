@@ -44,32 +44,54 @@
         </span>
       </div>
       <div class="flex items-center gap-1">
-        <div v-if="!isReadOnly && movableGroups.length > 0" class="relative">
+        <div v-if="!isReadOnly && !todo.parent_task_id" class="relative">
           <button
             @click.stop="showMoveMenu = !showMoveMenu"
             class="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 text-gray-400 hover:text-blue-500 focus:text-blue-500 transition-opacity p-0.5 rounded min-w-8 min-h-8 flex items-center justify-center cursor-pointer"
-            :title="t('todos.project_groups.move_to_board')"
+            :title="t('todos.move_or_copy')"
           >
             <Icon name="FolderInput" class="w-4 h-4" />
           </button>
           <div
             v-if="showMoveMenu"
-            class="absolute right-0 top-full z-20 mt-1 min-w-[10rem] rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+            class="absolute right-0 top-full z-20 mt-1 min-w-[12rem] rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800"
             @click.stop
           >
+            <template v-if="movableGroups.length > 0">
+              <p class="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                {{ t('todos.project_groups.move_to_board') }}
+              </p>
+              <button
+                v-for="group in movableGroups"
+                :key="group.id"
+                type="button"
+                class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                @click="moveToGroup(group.id)"
+              >
+                <span
+                  v-if="group.color"
+                  class="h-2 w-2 rounded-full shrink-0"
+                  :style="{ backgroundColor: group.color }"
+                />
+                <span class="truncate">{{ group.name }}</span>
+              </button>
+              <div class="my-1 border-t border-gray-100 dark:border-gray-700" />
+            </template>
             <button
-              v-for="group in movableGroups"
-              :key="group.id"
               type="button"
               class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-              @click="moveToGroup(group.id)"
+              @click="openEditForProjectAction"
             >
-              <span
-                v-if="group.color"
-                class="h-2 w-2 rounded-full shrink-0"
-                :style="{ backgroundColor: group.color }"
-              />
-              <span class="truncate">{{ group.name }}</span>
+              <Icon name="FolderInput" class="w-3.5 h-3.5 text-gray-400" />
+              <span>{{ t('todos.move_to_project') }}</span>
+            </button>
+            <button
+              type="button"
+              class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+              @click="openEditForProjectAction"
+            >
+              <Icon name="Copy" class="w-3.5 h-3.5 text-gray-400" />
+              <span>{{ t('todos.copy_to_project') }}</span>
             </button>
           </div>
         </div>
@@ -356,6 +378,11 @@ const movableGroups = computed(() =>
 const moveToGroup = (groupId: number) => {
   showMoveMenu.value = false;
   emit('move-to-group', { todo: props.todo, groupId });
+};
+
+const openEditForProjectAction = () => {
+  showMoveMenu.value = false;
+  emit('edit', props.todo);
 };
 
 const closeMoveMenu = () => {
