@@ -574,7 +574,23 @@
     
 
     <!-- Kanban Board -->
-    <div class="flex-1 flex gap-2 overflow-x-auto pb-1 min-h-0">
+    <div class="relative flex-1 flex gap-2 overflow-x-auto pb-1 min-h-0">
+      <div
+        v-if="isLoadingTodos"
+        class="absolute inset-0 z-20 flex items-center justify-center rounded-md bg-white/70 dark:bg-gray-900/70 backdrop-blur-[1px]"
+        role="status"
+        aria-live="polite"
+      >
+        <div class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+          <Icon name="Loader2" class="w-5 h-5 animate-spin text-blue-600" />
+          <span class="text-sm text-gray-900 dark:text-gray-100">{{ t('dashboard.loading_todos') }}</span>
+        </div>
+      </div>
+
+      <div
+        class="flex flex-1 gap-2 min-h-0 min-w-full"
+        :class="{ 'opacity-40 pointer-events-none': isLoadingTodos }"
+      >
       <TodoColumn
         :title="t('todos.to_do')"
         status="todo"
@@ -672,6 +688,7 @@
         @move-to-group="moveTodoToGroup"
         @todo-click="emit('todo-click', $event)"
       />
+      </div>
     </div>
 
     <!-- Todo Form Modal -->
@@ -1472,6 +1489,8 @@ const newProject = ref({
 
 const clients = ref<any[]>([]);
 const isUpdatingProject = ref(false); // Flag to prevent circular events
+const isLoadingTodos = ref(false);
+let todosLoadGeneration = 0;
 let unsubscribeFromTodos: (() => void) | null = null;
 
 // Computed properties
@@ -2773,6 +2792,9 @@ const onProjectChange = async (projectIdOrEvent?: Event | string) => {
     currentProject.value = null;
     localStorage.removeItem('currentProjectId');
     todosState.value = [];
+    projectGroups.value = [];
+    currentGroup.value = null;
+    isLoadingTodos.value = false;
     return;
   }
   
@@ -2786,6 +2808,10 @@ const onProjectChange = async (projectIdOrEvent?: Event | string) => {
     
     // Allow passing ID directly or use the bound value
     const projectId = typeof projectIdOrEvent === 'string' ? parseInt(projectIdOrEvent) : parseInt(selectedProjectId.value);
+
+    if (currentProject.value?.id === projectId && todosState.value.length > 0) {
+      return;
+    }
     
     // In read-only mode, find project from props
     if (props.isReadOnly && props.projects) {
@@ -2799,30 +2825,55 @@ const onProjectChange = async (projectIdOrEvent?: Event | string) => {
         return;
       }
     }
-    
-    const project = await todoApi.getProject(projectId);
-    
+
+    // Prefer the already-loaded project list — avoids a round-trip on every switch.
+    const project = projectsState.value.find(p => p.id === projectId)
+      ?? await todoApi.getProject(projectId);
+
+    // Instant feedback: clear the previous board and show the spinner right away.
+    todosState.value = [];
+    projectGroups.value = [];
+    currentGroup.value = null;
+    isLoadingTodos.value = true;
+
     currentProject.value = project;
     localStorage.setItem('currentProjectId', projectId.toString());
 
-    await loadProjectGroups(projectId);
-    
     // Dispatch event to update sidebar selection
     window.dispatchEvent(new CustomEvent('projectSelected', {
       detail: { projectId: projectId }
     }));
-    
-    // Load todosState for the selected project
-    await loadTodos();
-    
-    if ((window as any).$notify) {
-      (window as any).$notify({
-        type: 'success',
-        title: 'Project Selected',
-        message: `Switched to project "${project.name}".`
-      });
+
+    // Start todos as soon as we know the last-used board id; refine if groups disagree.
+    const storedGroupId = localStorage.getItem(groupStorageKey(projectId));
+    const peekedGroupId = storedGroupId ? Number.parseInt(storedGroupId, 10) : NaN;
+    if (Number.isFinite(peekedGroupId)) {
+      currentGroup.value = {
+        id: peekedGroupId,
+        project_id: projectId,
+        name: '',
+        color: null,
+        viewing_order: 0,
+        is_default: false,
+        created_at: '',
+        updated_at: '',
+      };
+
+      await Promise.all([
+        loadProjectGroups(projectId),
+        loadTodos(),
+      ]);
+
+      // If the stored board was invalid and groups picked a different default, reload once.
+      if (currentGroup.value && currentGroup.value.id !== peekedGroupId) {
+        await loadTodos();
+      }
+    } else {
+      await loadProjectGroups(projectId);
+      await loadTodos();
     }
   } catch {
+    isLoadingTodos.value = false;
     if ((window as any).$notify) {
       (window as any).$notify({
         type: 'error',
@@ -3022,6 +3073,8 @@ const selectProjectGroup = async (group: ProjectGroup) => {
   currentGroup.value = group;
   localStorage.setItem(groupStorageKey(currentProject.value.id), group.id.toString());
   selectedSavedViewName.value = '';
+  todosState.value = [];
+  isLoadingTodos.value = true;
   await loadTodos();
 };
 
@@ -3218,12 +3271,28 @@ const loadCurrentProject = async () => {
 
 // Load todosState from API
 const loadTodos = async () => {
+  const generation = ++todosLoadGeneration;
+  const projectIdAtStart = currentProject.value?.id ?? null;
+
+  if (!projectIdAtStart) {
+    todosState.value = [];
+    isLoadingTodos.value = false;
+    return;
+  }
+
+  isLoadingTodos.value = true;
+
   try {
     const filters: any = todoListFiltersForProject(
-      currentProject.value?.id ?? null,
+      projectIdAtStart,
       currentGroup.value,
     );
     const response = await todoApi.getTodos(filters);
+
+    // A newer switch/load started — discard this response.
+    if (generation !== todosLoadGeneration || currentProject.value?.id !== projectIdAtStart) {
+      return;
+    }
     
     // Check specific todosState
     const allTodos = response.data.todo.concat(response.data['in-progress']).concat(response.data['qa-testing']).concat(response.data.done);
@@ -3240,12 +3309,6 @@ const loadTodos = async () => {
         // Find and attach all subtasks that belong to this parent
         const childSubtasks = subtasks.filter(st => st.parent_task_id === todo.id);
         todo.subtasks = childSubtasks;
-        
-        // Debug logging
-        if (childSubtasks.length > 0) {
-        } else {
-        }
-      } else {
       }
     });
     
@@ -3257,22 +3320,29 @@ const loadTodos = async () => {
     }
 
   } catch {
+    if (generation === todosLoadGeneration) {
+      todosState.value = [];
+    }
+  } finally {
+    if (generation === todosLoadGeneration) {
+      isLoadingTodos.value = false;
+    }
   }
 };
 
-// Watch for project changes and reload todosState
-watch(currentProject, async (newProject, oldProject) => {
-  if (newProject?.id !== oldProject?.id) {
-    if (!newProject || currentGroup.value?.project_id !== newProject.id) {
-      currentGroup.value = null;
-    }
-    await loadProjectGroups(newProject?.id ?? null);
+// Keep the dropdown in sync when currentProject is set from elsewhere (sidebar, deep links).
+// Do NOT reload groups/todos here — callers already do that, and a second fetch made switches feel slow.
+watch(currentProject, (newProject, oldProject) => {
+  if (newProject?.id === oldProject?.id) {
+    return;
   }
 
-  // Only reload todosState if the project actually changed (not just set for the first time)
-  if (newProject && oldProject && newProject.id !== oldProject.id) {
+  if (newProject) {
     selectedProjectId.value = newProject.id.toString();
-    await loadTodos();
+  }
+
+  if (!newProject || currentGroup.value?.project_id !== newProject.id) {
+    currentGroup.value = null;
   }
 });
 
@@ -3689,8 +3759,17 @@ onMounted(async () => {
       isUpdatingProject.value = true;
       try {
         if (e.detail?.projectId) {
-          // Project was selected
-          localStorage.setItem('currentProjectId', e.detail.projectId.toString());
+          const projectId = Number(e.detail.projectId);
+          if (currentProject.value?.id === projectId && todosState.value.length > 0) {
+            return;
+          }
+
+          todosState.value = [];
+          projectGroups.value = [];
+          currentGroup.value = null;
+          isLoadingTodos.value = true;
+
+          localStorage.setItem('currentProjectId', projectId.toString());
           await loadCurrentProject();
           await loadTodos();
         } else {
@@ -3699,6 +3778,9 @@ onMounted(async () => {
           selectedProjectId.value = '';
           localStorage.removeItem('currentProjectId');
           todosState.value = [];
+          projectGroups.value = [];
+          currentGroup.value = null;
+          isLoadingTodos.value = false;
         }
       } finally {
         isUpdatingProject.value = false;
