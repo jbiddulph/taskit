@@ -83,21 +83,25 @@ const canShowRedemptionBox = computed(() => {
     return props.user && props.user.company_id !== null && props.user.company_id !== undefined;
 });
 
-// Filter out FREE / BUSINESS appropriately, and hide BUSINESS entirely from UI
+// Public SaaS plans only (match homepage): FREE, MIDI, MAXI.
+// Hide BUSINESS and LTD lifetime deals from the upgrade picker for now.
+const PUBLIC_PLAN_KEYS = ['FREE', 'MIDI', 'MAXI'] as const;
+
 const availablePlans = computed(() => {
     const current = currentPlan.value;
+    const filtered: Partial<Plans> = {};
 
-    // Start from all plans but never show BUSINESS in the UI
-    const filtered: Partial<Plans> = { ...props.plans };
-    delete filtered.BUSINESS;
-
-    // If user is on FREE plan, show all non-BUSINESS plans
-    if (current === 'FREE') {
-        return filtered;
+    for (const key of PUBLIC_PLAN_KEYS) {
+        if (props.plans[key]) {
+            filtered[key] = props.plans[key];
+        }
     }
 
     // If user is on a paid plan, hide FREE (they can only upgrade/downgrade or cancel)
-    delete filtered.FREE;
+    if (current !== 'FREE') {
+        delete filtered.FREE;
+    }
+
     return filtered;
 });
 
