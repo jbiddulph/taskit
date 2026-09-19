@@ -90,6 +90,7 @@ Route::middleware(['web', 'auth', 'subscription.access', 'api.rate.limit:api,60,
     Route::post('todos/{todo}/mark-assignment-seen', [TodoController::class, 'markAssignmentSeen']);
     Route::post('todos/{todo}/check-in', [TodoController::class, 'checkIn']);
     Route::post('todos/{todo}/subtasks', [TodoController::class, 'createSubtask']);
+    Route::post('todos/{todo}/copy', [TodoController::class, 'copy']);
 
     // Todo comments
     Route::apiResource('todos.comments', TodoCommentController::class);

@@ -248,6 +248,21 @@ class TodoApiService {
         return response.data;
     }
 
+    // Copy a todo (and its subtasks) into a project
+    async copyTodo(id: number, projectId: number, projectGroupId?: number | null): Promise<Todo> {
+        const data: Record<string, unknown> = { project_id: projectId };
+        if (projectGroupId) {
+            data.project_group_id = projectGroupId;
+        }
+
+        const response = await this.request<ApiResponse<Todo>>({
+            method: 'POST',
+            url: `/todos/${id}/copy`,
+            data,
+        });
+        return response.data;
+    }
+
     // Delete a todo
     async deleteTodo(id: number): Promise<void> {
         await this.request({

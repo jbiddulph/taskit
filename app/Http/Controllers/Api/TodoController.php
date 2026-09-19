@@ -893,6 +893,128 @@ class TodoController extends Controller
     }
 
     /**
+     * Copy a todo (and its subtasks) into a project. The copy starts in the
+     * 'todo' column and is owned by the current user; comments, attachments
+     * and check-in data are not carried over.
+     */
+    public function copy(Request $request, Todo $todo): JsonResponse
+    {
+        $user = Auth::user();
+
+        if (! $todo->canAccess($user)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized',
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'project_id' => 'required|integer|exists:taskit_projects,id',
+            'project_group_id' => 'nullable|exists:taskit_project_groups,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $targetProjectId = (int) $request->input('project_id');
+        $targetProject = Project::find($targetProjectId);
+
+        if (! $targetProject || ! $targetProject->canAccess($user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have access to the selected project.',
+            ], 403);
+        }
+
+        if ($user->company_id) {
+            $company = $user->company;
+            if (! $company->canCreateNewTodos() && $company->subscription_type === 'FREE') {
+                $limit = $company->getTodoLimit();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => "Todo limit reached ({$limit} todos). Upgrade to MIDI (£6/month) or MAXI (£12/month) for unlimited todos.",
+                ], 403);
+            }
+        }
+
+        $groupId = $request->filled('project_group_id') ? (int) $request->input('project_group_id') : null;
+        if ($groupId !== null) {
+            $groupBelongsToTarget = ProjectGroup::query()
+                ->where('id', $groupId)
+                ->where('project_id', $targetProjectId)
+                ->exists();
+
+            if (! $groupBelongsToTarget) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'That board does not belong to the selected project.',
+                ], 422);
+            }
+        } else {
+            $groupId = ProjectGroup::resolveOrCreateForProject($targetProject);
+        }
+
+        $copiedAttributes = static function (Todo $source): array {
+            return [
+                'title' => $source->title,
+                'description' => $source->description,
+                'priority' => $source->priority,
+                'type' => $source->type,
+                'card_icon' => $source->card_icon,
+                'outline_color' => $source->outline_color,
+                'tags' => $source->tags,
+                'assignee' => $source->assignee,
+                'due_date' => $source->due_date,
+                'location_name' => $source->location_name,
+                'location_address' => $source->location_address,
+                'latitude' => $source->latitude,
+                'longitude' => $source->longitude,
+                'operational_object_id' => $source->operational_object_id,
+                'story_points' => $source->story_points,
+                'status' => 'todo',
+            ];
+        };
+
+        $copy = Todo::create(array_merge($copiedAttributes($todo), [
+            'user_id' => $user->id,
+            'project_id' => $targetProjectId,
+            'project_group_id' => $groupId,
+            'parent_task_id' => null,
+            'company_id' => $user->company_id,
+        ]));
+
+        foreach ($todo->subtasks()->get() as $subtask) {
+            Todo::create(array_merge($copiedAttributes($subtask), [
+                'user_id' => $user->id,
+                'project_id' => $targetProjectId,
+                'project_group_id' => $groupId,
+                'parent_task_id' => $copy->id,
+                'company_id' => $user->company_id,
+            ]));
+        }
+
+        $copy->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
+
+        CacheService::invalidateUserCaches($user->id, $user->company_id);
+        CacheService::invalidateProjectCaches($targetProjectId, $user->company_id);
+
+        $this->webSocketService->todoCreated($copy);
+
+        Activity::createTodoActivity($copy, $user, 'todo_created');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Todo copied successfully',
+            'data' => $copy,
+        ], 201);
+    }
+
+    /**
      * Bulk update status for multiple todos
      */
     public function bulkUpdateStatus(Request $request): JsonResponse

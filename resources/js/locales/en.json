@@ -180,6 +180,13 @@
     "move_to_project_hint": "This todo (and any subtasks) will be moved to \"{project}\" and placed on its default board.",
     "todo_moved_title": "Todo Moved",
     "todo_moved_message": "\"{title}\" has been moved to \"{project}\".",
+    "copy_to_project": "Copy to project",
+    "copy_to_project_hint": "Creates a copy of this todo (as last saved, including subtasks) in the selected project. The copy starts in the To Do column.",
+    "copy": "Copy",
+    "copying": "Copying…",
+    "current_project_suffix": "(current)",
+    "todo_copied_title": "Todo Copied",
+    "todo_copied_message": "\"{title}\" has been copied to \"{project}\".",
     "project_groups": {
       "add_group": "Add board",
       "create_group": "Create board",

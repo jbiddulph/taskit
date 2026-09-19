@@ -683,8 +683,10 @@
       :projects="safeProjects"
       :current-project-group-id="currentGroup?.id ?? null"
       :modal-title="formModalTitle"
+      :copying="isCopyingTodo"
       @close="closeForm"
       @save="saveTodo"
+      @copy="copyTodoToProject"
     />
 
     <div v-if="showCreateGroup && currentProject" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click="showCreateGroup = false">
@@ -1837,6 +1839,56 @@ const findTodoById = (id: number): { todo: Todo; parentIndex?: number; subtaskIn
   }
 
   return null;
+};
+
+const isCopyingTodo = ref(false);
+
+const copyTodoToProject = async ({ todoId, projectId }: { todoId: number; projectId: number }) => {
+  if (isCopyingTodo.value) return;
+  isCopyingTodo.value = true;
+
+  try {
+    // Copy into the board currently being viewed when the target is the current project.
+    const groupId = currentProject.value?.id === projectId ? (currentGroup.value?.id ?? null) : null;
+    const copiedTodo = await todoApi.copyTodo(todoId, projectId, groupId);
+
+    if (currentProject.value && copiedTodo.project_id === currentProject.value.id) {
+      ingestCreatedTodo(copiedTodo);
+    }
+
+    const destination = safeProjects.value.find(p => p.id === copiedTodo.project_id);
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'success',
+        title: t('todos.todo_copied_title'),
+        message: t('todos.todo_copied_message', {
+          title: copiedTodo.title,
+          project: destination?.name ?? copiedTodo.project?.name ?? '',
+        }),
+      });
+    }
+
+    trackTodoEvent('copied', {
+      todo_id: todoId,
+      source_project_id: currentProject.value?.id,
+      project_id: copiedTodo.project_id,
+      project_name: destination?.name,
+    });
+
+    // Refresh sidebar project stats.
+    window.dispatchEvent(new CustomEvent('todoChanged'));
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to copy todo. Please try again.';
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: 'Copy Failed',
+        message,
+      });
+    }
+  } finally {
+    isCopyingTodo.value = false;
+  }
 };
 
 const removeTodoFromState = (id: number): boolean => {

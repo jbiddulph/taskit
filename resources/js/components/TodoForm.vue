@@ -106,6 +106,40 @@
             </p>
           </div>
 
+          <!-- Copy to another project (edit mode only) -->
+          <div
+            v-if="canCopyTodo"
+            class="rounded-md border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-800/50"
+          >
+            <label for="todo-copy-project" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {{ t('todos.copy_to_project') }}
+            </label>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <select
+                id="todo-copy-project"
+                v-model="copyTargetProjectId"
+                :disabled="copying"
+                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-60"
+              >
+                <option v-for="project in selectableProjects" :key="project.id" :value="project.id">
+                  {{ project.name }}<template v-if="project.id === originalProjectId"> {{ t('todos.current_project_suffix') }}</template>
+                </option>
+              </select>
+              <button
+                type="button"
+                :disabled="copying || copyTargetProjectId === null"
+                @click="handleCopy"
+                class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black/30 text-black dark:bg-white/30 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <Icon name="Copy" class="w-4 h-4" />
+                {{ copying ? t('todos.copying') : t('todos.copy') }}
+              </button>
+            </div>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {{ t('todos.copy_to_project_hint') }}
+            </p>
+          </div>
+
           <!-- Priority and Type -->
           <div class="grid grid-cols-2 gap-4">
             <div>
@@ -314,16 +348,19 @@ interface Props {
   currentProject?: Project | null;
   projects?: Project[];
   modalTitle?: string;
+  copying?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   isEditing: false,
   projects: () => [],
+  copying: false,
 });
 
 const emit = defineEmits<{
   close: [];
   save: [todo: Todo];
+  copy: [payload: { todoId: number; projectId: number }];
 }>();
 
 const page = usePage();
@@ -452,6 +489,41 @@ const isMovingToAnotherProject = computed(() => {
     && originalProjectId.value !== null
     && selectedProjectId.value !== originalProjectId.value;
 });
+
+// Copying is a separate action from saving: it duplicates the saved todo into the chosen project.
+const copyTargetProjectId = ref<number | null>(null);
+
+const canCopyTodo = computed(() => {
+  return props.isEditing
+    && !!props.todo?.id
+    && !props.todo?.parent_task_id
+    && selectableProjects.value.length > 0;
+});
+
+const defaultCopyTarget = (): number | null => {
+  const other = selectableProjects.value.find((p) => p.id !== originalProjectId.value);
+  return other?.id ?? originalProjectId.value ?? selectableProjects.value[0]?.id ?? null;
+};
+
+watch(
+  [selectableProjects, originalProjectId],
+  () => {
+    const stillValid = copyTargetProjectId.value !== null
+      && selectableProjects.value.some((p) => p.id === copyTargetProjectId.value);
+    if (!stillValid) {
+      copyTargetProjectId.value = defaultCopyTarget();
+    }
+  },
+  { immediate: true },
+);
+
+const handleCopy = () => {
+  const todoId = Number(props.todo?.id);
+  if (!todoId || copyTargetProjectId.value === null || props.copying) {
+    return;
+  }
+  emit('copy', { todoId, projectId: copyTargetProjectId.value });
+};
 
 const onSiteSelected = (site: OperationalSite | null) => {
   if (!site) {
