@@ -1,12 +1,12 @@
 <template>
-  <div class="flex w-full items-stretch gap-2 text-xs">
+  <div class="flex flex-wrap items-center justify-end gap-1 text-[10px] leading-tight sm:text-[11px]">
     <div
       v-for="item in statItems"
       :key="item.key"
-      class="flex flex-1 min-w-0 items-center justify-between gap-2 rounded-md border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900"
+      class="inline-flex items-center gap-1 rounded border border-gray-200 bg-white px-1.5 py-0.5 dark:border-gray-700 dark:bg-gray-900"
     >
-      <span class="truncate text-gray-600 dark:text-gray-400">{{ item.label }}</span>
-      <span class="shrink-0 font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ item.value }}</span>
+      <span class="whitespace-nowrap text-gray-500 dark:text-gray-400">{{ item.label }}</span>
+      <span class="font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ item.value }}</span>
     </div>
   </div>
 </template>
