@@ -44,6 +44,16 @@ jobs:
       - name: Lint Frontend
         run: npm run lint
 
+      - name: Verify committed frontend assets are up to date
+        run: |
+          npm run build
+          if [ -n "$(git status --porcelain public/build)" ]; then
+            echo "::error::public/build is out of date. Run 'npm run build' and commit the updated assets."
+            git status --porcelain public/build
+            git diff --stat public/build | head -50
+            exit 1
+          fi
+
       # - name: Commit Changes
       #   uses: stefanzweifel/git-auto-commit-action@v5
       #   with:
