@@ -56,6 +56,47 @@ class MapboxController extends Controller
         ]);
     }
 
+    public function geocode(Request $request): JsonResponse
+    {
+        if (! $this->mapboxService->isConfigured()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mapbox is not configured.',
+            ], 503);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'query' => 'required|string|min:2|max:500',
+            'proximity_latitude' => 'nullable|numeric|between:-90,90',
+            'proximity_longitude' => 'nullable|numeric|between:-180,180',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $proximityLng = $request->filled('proximity_longitude')
+            ? (float) $request->input('proximity_longitude')
+            : null;
+        $proximityLat = $request->filled('proximity_latitude')
+            ? (float) $request->input('proximity_latitude')
+            : null;
+
+        $results = $this->mapboxService->geocode(
+            (string) $request->input('query'),
+            $proximityLng,
+            $proximityLat,
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => $results,
+        ]);
+    }
+
     public function directions(Request $request): JsonResponse
     {
         if (! $this->mapboxService->isConfigured()) {

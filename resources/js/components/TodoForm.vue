@@ -343,6 +343,7 @@ import LocationPicker, { type LocationValue } from '@/components/LocationPicker.
 import SiteSelector from '@/components/SiteSelector.vue';
 import OperationsTips from '@/components/OperationsTips.vue';
 import { type OperationalSite } from '@/services/operationalSiteApi';
+import { mapboxApi } from '@/services/mapboxApi';
 import { type Project } from '@/services/todoApi';
 import type { Todo } from '@/services/todoApi';
 // import { uploadImageToTaskitBucket } from '@/services/supabaseClient';
@@ -542,17 +543,53 @@ const handleCopy = () => {
   emit('copy', { todoId, projectId: copyTargetProjectId.value });
 };
 
-const onSiteSelected = (site: OperationalSite | null) => {
+let siteSelectSeq = 0;
+
+const onSiteSelected = async (site: OperationalSite | null) => {
+  const seq = ++siteSelectSeq;
+
   if (!site) {
     return;
   }
 
+  const hasCoords = site.latitude != null && site.longitude != null;
+
   location.value = {
     location_name: site.name,
     location_address: site.full_address || null,
-    latitude: site.latitude ?? null,
-    longitude: site.longitude ?? null,
+    latitude: hasCoords ? site.latitude! : null,
+    longitude: hasCoords ? site.longitude! : null,
   };
+
+  if (hasCoords) {
+    return;
+  }
+
+  const query = (site.full_address || site.name || '').trim();
+  if (query.length < 2) {
+    return;
+  }
+
+  try {
+    const results = await mapboxApi.geocode(query);
+    if (seq !== siteSelectSeq) {
+      return;
+    }
+
+    const match = results[0];
+    if (!match?.latitude || !match?.longitude) {
+      return;
+    }
+
+    location.value = {
+      location_name: site.name,
+      location_address: site.full_address || match.location_address || null,
+      latitude: match.latitude,
+      longitude: match.longitude,
+    };
+  } catch {
+    // Keep address text even if geocoding fails — pin will be missing.
+  }
 };
 
 const location = ref<LocationValue>({

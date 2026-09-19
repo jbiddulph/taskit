@@ -27,10 +27,12 @@ onMounted(async () => {
     }
 });
 
+// Emit only when the user changes the selection (not on initial edit load),
+// so an existing todo location is not overwritten by the linked site.
 watch(model, (id) => {
     const site = sites.value.find((s) => s.id === id) ?? null;
     emit('selected', site);
-}, { immediate: true });
+});
 </script>
 
 <template>
@@ -50,7 +52,7 @@ watch(model, (id) => {
             </option>
         </select>
         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Link this task to a site. Location fields will pre-fill when selected.
+            Link this task to a site. Location and map pin will pre-fill from the site address.
         </p>
     </div>
 </template>
