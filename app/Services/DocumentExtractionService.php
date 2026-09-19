@@ -25,7 +25,7 @@ class DocumentExtractionService
     ): ?DocumentExtractionProposal {
         $extracted = null;
 
-        if (config('services.openai.api_key') && ($document->is_image || $document->is_pdf)) {
+        if (config('services.openai.api_key') && ($document->is_image || $document->is_pdf || $document->is_word_document)) {
             $extracted = $this->extractWithOpenAi($document);
         }
 
@@ -34,8 +34,11 @@ class DocumentExtractionService
             $extracted = $this->extractViaN8n($document, $user, $webhookUrl, $projectId);
         }
 
-        if (! $extracted && $document->is_pdf) {
-            $text = $this->extractPdfText(Storage::disk('private')->path($document->file_path));
+        if (! $extracted && ($document->is_pdf || $document->is_word_document)) {
+            $path = Storage::disk('private')->path($document->file_path);
+            $text = $document->is_pdf
+                ? $this->extractPdfText($path)
+                : $this->extractWordText($path, $document);
             if (trim($text) !== '') {
                 $extracted = CertificateFieldExtractor::fromText($text);
             }
@@ -184,12 +187,14 @@ class DocumentExtractionService
         ];
 
         try {
-            if ($document->is_pdf) {
-                $text = $this->extractPdfText($path);
+            if ($document->is_pdf || $document->is_word_document) {
+                $text = $document->is_pdf
+                    ? $this->extractPdfText($path)
+                    : $this->extractWordText($path, $document);
                 $fallback = CertificateFieldExtractor::fromText($text);
 
                 if (trim($text) === '') {
-                    Log::warning('PDF text extraction returned empty', ['document_id' => $document->id]);
+                    Log::warning('Document text extraction returned empty', ['document_id' => $document->id]);
 
                     return CertificateFieldExtractor::hasUsefulFields($fallback) ? $fallback : null;
                 }
@@ -423,6 +428,48 @@ PROMPT;
         }
 
         return trim(preg_replace('/\s+/', ' ', $text) ?? $text);
+    }
+
+    protected function extractWordText(string $path, OperationalDocument $document): string
+    {
+        if ($document->is_docx) {
+            return $this->extractDocxText($path);
+        }
+
+        // Legacy .doc: best-effort plain-text scrape when antiword/catdoc are unavailable.
+        $content = @file_get_contents($path);
+        if ($content === false) {
+            return '';
+        }
+
+        $content = preg_replace('/[^\x09\x0A\x0D\x20-\x7E]/', ' ', $content) ?? $content;
+
+        return trim(preg_replace('/\s+/', ' ', $content) ?? $content);
+    }
+
+    protected function extractDocxText(string $path): string
+    {
+        if (! class_exists(\ZipArchive::class) || ! is_file($path)) {
+            return '';
+        }
+
+        $zip = new \ZipArchive;
+        if ($zip->open($path) !== true) {
+            return '';
+        }
+
+        $xml = $zip->getFromName('word/document.xml') ?: '';
+        $zip->close();
+
+        if ($xml === '') {
+            return '';
+        }
+
+        $withBreaks = str_replace(['</w:p>', '</w:tr>', '<w:tab/>'], ["\n", "\n", "\t"], $xml);
+        $text = strip_tags($withBreaks);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_XML1, 'UTF-8');
+
+        return trim(preg_replace("/[ \t]+/", ' ', preg_replace("/\n{3,}/", "\n\n", $text) ?? $text) ?? $text);
     }
 
     protected function extractPdfTextWithPdftotext(string $path): string

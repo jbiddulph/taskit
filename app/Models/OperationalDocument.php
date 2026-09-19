@@ -93,7 +93,30 @@ class OperationalDocument extends Model
 
     public function getIsPdfAttribute(): bool
     {
-        return $this->mime_type === 'application/pdf';
+        return $this->mime_type === 'application/pdf'
+            || str_ends_with(strtolower((string) $this->original_filename), '.pdf');
+    }
+
+    public function getIsWordDocumentAttribute(): bool
+    {
+        $mime = strtolower((string) $this->mime_type);
+        $name = strtolower((string) $this->original_filename);
+
+        return in_array($mime, [
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ], true)
+            || str_ends_with($name, '.doc')
+            || str_ends_with($name, '.docx');
+    }
+
+    public function getIsDocxAttribute(): bool
+    {
+        $mime = strtolower((string) $this->mime_type);
+        $name = strtolower((string) $this->original_filename);
+
+        return $mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            || str_ends_with($name, '.docx');
     }
 
     public function canAccess(User $user): bool

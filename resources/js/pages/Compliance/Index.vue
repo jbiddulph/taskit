@@ -93,7 +93,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const { btnPrimary, btnSecondary, label, select, card } = useFormFieldClasses();
+const { btnPrimary, btnSecondary, label, select } = useFormFieldClasses();
 
 const uploadSiteId = ref<number | ''>(props.sites[0]?.id ?? '');
 const uploadProjectId = ref<number | ''>(props.projects[0]?.id ?? '');
@@ -102,6 +102,17 @@ const extractWithAi = ref(true);
 const uploading = ref(false);
 const uploadMessage = ref<string | null>(null);
 const uploadError = ref<string | null>(null);
+const isDraggingFile = ref(false);
+
+const acceptedExtensions = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.webp'];
+const acceptedMimeTypes = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+];
 
 function isActiveRequirement(item: Requirement): boolean {
   return Boolean(item.next_due_date || item.last_completed_at || item.has_document || item.has_linked_task);
@@ -112,6 +123,12 @@ const visibleRequirements = computed(() => props.requirements.filter(isActiveReq
 const actionNeeded = computed(() =>
   visibleRequirements.value.filter((item) => item.status === 'overdue' || item.status === 'due_soon'),
 );
+
+const selectedSite = computed(() =>
+  props.sites.find((site) => site.id === uploadSiteId.value) ?? null,
+);
+
+const fileAcceptLabel = 'PDF, DOC, DOCX, JPG, PNG, or WebP up to 20MB';
 
 function statusBadge(status: string): string {
   const map: Record<string, string> = {
@@ -146,18 +163,72 @@ function expiryValue(data: Record<string, unknown>): string {
   return typeof value === 'string' && value ? value : '—';
 }
 
-function onFileChange(event: Event) {
-  const inputEl = event.target as HTMLInputElement;
-  uploadFile.value = inputEl.files?.[0] ?? null;
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function isAcceptedFile(file: File): boolean {
+  const name = file.name.toLowerCase();
+  const hasExtension = acceptedExtensions.some((ext) => name.endsWith(ext));
+  const hasMime = !file.type || acceptedMimeTypes.includes(file.type);
+  return hasExtension && hasMime;
+}
+
+function assignUploadFile(file: File | null) {
   uploadMessage.value = null;
   uploadError.value = null;
+
+  if (!file) {
+    uploadFile.value = null;
+    return;
+  }
+
+  if (!isAcceptedFile(file)) {
+    uploadFile.value = null;
+    uploadError.value = `That file type is not supported. Use ${fileAcceptLabel}.`;
+    return;
+  }
+
+  if (file.size > 20 * 1024 * 1024) {
+    uploadFile.value = null;
+    uploadError.value = 'File is too large. Maximum size is 20MB.';
+    return;
+  }
+
+  uploadFile.value = file;
+}
+
+function onFileChange(event: Event) {
+  const inputEl = event.target as HTMLInputElement;
+  assignUploadFile(inputEl.files?.[0] ?? null);
+}
+
+function onDrop(event: DragEvent) {
+  event.preventDefault();
+  isDraggingFile.value = false;
+  const file = event.dataTransfer?.files?.[0] ?? null;
+  assignUploadFile(file);
+
+  const fileInput = document.getElementById('compliance-upload-file') as HTMLInputElement | null;
+  if (fileInput && file) {
+    // Keep the native input in sync when possible (browsers limit programmatic FileList writes).
+    fileInput.value = '';
+  }
+}
+
+function clearUploadFile() {
+  uploadFile.value = null;
+  const fileInput = document.getElementById('compliance-upload-file') as HTMLInputElement | null;
+  if (fileInput) fileInput.value = '';
 }
 
 async function uploadDocument() {
   if (!uploadFile.value || !uploadSiteId.value) {
     uploadError.value = props.sites.length
-      ? 'Choose a property and a certificate file to upload.'
-      : 'Add a property first, then upload certificates here.';
+      ? 'Choose a site and a certificate file to upload.'
+      : 'Add a site first, then upload certificates here.';
     return;
   }
 
@@ -171,13 +242,11 @@ async function uploadDocument() {
       project_id: uploadProjectId.value ? Number(uploadProjectId.value) : undefined,
     });
 
-    uploadFile.value = null;
-    const fileInput = document.getElementById('compliance-upload-file') as HTMLInputElement | null;
-    if (fileInput) fileInput.value = '';
+    clearUploadFile();
 
     uploadMessage.value = result.message
       || (result.data?.proposal_id
-        ? 'Uploaded. Review the AI extraction to confirm dates and create reminders.'
+        ? 'Uploaded. Review the AI extraction to confirm dates and create reminder todos.'
         : 'Document uploaded.');
 
     if (result.data?.proposal_id) {
@@ -186,7 +255,7 @@ async function uploadDocument() {
 
     router.reload({ only: ['summary', 'requirements', 'documents', 'pendingProposals'] });
   } catch {
-    uploadError.value = 'Could not upload that document. Try a PDF or photo under 20MB.';
+    uploadError.value = `Could not upload that document. Try ${fileAcceptLabel}.`;
   } finally {
     uploading.value = false;
   }
@@ -208,7 +277,7 @@ onUnmounted(() => {
 <template>
   <SeoHead
     title="Property Compliance Manager"
-    description="Upload gas certificates, EICRs, EPCs, insurance, and boiler records. AI extracts dates and creates expiry reminders for landlords and estate agents."
+    description="Upload PDF, DOC, or DOCX certificates for any site. AI extracts dates and creates expiry reminder todos."
     image="/zap_icon.png"
   />
 
@@ -227,14 +296,19 @@ onUnmounted(() => {
                 </div>
                 <h1 class="text-2xl font-semibold">Property Compliance Manager</h1>
                 <p class="text-gray-600 dark:text-gray-400 mt-1 max-w-2xl">
-                  For landlords and estate agents: upload gas certificates, EICRs, EPCs, insurance documents, and boiler servicing records.
-                  AI reads the dates and property details, then creates board tasks and reminders before anything expires.
+                  Upload certificates for any site. AI extracts the dates and details, then creates board todos and reminders before renewals are due.
                 </p>
               </div>
               <div class="flex flex-wrap gap-2">
                 <Link href="/clients" :class="btnSecondary">Clients</Link>
-                <Link href="/sites" :class="btnSecondary">Properties</Link>
-                <Link href="/sites/create" :class="btnPrimary">Add property</Link>
+                <Link href="/sites" :class="btnSecondary">Sites</Link>
+                <Link
+                  href="/sites/create"
+                  class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
+                >
+                  <Icon name="Plus" class="w-4 h-4" />
+                  Add Site
+                </Link>
               </div>
             </div>
 
@@ -271,69 +345,158 @@ onUnmounted(() => {
             </div>
 
             <section class="mb-8">
-              <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">Upload certificate</h2>
-              <div :class="card" class="bg-slate-50/80 dark:bg-gray-900/40">
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Drop a PDF or photo against a property. AI extracts the certificate type, address, and expiry date.
-                  When you approve the extraction, ZapTask updates the compliance record and creates reminder tasks on your board before renewals are due.
-                </p>
-
-                <div v-if="!sites.length" class="rounded-md border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 p-4 text-sm">
-                  <p class="font-medium text-amber-900 dark:text-amber-200">Add a property first</p>
-                  <p class="text-amber-800 dark:text-amber-300 mt-1">
-                    Certificates attach to a property so reminders know which address needs renewing.
+              <div class="flex flex-wrap items-end justify-between gap-3 mb-3">
+                <div>
+                  <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Upload certificate</h2>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    PDF, DOC, or DOCX for any site — AI extracts the details and turns renewals into todos.
                   </p>
-                  <Link href="/sites/create" :class="[btnPrimary, 'mt-3']">Create property</Link>
+                </div>
+                <ol class="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <li class="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-700 px-2.5 py-1">
+                    <span class="font-semibold text-gray-800 dark:text-gray-200">1</span> Site
+                  </li>
+                  <li aria-hidden="true" class="text-gray-300">→</li>
+                  <li class="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-700 px-2.5 py-1">
+                    <span class="font-semibold text-gray-800 dark:text-gray-200">2</span> Upload
+                  </li>
+                  <li aria-hidden="true" class="text-gray-300">→</li>
+                  <li class="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-700 px-2.5 py-1">
+                    <span class="font-semibold text-gray-800 dark:text-gray-200">3</span> AI extract
+                  </li>
+                  <li aria-hidden="true" class="text-gray-300">→</li>
+                  <li class="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-700 px-2.5 py-1">
+                    <span class="font-semibold text-gray-800 dark:text-gray-200">4</span> Todos
+                  </li>
+                </ol>
+              </div>
+
+              <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-slate-50 to-white dark:from-gray-900/60 dark:to-gray-800 p-5 md:p-6">
+                <div v-if="!sites.length" class="rounded-md border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 p-4 text-sm">
+                  <p class="font-medium text-amber-900 dark:text-amber-200">Add a site first</p>
+                  <p class="text-amber-800 dark:text-amber-300 mt-1">
+                    Certificates attach to a site so reminders know which address needs renewing.
+                  </p>
+                  <Link
+                    href="/sites/create"
+                    class="mt-3 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black"
+                  >
+                    <Icon name="Plus" class="w-4 h-4" />
+                    Add Site
+                  </Link>
                 </div>
 
-                <div v-else class="grid gap-4 md:grid-cols-2">
+                <div v-else class="space-y-5">
+                  <div class="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label :class="label" for="compliance-upload-site">Site</label>
+                      <select id="compliance-upload-site" v-model="uploadSiteId" :class="select">
+                        <option v-for="site in sites" :key="site.id" :value="site.id">
+                          {{ site.name }}<template v-if="site.client_name"> — {{ site.client_name }}</template>
+                        </option>
+                      </select>
+                      <p v-if="selectedSite?.address" class="mt-1 text-xs text-gray-500 truncate">{{ selectedSite.address }}</p>
+                    </div>
+                    <div v-if="projects.length">
+                      <label :class="label" for="compliance-upload-project">Project for reminder todos</label>
+                      <select id="compliance-upload-project" v-model="uploadProjectId" :class="select">
+                        <option v-for="project in projects" :key="project.id" :value="project.id">
+                          {{ project.key }} — {{ project.name }}
+                        </option>
+                      </select>
+                      <p class="mt-1 text-xs text-gray-500">Approved extractions create todos on this board.</p>
+                    </div>
+                  </div>
+
                   <div>
-                    <label :class="label" for="compliance-upload-site">Property</label>
-                    <select id="compliance-upload-site" v-model="uploadSiteId" :class="select">
-                      <option v-for="site in sites" :key="site.id" :value="site.id">
-                        {{ site.name }}<template v-if="site.client_name"> — {{ site.client_name }}</template>
-                      </option>
-                    </select>
-                  </div>
-                  <div v-if="projects.length">
-                    <label :class="label" for="compliance-upload-project">Tasks board for reminders</label>
-                    <select id="compliance-upload-project" v-model="uploadProjectId" :class="select">
-                      <option v-for="project in projects" :key="project.id" :value="project.id">
-                        {{ project.key }} — {{ project.name }}
-                      </option>
-                    </select>
-                  </div>
-                  <div class="md:col-span-2">
                     <label :class="label" for="compliance-upload-file">Certificate file</label>
-                    <input
-                      id="compliance-upload-file"
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png,.webp"
-                      class="text-sm w-full"
-                      @change="onFileChange"
-                    />
-                    <p class="text-xs text-gray-500 mt-1">PDF, JPG, PNG, or WebP up to 20MB.</p>
-                  </div>
-                  <div class="flex items-end">
-                    <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                      <input v-model="extractWithAi" type="checkbox" />
-                      Extract dates and property details with AI
+                    <label
+                      for="compliance-upload-file"
+                      class="mt-1 flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors"
+                      :class="isDraggingFile
+                        ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/30'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 bg-white/70 dark:bg-gray-900/30'"
+                      @dragenter.prevent="isDraggingFile = true"
+                      @dragover.prevent="isDraggingFile = true"
+                      @dragleave.prevent="isDraggingFile = false"
+                      @drop="onDrop"
+                    >
+                      <input
+                        id="compliance-upload-file"
+                        type="file"
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*"
+                        class="sr-only"
+                        @change="onFileChange"
+                      />
+                      <div class="rounded-full bg-gray-100 dark:bg-gray-800 p-3">
+                        <Icon name="Upload" class="w-6 h-6 text-gray-700 dark:text-gray-200" />
+                      </div>
+                      <div>
+                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          Drag & drop a certificate here, or click to browse
+                        </p>
+                        <p class="mt-1 text-xs text-gray-500">{{ fileAcceptLabel }}</p>
+                      </div>
+                      <div class="flex flex-wrap justify-center gap-1.5">
+                        <span
+                          v-for="ext in ['PDF', 'DOC', 'DOCX', 'JPG', 'PNG']"
+                          :key="ext"
+                          class="rounded border border-gray-200 dark:border-gray-700 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-gray-600 dark:text-gray-300"
+                        >
+                          {{ ext }}
+                        </span>
+                      </div>
                     </label>
+
+                    <div
+                      v-if="uploadFile"
+                      class="mt-3 flex items-center justify-between gap-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2"
+                    >
+                      <div class="min-w-0 flex items-center gap-2">
+                        <Icon name="FileText" class="w-4 h-4 shrink-0 text-gray-500" />
+                        <div class="min-w-0">
+                          <p class="truncate text-sm font-medium">{{ uploadFile.name }}</p>
+                          <p class="text-xs text-gray-500">{{ formatFileSize(uploadFile.size) }}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        class="text-xs font-medium text-gray-500 hover:text-red-600"
+                        @click="clearUploadFile"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
-                  <div class="flex items-end justify-end">
+
+                  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <label class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
+                      <input
+                        v-model="extractWithAi"
+                        type="checkbox"
+                        class="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span>
+                        <span class="font-medium">Extract with AI and create todos</span>
+                        <span class="block text-xs text-gray-500 mt-0.5">
+                          Reads certificate type, address, and expiry, then opens a review so you can confirm before todos are created.
+                        </span>
+                      </span>
+                    </label>
                     <button
                       type="button"
-                      :class="btnPrimary"
-                      :disabled="!uploadFile || uploading"
+                      class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium border transition-colors bg-black text-white hover:bg-gray-900 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-white dark:text-black dark:hover:bg-gray-100"
+                      :disabled="!uploadFile || uploading || !uploadSiteId"
                       @click="uploadDocument"
                     >
-                      {{ uploading ? 'Uploading…' : 'Upload & extract' }}
+                      <Icon :name="uploading ? 'Loader2' : 'Sparkles'" class="w-4 h-4" :class="{ 'animate-spin': uploading }" />
+                      {{ uploading ? 'Uploading & extracting…' : (extractWithAi ? 'Upload & extract' : 'Upload document') }}
                     </button>
                   </div>
                 </div>
 
-                <p v-if="uploadMessage" class="mt-3 text-sm text-green-700 dark:text-green-300">{{ uploadMessage }}</p>
-                <p v-if="uploadError" class="mt-3 text-sm text-red-600 dark:text-red-400">{{ uploadError }}</p>
+                <p v-if="uploadMessage" class="mt-4 text-sm text-green-700 dark:text-green-300">{{ uploadMessage }}</p>
+                <p v-if="uploadError" class="mt-4 text-sm text-red-600 dark:text-red-400">{{ uploadError }}</p>
               </div>
             </section>
 
@@ -390,7 +553,7 @@ onUnmounted(() => {
                   <thead>
                     <tr class="text-left text-xs uppercase tracking-wide text-gray-500 border-b border-gray-200 dark:border-gray-700">
                       <th class="py-2 pr-4">Item</th>
-                      <th class="py-2 pr-4">Property</th>
+                      <th class="py-2 pr-4">Site</th>
                       <th class="py-2 pr-4">Client</th>
                       <th class="py-2 pr-4">Due</th>
                       <th class="py-2">Status</th>
@@ -421,7 +584,7 @@ onUnmounted(() => {
                 </table>
               </div>
               <p v-else class="text-sm text-gray-500">
-                No dated certificates yet. Upload a gas certificate, EICR, EPC, insurance schedule, or boiler service record above — or apply an industry checklist on a property.
+                No dated certificates yet. Upload a gas certificate, EICR, EPC, insurance schedule, or boiler service record above — or apply an industry checklist on a site.
               </p>
             </section>
 
@@ -442,7 +605,7 @@ onUnmounted(() => {
                       <span v-if="doc.expires_display"> · Expires {{ doc.expires_display }}</span>
                     </div>
                   </div>
-                  <Link v-if="doc.site" :href="`/sites/${doc.site.id}`" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">Open property</Link>
+                  <Link v-if="doc.site" :href="`/sites/${doc.site.id}`" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">Open site</Link>
                 </div>
               </div>
               <p v-else class="text-sm text-gray-500">
