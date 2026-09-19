@@ -28,7 +28,7 @@ class OperationalDocumentController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'file' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:20480',
+            'file' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png,webp|max:20480',
             'title' => 'nullable|string|max:255',
             'expires_at' => 'nullable|date',
             'notes' => 'nullable|string|max:2000',
@@ -56,7 +56,7 @@ class OperationalDocumentController extends Controller
         return response()->json([
             'success' => true,
             'message' => $result['proposal']
-                ? 'Document uploaded. Review the AI extraction.'
+                ? 'Document uploaded. Review the AI extraction to create reminder todos.'
                 : 'Document uploaded.',
             'data' => [
                 'document' => $this->serializeDocument($result['document']),

@@ -95,6 +95,40 @@ class PropertyComplianceManagerTest extends TestCase
         ]);
     }
 
+    public function test_can_upload_docx_certificate_against_a_site(): void
+    {
+        Storage::fake('private');
+
+        [$user, $company] = $this->createMaxiUser('property-management');
+        $site = OperationalObject::create([
+            'company_id' => $company->id,
+            'type' => 'property',
+            'name' => 'Flat 3, Oak Court',
+            'created_by_user_id' => $user->id,
+        ]);
+
+        $file = UploadedFile::fake()->create(
+            'epc.docx',
+            80,
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        );
+
+        $this->actingAs($user)
+            ->postJson("/api/sites/{$site->id}/documents", [
+                'file' => $file,
+                'extract' => false,
+                'title' => 'EPC Certificate',
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('taskit_operational_documents', [
+            'company_id' => $company->id,
+            'operational_object_id' => $site->id,
+            'title' => 'EPC Certificate',
+        ]);
+    }
+
     public function test_property_management_template_includes_landlord_certificate_types(): void
     {
         [$user, $company] = $this->createMaxiUser('property-management');
