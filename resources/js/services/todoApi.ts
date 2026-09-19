@@ -230,6 +230,7 @@ class TodoApiService {
             operational_object_id: todoData.operational_object_id ?? null,
             card_icon: todoData.card_icon,
             outline_color: todoData.outline_color,
+            project_id: todoData.project_id,
             project_group_id: todoData.project_group_id,
         };
 

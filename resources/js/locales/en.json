@@ -176,6 +176,10 @@
     "outline_color_hint": "Defaults to the project colour when not set.",
     "use_project_color": "Use project colour",
     "use_type_icon_default": "Use type default",
+    "project": "Project",
+    "move_to_project_hint": "This todo (and any subtasks) will be moved to \"{project}\" and placed on its default board.",
+    "todo_moved_title": "Todo Moved",
+    "todo_moved_message": "\"{title}\" has been moved to \"{project}\".",
     "project_groups": {
       "add_group": "Add board",
       "create_group": "Create board",

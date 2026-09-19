@@ -680,6 +680,7 @@
       :todo="editingTodo"
       :is-editing="isEditingExistingTodo"
       :current-project="currentProject"
+      :projects="safeProjects"
       :current-project-group-id="currentGroup?.id ?? null"
       :modal-title="formModalTitle"
       @close="closeForm"
@@ -1652,6 +1653,29 @@ const saveTodo = async (todo: Todo) => {
         id: todoId,
         operational_object_id: (todo as Todo).operational_object_id ?? null,
       });
+
+      // Moved to a different project: it no longer belongs on this board.
+      if (updatedTodo.project_id && updatedTodo.project_id !== currentProject.value.id) {
+        removeTodoFromState(todoId);
+        editingTodo.value = null;
+        showForm.value = false;
+
+        const destination = safeProjects.value.find(p => p.id === updatedTodo.project_id);
+        if ((window as any).$notify) {
+          (window as any).$notify({
+            type: 'success',
+            title: t('todos.todo_moved_title'),
+            message: t('todos.todo_moved_message', {
+              title: updatedTodo.title,
+              project: destination?.name ?? updatedTodo.project?.name ?? '',
+            }),
+          });
+        }
+        // Refresh sidebar project stats: counts changed on both projects.
+        window.dispatchEvent(new CustomEvent('todoChanged'));
+        return;
+      }
+
       const index = todosState.value.findIndex(t => t.id === todo.id);
       if (index !== -1) {
         const existingTodo = todosState.value[index];
@@ -3484,6 +3508,16 @@ onMounted(async () => {
       case 'todo_updated':
         // Update existing todo in the list
         const updatedTodo = event.data;
+
+        // Moved to another project (possibly by another session): drop it from this board.
+        if (
+          currentProject.value &&
+          updatedTodo.project_id &&
+          updatedTodo.project_id !== currentProject.value.id
+        ) {
+          removeTodoFromState(updatedTodo.id);
+          break;
+        }
         
         // Check if this is a subtask
         if (updatedTodo.parent_task_id) {
@@ -3532,6 +3566,8 @@ onMounted(async () => {
             };
             todosState.value[updateIndex] = todoWithProject;
           } else {
+            // Not on this board yet: it may have just been moved into this project.
+            ingestCreatedTodo(updatedTodo);
           }
         }
         break;

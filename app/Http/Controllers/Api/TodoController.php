@@ -445,6 +445,7 @@ class TodoController extends Controller
             'operational_object_id' => 'nullable|exists:taskit_operational_objects,id',
             'story_points' => 'nullable|integer|min:1|max:21',
             'status' => 'sometimes|required|in:todo,in-progress,qa-testing,done',
+            'project_id' => 'sometimes|required|integer|exists:taskit_projects,id',
             'project_group_id' => 'nullable|exists:taskit_project_groups,id',
         ]);
 
@@ -464,11 +465,39 @@ class TodoController extends Controller
         // Store old assignee before updating
         $oldAssignee = $todo->assignee;
 
+        $previousProjectId = $todo->project_id;
+        $targetProjectId = $request->filled('project_id') ? (int) $request->input('project_id') : (int) $todo->project_id;
+        $isMovingProject = $targetProjectId !== (int) $previousProjectId;
+        $targetProject = null;
+
+        if ($isMovingProject) {
+            // Subtasks always live in their parent's project; move the parent instead.
+            if ($todo->parent_task_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Subtasks cannot be moved to a different project. Move the parent task instead.',
+                ], 422);
+            }
+
+            $targetProject = Project::find($targetProjectId);
+
+            if (! $targetProject || ! $targetProject->canAccess($user->id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have access to the selected project.',
+                ], 403);
+            }
+
+            $validated['project_id'] = $targetProjectId;
+        } else {
+            unset($validated['project_id']);
+        }
+
         if ($request->filled('project_group_id')) {
             $groupId = (int) $request->input('project_group_id');
             $group = ProjectGroup::query()
                 ->where('id', $groupId)
-                ->where('project_id', $todo->project_id)
+                ->where('project_id', $targetProjectId)
                 ->first();
 
             if (! $group) {
@@ -477,9 +506,22 @@ class TodoController extends Controller
                     'message' => 'That board does not belong to this project.',
                 ], 422);
             }
+        } elseif ($isMovingProject) {
+            // The old board belongs to the previous project, so land the todo on the target project's default board.
+            $validated['project_group_id'] = ProjectGroup::resolveOrCreateForProject($targetProject);
         }
 
         $todo->update($validated);
+
+        if ($isMovingProject) {
+            Todo::query()
+                ->where('parent_task_id', $todo->id)
+                ->update([
+                    'project_id' => $todo->project_id,
+                    'project_group_id' => $todo->project_group_id,
+                ]);
+        }
+
         $todo->refresh();
 
         $todo->load(['comments', 'attachments', 'project', 'subtasks.project', 'parentTask']);
@@ -487,6 +529,9 @@ class TodoController extends Controller
         CacheService::invalidateUserCaches($user->id, $user->company_id);
         if ($todo->project_id) {
             CacheService::invalidateProjectCaches($todo->project_id, $user->company_id);
+        }
+        if ($isMovingProject && $previousProjectId) {
+            CacheService::invalidateProjectCaches($previousProjectId, $user->company_id);
         }
 
         // Send real-time notification
