@@ -484,44 +484,51 @@
         </button>
       </div>
 
-      <!-- Quick filters -->
-      <div v-if="currentProject" class="mt-2 flex flex-wrap items-center gap-1.5">
-        <button
-          type="button"
-          class="rounded-full border px-2.5 py-0.5 text-xs font-medium transition"
-          :class="quickFilter === 'overdue'
-            ? 'border-red-400 bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-200'
-            : 'border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300'"
-          @click="toggleQuickFilter('overdue')"
-        >
-          {{ t('filters.overdue') }}
-        </button>
-        <button
-          v-if="currentUserName"
-          type="button"
-          class="rounded-full border px-2.5 py-0.5 text-xs font-medium transition"
-          :class="quickFilter === 'assigned_to_me'
-            ? 'border-blue-400 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200'
-            : 'border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300'"
-          @click="toggleQuickFilter('assigned_to_me')"
-        >
-          {{ t('filters.assigned_to_me') }}
-        </button>
-        <button
-          type="button"
-          class="rounded-full border px-2.5 py-0.5 text-xs font-medium transition"
-          :class="quickFilter === 'has_location'
-            ? 'border-emerald-400 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200'
-            : 'border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300'"
-          @click="toggleQuickFilter('has_location')"
-        >
-          {{ t('filters.has_location') }}
-        </button>
-      </div>
+      <!-- Quick filters + compact stats -->
+      <div
+        v-if="currentProject || (!props.showCalendar && !props.showMap && !props.showToday)"
+        class="mt-2 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+      >
+        <div v-if="currentProject" class="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            class="rounded-full border px-2.5 py-0.5 text-xs font-medium transition"
+            :class="quickFilter === 'overdue'
+              ? 'border-red-400 bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-200'
+              : 'border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300'"
+            @click="toggleQuickFilter('overdue')"
+          >
+            {{ t('filters.overdue') }}
+          </button>
+          <button
+            v-if="currentUserName"
+            type="button"
+            class="rounded-full border px-2.5 py-0.5 text-xs font-medium transition"
+            :class="quickFilter === 'assigned_to_me'
+              ? 'border-blue-400 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200'
+              : 'border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300'"
+            @click="toggleQuickFilter('assigned_to_me')"
+          >
+            {{ t('filters.assigned_to_me') }}
+          </button>
+          <button
+            type="button"
+            class="rounded-full border px-2.5 py-0.5 text-xs font-medium transition"
+            :class="quickFilter === 'has_location'
+              ? 'border-emerald-400 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200'
+              : 'border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300'"
+            @click="toggleQuickFilter('has_location')"
+          >
+            {{ t('filters.has_location') }}
+          </button>
+        </div>
 
-      <!-- Compact stats inside header -->
-      <div v-if="!props.showCalendar && !props.showMap && !props.showToday" class="mt-1.5 pt-1.5 border-t border-gray-200 dark:border-gray-700">
-        <TodoStats :todos="todosState" />
+        <div
+          v-if="!props.showCalendar && !props.showMap && !props.showToday"
+          class="sm:ml-auto"
+        >
+          <TodoStats :todos="todosState" />
+        </div>
       </div>
     </div>
 
