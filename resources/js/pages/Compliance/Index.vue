@@ -276,8 +276,8 @@ onUnmounted(() => {
 
 <template>
   <SeoHead
-    title="Property Compliance Manager"
-    description="Upload PDF, DOC, or DOCX certificates for any site. AI extracts dates and creates expiry reminder todos."
+    title="Compliance"
+    description="Company-wide compliance overview across all sites. Upload certificates and track renewals."
     image="/zap_icon.png"
   />
 
@@ -294,14 +294,14 @@ onUnmounted(() => {
                     <span class="text-sm font-medium">Dashboard</span>
                   </Link>
                 </div>
-                <h1 class="text-2xl font-semibold">Property Compliance Manager</h1>
+                <h1 class="text-2xl font-semibold">Compliance</h1>
                 <p class="text-gray-600 dark:text-gray-400 mt-1 max-w-2xl">
-                  Upload certificates for any site. AI extracts the dates and details, then creates board todos and reminders before renewals are due.
+                  Company-wide overview across all sites — what's overdue, upload certificates for any site, and track renewals in one place.
                 </p>
               </div>
               <div class="flex flex-wrap gap-2">
                 <Link href="/clients" :class="btnSecondary">Clients</Link>
-                <Link href="/sites" :class="btnSecondary">Sites</Link>
+                <Link href="/sites" :class="btnSecondary">All sites</Link>
                 <Link
                   href="/sites/create"
                   class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
@@ -310,6 +310,20 @@ onUnmounted(() => {
                   Add Site
                 </Link>
               </div>
+            </div>
+
+            <div class="mb-6 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20 p-4">
+              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">How this relates to Sites</p>
+              <ul class="text-sm text-gray-700 dark:text-gray-300 space-y-1.5 list-disc pl-5">
+                <li>
+                  <span class="font-medium">This page</span> — portfolio view: status tiles, upload for any site, and every dated certificate in one list.
+                </li>
+                <li>
+                  <span class="font-medium">A site page</span>
+                  (e.g. <Link href="/sites" class="underline hover:no-underline">Sites → open a property</Link>)
+                  — day-to-day work for one location: its documents, inspections, and checklist.
+                </li>
+              </ul>
             </div>
 
             <div class="flex flex-wrap gap-2 mb-6">
@@ -347,9 +361,9 @@ onUnmounted(() => {
             <section class="mb-8">
               <div class="flex flex-wrap items-end justify-between gap-3 mb-3">
                 <div>
-                  <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Upload certificate</h2>
+                  <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Upload for any site</h2>
                   <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    PDF, DOC, or DOCX for any site — AI extracts the details and turns renewals into todos.
+                    Same upload as on a site page — pick the site here, then AI extracts details and creates renewal todos.
                   </p>
                 </div>
                 <ol class="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
@@ -547,7 +561,10 @@ onUnmounted(() => {
             </section>
 
             <section class="mb-8">
-              <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">Tracked certificates</h2>
+              <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-1">Tracked certificates</h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                Dated items across all sites. Open a site name to edit that location's checklist.
+              </p>
               <div v-if="visibleRequirements.length" class="overflow-x-auto">
                 <table class="min-w-full text-sm">
                   <thead>
@@ -589,7 +606,10 @@ onUnmounted(() => {
             </section>
 
             <section>
-              <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">Uploaded documents</h2>
+              <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-1">Uploaded documents</h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                Files from every site. Use "Open site" to manage documents on that property's page.
+              </p>
               <div v-if="documents.length" class="space-y-2">
                 <div
                   v-for="doc in documents"
