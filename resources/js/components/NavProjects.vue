@@ -60,6 +60,7 @@ const currentProject = ref<Project | null>(null);
 const loading = ref(false);
 const isUpdatingProject = ref(false); // Flag to prevent circular events
 const collapsedClients = ref<Set<string>>(new Set()); // Track collapsed client sections
+const projectSearchQuery = ref('');
 let unsubscribeFromProjects: (() => void) | null = null;
 
 // Check if we're on the subscription page
@@ -183,15 +184,43 @@ const loadProjects = async () => {
   }
 };
 
-// Computed grouped projects respecting active client filter
+const projectSearchNormalized = computed(() => projectSearchQuery.value.trim().toLowerCase());
+
+const projectMatchesSearch = (project: Project): boolean => {
+  const q = projectSearchNormalized.value;
+  if (!q) return true;
+  return (project.name || '').toLowerCase().includes(q)
+    || (project.key || '').toLowerCase().includes(q);
+};
+
+// Computed grouped projects respecting active client filter + search
 const visibleGroupedProjects = computed(() => {
   if (!groupedProjects.value) {
     return null;
   }
 
-  // No active client filter → show all groups
+  const filterProjects = (list: Project[] = []) => list.filter(projectMatchesSearch);
+
+  // No active client filter → show all groups (search-filtered)
   if (!selectedClientId.value) {
-    return groupedProjects.value;
+    const noClient = filterProjects(groupedProjects.value.no_client || []);
+    const clients: Record<string, any> = {};
+    Object.entries(groupedProjects.value.clients || {}).forEach(([id, client]: [string, any]) => {
+      const projectsForClient = filterProjects(client.projects || []);
+      if (projectsForClient.length > 0) {
+        clients[id] = { ...client, projects: projectsForClient };
+      }
+    });
+
+    // When searching, hide empty "No Client" / client headers
+    if (projectSearchNormalized.value && noClient.length === 0 && Object.keys(clients).length === 0) {
+      return { no_client: [], clients: {} };
+    }
+
+    return {
+      no_client: noClient,
+      clients,
+    };
   }
 
   const clientsGroup = groupedProjects.value.clients || {};
@@ -207,20 +236,35 @@ const visibleGroupedProjects = computed(() => {
     };
   }
 
+  const projectsForClient = filterProjects(target.projects || []);
+  if (projectsForClient.length === 0) {
+    return { no_client: [], clients: {} };
+  }
+
   return {
     no_client: [],
     clients: {
-      [target.id]: target,
+      [target.id]: { ...target, projects: projectsForClient },
     },
   };
 });
 
 // Computed filtered projects for flat list view
 const filteredProjects = computed(() => {
-  if (!selectedClientId.value) {
-    return projects.value;
+  let list = projects.value;
+  if (selectedClientId.value) {
+    list = list.filter(p => p.client_id === selectedClientId.value);
   }
-  return projects.value.filter(p => p.client_id === selectedClientId.value);
+  return list.filter(projectMatchesSearch);
+});
+
+const hasVisibleProjects = computed(() => {
+  if (visibleGroupedProjects.value) {
+    const grouped = visibleGroupedProjects.value;
+    if ((grouped.no_client?.length || 0) > 0) return true;
+    return Object.keys(grouped.clients || {}).length > 0;
+  }
+  return filteredProjects.value.length > 0;
 });
 
 const selectProject = (project: Project) => {
@@ -571,6 +615,25 @@ const isClientCollapsed = (clientName: string) => {
             <span>New Project</span>
           </div>
         </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <!-- Search projects -->
+      <div v-if="!loading && (projects.length > 0 || projectSearchQuery)" class="px-2 pb-2">
+        <label class="sr-only" for="sidebar-project-search">Search projects</label>
+        <input
+          id="sidebar-project-search"
+          v-model="projectSearchQuery"
+          type="search"
+          placeholder="Search projects…"
+          autocomplete="off"
+          class="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 dark:placeholder:text-gray-500"
+        />
+      </div>
+
+      <SidebarMenuItem v-if="!loading && projectSearchNormalized && !hasVisibleProjects">
+        <div class="px-2 py-2 text-xs text-gray-500 dark:text-gray-400">
+          No projects match "{{ projectSearchQuery.trim() }}"
+        </div>
       </SidebarMenuItem>
       
       <!-- Grouped Project List (with clients) -->
