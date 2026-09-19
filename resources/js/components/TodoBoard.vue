@@ -680,10 +680,13 @@
       :todo="editingTodo"
       :is-editing="isEditingExistingTodo"
       :current-project="currentProject"
+      :projects="safeProjects"
       :current-project-group-id="currentGroup?.id ?? null"
       :modal-title="formModalTitle"
+      :copying="isCopyingTodo"
       @close="closeForm"
       @save="saveTodo"
+      @copy="copyTodoToProject"
     />
 
     <div v-if="showCreateGroup && currentProject" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click="showCreateGroup = false">
@@ -1652,6 +1655,29 @@ const saveTodo = async (todo: Todo) => {
         id: todoId,
         operational_object_id: (todo as Todo).operational_object_id ?? null,
       });
+
+      // Moved to a different project: it no longer belongs on this board.
+      if (updatedTodo.project_id && updatedTodo.project_id !== currentProject.value.id) {
+        removeTodoFromState(todoId);
+        editingTodo.value = null;
+        showForm.value = false;
+
+        const destination = safeProjects.value.find(p => p.id === updatedTodo.project_id);
+        if ((window as any).$notify) {
+          (window as any).$notify({
+            type: 'success',
+            title: t('todos.todo_moved_title'),
+            message: t('todos.todo_moved_message', {
+              title: updatedTodo.title,
+              project: destination?.name ?? updatedTodo.project?.name ?? '',
+            }),
+          });
+        }
+        // Refresh sidebar project stats: counts changed on both projects.
+        window.dispatchEvent(new CustomEvent('todoChanged'));
+        return;
+      }
+
       const index = todosState.value.findIndex(t => t.id === todo.id);
       if (index !== -1) {
         const existingTodo = todosState.value[index];
@@ -1813,6 +1839,56 @@ const findTodoById = (id: number): { todo: Todo; parentIndex?: number; subtaskIn
   }
 
   return null;
+};
+
+const isCopyingTodo = ref(false);
+
+const copyTodoToProject = async ({ todoId, projectId }: { todoId: number; projectId: number }) => {
+  if (isCopyingTodo.value) return;
+  isCopyingTodo.value = true;
+
+  try {
+    // Copy into the board currently being viewed when the target is the current project.
+    const groupId = currentProject.value?.id === projectId ? (currentGroup.value?.id ?? null) : null;
+    const copiedTodo = await todoApi.copyTodo(todoId, projectId, groupId);
+
+    if (currentProject.value && copiedTodo.project_id === currentProject.value.id) {
+      ingestCreatedTodo(copiedTodo);
+    }
+
+    const destination = safeProjects.value.find(p => p.id === copiedTodo.project_id);
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'success',
+        title: t('todos.todo_copied_title'),
+        message: t('todos.todo_copied_message', {
+          title: copiedTodo.title,
+          project: destination?.name ?? copiedTodo.project?.name ?? '',
+        }),
+      });
+    }
+
+    trackTodoEvent('copied', {
+      todo_id: todoId,
+      source_project_id: currentProject.value?.id,
+      project_id: copiedTodo.project_id,
+      project_name: destination?.name,
+    });
+
+    // Refresh sidebar project stats.
+    window.dispatchEvent(new CustomEvent('todoChanged'));
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to copy todo. Please try again.';
+    if ((window as any).$notify) {
+      (window as any).$notify({
+        type: 'error',
+        title: 'Copy Failed',
+        message,
+      });
+    }
+  } finally {
+    isCopyingTodo.value = false;
+  }
 };
 
 const removeTodoFromState = (id: number): boolean => {
@@ -3484,6 +3560,16 @@ onMounted(async () => {
       case 'todo_updated':
         // Update existing todo in the list
         const updatedTodo = event.data;
+
+        // Moved to another project (possibly by another session): drop it from this board.
+        if (
+          currentProject.value &&
+          updatedTodo.project_id &&
+          updatedTodo.project_id !== currentProject.value.id
+        ) {
+          removeTodoFromState(updatedTodo.id);
+          break;
+        }
         
         // Check if this is a subtask
         if (updatedTodo.parent_task_id) {
@@ -3532,6 +3618,8 @@ onMounted(async () => {
             };
             todosState.value[updateIndex] = todoWithProject;
           } else {
+            // Not on this board yet: it may have just been moved into this project.
+            ingestCreatedTodo(updatedTodo);
           }
         }
         break;

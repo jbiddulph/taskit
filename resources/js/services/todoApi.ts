@@ -230,6 +230,7 @@ class TodoApiService {
             operational_object_id: todoData.operational_object_id ?? null,
             card_icon: todoData.card_icon,
             outline_color: todoData.outline_color,
+            project_id: todoData.project_id,
             project_group_id: todoData.project_group_id,
         };
 
@@ -243,6 +244,21 @@ class TodoApiService {
             method: 'PUT',
             url: `/todos/${id}`,
             data: payload,
+        });
+        return response.data;
+    }
+
+    // Copy a todo (and its subtasks) into a project
+    async copyTodo(id: number, projectId: number, projectGroupId?: number | null): Promise<Todo> {
+        const data: Record<string, unknown> = { project_id: projectId };
+        if (projectGroupId) {
+            data.project_group_id = projectGroupId;
+        }
+
+        const response = await this.request<ApiResponse<Todo>>({
+            method: 'POST',
+            url: `/todos/${id}/copy`,
+            data,
         });
         return response.data;
     }

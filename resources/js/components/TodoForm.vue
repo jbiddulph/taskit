@@ -87,6 +87,59 @@
 
           <OperationsTips v-if="activeTab === 'advanced' || isEditing" context="task_form" class="mb-4" />
 
+          <!-- Project (move to a different project, edit mode only) -->
+          <div v-if="canChangeProject">
+            <label for="todo-project" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {{ t('todos.project') }}
+            </label>
+            <select
+              id="todo-project"
+              v-model="selectedProjectId"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option v-for="project in selectableProjects" :key="project.id" :value="project.id">
+                {{ project.name }}
+              </option>
+            </select>
+            <p v-if="isMovingToAnotherProject && targetProject" class="mt-1 text-xs text-amber-600 dark:text-amber-400">
+              {{ t('todos.move_to_project_hint', { project: targetProject.name }) }}
+            </p>
+          </div>
+
+          <!-- Copy to another project (edit mode only) -->
+          <div
+            v-if="canCopyTodo"
+            class="rounded-md border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-800/50"
+          >
+            <label for="todo-copy-project" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {{ t('todos.copy_to_project') }}
+            </label>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <select
+                id="todo-copy-project"
+                v-model="copyTargetProjectId"
+                :disabled="copying"
+                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-60"
+              >
+                <option v-for="project in selectableProjects" :key="project.id" :value="project.id">
+                  {{ project.name }}<template v-if="project.id === originalProjectId"> {{ t('todos.current_project_suffix') }}</template>
+                </option>
+              </select>
+              <button
+                type="button"
+                :disabled="copying || copyTargetProjectId === null"
+                @click="handleCopy"
+                class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors cursor-pointer bg-black/30 text-black dark:bg-white/30 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <Icon name="Copy" class="w-4 h-4" />
+                {{ copying ? t('todos.copying') : t('todos.copy') }}
+              </button>
+            </div>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {{ t('todos.copy_to_project_hint') }}
+            </p>
+          </div>
+
           <!-- Priority and Type -->
           <div class="grid grid-cols-2 gap-4">
             <div>
@@ -293,16 +346,21 @@ interface Props {
   todo?: Todo;
   isEditing?: boolean;
   currentProject?: Project | null;
+  projects?: Project[];
   modalTitle?: string;
+  copying?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   isEditing: false,
+  projects: () => [],
+  copying: false,
 });
 
 const emit = defineEmits<{
   close: [];
   save: [todo: Todo];
+  copy: [payload: { todoId: number; projectId: number }];
 }>();
 
 const page = usePage();
@@ -392,6 +450,81 @@ const resetOutlineColor = () => {
 
 const operationalObjectId = ref<number | null>(null);
 
+// Project the todo belongs to; editable in edit mode so a todo can be moved elsewhere.
+const selectedProjectId = ref<number | null>(null);
+
+const originalProjectId = computed<number | null>(() => {
+  if (props.todo?.project_id) {
+    return Number(props.todo.project_id);
+  }
+  return props.currentProject?.id ?? null;
+});
+
+const selectableProjects = computed<Project[]>(() => {
+  const list = [...props.projects];
+  // Always include the todo's current project so the select never shows an empty value.
+  if (props.currentProject && !list.some((p) => p.id === props.currentProject!.id)) {
+    list.push(props.currentProject);
+  }
+  return list.sort((a, b) => a.name.localeCompare(b.name));
+});
+
+const canChangeProject = computed(() => {
+  return props.isEditing
+    && !!props.todo?.id
+    && !props.todo?.parent_task_id
+    && selectableProjects.value.length > 1;
+});
+
+const targetProject = computed<Project | null>(() => {
+  if (selectedProjectId.value === null) {
+    return null;
+  }
+  return selectableProjects.value.find((p) => p.id === selectedProjectId.value) ?? null;
+});
+
+const isMovingToAnotherProject = computed(() => {
+  return canChangeProject.value
+    && selectedProjectId.value !== null
+    && originalProjectId.value !== null
+    && selectedProjectId.value !== originalProjectId.value;
+});
+
+// Copying is a separate action from saving: it duplicates the saved todo into the chosen project.
+const copyTargetProjectId = ref<number | null>(null);
+
+const canCopyTodo = computed(() => {
+  return props.isEditing
+    && !!props.todo?.id
+    && !props.todo?.parent_task_id
+    && selectableProjects.value.length > 0;
+});
+
+const defaultCopyTarget = (): number | null => {
+  const other = selectableProjects.value.find((p) => p.id !== originalProjectId.value);
+  return other?.id ?? originalProjectId.value ?? selectableProjects.value[0]?.id ?? null;
+};
+
+watch(
+  [selectableProjects, originalProjectId],
+  () => {
+    const stillValid = copyTargetProjectId.value !== null
+      && selectableProjects.value.some((p) => p.id === copyTargetProjectId.value);
+    if (!stillValid) {
+      copyTargetProjectId.value = defaultCopyTarget();
+    }
+  },
+  { immediate: true },
+);
+
+const handleCopy = () => {
+  const todoId = Number(props.todo?.id);
+  if (!todoId || copyTargetProjectId.value === null || props.copying) {
+    return;
+  }
+  emit('copy', { todoId, projectId: copyTargetProjectId.value });
+};
+
 const onSiteSelected = (site: OperationalSite | null) => {
   if (!site) {
     return;
@@ -461,6 +594,7 @@ const resetForm = () => {
     longitude: null,
   };
   operationalObjectId.value = null;
+  selectedProjectId.value = props.currentProject?.id ?? null;
 };
 
 // Initialize form when editing
@@ -493,6 +627,7 @@ watch(() => props.todo, (newTodo) => {
       longitude: newTodo.longitude ?? null,
     };
     operationalObjectId.value = newTodo.operational_object_id ?? null;
+    selectedProjectId.value = newTodo.project_id ? Number(newTodo.project_id) : (props.currentProject?.id ?? null);
   } else {
     resetForm();
     // Auto-assign current user on create
@@ -525,6 +660,13 @@ const handleSubmit = async () => {
     
     const resolvedType = todoType.value.trim();
 
+    let resolvedProjectId: number = props.currentProject.id;
+    if (props.isEditing) {
+      resolvedProjectId = canChangeProject.value && selectedProjectId.value !== null
+        ? selectedProjectId.value
+        : (originalProjectId.value ?? props.currentProject.id);
+    }
+
     const todoData: any = {
       title: form.value.title,
       description: form.value.description,
@@ -535,7 +677,7 @@ const handleSubmit = async () => {
       due_date: form.value.due_date ? form.value.due_date : null,
       story_points: form.value.story_points ? form.value.story_points : null,
       status: form.value.status,
-      project_id: props.currentProject.id,
+      project_id: resolvedProjectId,
       location_name: location.value.location_name,
       location_address: location.value.location_address,
       latitude: location.value.latitude,
@@ -552,8 +694,9 @@ const handleSubmit = async () => {
       // Track todo update event
       trackTodoEvent('updated', {
         todo_id: todoData.id,
-        project_id: props.currentProject.id,
-        project_name: props.currentProject.name,
+        project_id: resolvedProjectId,
+        project_name: targetProject.value?.name ?? props.currentProject.name,
+        moved_project: isMovingToAnotherProject.value,
         priority: todoData.priority,
         type: todoData.type,
         has_due_date: !!todoData.due_date,
