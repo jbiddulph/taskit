@@ -449,13 +449,13 @@
       "examples_heading": "Examples",
       "sites_index": {
         "title": "How to use Sites & Assets",
-        "intro": "Sites are the properties, buildings, rooms, and equipment your team works on. Compliance and documents attach to each site.",
+        "intro": "Sites are the places you manage. Open a site for that location's certificates and checklist. Use Compliance for a company-wide overview across every site.",
         "items": [
           "Add one site per property or address — use child sites for flats, rooms, or units inside a building.",
-          "Apply your industry compliance template when creating a site to auto-add gas safety, inspections, and renewals.",
-          "Watch the dashboard tiles: overdue and due-soon counts roll up across your whole portfolio.",
-          "Open any site to upload certificates, run inspections, and see linked tasks.",
-          "Link a site to a client so compliance and documents appear on that client's record."
+          "Apply your industry checklist template when creating a site to auto-add gas safety, inspections, and renewals.",
+          "Watch the \"Across all sites\" tiles, or open Compliance for the full portfolio view and upload hub.",
+          "Open any site to upload certificates, run inspections, and set due dates for that location only.",
+          "Link a site to a client so documents and checklist items appear on that client's record."
         ],
         "examples": [
           "Building: Riverside Court → child units: Flat 1, Flat 2, Flat 3",
@@ -479,11 +479,11 @@
         ]
       },
       "sites_show": {
-        "title": "Documents, compliance & inspections",
-        "intro": "This page is the operational hub for one location.",
+        "title": "Working on one site",
+        "intro": "This page is only for this location. Company-wide status and upload-for-any-site live under Compliance in the nav.",
         "items": [
           "Upload a certificate (PDF or photo). Turn on AI extraction to pull expiry date and certificate number automatically.",
-          "Set due dates on compliance items — ZapTask creates reminder tasks ~30 days before (configurable per item).",
+          "Set due dates on checklist items — ZapTask creates reminder tasks ~30 days before (configurable per item).",
           "Mark an item complete after work is done; the next due date is calculated from its frequency.",
           "Start an inspection checklist with photos, then download a PDF report for your records or auditors.",
           "Any failed checklist items can create follow-up tasks on your board if you tick that option (due in 3 days).",
@@ -492,7 +492,7 @@
         "examples": [
           "Upload Gas Safety Certificate.pdf → AI finds expiry 14 Sep 2026 → Apply to site",
           "Start Fire Alarm Inspection → Pass/Fail checklist + photos → Download PDF",
-          "Complete board task \"Annual gas safety\" → compliance item auto-renews for next year"
+          "Complete board task \"Annual gas safety\" → checklist item auto-renews for next year"
         ]
       },
       "task_form": {

@@ -111,6 +111,72 @@ const uploadFile = ref<File | null>(null);
 const manualExpiry = ref('');
 const extractWithAi = ref(true);
 const uploadProjectId = ref<number | ''>(props.projects[0]?.id ?? '');
+const isDraggingFile = ref(false);
+const uploadError = ref<string | null>(null);
+
+const acceptedExtensions = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.webp'];
+const acceptedMimeTypes = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+];
+const fileAcceptLabel = 'PDF, DOC, DOCX, JPG, PNG, or WebP up to 20MB';
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function isAcceptedFile(file: File): boolean {
+  const name = file.name.toLowerCase();
+  const hasExtension = acceptedExtensions.some((ext) => name.endsWith(ext));
+  const hasMime = !file.type || acceptedMimeTypes.includes(file.type);
+  return hasExtension && hasMime;
+}
+
+function clearUploadFile() {
+  uploadFile.value = null;
+  const fileInput = document.getElementById('site-upload-file') as HTMLInputElement | null;
+  if (fileInput) fileInput.value = '';
+}
+
+function assignUploadFile(file: File | null) {
+  uploadError.value = null;
+
+  if (!file) {
+    uploadFile.value = null;
+    return;
+  }
+
+  if (!isAcceptedFile(file)) {
+    uploadFile.value = null;
+    uploadError.value = `That file type is not supported. Use ${fileAcceptLabel}.`;
+    return;
+  }
+
+  if (file.size > 20 * 1024 * 1024) {
+    uploadFile.value = null;
+    uploadError.value = 'File is too large. Maximum size is 20MB.';
+    return;
+  }
+
+  uploadFile.value = file;
+}
+
+function onFileChange(event: Event) {
+  const inputEl = event.target as HTMLInputElement;
+  assignUploadFile(inputEl.files?.[0] ?? null);
+}
+
+function onDrop(event: DragEvent) {
+  event.preventDefault();
+  isDraggingFile.value = false;
+  assignUploadFile(event.dataTransfer?.files?.[0] ?? null);
+}
 
 const editForm = useForm({
   next_due_date: '',
@@ -185,19 +251,21 @@ function openProposalReview(proposalId: number) {
 async function uploadDocument() {
   if (!uploadFile.value) return;
   uploading.value = true;
+  uploadError.value = null;
   try {
     const result = await operationalSiteApi.uploadDocument(props.site.id, uploadFile.value, {
       expires_at: manualExpiry.value || undefined,
       extract: extractWithAi.value,
       project_id: uploadProjectId.value ? Number(uploadProjectId.value) : undefined,
     });
-    uploadFile.value = null;
+    clearUploadFile();
     manualExpiry.value = '';
     if (result.data?.proposal_id) {
       openProposalReview(result.data.proposal_id);
     }
     router.reload({ only: ['site', 'pendingDocumentProposals'] });
   } catch {
+    uploadError.value = `Could not upload that document. Try ${fileAcceptLabel}.`;
     if ((window as any).$notify) {
       (window as any).$notify({ type: 'error', title: 'Upload failed', message: 'Could not upload document.' });
     }
@@ -216,11 +284,6 @@ function deleteInspection(insp: SiteInspection) {
   router.delete(`/inspections/${insp.id}`, {
     onSuccess: () => window.dispatchEvent(new CustomEvent('todoChanged')),
   });
-}
-
-function onFileChange(event: Event) {
-  const input = event.target as HTMLInputElement;
-  uploadFile.value = input.files?.[0] ?? null;
 }
 
 const onExtractionReviewed = () => {
@@ -260,10 +323,21 @@ onUnmounted(() => {
                 <p v-if="site.parent" class="text-sm text-gray-500 mt-1">Inside {{ site.parent.name }}</p>
               </div>
               <div class="flex flex-wrap gap-2 shrink-0">
-                <Link href="/compliance" :class="btnSecondary">Compliance</Link>
+                <Link href="/compliance" :class="btnSecondary" title="Company-wide compliance overview across all sites">
+                  All-sites overview
+                </Link>
                 <Link :href="`/sites/create?parent_id=${site.id}`" :class="btnSecondary">Add child site</Link>
                 <Link :href="`/sites/${site.id}/edit`" :class="btnSecondary">Edit</Link>
               </div>
+            </div>
+
+            <div class="mb-8 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20 p-4">
+              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">You're on one site</p>
+              <p class="text-sm text-gray-700 dark:text-gray-300">
+                Everything below is for <span class="font-medium">{{ site.name }}</span> only — certificates, inspections, and the checklist for this location.
+                For a company-wide view of what's overdue across every site, open
+                <Link href="/compliance" class="underline hover:no-underline">Compliance</Link>.
+              </p>
             </div>
 
             <div v-if="site.children.length" class="mb-8">
@@ -283,7 +357,10 @@ onUnmounted(() => {
             <OperationsTips context="sites_show" class="mb-8" />
 
             <section class="mb-8">
-              <h2 :class="sectionTitle" class="mb-4">Documents</h2>
+              <h2 :class="sectionTitle" class="mb-1">Certificates & documents for this site</h2>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-xl">
+                Upload gas safety, EICR, EPC, insurance, and similar files for this location. They also appear on the company Compliance page.
+              </p>
 
               <div
                 v-for="proposal in pendingDocumentProposals ?? []"
@@ -298,34 +375,112 @@ onUnmounted(() => {
               </div>
 
               <div :class="card" class="mb-4">
-                <div class="grid gap-4 md:grid-cols-2">
-                  <div class="md:col-span-2">
-                    <label :class="label">Upload certificate or document</label>
-                    <p class="text-xs text-gray-500 mb-2">PDFs and photos: fire safety, PAT tests, boiler servicing, contracts, and similar. OpenAI reads expiry dates and notifies your company.</p>
-                    <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="text-sm w-full" @change="onFileChange" />
+                <div class="mb-4">
+                  <label :class="label" for="site-upload-file">Upload certificate or document</label>
+                  <p class="text-xs text-gray-500 mt-1">
+                    PDF, DOC, DOCX, or photos — fire safety, PAT tests, boiler servicing, contracts, and similar.
+                    AI reads expiry dates, then you can create reminder todos for your company.
+                  </p>
+                </div>
+
+                <label
+                  for="site-upload-file"
+                  class="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors"
+                  :class="isDraggingFile
+                    ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/30'
+                    : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 bg-gray-50/80 dark:bg-gray-900/40'"
+                  @dragenter.prevent="isDraggingFile = true"
+                  @dragover.prevent="isDraggingFile = true"
+                  @dragleave.prevent="isDraggingFile = false"
+                  @drop="onDrop"
+                >
+                  <input
+                    id="site-upload-file"
+                    type="file"
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*"
+                    class="sr-only"
+                    @change="onFileChange"
+                  />
+                  <div class="rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3">
+                    <Icon name="Upload" class="w-6 h-6 text-gray-700 dark:text-gray-200" />
                   </div>
+                  <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      Drag & drop a file here, or click to browse
+                    </p>
+                    <p class="mt-1 text-xs text-gray-500">{{ fileAcceptLabel }}</p>
+                  </div>
+                  <div class="flex flex-wrap justify-center gap-1.5">
+                    <span
+                      v-for="ext in ['PDF', 'DOC', 'DOCX', 'JPG', 'PNG']"
+                      :key="ext"
+                      class="rounded border border-gray-200 dark:border-gray-700 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-gray-600 dark:text-gray-300"
+                    >
+                      {{ ext }}
+                    </span>
+                  </div>
+                </label>
+
+                <div
+                  v-if="uploadFile"
+                  class="mt-3 flex items-center justify-between gap-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2"
+                >
+                  <div class="min-w-0 flex items-center gap-2">
+                    <Icon name="FileText" class="w-4 h-4 shrink-0 text-gray-500" />
+                    <div class="min-w-0">
+                      <p class="truncate text-sm font-medium">{{ uploadFile.name }}</p>
+                      <p class="text-xs text-gray-500">{{ formatFileSize(uploadFile.size) }}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="text-xs font-medium text-gray-500 hover:text-red-600"
+                    @click="clearUploadFile"
+                  >
+                    Remove
+                  </button>
+                </div>
+
+                <p v-if="uploadError" class="mt-3 text-sm text-red-600 dark:text-red-400">{{ uploadError }}</p>
+
+                <div class="mt-4 grid gap-4 md:grid-cols-2">
                   <div v-if="projects.length">
-                    <label :class="label">Tasks board for AI reminders</label>
-                    <select v-model="uploadProjectId" :class="select">
+                    <label :class="label" for="site-upload-project">Project for AI reminder todos</label>
+                    <select id="site-upload-project" v-model="uploadProjectId" :class="select">
                       <option v-for="project in projects" :key="project.id" :value="project.id">
                         {{ project.key }} — {{ project.name }}
                       </option>
                     </select>
                   </div>
                   <div>
-                    <label :class="label">Expiry date (optional)</label>
-                    <input v-model="manualExpiry" type="date" :class="input" />
+                    <label :class="label" for="site-upload-expiry">Expiry date (optional)</label>
+                    <input id="site-upload-expiry" v-model="manualExpiry" type="date" :class="input" />
                   </div>
-                  <div class="flex items-end">
-                    <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                      <input v-model="extractWithAi" type="checkbox" />
-                      Extract details with AI
+                  <div class="md:col-span-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <label class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
+                      <input
+                        v-model="extractWithAi"
+                        type="checkbox"
+                        class="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span>
+                        <span class="font-medium">Extract details with AI</span>
+                        <span class="block text-xs text-gray-500 mt-0.5">
+                          Reads certificate type and expiry, then opens a review before creating reminder todos.
+                        </span>
+                      </span>
                     </label>
+                    <button
+                      type="button"
+                      class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium border transition-colors bg-black text-white hover:bg-gray-900 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-white dark:text-black dark:hover:bg-gray-100"
+                      :disabled="!uploadFile || uploading"
+                      @click="uploadDocument"
+                    >
+                      <Icon :name="uploading ? 'Loader2' : 'Upload'" class="w-4 h-4" :class="{ 'animate-spin': uploading }" />
+                      {{ uploading ? 'Uploading…' : (extractWithAi ? 'Upload & extract' : 'Upload') }}
+                    </button>
                   </div>
                 </div>
-                <button type="button" :class="[btnPrimary, 'mt-4']" :disabled="!uploadFile || uploading" @click="uploadDocument">
-                  {{ uploading ? 'Uploading…' : 'Upload' }}
-                </button>
               </div>
 
               <div v-if="site.documents?.length" class="space-y-2">
@@ -352,7 +507,10 @@ onUnmounted(() => {
             </section>
 
             <section class="mb-8">
-              <h2 :class="sectionTitle" class="mb-4">Inspections</h2>
+              <h2 :class="sectionTitle" class="mb-1">Inspections for this site</h2>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-xl">
+                Run checklists and download PDF reports for this location only.
+              </p>
               <div v-if="inspectionTemplates?.length" class="flex flex-wrap gap-2 mb-4">
                 <Link
                   v-for="template in inspectionTemplates"
@@ -388,9 +546,11 @@ onUnmounted(() => {
             <section>
               <div class="flex flex-col gap-1 mb-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <h2 :class="sectionTitle">Compliance</h2>
+                  <h2 :class="sectionTitle">Checklist for this site</h2>
                   <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-xl">
-                    Certificates and dates for this site. Checklist items without a date, document, or task stay under Unscheduled on this page so you can set them up here.
+                    Due dates and renewals for this location. Items without a date stay under Unscheduled here — they only appear on the company
+                    <Link href="/compliance" class="underline hover:no-underline">Compliance</Link>
+                    page once dated, documented, or linked to a task.
                   </p>
                 </div>
                 <div v-if="hasComplianceTemplates" class="shrink-0 sm:text-right">
@@ -398,7 +558,7 @@ onUnmounted(() => {
                     Apply industry template
                   </button>
                   <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs sm:ml-auto">
-                    Seeds this site with your company's industry checklist (gas, EICR, contracts, and similar). Items stay Unscheduled here until they have a date, upload, or task. They will not appear on the company Compliance page until then.
+                    Adds a starter checklist (gas, EICR, contracts, and similar) for this site. Set due dates to start tracking them company-wide.
                   </p>
                 </div>
               </div>
@@ -465,9 +625,9 @@ onUnmounted(() => {
                 v-else-if="!(site.unscheduled_compliance_requirements?.length)"
                 class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-8 text-center"
               >
-                <p class="text-gray-600 dark:text-gray-400 mb-2">No scheduled compliance items yet.</p>
+                <p class="text-gray-600 dark:text-gray-400 mb-2">No scheduled checklist items yet.</p>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto">
-                  Apply the industry template to seed a checklist. Unscheduled items stay below so you can set a due date. They will not appear on the company Compliance page until then.
+                  Apply the industry template to seed a checklist for this site. Unscheduled items stay below until you set a due date — then they show on the company Compliance overview.
                 </p>
                 <button v-if="hasComplianceTemplates" type="button" :class="btnPrimary" @click="applyTemplate">
                   Apply industry template
@@ -475,13 +635,13 @@ onUnmounted(() => {
               </div>
 
               <p v-else class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                No dated compliance items yet. Set a due date on an unscheduled item below to move it here.
+                No dated checklist items yet. Set a due date on an unscheduled item below to track it here and on Compliance.
               </p>
 
               <div v-if="site.unscheduled_compliance_requirements?.length" class="mt-8">
                 <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Unscheduled</h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-3 max-w-xl">
-                  Not yet dated — set a due date or assignee, or delete items you do not need. These do not count as overdue and do not appear on the company Compliance page.
+                  Not yet dated — set a due date or assignee, or delete items you do not need. These do not count as overdue and do not appear on the company Compliance overview.
                 </p>
                 <div class="space-y-3">
                   <div

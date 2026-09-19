@@ -173,7 +173,7 @@ const mobileNavClass = (active: boolean) =>
                     href="/sites" 
                     :class="desktopNavClass(isSitesActive)"
                     :aria-current="isSitesActive ? 'page' : undefined"
-                    title="Sites & Assets"
+                    title="Sites — manage each property"
                 >
                     <Building2 class="w-4 h-4" />
                     <span class="hidden sm:inline">Sites</span>
@@ -184,7 +184,7 @@ const mobileNavClass = (active: boolean) =>
                     href="/compliance"
                     :class="desktopNavClass(isComplianceActive)"
                     :aria-current="isComplianceActive ? 'page' : undefined"
-                    title="Property Compliance Manager"
+                    title="Compliance — overview across all sites"
                 >
                     <ShieldCheck class="w-4 h-4" />
                     <span class="hidden sm:inline">Compliance</span>
@@ -291,7 +291,7 @@ const mobileNavClass = (active: boolean) =>
                                 :aria-current="isSitesActive ? 'page' : undefined"
                             >
                                 <Building2 class="w-5 h-5 flex-shrink-0" />
-                                <span class="font-medium">Sites & Assets</span>
+                                <span class="font-medium">Sites</span>
                             </Link>
 
                             <Link
@@ -302,7 +302,7 @@ const mobileNavClass = (active: boolean) =>
                                 :aria-current="isComplianceActive ? 'page' : undefined"
                             >
                                 <ShieldCheck class="w-5 h-5 flex-shrink-0" />
-                                <span class="font-medium">Property Compliance</span>
+                                <span class="font-medium">Compliance</span>
                             </Link>
                             
                             <!-- Team Dropdown -->
