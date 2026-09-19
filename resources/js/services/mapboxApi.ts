@@ -47,6 +47,26 @@ class MapboxApiService {
         return response.data;
     }
 
+    async geocode(
+        query: string,
+        proximity?: { latitude: number; longitude: number } | null,
+    ): Promise<MapLocation[]> {
+        const response = await this.request<{ success: boolean; data: MapLocation[] }>({
+            method: 'GET',
+            url: '/mapbox/geocode',
+            params: {
+                query,
+                ...(proximity
+                    ? {
+                          proximity_latitude: proximity.latitude,
+                          proximity_longitude: proximity.longitude,
+                      }
+                    : {}),
+            },
+        });
+        return response.data ?? [];
+    }
+
     async directions(coordinates: Array<{ latitude: number; longitude: number }>, profile = 'driving'): Promise<MapRoute | null> {
         const response = await this.request<{ success: boolean; data: MapRoute | null }>({
             method: 'POST',

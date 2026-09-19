@@ -143,8 +143,9 @@ Route::middleware(['web', 'auth', 'subscription.access', 'api.rate.limit:api,60,
     Route::post('meeting-notes/proposals/{proposal}/approve', [MeetingNoteProposalController::class, 'approve']);
     Route::post('meeting-notes/proposals/{proposal}/dismiss', [MeetingNoteProposalController::class, 'dismiss']);
 
-    // Mapbox — reverse geocoding & route planning for location-aware tasks
+    // Mapbox — geocoding & route planning for location-aware tasks
     Route::get('mapbox/status', [MapboxController::class, 'status']);
+    Route::get('mapbox/geocode', [MapboxController::class, 'geocode']);
     Route::get('mapbox/reverse-geocode', [MapboxController::class, 'reverseGeocode']);
     Route::post('mapbox/directions', [MapboxController::class, 'directions']);
 

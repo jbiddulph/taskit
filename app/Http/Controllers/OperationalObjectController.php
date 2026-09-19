@@ -10,6 +10,7 @@ use App\Models\OperationalObject;
 use App\Models\Project;
 use App\Services\ComplianceRequirementService;
 use App\Services\InspectionService;
+use App\Services\MapboxService;
 use App\Services\OperationalDocumentDeletionService;
 use App\Services\OperationalLinkedTodoService;
 use App\Services\OperationalObjectDeletionService;
@@ -30,6 +31,7 @@ class OperationalObjectController extends Controller
         protected OperationalDocumentDeletionService $documentDeletionService,
         protected InspectionService $inspectionService,
         protected OperationalLinkedTodoService $linkedTodoService,
+        protected MapboxService $mapboxService,
     ) {}
 
     public function index(Request $request): Response
@@ -105,6 +107,8 @@ class OperationalObjectController extends Controller
         }
 
         $this->assertClientBelongsToCompany($validated['client_id'] ?? null, $user->company_id);
+
+        $validated = $this->ensureCoordinates($validated);
 
         $object = OperationalObject::create([
             ...collect($validated)->except(['apply_compliance_template', 'default_project_id'])->all(),
@@ -203,7 +207,10 @@ class OperationalObjectController extends Controller
 
         $this->assertClientBelongsToCompany($validated['client_id'] ?? null, $user->company_id);
 
+        $validated = $this->ensureCoordinates($validated);
+
         $site->update($validated);
+        $site->syncLocationToTodos();
 
         return redirect()->route('sites.show', $site)->with('success', 'Site updated successfully!');
     }
@@ -425,6 +432,51 @@ class OperationalObjectController extends Controller
                 'key' => $project->key,
             ])
             ->all();
+    }
+
+    /**
+     * Geocode address fields when lat/lng are missing so site selection can pin todos on the map.
+     *
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
+    protected function ensureCoordinates(array $validated): array
+    {
+        $hasCoords = isset($validated['latitude'], $validated['longitude'])
+            && $validated['latitude'] !== null
+            && $validated['latitude'] !== ''
+            && $validated['longitude'] !== null
+            && $validated['longitude'] !== '';
+
+        if ($hasCoords || ! $this->mapboxService->isConfigured()) {
+            return $validated;
+        }
+
+        $query = collect([
+            $validated['address_line_1'] ?? null,
+            $validated['address_line_2'] ?? null,
+            $validated['city'] ?? null,
+            $validated['postal_code'] ?? null,
+            $validated['country'] ?? null,
+        ])->filter()->implode(', ');
+
+        if ($query === '' && ! empty($validated['name'])) {
+            $query = (string) $validated['name'];
+        }
+
+        if (strlen($query) < 2) {
+            return $validated;
+        }
+
+        $match = $this->mapboxService->geocode($query)[0] ?? null;
+        if (! $match) {
+            return $validated;
+        }
+
+        $validated['latitude'] = $match['latitude'];
+        $validated['longitude'] = $match['longitude'];
+
+        return $validated;
     }
 
     protected function serializeObject(OperationalObject $object): array
