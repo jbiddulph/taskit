@@ -640,19 +640,19 @@ onMounted(() => {
                                 <svg class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Up to 5 members</span>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Up to <strong>5</strong> members</span>
                             </div>
                             <div class="flex items-start gap-3">
                                 <svg class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Up to 10 clients</span>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Up to <strong>10</strong> clients</span>
                             </div>
                             <div class="flex items-start gap-3">
                                 <svg class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Up to 20 projects per client</span>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Up to <strong>20</strong> projects per client</span>
                             </div>
                             <div class="flex items-start gap-3">
                                 <svg class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -682,6 +682,9 @@ onMounted(() => {
                                     <li>• Company Sub Domain</li>
                                     <li>• Public Facing Dashboard</li>
                                     <li>• Import/Export data</li>
+                                    <li>• Sites & Assets</li>
+                                    <li>• Property Compliance</li>
+                                    <li>• Document upload & AI scanning</li>
                                 </ul>
                             </div>
                         </div>
@@ -727,19 +730,19 @@ onMounted(() => {
                                 <svg class="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Up to 20 members</span>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Up to <strong>20</strong> members</span>
                             </div>
                             <div class="flex items-start gap-3">
                                 <svg class="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Up to 30 clients</span>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Up to <strong>30</strong> clients</span>
                             </div>
                             <div class="flex items-start gap-3">
                                 <svg class="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Up to 40 projects per client</span>
+                                <span class="text-sm text-[#4a4a45] dark:text-gray-300">Up to <strong>40</strong> projects per client</span>
                             </div>
                             <div class="flex items-start gap-3">
                                 <svg class="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -787,6 +790,9 @@ onMounted(() => {
                                     <li>• Company Sub Domain</li>
                                     <li>• Public Facing Dashboard</li>
                                     <li>• Import/Export data</li>
+                                    <li>• Sites & Assets</li>
+                                    <li>• Property Compliance</li>
+                                    <li>• Document upload & AI scanning</li>
                                 </ul>
                             </div>
                         </div>

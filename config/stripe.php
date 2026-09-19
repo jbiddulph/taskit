@@ -76,6 +76,9 @@ return [
                 'Company Sub Domain',
                 'Public Facing Dashboard',
                 'Import/Export data',
+                'Sites & Assets',
+                'Property Compliance',
+                'Document upload & AI scanning',
             ]
         ],
         'MAXI' => [
@@ -107,6 +110,9 @@ return [
                 'Company Sub Domain',
                 'Public Facing Dashboard',
                 'Import/Export data',
+                'Sites & Assets',
+                'Property Compliance',
+                'Document upload & AI scanning',
             ]
         ],
         'BUSINESS' => [

@@ -111,6 +111,15 @@ const formatPrice = (price: number): string => {
     return `£${(price / 100).toFixed(0)}`;
 };
 
+/** Bold numeric limits in plan feature lines (e.g. "Up to 5 members"). */
+const formatFeatureHtml = (feature: string): string => {
+    const escaped = feature
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    return escaped.replace(/(\d+)/g, '<strong>$1</strong>');
+};
+
 // const getPlanColor = (planType: string): string => {
 //     switch (planType) {
 //         case 'FREE': return 'gray';
@@ -629,7 +638,7 @@ const reactivateSubscription = async () => {
                                     class="flex items-start gap-2 text-sm"
                                 >
                                     <Check class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                                    <span>{{ feature }}</span>
+                                    <span v-html="formatFeatureHtml(feature)"></span>
                                 </li>
                             </ul>
                             

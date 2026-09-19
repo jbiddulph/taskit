@@ -447,10 +447,11 @@ defineOptions({
                                                 or £60/year (save £12)
                                             </p>
                                             <ul class="text-xs text-[#706f6c] dark:text-[#A1A09A] space-y-1">
-                                                <li>• Up to 5 members</li>
-                                                <li>• Up to 10 clients</li>
-                                                <li>• Up to 20 projects per client</li>
+                                                <li>• Up to <strong>5</strong> members</li>
+                                                <li>• Up to <strong>10</strong> clients</li>
+                                                <li>• Up to <strong>20</strong> projects per client</li>
                                                 <li>• Unlimited todos</li>
+                                                <li>• Sites, Compliance & AI document scanning</li>
                                             </ul>
                                         </div>
                                         <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
@@ -459,10 +460,11 @@ defineOptions({
                                                 or £120/year (save £24)
                                             </p>
                                             <ul class="text-xs text-[#706f6c] dark:text-[#A1A09A] space-y-1">
-                                                <li>• Up to 20 members</li>
-                                                <li>• Up to 30 clients</li>
-                                                <li>• Up to 40 projects per client</li>
+                                                <li>• Up to <strong>20</strong> members</li>
+                                                <li>• Up to <strong>30</strong> clients</li>
+                                                <li>• Up to <strong>40</strong> projects per client</li>
                                                 <li>• Unlimited todos</li>
+                                                <li>• Sites, Compliance & AI document scanning</li>
                                                 <li>• Integrations & automations</li>
                                                 <li>• Priority support</li>
                                             </ul>
