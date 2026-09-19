@@ -323,10 +323,21 @@ onUnmounted(() => {
                 <p v-if="site.parent" class="text-sm text-gray-500 mt-1">Inside {{ site.parent.name }}</p>
               </div>
               <div class="flex flex-wrap gap-2 shrink-0">
-                <Link href="/compliance" :class="btnSecondary">Compliance</Link>
+                <Link href="/compliance" :class="btnSecondary" title="Company-wide compliance overview across all sites">
+                  All-sites overview
+                </Link>
                 <Link :href="`/sites/create?parent_id=${site.id}`" :class="btnSecondary">Add child site</Link>
                 <Link :href="`/sites/${site.id}/edit`" :class="btnSecondary">Edit</Link>
               </div>
+            </div>
+
+            <div class="mb-8 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20 p-4">
+              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">You're on one site</p>
+              <p class="text-sm text-gray-700 dark:text-gray-300">
+                Everything below is for <span class="font-medium">{{ site.name }}</span> only — certificates, inspections, and the checklist for this location.
+                For a company-wide view of what's overdue across every site, open
+                <Link href="/compliance" class="underline hover:no-underline">Compliance</Link>.
+              </p>
             </div>
 
             <div v-if="site.children.length" class="mb-8">
@@ -346,7 +357,10 @@ onUnmounted(() => {
             <OperationsTips context="sites_show" class="mb-8" />
 
             <section class="mb-8">
-              <h2 :class="sectionTitle" class="mb-4">Documents</h2>
+              <h2 :class="sectionTitle" class="mb-1">Certificates & documents for this site</h2>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-xl">
+                Upload gas safety, EICR, EPC, insurance, and similar files for this location. They also appear on the company Compliance page.
+              </p>
 
               <div
                 v-for="proposal in pendingDocumentProposals ?? []"
@@ -493,7 +507,10 @@ onUnmounted(() => {
             </section>
 
             <section class="mb-8">
-              <h2 :class="sectionTitle" class="mb-4">Inspections</h2>
+              <h2 :class="sectionTitle" class="mb-1">Inspections for this site</h2>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-xl">
+                Run checklists and download PDF reports for this location only.
+              </p>
               <div v-if="inspectionTemplates?.length" class="flex flex-wrap gap-2 mb-4">
                 <Link
                   v-for="template in inspectionTemplates"
@@ -529,9 +546,11 @@ onUnmounted(() => {
             <section>
               <div class="flex flex-col gap-1 mb-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <h2 :class="sectionTitle">Compliance</h2>
+                  <h2 :class="sectionTitle">Checklist for this site</h2>
                   <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-xl">
-                    Certificates and dates for this site. Checklist items without a date, document, or task stay under Unscheduled on this page so you can set them up here.
+                    Due dates and renewals for this location. Items without a date stay under Unscheduled here — they only appear on the company
+                    <Link href="/compliance" class="underline hover:no-underline">Compliance</Link>
+                    page once dated, documented, or linked to a task.
                   </p>
                 </div>
                 <div v-if="hasComplianceTemplates" class="shrink-0 sm:text-right">
@@ -539,7 +558,7 @@ onUnmounted(() => {
                     Apply industry template
                   </button>
                   <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs sm:ml-auto">
-                    Seeds this site with your company's industry checklist (gas, EICR, contracts, and similar). Items stay Unscheduled here until they have a date, upload, or task. They will not appear on the company Compliance page until then.
+                    Adds a starter checklist (gas, EICR, contracts, and similar) for this site. Set due dates to start tracking them company-wide.
                   </p>
                 </div>
               </div>
@@ -606,9 +625,9 @@ onUnmounted(() => {
                 v-else-if="!(site.unscheduled_compliance_requirements?.length)"
                 class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-8 text-center"
               >
-                <p class="text-gray-600 dark:text-gray-400 mb-2">No scheduled compliance items yet.</p>
+                <p class="text-gray-600 dark:text-gray-400 mb-2">No scheduled checklist items yet.</p>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto">
-                  Apply the industry template to seed a checklist. Unscheduled items stay below so you can set a due date. They will not appear on the company Compliance page until then.
+                  Apply the industry template to seed a checklist for this site. Unscheduled items stay below until you set a due date — then they show on the company Compliance overview.
                 </p>
                 <button v-if="hasComplianceTemplates" type="button" :class="btnPrimary" @click="applyTemplate">
                   Apply industry template
@@ -616,13 +635,13 @@ onUnmounted(() => {
               </div>
 
               <p v-else class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                No dated compliance items yet. Set a due date on an unscheduled item below to move it here.
+                No dated checklist items yet. Set a due date on an unscheduled item below to track it here and on Compliance.
               </p>
 
               <div v-if="site.unscheduled_compliance_requirements?.length" class="mt-8">
                 <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Unscheduled</h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-3 max-w-xl">
-                  Not yet dated — set a due date or assignee, or delete items you do not need. These do not count as overdue and do not appear on the company Compliance page.
+                  Not yet dated — set a due date or assignee, or delete items you do not need. These do not count as overdue and do not appear on the company Compliance overview.
                 </p>
                 <div class="space-y-3">
                   <div

@@ -102,7 +102,7 @@ function deleteSite(site: Site) {
                 </div>
                 <h1 class="text-2xl font-semibold">Sites & Assets</h1>
                 <p class="text-gray-600 dark:text-gray-400 mt-1">
-                  Properties, buildings, equipment, and compliance tracking — linked to your clients
+                  Your properties and assets — open a site to manage its certificates, checklist, and inspections
                 </p>
               </div>
               <div class="flex flex-wrap gap-2">
@@ -116,7 +116,7 @@ function deleteSite(site: Site) {
                   href="/compliance"
                   class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
-                  Compliance
+                  Compliance overview
                 </Link>
                 <Link
                 href="/sites/create"
@@ -126,6 +126,20 @@ function deleteSite(site: Site) {
                 Add Site
               </Link>
               </div>
+            </div>
+
+            <div class="mb-6 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20 p-4">
+              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Sites vs Compliance — what's the difference?</p>
+              <ul class="text-sm text-gray-700 dark:text-gray-300 space-y-1.5 list-disc pl-5">
+                <li>
+                  <span class="font-medium">Sites</span> — one page per property. Upload certificates, run inspections, and set due dates for that location.
+                </li>
+                <li>
+                  <span class="font-medium">Compliance</span> —
+                  <Link href="/compliance" class="underline hover:no-underline">company-wide overview</Link>
+                  across all sites: what's overdue, upload for any site, and track renewals in one place.
+                </li>
+              </ul>
             </div>
 
             <OperationsTips context="sites_index" class="mb-8" :default-open="sites.length === 0" />
@@ -142,22 +156,30 @@ function deleteSite(site: Site) {
               </select>
             </div>
 
-            <div v-if="complianceSummary.total > 0" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-              <div class="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30 p-4">
-                <div class="text-xs uppercase tracking-wide text-red-700 dark:text-red-300">Overdue</div>
-                <div class="text-2xl font-semibold text-red-700 dark:text-red-300">{{ complianceSummary.overdue }}</div>
+            <div v-if="complianceSummary.total > 0" class="mb-8">
+              <div class="flex flex-wrap items-end justify-between gap-2 mb-3">
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Across all sites</h2>
+                <Link href="/compliance" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                  Open full Compliance overview
+                </Link>
               </div>
-              <div class="rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 p-4">
-                <div class="text-xs uppercase tracking-wide text-amber-700 dark:text-amber-300">Due soon</div>
-                <div class="text-2xl font-semibold text-amber-700 dark:text-amber-300">{{ complianceSummary.due_soon }}</div>
-              </div>
-              <div class="rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/30 p-4">
-                <div class="text-xs uppercase tracking-wide text-green-700 dark:text-green-300">Compliant</div>
-                <div class="text-2xl font-semibold text-green-700 dark:text-green-300">{{ complianceSummary.compliant }}</div>
-              </div>
-              <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-4">
-                <div class="text-xs uppercase tracking-wide text-gray-600 dark:text-gray-400">Missing dates</div>
-                <div class="text-2xl font-semibold text-gray-700 dark:text-gray-300">{{ complianceSummary.missing }}</div>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30 p-4">
+                  <div class="text-xs uppercase tracking-wide text-red-700 dark:text-red-300">Overdue</div>
+                  <div class="text-2xl font-semibold text-red-700 dark:text-red-300">{{ complianceSummary.overdue }}</div>
+                </div>
+                <div class="rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 p-4">
+                  <div class="text-xs uppercase tracking-wide text-amber-700 dark:text-amber-300">Due soon</div>
+                  <div class="text-2xl font-semibold text-amber-700 dark:text-amber-300">{{ complianceSummary.due_soon }}</div>
+                </div>
+                <div class="rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/30 p-4">
+                  <div class="text-xs uppercase tracking-wide text-green-700 dark:text-green-300">Compliant</div>
+                  <div class="text-2xl font-semibold text-green-700 dark:text-green-300">{{ complianceSummary.compliant }}</div>
+                </div>
+                <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-4">
+                  <div class="text-xs uppercase tracking-wide text-gray-600 dark:text-gray-400">Missing dates</div>
+                  <div class="text-2xl font-semibold text-gray-700 dark:text-gray-300">{{ complianceSummary.missing }}</div>
+                </div>
               </div>
             </div>
 
