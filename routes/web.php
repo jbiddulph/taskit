@@ -7,7 +7,6 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\InspectionController;
 use App\Http\Controllers\OperationalObjectController;
 use App\Http\Controllers\IndustryLandingController;
-use App\Http\Controllers\RedemptionController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SubdomainController;
 use App\Http\Middleware\SubdomainMiddleware;
@@ -68,10 +67,19 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
-// LTD redemption: available as soon as the user has an account (no email verification required)
+// LTD redemption temporarily disabled — send users to MIDI/MAXI subscription instead
 Route::middleware(['auth'])->group(function () {
-    Route::get('/ltd/redeem', [RedemptionController::class, 'show'])->name('ltd.redeem.show');
-    Route::post('/ltd/redeem', [RedemptionController::class, 'redeem'])->name('ltd.redeem');
+    Route::get('/ltd/redeem', function () {
+        return redirect()
+            ->route('subscription.index')
+            ->with('info', 'Lifetime deal redemption is not available right now. Please choose MIDI or MAXI.');
+    })->name('ltd.redeem.show');
+
+    Route::post('/ltd/redeem', function () {
+        return redirect()
+            ->route('subscription.index')
+            ->with('info', 'Lifetime deal redemption is not available right now. Please choose MIDI or MAXI.');
+    })->name('ltd.redeem');
 });
 
 Route::get('dashboard', function () {

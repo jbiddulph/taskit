@@ -38,17 +38,11 @@ const closeMobileMenu = () => {
     isMobileMenuOpen.value = false;
 };
 
-// Access user data to check if they have a company_id
+// Access user data for company / nav context
 const page = usePage();
 const user = computed(() => {
     const pageProps: any = page.props;
     return pageProps.user ?? (pageProps.auth as any)?.user ?? null;
-});
-
-// Show redemption code link only if user doesn't have a company_id
-const showRedemptionLink = computed(() => {
-    const u: any = user.value;
-    return u && (u.company_id === null || u.company_id === undefined);
 });
 
 const canAccessSites = computed(() => {
@@ -114,20 +108,8 @@ const mobileNavClass = (active: boolean) =>
             </template>
         </div>
         
-        <!-- Center: Redemption Code Link (only for users without company_id) -->
-        <div class="flex-1 flex justify-center">
-            <Link
-                v-if="showRedemptionLink"
-                href="/ltd/redeem"
-                class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
-                title="Apply Redemption Code"
-            >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
-                </svg>
-                <span>Apply Redemption Code</span>
-            </Link>
-        </div>
+        <!-- Spacer so right-side actions stay aligned -->
+        <div class="flex-1" />
         
         <!-- Company info, Clients Link, Team, and Notification Badge on the right -->
         <div class="flex items-center gap-3">
