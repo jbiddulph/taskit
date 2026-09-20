@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
 // import { login } from '@/routes';
-import { Form, Link } from '@inertiajs/vue3';
+import { Form } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
 import { ref, computed, watch } from 'vue';
 import SeoHead from '@/components/SeoHead.vue';
@@ -148,12 +148,6 @@ const showIndividualOption = computed(() => subscriptionType.value === 'FREE');
                     </select>
                     <p class="text-xs text-muted-foreground mt-1">
                         You can upgrade or change your plan anytime after registration.
-                    </p>
-                    <p class="text-xs text-muted-foreground mt-1">
-                        Have a lifetime deal?
-                        <Link href="/ltd/redeem" class="text-blue-600 hover:underline">
-                            Redeem your code after signup
-                        </Link>.
                     </p>
                     <InputError :message="errors.subscription_type" />
                 </div>
