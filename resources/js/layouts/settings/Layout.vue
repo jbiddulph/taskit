@@ -38,6 +38,22 @@ const sidebarNavItems = computed(() => {
             title: 'API Tokens',
             href: '/settings/api-tokens',
         },
+        {
+            title: 'Platform',
+            href: '/settings/platform',
+        },
+        {
+            title: 'Workspaces',
+            href: '/settings/workspaces',
+        },
+        {
+            title: 'Platform API keys',
+            href: '/settings/platform-api-keys',
+        },
+        {
+            title: 'Automations',
+            href: '/settings/automations',
+        },
     ];
 
     // Add Company settings for eligible paid / LTD plans

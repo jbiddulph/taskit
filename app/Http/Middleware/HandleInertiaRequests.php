@@ -70,6 +70,11 @@ class HandleInertiaRequests extends Middleware
             'features' => [
                 'sites' => (bool) ($user?->company?->canAccessSites()),
             ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'plainTextToken' => fn () => $request->session()->get('plainTextToken'),
+                'plainTextPlatformKey' => fn () => $request->session()->get('plainTextPlatformKey'),
+            ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

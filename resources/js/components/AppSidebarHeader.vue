@@ -7,7 +7,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { BreadcrumbItemType } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
-import { HeartHandshake, Building2, ShieldCheck } from 'lucide-vue-next';
+import { HeartHandshake, Building2, ShieldCheck, Layers } from 'lucide-vue-next';
 import { cn } from '@/lib/utils';
 import { isNavSectionActive } from '@/lib/activeNavSection';
 
@@ -78,6 +78,7 @@ const isCompanyActive = computed(() => isNavSectionActive(page.url, 'company'));
 const isClientsActive = computed(() => isNavSectionActive(page.url, 'clients'));
 const isSitesActive = computed(() => isNavSectionActive(page.url, 'sites'));
 const isComplianceActive = computed(() => isNavSectionActive(page.url, 'compliance'));
+const isPlatformActive = computed(() => isNavSectionActive(page.url, 'platform'));
 const isTeamActive = computed(() => isNavSectionActive(page.url, 'team'));
 
 const desktopNavClass = (active: boolean) =>
@@ -170,6 +171,16 @@ const mobileNavClass = (active: boolean) =>
                 >
                     <ShieldCheck class="w-4 h-4" />
                     <span class="hidden sm:inline">Compliance</span>
+                </Link>
+
+                <Link
+                    href="/settings/platform"
+                    :class="desktopNavClass(isPlatformActive)"
+                    :aria-current="isPlatformActive ? 'page' : undefined"
+                    title="Platform — workspaces, API keys, automations"
+                >
+                    <Layers class="w-4 h-4" />
+                    <span class="hidden sm:inline">Platform</span>
                 </Link>
                 
                 <CompanyUsersDropdown :is-active="isTeamActive" />
@@ -285,6 +296,16 @@ const mobileNavClass = (active: boolean) =>
                             >
                                 <ShieldCheck class="w-5 h-5 flex-shrink-0" />
                                 <span class="font-medium">Compliance</span>
+                            </Link>
+
+                            <Link
+                                href="/settings/platform"
+                                @click="closeMobileMenu"
+                                :class="mobileNavClass(isPlatformActive)"
+                                :aria-current="isPlatformActive ? 'page' : undefined"
+                            >
+                                <Layers class="w-5 h-5 flex-shrink-0" />
+                                <span class="font-medium">Platform</span>
                             </Link>
                             
                             <!-- Team Dropdown -->

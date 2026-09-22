@@ -1,4 +1,4 @@
-export type NavSection = 'company' | 'clients' | 'sites' | 'compliance' | 'team';
+export type NavSection = 'company' | 'clients' | 'sites' | 'compliance' | 'team' | 'platform';
 
 const SECTION_PREFIXES: Record<NavSection, readonly string[]> = {
     company: ['/companies', '/settings/company', '/settings/company-logo'],
@@ -6,6 +6,12 @@ const SECTION_PREFIXES: Record<NavSection, readonly string[]> = {
     sites: ['/sites'],
     compliance: ['/compliance'],
     team: ['/team'],
+    platform: [
+        '/settings/platform',
+        '/settings/workspaces',
+        '/settings/platform-api-keys',
+        '/settings/automations',
+    ],
 };
 
 export function inertiaPath(url: string): string {
