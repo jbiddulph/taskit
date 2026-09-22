@@ -20,7 +20,7 @@ class AssetController extends PlatformController
 
         $query = OperationalObject::query()
             ->forCompany($companyId)
-            ->with('workspace')
+            ->with(['workspace', 'photos'])
             ->orderBy('name');
 
         if ($request->filled('type')) {
@@ -64,9 +64,9 @@ class AssetController extends PlatformController
             return $this->fail('Asset not found.', 404);
         }
 
-        $asset->load('workspace');
+        $asset->load(['workspace', 'photos']);
 
-        return $this->ok($this->transform($asset));
+        return $this->ok($this->transform($asset, true));
     }
 
     public function store(Request $request): JsonResponse
@@ -218,9 +218,13 @@ class AssetController extends PlatformController
             ->first();
     }
 
-    private function transform(OperationalObject $asset): array
+    private function transform(OperationalObject $asset, bool $detailed = false): array
     {
-        return [
+        $cover = $asset->relationLoaded('photos')
+            ? ($asset->photos->firstWhere('is_cover', true) ?? $asset->photos->first())
+            : null;
+
+        $payload = [
             'id' => $asset->id,
             'company_id' => $asset->company_id,
             'client_id' => $asset->client_id,
@@ -235,6 +239,12 @@ class AssetController extends PlatformController
                 'tenure' => $asset->tenure,
                 'occupancy_status' => $asset->occupancy_status,
             ],
+            'photo_count' => $asset->relationLoaded('photos')
+                ? $asset->photos->count()
+                : $asset->photos()->count(),
+            'cover_photo_url' => $cover
+                ? url("/api/v1/assets/{$asset->id}/photos/{$cover->id}")
+                : null,
             'metadata' => $asset->metadata,
             'address' => [
                 'line_1' => $asset->address_line_1,
@@ -246,5 +256,20 @@ class AssetController extends PlatformController
             'created_at' => optional($asset->created_at)?->toIso8601String(),
             'updated_at' => optional($asset->updated_at)?->toIso8601String(),
         ];
+
+        if ($detailed && $asset->relationLoaded('photos')) {
+            $payload['photos'] = $asset->photos->map(fn ($photo) => [
+                'id' => $photo->id,
+                'caption' => $photo->caption,
+                'is_cover' => (bool) $photo->is_cover,
+                'sort_order' => $photo->sort_order,
+                'original_filename' => $photo->original_filename,
+                'mime_type' => $photo->mime_type,
+                'file_size' => $photo->file_size,
+                'url' => url("/api/v1/assets/{$asset->id}/photos/{$photo->id}"),
+            ])->values()->all();
+        }
+
+        return $payload;
     }
 }

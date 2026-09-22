@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\VoiceCommandController;
 use App\Http\Controllers\Api\V1\AiController as V1AiController;
 use App\Http\Controllers\Api\V1\ApiKeyController as V1ApiKeyController;
 use App\Http\Controllers\Api\V1\AssetController as V1AssetController;
+use App\Http\Controllers\Api\V1\AssetPhotoController as V1AssetPhotoController;
 use App\Http\Controllers\Api\V1\AutomationController as V1AutomationController;
 use App\Http\Controllers\Api\V1\ChecklistController as V1ChecklistController;
 use App\Http\Controllers\Api\V1\CompanyController as V1CompanyController;
@@ -107,6 +108,17 @@ Route::prefix('v1')
         Route::patch('assets/{id}', [V1AssetController::class, 'update'])
             ->middleware('platform.auth:assets.write');
         Route::delete('assets/{id}', [V1AssetController::class, 'destroy'])
+            ->middleware('platform.auth:assets.write');
+
+        Route::get('assets/{assetId}/photos', [V1AssetPhotoController::class, 'index'])
+            ->middleware('platform.auth:assets.read');
+        Route::post('assets/{assetId}/photos', [V1AssetPhotoController::class, 'store'])
+            ->middleware('platform.auth:assets.write');
+        Route::get('assets/{assetId}/photos/{photoId}', [V1AssetPhotoController::class, 'show'])
+            ->middleware('platform.auth:assets.read');
+        Route::patch('assets/{assetId}/photos/{photoId}', [V1AssetPhotoController::class, 'update'])
+            ->middleware('platform.auth:assets.write');
+        Route::delete('assets/{assetId}/photos/{photoId}', [V1AssetPhotoController::class, 'destroy'])
             ->middleware('platform.auth:assets.write');
 
         Route::get('api-keys', [V1ApiKeyController::class, 'index'])

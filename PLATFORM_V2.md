@@ -66,13 +66,14 @@ Optional `trigger_config` filters: `category`, `project_id`, `asset_id`.
 
 ## Property MVP
 
-Extends **Sites** (not a fork) for specialised property work:
+Extends **Sites** (not a fork) for specialised property / estate-agent work:
 
 - Property fields on sites: `property_type`, `bedrooms`, `tenure`, `occupancy_status`
+- **Multiple listing photos** per site (cover + gallery) — UI on Sites, API `/api/v1/assets/{id}/photos`
 - Compliance record extras: `issued_at`, `provider`
 - Canonical `taskit_compliance_types` catalogue (seeded from certificate types)
 - Nav order: Clients → Compliance → Sites
-- Platform API asset payloads include `property` + `client_id`
+- Platform API asset payloads include `property` + `client_id` + `photo_count` / `cover_photo_url`
 - Companies can enable the `property` platform application
 
 ## Auth rules

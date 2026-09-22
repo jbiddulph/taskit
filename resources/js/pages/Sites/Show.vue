@@ -41,6 +41,17 @@ interface SiteDocument {
   download_url: string;
 }
 
+interface SitePhoto {
+  id: number;
+  caption?: string | null;
+  is_cover: boolean;
+  sort_order: number;
+  original_filename: string;
+  mime_type: string;
+  file_size: number;
+  url: string;
+}
+
 interface PendingProposal {
   id: number;
   extracted_data: Record<string, string | null>;
@@ -83,6 +94,8 @@ interface Site {
   compliance_requirements: ComplianceRequirement[];
   unscheduled_compliance_requirements?: ComplianceRequirement[];
   documents: SiteDocument[];
+  photos?: SitePhoto[];
+  cover_photo_url?: string | null;
   inspections: SiteInspection[];
 }
 
@@ -118,6 +131,15 @@ const uploadProjectId = ref<number | ''>(props.projects[0]?.id ?? '');
 const isDraggingFile = ref(false);
 const uploadError = ref<string | null>(null);
 
+const photoUploading = ref(false);
+const photoFiles = ref<File[]>([]);
+const photoCaption = ref('');
+const photoError = ref<string | null>(null);
+const lightboxUrl = ref<string | null>(null);
+
+const acceptedPhotoMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const acceptedPhotoExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+
 const acceptedExtensions = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.webp'];
 const acceptedMimeTypes = [
   'application/pdf',
@@ -128,6 +150,66 @@ const acceptedMimeTypes = [
   'image/webp',
 ];
 const fileAcceptLabel = 'PDF, DOC, DOCX, JPG, PNG, or WebP up to 20MB';
+
+function isAcceptedPhoto(file: File): boolean {
+  const name = file.name.toLowerCase();
+  const hasExtension = acceptedPhotoExtensions.some((ext) => name.endsWith(ext));
+  const hasMime = !file.type || acceptedPhotoMimes.includes(file.type);
+  return hasExtension && hasMime;
+}
+
+function onPhotoFilesChange(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const files = Array.from(input.files ?? []);
+  photoError.value = null;
+  const accepted = files.filter(isAcceptedPhoto);
+  if (accepted.length !== files.length) {
+    photoError.value = 'Only JPG, PNG, WebP, or GIF images up to 10MB.';
+  }
+  photoFiles.value = accepted.slice(0, 10);
+}
+
+function uploadPhotos() {
+  if (!photoFiles.value.length || photoUploading.value) return;
+  photoUploading.value = true;
+  photoError.value = null;
+
+  const form = new FormData();
+  photoFiles.value.forEach((file) => form.append('photos[]', file));
+  if (photoCaption.value.trim()) {
+    form.append('caption', photoCaption.value.trim());
+  }
+
+  router.post(`/sites/${props.site.id}/photos`, form, {
+    forceFormData: true,
+    preserveScroll: true,
+    onFinish: () => {
+      photoUploading.value = false;
+    },
+    onSuccess: () => {
+      photoFiles.value = [];
+      photoCaption.value = '';
+      const input = document.getElementById('site-photo-upload') as HTMLInputElement | null;
+      if (input) input.value = '';
+    },
+    onError: (errors) => {
+      photoError.value = (errors.photos as string) || 'Upload failed.';
+    },
+  });
+}
+
+function setCoverPhoto(photo: SitePhoto) {
+  router.patch(
+    `/sites/${props.site.id}/photos/${photo.id}`,
+    { is_cover: true },
+    { preserveScroll: true },
+  );
+}
+
+function deletePhoto(photo: SitePhoto) {
+  if (!confirm('Remove this photo?')) return;
+  router.delete(`/sites/${props.site.id}/photos/${photo.id}`, { preserveScroll: true });
+}
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -369,6 +451,98 @@ onUnmounted(() => {
             </div>
 
             <OperationsTips context="sites_show" class="mb-8" />
+
+            <section class="mb-8">
+              <h2 :class="sectionTitle" class="mb-1">Property photos</h2>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-xl">
+                Listing and viewing photos for estate agents — front elevation, rooms, and garden. First photo becomes the cover unless you set another.
+              </p>
+
+              <div
+                v-if="site.photos?.length"
+                class="mb-4 grid grid-cols-2 sm:grid-cols-3 gap-3"
+              >
+                <div
+                  v-for="photo in site.photos"
+                  :key="photo.id"
+                  class="group relative overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 aspect-[4/3]"
+                >
+                  <button type="button" class="absolute inset-0 z-0" @click="lightboxUrl = photo.url">
+                    <img :src="photo.url" :alt="photo.caption || photo.original_filename" class="h-full w-full object-cover" loading="lazy" />
+                  </button>
+                  <span
+                    v-if="photo.is_cover"
+                    class="absolute left-2 top-2 z-10 rounded bg-black/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white"
+                  >
+                    Cover
+                  </span>
+                  <div class="absolute inset-x-0 bottom-0 z-10 flex gap-1 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    <button
+                      v-if="!photo.is_cover"
+                      type="button"
+                      class="rounded bg-white/90 px-2 py-1 text-[11px] font-medium text-gray-900"
+                      @click.stop="setCoverPhoto(photo)"
+                    >
+                      Set cover
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded bg-red-600/90 px-2 py-1 text-[11px] font-medium text-white"
+                      @click.stop="deletePhoto(photo)"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div :class="card">
+                <label :class="label" for="site-photo-upload">Add photos</label>
+                <p class="text-xs text-gray-500 mt-1 mb-3">JPG, PNG, WebP, or GIF — up to 10 at a time, 10MB each (max 30 per site).</p>
+                <input
+                  id="site-photo-upload"
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif"
+                  multiple
+                  class="block w-full text-sm text-gray-600 dark:text-gray-300 file:mr-3 file:rounded-md file:border-0 file:bg-gray-900 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white dark:file:bg-white dark:file:text-black"
+                  @change="onPhotoFilesChange"
+                />
+                <input
+                  v-model="photoCaption"
+                  type="text"
+                  maxlength="255"
+                  placeholder="Optional caption for the first photo"
+                  :class="[input, 'mt-3']"
+                />
+                <p v-if="photoFiles.length" class="mt-2 text-xs text-gray-500">
+                  {{ photoFiles.length }} file{{ photoFiles.length === 1 ? '' : 's' }} selected
+                </p>
+                <p v-if="photoError" class="mt-2 text-sm text-red-600">{{ photoError }}</p>
+                <button
+                  type="button"
+                  :class="[btnPrimary, 'mt-3']"
+                  :disabled="!photoFiles.length || photoUploading"
+                  @click="uploadPhotos"
+                >
+                  {{ photoUploading ? 'Uploading…' : 'Upload photos' }}
+                </button>
+              </div>
+            </section>
+
+            <div
+              v-if="lightboxUrl"
+              class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+              @click.self="lightboxUrl = null"
+            >
+              <button
+                type="button"
+                class="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1 text-sm font-medium text-gray-900"
+                @click="lightboxUrl = null"
+              >
+                Close
+              </button>
+              <img :src="lightboxUrl" alt="Property photo" class="max-h-[90vh] max-w-full rounded-lg object-contain" />
+            </div>
 
             <section class="mb-8">
               <h2 :class="sectionTitle" class="mb-1">Certificates & documents for this site</h2>

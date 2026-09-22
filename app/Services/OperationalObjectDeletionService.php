@@ -11,7 +11,7 @@ class OperationalObjectDeletionService
     public function deleteWithDescendants(OperationalObject $object): void
     {
         DB::transaction(function () use ($object) {
-            $object->load(['children', 'documents', 'inspections.photos']);
+            $object->load(['children', 'documents', 'photos', 'inspections.photos']);
 
             foreach ($object->children as $child) {
                 $this->deleteWithDescendants($child);
@@ -27,6 +27,12 @@ class OperationalObjectDeletionService
         foreach ($object->documents as $document) {
             if ($document->file_path && Storage::disk('private')->exists($document->file_path)) {
                 Storage::disk('private')->delete($document->file_path);
+            }
+        }
+
+        foreach ($object->photos as $photo) {
+            if ($photo->file_path && Storage::disk('private')->exists($photo->file_path)) {
+                Storage::disk('private')->delete($photo->file_path);
             }
         }
 

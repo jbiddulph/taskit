@@ -7,6 +7,7 @@ use App\Models\ComplianceRequirement;
 use App\Models\DocumentExtractionProposal;
 use App\Models\OperationalDocument;
 use App\Models\OperationalObject;
+use App\Models\OperationalObjectPhoto;
 use App\Models\Project;
 use App\Services\ComplianceRequirementService;
 use App\Services\InspectionService;
@@ -14,6 +15,7 @@ use App\Services\MapboxService;
 use App\Services\OperationalDocumentDeletionService;
 use App\Services\OperationalLinkedTodoService;
 use App\Services\OperationalObjectDeletionService;
+use App\Services\OperationalObjectPhotoService;
 use App\Support\ComplianceTemplates;
 use App\Support\InspectionTemplates;
 use App\Support\OperationalObjectTypes;
@@ -35,6 +37,7 @@ class OperationalObjectController extends Controller
         protected InspectionService $inspectionService,
         protected OperationalLinkedTodoService $linkedTodoService,
         protected MapboxService $mapboxService,
+        protected OperationalObjectPhotoService $photoService,
     ) {}
 
     public function index(Request $request): Response
@@ -43,7 +46,7 @@ class OperationalObjectController extends Controller
         $clientId = $request->integer('client_id') ?: null;
 
         $objects = OperationalObject::forCompany($user->company_id)
-            ->with(['parent', 'client', 'complianceRequirements.documents', 'complianceRequirements.todos'])
+            ->with(['parent', 'client', 'complianceRequirements.documents', 'complianceRequirements.todos', 'photos'])
             ->withCount('children')
             ->whereNull('parent_id')
             ->when($clientId, fn ($query) => $query->where('client_id', $clientId))
@@ -153,6 +156,7 @@ class OperationalObjectController extends Controller
             'complianceRequirements.documents',
             'createdBy',
             'documents',
+            'photos',
             'inspections.inspector',
         ]);
 
@@ -370,6 +374,99 @@ class OperationalObjectController extends Controller
         return Storage::disk('private')->download($document->file_path, $document->original_filename);
     }
 
+    public function storePhotos(Request $request, OperationalObject $site)
+    {
+        $user = Auth::user();
+        $this->authorizeObject($site, $user);
+
+        $validated = $request->validate([
+            'photos' => 'required|array|min:1|max:10',
+            'photos.*' => 'required|file|mimes:jpeg,jpg,png,webp,gif|max:10240',
+            'caption' => 'nullable|string|max:255',
+            'as_cover' => 'sometimes|boolean',
+        ]);
+
+        $uploaded = 0;
+        $asCover = $request->boolean('as_cover');
+
+        try {
+            foreach ($request->file('photos', []) as $index => $file) {
+                $this->photoService->add(
+                    $site,
+                    $file,
+                    $user,
+                    $index === 0 ? ($validated['caption'] ?? null) : null,
+                    $asCover && $index === 0,
+                );
+                $uploaded++;
+            }
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['photos' => $e->getMessage()]);
+        }
+
+        $label = $uploaded === 1 ? 'photo' : 'photos';
+
+        return back()->with('success', "{$uploaded} {$label} added.");
+    }
+
+    public function showPhoto(OperationalObject $site, OperationalObjectPhoto $photo)
+    {
+        $user = Auth::user();
+        $this->authorizeObject($site, $user);
+
+        if ($photo->operational_object_id !== $site->id) {
+            abort(404);
+        }
+
+        if (! Storage::disk('private')->exists($photo->file_path)) {
+            abort(404);
+        }
+
+        return Storage::disk('private')->response($photo->file_path, $photo->original_filename, [
+            'Content-Type' => $photo->mime_type,
+            'Cache-Control' => 'private, max-age=3600',
+        ]);
+    }
+
+    public function updatePhoto(Request $request, OperationalObject $site, OperationalObjectPhoto $photo)
+    {
+        $user = Auth::user();
+        $this->authorizeObject($site, $user);
+
+        if ($photo->operational_object_id !== $site->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'caption' => 'nullable|string|max:255',
+            'is_cover' => 'sometimes|boolean',
+        ]);
+
+        if (array_key_exists('caption', $validated)) {
+            $this->photoService->updateCaption($photo, $validated['caption']);
+        }
+
+        if ($request->boolean('is_cover')) {
+            $this->photoService->setCover($site, $photo);
+        }
+
+        return back()->with('success', 'Photo updated.');
+    }
+
+    public function destroyPhoto(OperationalObject $site, OperationalObjectPhoto $photo)
+    {
+        $user = Auth::user();
+        $this->authorizeObject($site, $user);
+
+        if ($photo->operational_object_id !== $site->id) {
+            abort(404);
+        }
+
+        $this->photoService->delete($photo);
+
+        return back()->with('success', 'Photo removed.');
+    }
+
     protected function requireCompanyUser()
     {
         $user = Auth::user();
@@ -528,6 +625,10 @@ class OperationalObjectController extends Controller
             ] : null,
             'children_count' => $object->children_count ?? $object->children()->count(),
             'linked_todo_count' => $this->linkedTodoService->countForOperationalObjectTree($object),
+            'photo_count' => $object->relationLoaded('photos')
+                ? $object->photos->count()
+                : $object->photos()->count(),
+            'cover_photo_url' => $this->coverPhotoUrl($object),
             'compliance_counts' => [
                 'overdue' => $trackedRequirements->where('status', ComplianceRequirement::STATUS_OVERDUE)->count(),
                 'due_soon' => $trackedRequirements->where('status', ComplianceRequirement::STATUS_DUE_SOON)->count(),
@@ -535,6 +636,33 @@ class OperationalObjectController extends Controller
                 'missing' => $trackedRequirements->where('status', ComplianceRequirement::STATUS_MISSING)->count(),
             ],
         ];
+    }
+
+    protected function coverPhotoUrl(OperationalObject $object): ?string
+    {
+        $cover = $object->relationLoaded('photos')
+            ? ($object->photos->firstWhere('is_cover', true) ?? $object->photos->first())
+            : $object->photos()->where('is_cover', true)->first() ?? $object->photos()->orderBy('sort_order')->first();
+
+        if (! $cover) {
+            return null;
+        }
+
+        return route('sites.photos.show', [$object->id, $cover->id]);
+    }
+
+    protected function serializePhotos(OperationalObject $object): array
+    {
+        return $object->photos->map(fn (OperationalObjectPhoto $photo) => [
+            'id' => $photo->id,
+            'caption' => $photo->caption,
+            'is_cover' => (bool) $photo->is_cover,
+            'sort_order' => $photo->sort_order,
+            'original_filename' => $photo->original_filename,
+            'mime_type' => $photo->mime_type,
+            'file_size' => $photo->file_size,
+            'url' => route('sites.photos.show', [$object->id, $photo->id]),
+        ])->values()->all();
     }
 
     protected function serializeObjectDetail(OperationalObject $object): array
@@ -600,6 +728,8 @@ class OperationalObjectController extends Controller
                 'extracted_data' => $doc->extracted_data,
                 'download_url' => route('sites.documents.download', [$object->id, $doc->id]),
             ]),
+            'photos' => $this->serializePhotos($object),
+            'cover_photo_url' => $this->coverPhotoUrl($object),
             'inspections' => $object->inspections->take(10)->map(fn ($insp) => [
                 'id' => $insp->id,
                 'label' => $insp->label,
