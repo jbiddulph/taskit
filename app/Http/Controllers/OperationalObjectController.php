@@ -414,16 +414,22 @@ class OperationalObjectController extends Controller
         $user = Auth::user();
         $this->authorizeObject($site, $user);
 
-        if ($photo->operational_object_id !== $site->id) {
+        if ((int) $photo->operational_object_id !== (int) $site->id) {
             abort(404);
         }
 
         if (! Storage::disk('private')->exists($photo->file_path)) {
-            abort(404);
+            abort(404, 'Photo file missing.');
         }
 
-        return Storage::disk('private')->response($photo->file_path, $photo->original_filename, [
-            'Content-Type' => $photo->mime_type,
+        $mime = $photo->mime_type ?: 'image/jpeg';
+        $filename = str_replace(['"', "\r", "\n"], '', $photo->original_filename ?: 'photo.jpg');
+
+        // Stream inline so <img> / lightbox can display (not download).
+        return Storage::disk('private')->response($photo->file_path, $filename, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+            'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => 'private, max-age=3600',
         ]);
     }
@@ -648,7 +654,8 @@ class OperationalObjectController extends Controller
             return null;
         }
 
-        return route('sites.photos.show', [$object->id, $cover->id]);
+        // Relative path so <img> works even when APP_URL differs from the browser host.
+        return "/sites/{$object->id}/photos/{$cover->id}";
     }
 
     protected function serializePhotos(OperationalObject $object): array
@@ -661,7 +668,7 @@ class OperationalObjectController extends Controller
             'original_filename' => $photo->original_filename,
             'mime_type' => $photo->mime_type,
             'file_size' => $photo->file_size,
-            'url' => route('sites.photos.show', [$object->id, $photo->id]),
+            'url' => "/sites/{$object->id}/photos/{$photo->id}",
         ])->values()->all();
     }
 
