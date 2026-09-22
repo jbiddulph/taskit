@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 // import { dashboard } from '@/routes';
-import { type BreadcrumbItem } from '@/types';
 import SeoHead from '@/components/SeoHead.vue';
 import TodoBoard from '../components/TodoBoard.vue';
 import LimitWarnings from '../components/LimitWarnings.vue';
@@ -38,13 +37,6 @@ interface Props {
 defineProps<Props>();
 
 const { t } = useI18n();
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: t('dashboard.title'),
-        href: '/dashboard',
-    },
-];
 
 // Project color state for main tag border
 const currentProjectColor = ref<string | null>(null);
@@ -123,7 +115,7 @@ const handleAiTaskCreated = () => {
         image="/zap_icon.png"
     />
 
-    <AppLayout :breadcrumbs="breadcrumbs" :company="company" :project-color="currentProjectColor">
+    <AppLayout :company="company" :project-color="currentProjectColor">
         <template #dashboardActions>
             <MeetingNotesRecorderButton />
 
