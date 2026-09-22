@@ -87,6 +87,11 @@ class AssetController extends PlatformController
             'postal_code' => 'nullable|string|max:20',
             'country' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
+            'property_type' => 'nullable|string|max:50',
+            'bedrooms' => 'nullable|integer|min:0|max:50',
+            'tenure' => 'nullable|string|max:50',
+            'occupancy_status' => 'nullable|string|max:50',
+            'client_id' => 'nullable|integer|exists:taskit_clients,id',
         ]);
 
         if ($validator->fails()) {
@@ -109,6 +114,7 @@ class AssetController extends PlatformController
         $asset = OperationalObject::create([
             'company_id' => $companyId,
             'workspace_id' => $workspaceId,
+            'client_id' => $request->input('client_id'),
             'type' => $request->input('type'),
             'name' => $request->input('name'),
             'reference' => $request->input('reference'),
@@ -120,6 +126,10 @@ class AssetController extends PlatformController
             'postal_code' => $request->input('postal_code'),
             'country' => $request->input('country'),
             'notes' => $request->input('notes'),
+            'property_type' => $request->input('property_type'),
+            'bedrooms' => $request->input('bedrooms'),
+            'tenure' => $request->input('tenure'),
+            'occupancy_status' => $request->input('occupancy_status', 'occupied'),
             'is_active' => true,
             'created_by_user_id' => $user->id,
         ]);
@@ -150,6 +160,11 @@ class AssetController extends PlatformController
             'postal_code' => 'nullable|string|max:20',
             'country' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
+            'property_type' => 'nullable|string|max:50',
+            'bedrooms' => 'nullable|integer|min:0|max:50',
+            'tenure' => 'nullable|string|max:50',
+            'occupancy_status' => 'nullable|string|max:50',
+            'client_id' => 'nullable|integer|exists:taskit_clients,id',
         ]);
 
         if ($validator->fails()) {
@@ -159,6 +174,7 @@ class AssetController extends PlatformController
         $data = $request->only([
             'type', 'name', 'reference', 'status', 'metadata', 'is_active',
             'address_line_1', 'address_line_2', 'city', 'postal_code', 'country', 'notes',
+            'property_type', 'bedrooms', 'tenure', 'occupancy_status', 'client_id',
         ]);
 
         if ($request->has('workspace_id')) {
@@ -207,11 +223,18 @@ class AssetController extends PlatformController
         return [
             'id' => $asset->id,
             'company_id' => $asset->company_id,
+            'client_id' => $asset->client_id,
             'workspace_id' => $asset->workspace_id,
             'type' => $asset->type,
             'name' => $asset->name,
             'reference' => $asset->reference,
             'status' => $asset->status ?? ($asset->is_active ? 'active' : 'inactive'),
+            'property' => [
+                'property_type' => $asset->property_type,
+                'bedrooms' => $asset->bedrooms,
+                'tenure' => $asset->tenure,
+                'occupancy_status' => $asset->occupancy_status,
+            ],
             'metadata' => $asset->metadata,
             'address' => [
                 'line_1' => $asset->address_line_1,

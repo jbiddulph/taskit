@@ -17,6 +17,9 @@ use App\Services\OperationalObjectDeletionService;
 use App\Support\ComplianceTemplates;
 use App\Support\InspectionTemplates;
 use App\Support\OperationalObjectTypes;
+use App\Support\PropertyOccupancy;
+use App\Support\PropertyTenure;
+use App\Support\PropertyTypes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -54,7 +57,10 @@ class OperationalObjectController extends Controller
             'selectedClientId' => $clientId,
             'complianceSummary' => $this->complianceSummary($user->company_id, $clientId),
             'hasComplianceTemplates' => ComplianceTemplates::hasTemplates($user->company?->industry),
+            'propertyTypeOptions' => PropertyTypes::choices(),
+            'occupancyOptions' => PropertyOccupancy::choices(),
             'company' => $this->companyPayload($user),
+            'hierarchyHint' => 'Company → Clients → Compliance → Sites → Projects → Tasks',
         ]);
     }
 
@@ -64,6 +70,9 @@ class OperationalObjectController extends Controller
 
         return Inertia::render('Sites/Create', [
             'objectTypes' => OperationalObjectTypes::choices(),
+            'propertyTypeOptions' => PropertyTypes::choices(),
+            'tenureOptions' => PropertyTenure::choices(),
+            'occupancyOptions' => PropertyOccupancy::choices(),
             'parentOptions' => $this->parentOptions($user->company_id),
             'clients' => $this->clientOptions($user->company_id),
             'projects' => $this->projectOptions($user->company_id),
@@ -92,6 +101,10 @@ class OperationalObjectController extends Controller
             'longitude' => 'nullable|numeric|between:-180,180',
             'notes' => 'nullable|string|max:2000',
             'client_id' => 'nullable|exists:taskit_clients,id',
+            'property_type' => PropertyTypes::validationRule(),
+            'bedrooms' => 'nullable|integer|min:0|max:50',
+            'tenure' => PropertyTenure::validationRule(),
+            'occupancy_status' => 'nullable|'.PropertyOccupancy::validationRule(),
             'apply_compliance_template' => 'sometimes|boolean',
             'default_project_id' => 'nullable|exists:taskit_projects,id',
         ]);
@@ -109,6 +122,7 @@ class OperationalObjectController extends Controller
         $this->assertClientBelongsToCompany($validated['client_id'] ?? null, $user->company_id);
 
         $validated = $this->ensureCoordinates($validated);
+        $validated['occupancy_status'] = $validated['occupancy_status'] ?? PropertyOccupancy::OCCUPIED;
 
         $object = OperationalObject::create([
             ...collect($validated)->except(['apply_compliance_template', 'default_project_id'])->all(),
@@ -174,6 +188,9 @@ class OperationalObjectController extends Controller
                 'linked_todo_count' => $this->linkedTodoService->countForOperationalObjectTree($site),
             ]),
             'objectTypes' => OperationalObjectTypes::choices(),
+            'propertyTypeOptions' => PropertyTypes::choices(),
+            'tenureOptions' => PropertyTenure::choices(),
+            'occupancyOptions' => PropertyOccupancy::choices(),
             'parentOptions' => $this->parentOptions($user->company_id, $site->id),
             'clients' => $this->clientOptions($user->company_id),
             'company' => $this->companyPayload($user),
@@ -199,6 +216,10 @@ class OperationalObjectController extends Controller
             'longitude' => 'nullable|numeric|between:-180,180',
             'client_id' => 'nullable|exists:taskit_clients,id',
             'notes' => 'nullable|string|max:2000',
+            'property_type' => PropertyTypes::validationRule(),
+            'bedrooms' => 'nullable|integer|min:0|max:50',
+            'tenure' => PropertyTenure::validationRule(),
+            'occupancy_status' => 'nullable|'.PropertyOccupancy::validationRule(),
         ]);
 
         if (! empty($validated['parent_id']) && (int) $validated['parent_id'] === $site->id) {
@@ -299,8 +320,10 @@ class OperationalObjectController extends Controller
 
         $validated = $request->validate([
             'next_due_date' => 'nullable|date',
+            'issued_at' => 'nullable|date',
             'assignee' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:2000',
+            'provider' => 'nullable|string|max:255',
             'project_id' => 'nullable|exists:taskit_projects,id',
             'auto_create_tasks' => 'sometimes|boolean',
         ]);
@@ -488,6 +511,13 @@ class OperationalObjectController extends Controller
             'id' => $object->id,
             'type' => $object->type,
             'type_label' => OperationalObjectTypes::label($object->type),
+            'property_type' => $object->property_type,
+            'property_type_label' => PropertyTypes::label($object->property_type),
+            'bedrooms' => $object->bedrooms,
+            'tenure' => $object->tenure,
+            'tenure_label' => PropertyTenure::label($object->tenure),
+            'occupancy_status' => $object->occupancy_status,
+            'occupancy_label' => PropertyOccupancy::label($object->occupancy_status),
             'name' => $object->name,
             'reference' => $object->reference,
             'full_address' => $object->full_address,
@@ -514,6 +544,13 @@ class OperationalObjectController extends Controller
             'linked_todo_count' => $this->linkedTodoService->countForOperationalObjectTree($object),
             'type' => $object->type,
             'type_label' => OperationalObjectTypes::label($object->type),
+            'property_type' => $object->property_type,
+            'property_type_label' => PropertyTypes::label($object->property_type),
+            'bedrooms' => $object->bedrooms,
+            'tenure' => $object->tenure,
+            'tenure_label' => PropertyTenure::label($object->tenure),
+            'occupancy_status' => $object->occupancy_status,
+            'occupancy_label' => PropertyOccupancy::label($object->occupancy_status),
             'name' => $object->name,
             'reference' => $object->reference,
             'address_line_1' => $object->address_line_1,
@@ -591,9 +628,12 @@ class OperationalObjectController extends Controller
             'next_due_date' => $req->next_due_date?->format('Y-m-d'),
             'next_due_display' => $req->next_due_date?->format('j M Y'),
             'last_completed_at' => $req->last_completed_at?->format('j M Y'),
+            'issued_at' => $req->issued_at?->format('Y-m-d'),
+            'issued_display' => $req->issued_at?->format('j M Y'),
             'assignee' => $openTodo?->assignee ?: $req->assignee,
             'status' => $req->status,
             'notes' => $req->notes,
+            'provider' => $req->provider,
             'auto_create_tasks' => $req->auto_create_tasks,
             'project_id' => $req->project_id,
             'has_open_task' => $openTodo !== null,

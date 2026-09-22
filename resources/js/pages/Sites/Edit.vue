@@ -31,6 +31,10 @@ interface Site {
   latitude?: number;
   longitude?: number;
   notes?: string;
+  property_type?: string | null;
+  bedrooms?: number | null;
+  tenure?: string | null;
+  occupancy_status?: string | null;
   children_count?: number;
   linked_todo_count?: number;
 }
@@ -38,6 +42,9 @@ interface Site {
 interface Props {
   site: Site;
   objectTypes: Option[];
+  propertyTypeOptions?: Option[];
+  tenureOptions?: Option[];
+  occupancyOptions?: Option[];
   parentOptions: ParentOption[];
   clients?: { id: number; name: string }[];
   company?: {
@@ -65,6 +72,10 @@ const form = useForm({
   latitude: props.site.latitude ?? '',
   longitude: props.site.longitude ?? '',
   notes: props.site.notes ?? '',
+  property_type: props.site.property_type ?? '',
+  bedrooms: props.site.bedrooms ?? '',
+  tenure: props.site.tenure ?? '',
+  occupancy_status: props.site.occupancy_status ?? 'occupied',
 });
 
 const submit = () => {
@@ -72,6 +83,9 @@ const submit = () => {
     ...data,
     parent_id: data.parent_id || null,
     client_id: data.client_id || null,
+    property_type: data.property_type || null,
+    tenure: data.tenure || null,
+    bedrooms: data.bedrooms === '' ? null : Number(data.bedrooms),
     latitude: data.latitude === '' ? null : Number(data.latitude),
     longitude: data.longitude === '' ? null : Number(data.longitude),
   })).put(`/sites/${props.site.id}`);
@@ -133,6 +147,39 @@ const deleteSite = () => {
                   <option value="">No client</option>
                   <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
                 </select>
+              </div>
+
+              <div
+                v-if="['property', 'building', 'unit', 'site'].includes(form.type)"
+                class="rounded-lg border border-border p-4 space-y-4"
+              >
+                <p class="text-sm font-medium">Property details</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label :class="label">Property type</label>
+                    <select v-model="form.property_type" :class="select">
+                      <option value="">Select…</option>
+                      <option v-for="option in propertyTypeOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label :class="label">Bedrooms</label>
+                    <input v-model="form.bedrooms" type="number" min="0" max="50" :class="input" />
+                  </div>
+                  <div>
+                    <label :class="label">Tenure</label>
+                    <select v-model="form.tenure" :class="select">
+                      <option value="">Select…</option>
+                      <option v-for="option in tenureOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label :class="label">Occupancy</label>
+                    <select v-model="form.occupancy_status" :class="select">
+                      <option v-for="option in occupancyOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                    </select>
+                  </div>
+                </div>
               </div>
 
               <div v-if="parentOptions.length">

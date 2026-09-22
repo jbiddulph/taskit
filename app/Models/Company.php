@@ -339,6 +339,27 @@ class Company extends Model
         return in_array($this->subscription_type, self::sitesAccessPlans(), true);
     }
 
+    public function hasPlatformApplication(string $slug): bool
+    {
+        return $this->platformApplications()
+            ->where('enabled', true)
+            ->whereHas('application', fn ($q) => $q->where('slug', $slug))
+            ->exists();
+    }
+
+    public function enablePlatformApplication(string $slug): CompanyApplication
+    {
+        $application = PlatformApplication::query()->where('slug', $slug)->firstOrFail();
+
+        return CompanyApplication::query()->updateOrCreate(
+            [
+                'company_id' => $this->id,
+                'application_id' => $application->id,
+            ],
+            ['enabled' => true]
+        );
+    }
+
     /**
      * Check if company is near member limit (at warning threshold)
      */

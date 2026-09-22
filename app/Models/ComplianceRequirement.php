@@ -33,15 +33,18 @@ class ComplianceRequirement extends Model
         'lead_time_days',
         'next_due_date',
         'last_completed_at',
+        'issued_at',
         'assignee',
         'status',
         'notes',
+        'provider',
         'auto_create_tasks',
     ];
 
     protected $casts = [
         'next_due_date' => 'date',
         'last_completed_at' => 'date',
+        'issued_at' => 'date',
         'lead_time_days' => 'integer',
         'auto_create_tasks' => 'boolean',
     ];

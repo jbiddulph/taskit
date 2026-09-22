@@ -18,6 +18,9 @@ interface Site {
   id: number;
   type: string;
   type_label: string;
+  property_type_label?: string;
+  bedrooms?: number | null;
+  occupancy_label?: string;
   name: string;
   reference?: string;
   full_address: string;
@@ -102,7 +105,7 @@ function deleteSite(site: Site) {
                 </div>
                 <h1 class="text-2xl font-semibold">Sites & Assets</h1>
                 <p class="text-gray-600 dark:text-gray-400 mt-1">
-                  Your properties and assets — open a site to manage its certificates, checklist, and inspections
+                  Company → Clients → Compliance → Sites → Projects → Tasks
                 </p>
               </div>
               <div class="flex flex-wrap gap-2">
@@ -129,15 +132,18 @@ function deleteSite(site: Site) {
             </div>
 
             <div class="mb-6 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20 p-4">
-              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Sites vs Compliance — what's the difference?</p>
+              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">How the hierarchy fits</p>
               <ul class="text-sm text-gray-700 dark:text-gray-300 space-y-1.5 list-disc pl-5">
                 <li>
-                  <span class="font-medium">Sites</span> — one page per property. Upload certificates, run inspections, and set due dates for that location.
+                  <span class="font-medium">Clients</span> — who you work for.
                 </li>
                 <li>
                   <span class="font-medium">Compliance</span> —
-                  <Link href="/compliance" class="underline hover:no-underline">company-wide overview</Link>
-                  across all sites: what's overdue, upload for any site, and track renewals in one place.
+                  <Link href="/compliance" class="underline hover:no-underline">portfolio overview</Link>
+                  across a client's sites (overdue, due soon, renewals).
+                </li>
+                <li>
+                  <span class="font-medium">Sites</span> — each property/asset; certificates, inspections, and linked projects/tasks live here.
                 </li>
               </ul>
             </div>
@@ -201,6 +207,14 @@ function deleteSite(site: Site) {
                 </div>
                 <p v-if="site.full_address" class="text-sm text-gray-600 dark:text-gray-400 mb-3">
                   <Link :href="`/sites/${site.id}`">{{ site.full_address }}</Link>
+                </p>
+                <p
+                  v-if="site.property_type_label || site.bedrooms != null || site.occupancy_label"
+                  class="text-xs text-gray-500 mb-2 flex flex-wrap gap-x-3 gap-y-1"
+                >
+                  <span v-if="site.property_type_label">{{ site.property_type_label }}</span>
+                  <span v-if="site.bedrooms != null">{{ site.bedrooms }} bed</span>
+                  <span v-if="site.occupancy_label">{{ site.occupancy_label }}</span>
                 </p>
                 <p v-if="site.client" class="text-xs text-gray-500 mb-2">
                   Client:
