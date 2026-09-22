@@ -194,6 +194,52 @@ export class ZapTaskClient {
     list: () => this.get<{ users: Array<Record<string, unknown>> }>('/api/v1/users'),
   };
 
+  readonly automations = {
+    list: () => this.get<{ automations: Array<Record<string, unknown>> }>('/api/v1/automations'),
+    create: (input: Record<string, unknown>) => this.post('/api/v1/automations', input),
+    update: (id: number, input: Record<string, unknown>) =>
+      this.patch(`/api/v1/automations/${id}`, input),
+    delete: (id: number) => this.delete<null>(`/api/v1/automations/${id}`),
+  };
+
+  /**
+   * Platform AI for specialised apps — always preview first, then confirm to write.
+   */
+  readonly ai = {
+    propose: (input: {
+      message: string;
+      context?: string;
+      project_id?: number;
+    }) =>
+      this.post<{
+        intent: string;
+        task?: Record<string, unknown> | null;
+        preview?: Record<string, unknown>;
+        confidence?: string;
+        requires_confirmation?: boolean;
+      }>('/api/v1/ai', input),
+    confirm: (input: {
+      confirm: true;
+      message?: string;
+      project_id?: number;
+      task: {
+        title: string;
+        assigned_to?: string;
+        asset_id?: number;
+        due_date?: string;
+        category?: string;
+        priority?: string;
+        description?: string;
+        project_id?: number;
+      };
+    }) =>
+      this.post<{
+        intent: string;
+        message?: string;
+        task: Record<string, unknown>;
+      }>('/api/v1/ai', input),
+  };
+
   readonly files = {
     // Attachments remain on the session SPA API; specialised apps can use the SDK base for /api/todos/{id}/attachments
     listForTask: (todoId: number) => this.get(`/api/todos/${todoId}/attachments`),

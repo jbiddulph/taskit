@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TodayController;
 use App\Http\Controllers\Api\VoiceCommandController;
+use App\Http\Controllers\Api\V1\AiController as V1AiController;
 use App\Http\Controllers\Api\V1\ApiKeyController as V1ApiKeyController;
 use App\Http\Controllers\Api\V1\AssetController as V1AssetController;
 use App\Http\Controllers\Api\V1\AutomationController as V1AutomationController;
@@ -123,6 +124,10 @@ Route::prefix('v1')
             ->middleware('platform.auth:automations.write');
         Route::delete('automations/{id}', [V1AutomationController::class, 'destroy'])
             ->middleware('platform.auth:automations.write');
+
+        // AI as a service for specialised apps (preview → confirm)
+        Route::post('ai', [V1AiController::class, 'handle'])
+            ->middleware('platform.auth:ai.write');
     });
 
 /*

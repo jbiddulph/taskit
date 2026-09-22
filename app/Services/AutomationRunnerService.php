@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Activity;
 use App\Models\Automation;
+use App\Models\ComplianceRequirement;
 use App\Models\Notification;
 use App\Models\Project;
 use App\Models\ProjectGroup;
@@ -14,6 +15,21 @@ use Illuminate\Support\Facades\Log;
 
 class AutomationRunnerService
 {
+    /** Prevent nested dispatch while an action is creating/updating todos. */
+    private static bool $dispatching = false;
+
+    /**
+     * Run scheduled triggers: date_reached, task_overdue, compliance_expiring.
+     */
+    public function runScheduledAutomations(?Carbon $date = null): int
+    {
+        $date ??= Carbon::today();
+
+        return $this->runDateReachedAutomations($date)
+            + $this->runTaskOverdueAutomations($date)
+            + $this->runComplianceExpiringAutomations($date);
+    }
+
     /**
      * Run date_reached automations that create reminder/tasks for a given date.
      */
@@ -48,10 +64,135 @@ class AutomationRunnerService
     }
 
     /**
+     * Fire task_overdue for incomplete todos past due (once per automation per day).
+     */
+    public function runTaskOverdueAutomations(?Carbon $date = null): int
+    {
+        $date ??= Carbon::today();
+        $ran = 0;
+
+        $automations = Automation::query()
+            ->enabled()
+            ->ofTrigger(Automation::TRIGGER_TASK_OVERDUE)
+            ->get();
+
+        foreach ($automations as $automation) {
+            if ($automation->last_run_at && $automation->last_run_at->isSameDay($date)) {
+                continue;
+            }
+
+            $overdue = Todo::query()
+                ->forCompany($automation->company_id)
+                ->whereDate('due_date', '<', $date)
+                ->whereNotIn('status', ['done', 'completed', 'cancelled'])
+                ->whereNull('parent_task_id')
+                ->limit(50)
+                ->get();
+
+            foreach ($overdue as $todo) {
+                $context = [
+                    'todo_id' => $todo->id,
+                    'task_title' => $todo->title,
+                    'asset_id' => $todo->operational_object_id,
+                    'project_id' => $todo->project_id,
+                    'category' => $todo->category,
+                    'due_date' => optional($todo->due_date)?->toDateString(),
+                    'date' => $date->toDateString(),
+                ];
+
+                if (! $this->matchesTriggerFilters($automation, $context)) {
+                    continue;
+                }
+
+                try {
+                    $this->executeAction($automation, $context);
+                    $ran++;
+                } catch (\Throwable $e) {
+                    Log::error('Overdue automation failed', [
+                        'automation_id' => $automation->id,
+                        'todo_id' => $todo->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            if ($overdue->isNotEmpty()) {
+                $automation->forceFill(['last_run_at' => now()])->save();
+            }
+        }
+
+        return $ran;
+    }
+
+    /**
+     * Fire compliance_expiring for requirements due within configured days.
+     */
+    public function runComplianceExpiringAutomations(?Carbon $date = null): int
+    {
+        $date ??= Carbon::today();
+        $ran = 0;
+
+        $automations = Automation::query()
+            ->enabled()
+            ->ofTrigger(Automation::TRIGGER_COMPLIANCE_EXPIRING)
+            ->get();
+
+        foreach ($automations as $automation) {
+            if ($automation->last_run_at && $automation->last_run_at->isSameDay($date)) {
+                continue;
+            }
+
+            $daysBefore = (int) ($automation->trigger_config['days_before'] ?? 30);
+            $windowEnd = $date->copy()->addDays($daysBefore);
+
+            $requirements = ComplianceRequirement::query()
+                ->forCompany($automation->company_id)
+                ->whereNotNull('next_due_date')
+                ->whereDate('next_due_date', '>=', $date)
+                ->whereDate('next_due_date', '<=', $windowEnd)
+                ->limit(50)
+                ->get();
+
+            foreach ($requirements as $requirement) {
+                $context = [
+                    'compliance_requirement_id' => $requirement->id,
+                    'task_title' => $requirement->label ?? $requirement->requirement_type,
+                    'asset_id' => $requirement->operational_object_id,
+                    'project_id' => $requirement->project_id,
+                    'category' => $requirement->requirement_type,
+                    'due_date' => optional($requirement->next_due_date)?->toDateString(),
+                    'date' => $date->toDateString(),
+                ];
+
+                try {
+                    $this->executeAction($automation, $context);
+                    $ran++;
+                } catch (\Throwable $e) {
+                    Log::error('Compliance expiring automation failed', [
+                        'automation_id' => $automation->id,
+                        'requirement_id' => $requirement->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            if ($requirements->isNotEmpty()) {
+                $automation->forceFill(['last_run_at' => now()])->save();
+            }
+        }
+
+        return $ran;
+    }
+
+    /**
      * Dispatch event-based automations (task_completed, task_created, etc.).
      */
     public function dispatch(string $triggerType, int $companyId, array $context = []): int
     {
+        if (self::$dispatching) {
+            return 0;
+        }
+
         $ran = 0;
 
         $automations = Automation::query()
@@ -61,7 +202,12 @@ class AutomationRunnerService
             ->get();
 
         foreach ($automations as $automation) {
+            if (! $this->matchesTriggerFilters($automation, $context)) {
+                continue;
+            }
+
             try {
+                self::$dispatching = true;
                 $this->executeAction($automation, $context);
                 $automation->forceFill(['last_run_at' => now()])->save();
                 $ran++;
@@ -70,10 +216,36 @@ class AutomationRunnerService
                     'automation_id' => $automation->id,
                     'error' => $e->getMessage(),
                 ]);
+            } finally {
+                self::$dispatching = false;
             }
         }
 
         return $ran;
+    }
+
+    /**
+     * Optional trigger_config filters: category, project_id, asset_id.
+     */
+    private function matchesTriggerFilters(Automation $automation, array $context): bool
+    {
+        $config = $automation->trigger_config ?? [];
+
+        if (! empty($config['category']) && ($context['category'] ?? null) !== $config['category']) {
+            return false;
+        }
+
+        if (! empty($config['project_id'])
+            && (int) ($context['project_id'] ?? 0) !== (int) $config['project_id']) {
+            return false;
+        }
+
+        if (! empty($config['asset_id'])
+            && (int) ($context['asset_id'] ?? 0) !== (int) $config['asset_id']) {
+            return false;
+        }
+
+        return true;
     }
 
     private function shouldRunDateReached(Automation $automation, Carbon $date): bool

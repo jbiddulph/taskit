@@ -7,6 +7,7 @@ use App\Http\Controllers\Settings\DashboardController;
 use App\Http\Controllers\Settings\ExportImportController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\PlatformApiKeyController;
+use App\Http\Controllers\Settings\PlatformApplicationController;
 use App\Http\Controllers\Settings\PlatformController;
 use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Auth;
@@ -55,6 +56,12 @@ Route::middleware(['auth', 'subscription.access'])->group(function () {
     Route::delete('settings/automations/{automation}', [AutomationSettingsController::class, 'destroy'])
         ->middleware('throttle:30,1')
         ->name('automations.destroy');
+
+    Route::get('settings/platform-applications', [PlatformApplicationController::class, 'index'])
+        ->name('platform-applications.settings');
+    Route::put('settings/platform-applications/{slug}', [PlatformApplicationController::class, 'update'])
+        ->middleware('throttle:30,1')
+        ->name('platform-applications.update');
 
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/Appearance');

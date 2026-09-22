@@ -44,6 +44,7 @@ class ApiKey extends Model
         'documents.write',
         'automations.read',
         'automations.write',
+        'ai.write',
     ];
 
     public function company(): BelongsTo
