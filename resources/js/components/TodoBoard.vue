@@ -3885,6 +3885,7 @@ onMounted(async () => {
   window.addEventListener('openTodoById', handleOpenTodoById);
   window.addEventListener('meetingNotesTodosCreated', handleMeetingNotesTodosCreated);
   window.addEventListener('voiceCommandApplied', handleVoiceCommandApplied);
+  window.addEventListener('todos:refresh', loadTodos);
 });
 
 // Cleanup on unmount
@@ -3903,6 +3904,7 @@ onUnmounted(() => {
   window.removeEventListener('openTodoById', handleOpenTodoById);
   window.removeEventListener('meetingNotesTodosCreated', handleMeetingNotesTodosCreated);
   window.removeEventListener('voiceCommandApplied', handleVoiceCommandApplied);
+  window.removeEventListener('todos:refresh', loadTodos);
 });
 
 </script>

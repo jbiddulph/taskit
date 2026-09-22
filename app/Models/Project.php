@@ -23,6 +23,7 @@ class Project extends Model
         'viewing_order',
         'client_id',
         'company_id',
+        'workspace_id',
     ];
 
     protected $casts = [
@@ -35,6 +36,11 @@ class Project extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
     }
 
     /**

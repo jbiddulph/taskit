@@ -105,6 +105,26 @@ class Company extends Model
         return $this->hasMany(ComplianceRequirement::class);
     }
 
+    public function workspaces(): HasMany
+    {
+        return $this->hasMany(Workspace::class);
+    }
+
+    public function apiKeys(): HasMany
+    {
+        return $this->hasMany(ApiKey::class);
+    }
+
+    public function automations(): HasMany
+    {
+        return $this->hasMany(Automation::class);
+    }
+
+    public function platformApplications(): HasMany
+    {
+        return $this->hasMany(CompanyApplication::class);
+    }
+
     /**
      * Get visible projects based on subscription tier
      */

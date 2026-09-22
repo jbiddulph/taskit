@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ActivityController;
+use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\ExtensionController;
 use App\Http\Controllers\Api\MapboxController;
 use App\Http\Controllers\Api\MeetingNoteProposalController;
@@ -17,6 +18,15 @@ use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TodayController;
 use App\Http\Controllers\Api\VoiceCommandController;
+use App\Http\Controllers\Api\V1\ApiKeyController as V1ApiKeyController;
+use App\Http\Controllers\Api\V1\AssetController as V1AssetController;
+use App\Http\Controllers\Api\V1\AutomationController as V1AutomationController;
+use App\Http\Controllers\Api\V1\ChecklistController as V1ChecklistController;
+use App\Http\Controllers\Api\V1\CompanyController as V1CompanyController;
+use App\Http\Controllers\Api\V1\ProjectController as V1ProjectController;
+use App\Http\Controllers\Api\V1\TaskController as V1TaskController;
+use App\Http\Controllers\Api\V1\UserController as V1UserController;
+use App\Http\Controllers\Api\V1\WorkspaceController as V1WorkspaceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -34,6 +44,86 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+/*
+|--------------------------------------------------------------------------
+| ZapTask Platform API v1
+|--------------------------------------------------------------------------
+|
+| Authenticated via session, Sanctum PAT, or company API key (zt_live_*).
+| Company scope is derived from credentials — never from client-supplied IDs.
+|
+*/
+Route::prefix('v1')
+    ->middleware(['api.rate.limit:api,120,1'])
+    ->group(function () {
+        Route::get('companies/{id}', [V1CompanyController::class, 'show'])
+            ->middleware('platform.auth:users.read');
+
+        Route::get('users', [V1UserController::class, 'index'])
+            ->middleware('platform.auth:users.read');
+
+        Route::get('workspaces', [V1WorkspaceController::class, 'index'])
+            ->middleware('platform.auth:workspaces.read');
+        Route::post('workspaces', [V1WorkspaceController::class, 'store'])
+            ->middleware('platform.auth:workspaces.write');
+        Route::get('workspaces/{id}', [V1WorkspaceController::class, 'show'])
+            ->middleware('platform.auth:workspaces.read');
+        Route::patch('workspaces/{id}', [V1WorkspaceController::class, 'update'])
+            ->middleware('platform.auth:workspaces.write');
+        Route::delete('workspaces/{id}', [V1WorkspaceController::class, 'destroy'])
+            ->middleware('platform.auth:workspaces.write');
+
+        Route::get('projects', [V1ProjectController::class, 'index'])
+            ->middleware('platform.auth:projects.read');
+
+        Route::get('tasks', [V1TaskController::class, 'index'])
+            ->middleware('platform.auth:tasks.read');
+        Route::post('tasks', [V1TaskController::class, 'store'])
+            ->middleware('platform.auth:tasks.write');
+        Route::get('tasks/{id}', [V1TaskController::class, 'show'])
+            ->middleware('platform.auth:tasks.read');
+        Route::patch('tasks/{id}', [V1TaskController::class, 'update'])
+            ->middleware('platform.auth:tasks.write');
+        Route::delete('tasks/{id}', [V1TaskController::class, 'destroy'])
+            ->middleware('platform.auth:tasks.write');
+
+        Route::get('tasks/{taskId}/checklist', [V1ChecklistController::class, 'index'])
+            ->middleware('platform.auth:tasks.read');
+        Route::post('tasks/{taskId}/checklist', [V1ChecklistController::class, 'store'])
+            ->middleware('platform.auth:tasks.write');
+        Route::patch('tasks/{taskId}/checklist/{itemId}', [V1ChecklistController::class, 'update'])
+            ->middleware('platform.auth:tasks.write');
+        Route::delete('tasks/{taskId}/checklist/{itemId}', [V1ChecklistController::class, 'destroy'])
+            ->middleware('platform.auth:tasks.write');
+
+        Route::get('assets', [V1AssetController::class, 'index'])
+            ->middleware('platform.auth:assets.read');
+        Route::post('assets', [V1AssetController::class, 'store'])
+            ->middleware('platform.auth:assets.write');
+        Route::get('assets/{id}', [V1AssetController::class, 'show'])
+            ->middleware('platform.auth:assets.read');
+        Route::patch('assets/{id}', [V1AssetController::class, 'update'])
+            ->middleware('platform.auth:assets.write');
+        Route::delete('assets/{id}', [V1AssetController::class, 'destroy'])
+            ->middleware('platform.auth:assets.write');
+
+        Route::get('api-keys', [V1ApiKeyController::class, 'index'])
+            ->middleware('platform.auth');
+        Route::post('api-keys', [V1ApiKeyController::class, 'store'])
+            ->middleware('platform.auth');
+        Route::delete('api-keys/{id}', [V1ApiKeyController::class, 'destroy'])
+            ->middleware('platform.auth');
+
+        Route::get('automations', [V1AutomationController::class, 'index'])
+            ->middleware('platform.auth:automations.read');
+        Route::post('automations', [V1AutomationController::class, 'store'])
+            ->middleware('platform.auth:automations.write');
+        Route::patch('automations/{id}', [V1AutomationController::class, 'update'])
+            ->middleware('platform.auth:automations.write');
+        Route::delete('automations/{id}', [V1AutomationController::class, 'destroy'])
+            ->middleware('platform.auth:automations.write');
+    });
 
 /*
 |--------------------------------------------------------------------------
@@ -137,6 +227,10 @@ Route::middleware(['web', 'auth', 'subscription.access', 'api.rate.limit:api,60,
     // Meeting notes
     Route::post('meeting-notes', [MeetingNotesController::class, 'store']);
     Route::post('voice-commands/process', [VoiceCommandController::class, 'process']);
+
+    // AI gateway — structured proposals only; confirm required to mutate
+    Route::post('ai', [AiController::class, 'handle']);
+
     Route::get('today/summary', [TodayController::class, 'summary']);
     Route::get('meeting-notes/proposals/pending', [MeetingNoteProposalController::class, 'pending']);
     Route::get('meeting-notes/proposals/{proposal}', [MeetingNoteProposalController::class, 'show']);

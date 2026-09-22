@@ -6,6 +6,7 @@ import SeoHead from '@/components/SeoHead.vue';
 import TodoBoard from '../components/TodoBoard.vue';
 import LimitWarnings from '../components/LimitWarnings.vue';
 import ActivityFeed from '../components/ActivityFeed.vue';
+import AiCreateBox from '../components/AiCreateBox.vue';
 import MeetingNotesRecorderButton from '../components/MeetingNotesRecorderButton.vue';
 import VoiceDeleteConfirmDialog from '../components/VoiceDeleteConfirmDialog.vue';
 import VoiceConfirmTaskDialog from '../components/VoiceConfirmTaskDialog.vue';
@@ -91,6 +92,10 @@ const handleProjectChange = (project: any) => {
 
 const toggleSelectMode = () => {
     isSelectMode.value = !isSelectMode.value;
+};
+
+const handleAiTaskCreated = () => {
+    window.dispatchEvent(new CustomEvent('todos:refresh'));
 };
 </script>
 
@@ -200,13 +205,15 @@ const toggleSelectMode = () => {
         <VoiceConfirmTaskDialog />
         
         <div class="flex h-full flex-1 flex-col gap-2 overflow-x-auto rounded-xl p-2">
+            <AiCreateBox class="shrink-0" @created="handleAiTaskCreated" />
+
             <div :class="[
                 'grid gap-2 h-full min-h-0',
                 showActivityFeed ? 'grid-cols-1 lg:grid-cols-4' : 'grid-cols-1'
             ]">
                 <!-- Main Todo Board -->
                 <div :class="[showActivityFeed ? 'lg:col-span-3' : 'col-span-1', 'h-full min-h-0']">
-                    <TodoBoard 
+                    <TodoBoard
                         @project-changed="handleProjectChange" 
                         :show-activity-feed="showActivityFeed"
                         :show-calendar="showCalendar"
