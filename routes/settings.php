@@ -1,11 +1,15 @@
 <?php
 
 use App\Http\Controllers\Settings\ApiTokenController;
+use App\Http\Controllers\Settings\AutomationSettingsController;
 use App\Http\Controllers\Settings\CompanyController;
 use App\Http\Controllers\Settings\DashboardController;
 use App\Http\Controllers\Settings\ExportImportController;
 use App\Http\Controllers\Settings\PasswordController;
+use App\Http\Controllers\Settings\PlatformApiKeyController;
+use App\Http\Controllers\Settings\PlatformController;
 use App\Http\Controllers\Settings\ProfileController;
+use App\Http\Controllers\Settings\WorkspaceController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -30,6 +34,42 @@ Route::middleware(['auth', 'subscription.access'])->group(function () {
     Route::delete('settings/api-tokens/{tokenId}', [ApiTokenController::class, 'destroy'])
         ->middleware('throttle:20,1')
         ->name('api-tokens.destroy');
+
+    // Platform v2 — workspaces, API keys, automations
+    Route::get('settings/platform', [PlatformController::class, 'index'])->name('platform.settings');
+
+    Route::get('settings/workspaces', [WorkspaceController::class, 'index'])->name('workspaces.settings');
+    Route::post('settings/workspaces', [WorkspaceController::class, 'store'])
+        ->middleware('throttle:30,1')
+        ->name('workspaces.store');
+    Route::post('settings/workspaces/switch', [WorkspaceController::class, 'switch'])
+        ->middleware('throttle:60,1')
+        ->name('workspaces.switch');
+    Route::put('settings/workspaces/{workspace}', [WorkspaceController::class, 'update'])
+        ->middleware('throttle:30,1')
+        ->name('workspaces.update');
+    Route::delete('settings/workspaces/{workspace}', [WorkspaceController::class, 'destroy'])
+        ->middleware('throttle:30,1')
+        ->name('workspaces.destroy');
+
+    Route::get('settings/platform-api-keys', [PlatformApiKeyController::class, 'index'])->name('platform-api-keys.settings');
+    Route::post('settings/platform-api-keys', [PlatformApiKeyController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('platform-api-keys.store');
+    Route::delete('settings/platform-api-keys/{apiKeyId}', [PlatformApiKeyController::class, 'destroy'])
+        ->middleware('throttle:20,1')
+        ->name('platform-api-keys.destroy');
+
+    Route::get('settings/automations', [AutomationSettingsController::class, 'index'])->name('automations.settings');
+    Route::post('settings/automations', [AutomationSettingsController::class, 'store'])
+        ->middleware('throttle:30,1')
+        ->name('automations.store');
+    Route::put('settings/automations/{automation}', [AutomationSettingsController::class, 'update'])
+        ->middleware('throttle:30,1')
+        ->name('automations.update');
+    Route::delete('settings/automations/{automation}', [AutomationSettingsController::class, 'destroy'])
+        ->middleware('throttle:30,1')
+        ->name('automations.destroy');
 
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/Appearance');

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import NavProjects from '@/components/NavProjects.vue';
 import NavUser from '@/components/NavUser.vue';
+import WorkspaceSwitcher from '@/components/WorkspaceSwitcher.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuItem } from '@/components/ui/sidebar';
 // import { dashboard } from '@/routes';
 import { Link } from '@inertiajs/vue3';
@@ -17,6 +18,7 @@ import AppLogo from './AppLogo.vue';
                     </Link>
                 </SidebarMenuItem>
             </SidebarMenu>
+            <WorkspaceSwitcher />
         </SidebarHeader>
 
         <SidebarContent>

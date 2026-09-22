@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\CurrentWorkspace;
 use App\Support\Industries;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
@@ -53,7 +54,12 @@ class HandleInertiaRequests extends Middleware
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
         $user = $request->user();
-        $companyIndustry = $user?->company?->industry ?? Industries::default();
+        if ($user) {
+            $user->loadMissing('company');
+        }
+        $company = $user?->company;
+        $companyIndustry = $company?->industry ?? Industries::default();
+        $currentWorkspace = $user && $company ? CurrentWorkspace::resolve($request) : null;
 
         return [
             ...parent::share($request),
@@ -61,14 +67,23 @@ class HandleInertiaRequests extends Middleware
             'isSubdomain' => (bool) $request->attributes->get('isSubdomain', false),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
-                'user' => $user ? $user->load('company') : null,
+                'user' => $user,
             ],
             'companyIndustry' => $companyIndustry,
             'todoTypeOptions' => Industries::typeOptionsFor($companyIndustry),
             'todoTypeIcons' => Industries::typeIconMap(),
             'industries' => Industries::choices(),
             'features' => [
-                'sites' => (bool) ($user?->company?->canAccessSites()),
+                'sites' => (bool) ($company?->canAccessSites()),
+            ],
+            'platform' => [
+                'workspaces' => $company ? CurrentWorkspace::listForShare($company) : [],
+                'currentWorkspaceId' => $currentWorkspace?->id,
+            ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'plainTextToken' => fn () => $request->session()->get('plainTextToken'),
+                'plainTextPlatformKey' => fn () => $request->session()->get('plainTextPlatformKey'),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

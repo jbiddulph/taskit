@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
 import { todoApi, type Project } from '@/services/todoApi';
 import { realtimeService } from '@/services/realtimeService';
@@ -14,6 +14,14 @@ const { selectedClientId, setClientId } = useClientStore();
 const { isMobile, setOpenMobile } = useSidebar();
 const todosLoaded = ref(false);
 const page = usePage();
+
+const currentWorkspaceId = computed(() => (page.props as any).platform?.currentWorkspaceId ?? null);
+
+watch(currentWorkspaceId, async (next, prev) => {
+  if (next === prev) return;
+  await loadProjects();
+  window.dispatchEvent(new CustomEvent('workspaceChanged', { detail: { workspaceId: next } }));
+});
 
 // Access user data from page props
 const user = computed(() => {
