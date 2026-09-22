@@ -52,7 +52,7 @@ const cards = computed(() => [
       <div class="space-y-8">
         <HeadingSmall
           title="ZapTask Platform"
-          description="API access and automations on top of Company → Clients → Projects → Boards → Tasks."
+          description="API access and automations on top of Company → Clients → Compliance → Sites → Projects → Tasks."
         />
 
         <p v-if="flashSuccess" class="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-900 dark:bg-green-950/40 dark:text-green-200">

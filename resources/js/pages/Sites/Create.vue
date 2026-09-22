@@ -24,6 +24,9 @@ interface ProjectOption {
 
 interface Props {
   objectTypes: Option[];
+  propertyTypeOptions?: Option[];
+  tenureOptions?: Option[];
+  occupancyOptions?: Option[];
   parentOptions: ParentOption[];
   clients?: { id: number; name: string }[];
   projects: ProjectOption[];
@@ -55,6 +58,10 @@ const form = useForm({
   latitude: '' as string | number,
   longitude: '' as string | number,
   notes: '',
+  property_type: '',
+  bedrooms: '' as string | number,
+  tenure: '',
+  occupancy_status: 'occupied',
   apply_compliance_template: true,
   default_project_id: '' as string | number,
 });
@@ -65,6 +72,9 @@ const submit = () => {
     parent_id: data.parent_id || null,
     client_id: data.client_id || null,
     default_project_id: data.default_project_id || null,
+    property_type: data.property_type || null,
+    tenure: data.tenure || null,
+    bedrooms: data.bedrooms === '' ? null : Number(data.bedrooms),
     latitude: data.latitude === '' ? null : Number(data.latitude),
     longitude: data.longitude === '' ? null : Number(data.longitude),
   })).post('/sites');
@@ -85,7 +95,9 @@ const submit = () => {
                 Back to sites
               </Link>
               <h1 class="text-2xl font-semibold">Add site</h1>
-              <p class="text-gray-600 dark:text-gray-400 mt-1">Add a property, building, or asset to track compliance.</p>
+              <p class="text-gray-600 dark:text-gray-400 mt-1">
+                Add a property under a client. Compliance rolls up across sites; projects and tasks sit under the site.
+              </p>
             </div>
 
             <OperationsTips context="sites_create" class="mb-6" :default-open="true" />
@@ -115,7 +127,40 @@ const submit = () => {
                   <option value="">No client</option>
                   <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
                 </select>
-                <p class="text-xs text-gray-500 mt-1">Link this site to a client so compliance rolls up on their record.</p>
+                <p class="text-xs text-gray-500 mt-1">Company → Clients → Compliance → Sites. Link this site to a client so compliance rolls up.</p>
+              </div>
+
+              <div
+                v-if="['property', 'building', 'unit', 'site'].includes(form.type)"
+                class="rounded-lg border border-border p-4 space-y-4"
+              >
+                <p class="text-sm font-medium">Property details</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label :class="label">Property type</label>
+                    <select v-model="form.property_type" :class="select">
+                      <option value="">Select…</option>
+                      <option v-for="option in propertyTypeOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label :class="label">Bedrooms</label>
+                    <input v-model="form.bedrooms" type="number" min="0" max="50" :class="input" />
+                  </div>
+                  <div>
+                    <label :class="label">Tenure</label>
+                    <select v-model="form.tenure" :class="select">
+                      <option value="">Select…</option>
+                      <option v-for="option in tenureOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label :class="label">Occupancy</label>
+                    <select v-model="form.occupancy_status" :class="select">
+                      <option v-for="option in occupancyOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                    </select>
+                  </div>
+                </div>
               </div>
 
               <div v-if="parentOptions.length">

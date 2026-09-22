@@ -20,6 +20,10 @@ class OperationalObject extends Model
         'client_id',
         'parent_id',
         'type',
+        'property_type',
+        'bedrooms',
+        'tenure',
+        'occupancy_status',
         'name',
         'reference',
         'address_line_1',
@@ -41,6 +45,7 @@ class OperationalObject extends Model
         'longitude' => 'float',
         'metadata' => 'array',
         'is_active' => 'boolean',
+        'bedrooms' => 'integer',
     ];
 
     public function company(): BelongsTo
@@ -101,6 +106,11 @@ class OperationalObject extends Model
     public function scopeOfType(Builder $query, string $type): void
     {
         $query->where('type', $type);
+    }
+
+    public function isPropertyLike(): bool
+    {
+        return in_array($this->type, ['property', 'building', 'unit', 'site'], true);
     }
 
     public function getFullAddressAttribute(): string

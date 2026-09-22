@@ -53,12 +53,26 @@ export interface ChecklistItem {
 export interface Asset {
   id: number;
   company_id: number;
+  client_id?: number | null;
   workspace_id?: number | null;
   type: string;
   name: string;
   reference?: string | null;
   status?: string;
+  property?: {
+    property_type?: string | null;
+    bedrooms?: number | null;
+    tenure?: string | null;
+    occupancy_status?: string | null;
+  };
   metadata?: Record<string, unknown> | null;
+  address?: {
+    line_1?: string | null;
+    line_2?: string | null;
+    city?: string | null;
+    postal_code?: string | null;
+    country?: string | null;
+  };
   created_at?: string;
   updated_at?: string;
 }
@@ -99,8 +113,19 @@ export interface CreateAssetInput {
   name: string;
   reference?: string;
   workspace_id?: number;
+  client_id?: number;
   status?: string;
   metadata?: Record<string, unknown>;
+  property_type?: string;
+  bedrooms?: number;
+  tenure?: string;
+  occupancy_status?: string;
+  address_line_1?: string;
+  address_line_2?: string;
+  city?: string;
+  postal_code?: string;
+  country?: string;
+  notes?: string;
 }
 
 export interface ApiResponse<T> {

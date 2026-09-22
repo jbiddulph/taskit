@@ -67,6 +67,10 @@ interface SiteInspection {
 interface Site {
   id: number;
   type_label: string;
+  property_type_label?: string;
+  bedrooms?: number | null;
+  tenure_label?: string;
+  occupancy_label?: string;
   name: string;
   reference?: string;
   full_address: string;
@@ -316,6 +320,15 @@ onUnmounted(() => {
                 <div class="text-xs uppercase tracking-wide text-gray-500">{{ site.type_label }}</div>
                 <h1 class="text-2xl font-semibold">{{ site.name }}</h1>
                 <p v-if="site.full_address" class="text-gray-600 dark:text-gray-400 mt-1">{{ site.full_address }}</p>
+                <p
+                  v-if="site.property_type_label || site.bedrooms != null || site.tenure_label || site.occupancy_label"
+                  class="text-sm text-gray-600 dark:text-gray-400 mt-2 flex flex-wrap gap-x-4 gap-y-1"
+                >
+                  <span v-if="site.property_type_label">{{ site.property_type_label }}</span>
+                  <span v-if="site.bedrooms != null">{{ site.bedrooms }} bedrooms</span>
+                  <span v-if="site.tenure_label">{{ site.tenure_label }}</span>
+                  <span v-if="site.occupancy_label">{{ site.occupancy_label }}</span>
+                </p>
                 <p v-if="site.client" class="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Client:
                   <Link :href="`/clients/${site.client.id}`" class="hover:underline">{{ site.client.name }}</Link>
@@ -323,8 +336,8 @@ onUnmounted(() => {
                 <p v-if="site.parent" class="text-sm text-gray-500 mt-1">Inside {{ site.parent.name }}</p>
               </div>
               <div class="flex flex-wrap gap-2 shrink-0">
-                <Link href="/compliance" :class="btnSecondary" title="Company-wide compliance overview across all sites">
-                  All-sites overview
+                <Link href="/compliance" :class="btnSecondary" title="Compliance sits between Clients and Sites — portfolio overview">
+                  Compliance overview
                 </Link>
                 <Link :href="`/sites/create?parent_id=${site.id}`" :class="btnSecondary">Add child site</Link>
                 <Link :href="`/sites/${site.id}/edit`" :class="btnSecondary">Edit</Link>
@@ -334,9 +347,10 @@ onUnmounted(() => {
             <div class="mb-8 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20 p-4">
               <p class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">You're on one site</p>
               <p class="text-sm text-gray-700 dark:text-gray-300">
-                Everything below is for <span class="font-medium">{{ site.name }}</span> only — certificates, inspections, and the checklist for this location.
-                For a company-wide view of what's overdue across every site, open
-                <Link href="/compliance" class="underline hover:no-underline">Compliance</Link>.
+                Hierarchy: Company → Clients →
+                <Link href="/compliance" class="underline hover:no-underline">Compliance</Link>
+                → Sites → Projects → Tasks.
+                Everything below is for <span class="font-medium">{{ site.name }}</span> only.
               </p>
             </div>
 

@@ -39,12 +39,21 @@ await client.tasks.create({
 })
 
 await client.assets.create({
-  type: 'vehicle',
-  name: 'Ford Transit',
-  reference: 'AB12 CDE',
-  metadata: { make: 'Ford', model: 'Transit', year: 2023 },
+  type: 'property',
+  name: '24 High Street',
+  reference: 'Unit 4B',
+  property_type: 'flat',
+  bedrooms: 2,
+  tenure: 'leasehold',
+  occupancy_status: 'occupied',
+  address_line_1: '24 High Street',
+  city: 'London',
+  postal_code: 'E1 1AA',
 })
 ```
+
+Hierarchy reminder: **Company → Clients → Compliance → Sites → Projects → Tasks**.
+Sites/assets are the property layer specialised apps extend.
 
 ## Auth
 
