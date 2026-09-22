@@ -27,7 +27,7 @@ interface Option {
   label: string;
 }
 
-const props = defineProps<{
+defineProps<{
   automations: AutomationRow[];
   triggerOptions: Option[];
   actionOptions: Option[];

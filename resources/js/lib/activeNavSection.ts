@@ -8,7 +8,6 @@ const SECTION_PREFIXES: Record<NavSection, readonly string[]> = {
     team: ['/team'],
     platform: [
         '/settings/platform',
-        '/settings/workspaces',
         '/settings/platform-api-keys',
         '/settings/automations',
     ],

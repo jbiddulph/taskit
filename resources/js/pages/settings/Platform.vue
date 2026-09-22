@@ -11,7 +11,7 @@ import Icon from '@/components/Icon.vue';
 
 const props = defineProps<{
   company: { id: number; name: string };
-  stats: { workspaces: number; api_keys: number; automations: number };
+  stats: { api_keys: number; automations: number };
   apiBaseUrl: string;
 }>();
 
@@ -23,13 +23,6 @@ const page = usePage();
 const flashSuccess = computed(() => (page.props.flash as { success?: string } | undefined)?.success);
 
 const cards = computed(() => [
-  {
-    title: 'Workspaces',
-    description: 'Separate Property, Fleet, Head Office, and Personal work into scoped areas.',
-    href: '/settings/workspaces',
-    count: props.stats.workspaces,
-    icon: 'Layers',
-  },
   {
     title: 'Platform API keys',
     description: 'Issue zt_live_ keys for specialised apps, n8n, and the TypeScript SDK.',
@@ -51,7 +44,7 @@ const cards = computed(() => [
   <AppLayout :breadcrumbs="breadcrumbItems">
     <SeoHead
       title="ZapTask Platform"
-      description="Manage workspaces, API keys, and automations for the ZapTask multi-app platform."
+      description="Manage API keys and automations for the ZapTask platform."
       image="/zap_icon.png"
     />
 
@@ -59,20 +52,20 @@ const cards = computed(() => [
       <div class="space-y-8">
         <HeadingSmall
           title="ZapTask Platform"
-          description="Phase 2 foundation — workspaces, API access, and automations that specialised apps share."
+          description="API access and automations on top of Company → Clients → Projects → Boards → Tasks."
         />
 
         <p v-if="flashSuccess" class="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-900 dark:bg-green-950/40 dark:text-green-200">
           {{ flashSuccess }}
         </p>
 
-        <div class="rounded-lg border border-violet-200 bg-violet-50/70 p-4 text-sm dark:border-violet-900 dark:bg-violet-950/30">
-          <p class="font-medium text-violet-900 dark:text-violet-100">Company: {{ company.name }}</p>
-          <p class="mt-1 text-violet-800/80 dark:text-violet-200/80">
+        <div class="rounded-lg border border-border bg-muted/40 p-4 text-sm">
+          <p class="font-medium text-foreground">Company: {{ company.name }}</p>
+          <p class="mt-1 text-muted-foreground">
             Versioned API root:
-            <code class="rounded bg-white/80 px-1.5 py-0.5 text-xs dark:bg-gray-900">{{ apiBaseUrl }}</code>
+            <code class="rounded bg-background px-1.5 py-0.5 text-xs">{{ apiBaseUrl }}</code>
           </p>
-          <p class="mt-2 text-violet-800/80 dark:text-violet-200/80">
+          <p class="mt-2 text-muted-foreground">
             On the dashboard, use <strong>What needs doing?</strong> for AI task creation (preview → confirm).
           </p>
         </div>
@@ -82,10 +75,10 @@ const cards = computed(() => [
             v-for="card in cards"
             :key="card.href"
             :href="card.href"
-            class="flex items-start gap-4 rounded-lg border border-border bg-card p-4 transition hover:border-violet-300 hover:bg-violet-50/40 dark:hover:border-violet-800 dark:hover:bg-violet-950/20"
+            class="flex items-start gap-4 rounded-lg border border-border bg-card p-4 transition hover:border-foreground/20 hover:bg-muted/30"
           >
             <div class="rounded-md border border-border bg-background p-2">
-              <Icon :name="card.icon" class="h-5 w-5 text-violet-600 dark:text-violet-300" />
+              <Icon :name="card.icon" class="h-5 w-5 text-foreground" />
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center justify-between gap-2">

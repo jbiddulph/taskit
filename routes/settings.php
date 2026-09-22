@@ -9,7 +9,6 @@ use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\PlatformApiKeyController;
 use App\Http\Controllers\Settings\PlatformController;
 use App\Http\Controllers\Settings\ProfileController;
-use App\Http\Controllers\Settings\WorkspaceController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -35,22 +34,8 @@ Route::middleware(['auth', 'subscription.access'])->group(function () {
         ->middleware('throttle:20,1')
         ->name('api-tokens.destroy');
 
-    // Platform v2 — workspaces, API keys, automations
+    // Platform — API keys and automations (no workspaces; Company → Clients → Projects covers scoping)
     Route::get('settings/platform', [PlatformController::class, 'index'])->name('platform.settings');
-
-    Route::get('settings/workspaces', [WorkspaceController::class, 'index'])->name('workspaces.settings');
-    Route::post('settings/workspaces', [WorkspaceController::class, 'store'])
-        ->middleware('throttle:30,1')
-        ->name('workspaces.store');
-    Route::post('settings/workspaces/switch', [WorkspaceController::class, 'switch'])
-        ->middleware('throttle:60,1')
-        ->name('workspaces.switch');
-    Route::put('settings/workspaces/{workspace}', [WorkspaceController::class, 'update'])
-        ->middleware('throttle:30,1')
-        ->name('workspaces.update');
-    Route::delete('settings/workspaces/{workspace}', [WorkspaceController::class, 'destroy'])
-        ->middleware('throttle:30,1')
-        ->name('workspaces.destroy');
 
     Route::get('settings/platform-api-keys', [PlatformApiKeyController::class, 'index'])->name('platform-api-keys.settings');
     Route::post('settings/platform-api-keys', [PlatformApiKeyController::class, 'store'])

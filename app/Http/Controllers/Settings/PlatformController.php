@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\ApiKey;
 use App\Models\Automation;
-use App\Models\Workspace;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -13,7 +12,7 @@ use Inertia\Response;
 class PlatformController extends Controller
 {
     /**
-     * Platform v2 overview — surfaces workspaces, API keys, automations, and AI.
+     * Platform overview — API keys, automations, and AI entry points.
      */
     public function index(Request $request): Response
     {
@@ -24,15 +23,12 @@ class PlatformController extends Controller
             abort(403, 'A company is required to use the ZapTask platform.');
         }
 
-        Workspace::ensureDefaultForCompany($company);
-
         return Inertia::render('settings/Platform', [
             'company' => [
                 'id' => $company->id,
                 'name' => $company->name,
             ],
             'stats' => [
-                'workspaces' => Workspace::query()->forCompany($company->id)->count(),
                 'api_keys' => ApiKey::query()->forCompany($company->id)->count(),
                 'automations' => Automation::query()->forCompany($company->id)->count(),
             ],
