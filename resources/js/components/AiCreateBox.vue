@@ -75,7 +75,8 @@ const propose = async () => {
   preview.value = null;
 
   try {
-    const { data } = await axios.post('/api/ai', {
+    // axios baseURL is already '/api' (see app.ts) — path must be '/ai', not '/api/ai'
+    const { data } = await axios.post('/ai', {
       message: message.value.trim(),
       context: 'task_creation',
       project_id: currentProjectId.value ?? undefined,
@@ -112,7 +113,7 @@ const confirmCreate = async () => {
   error.value = null;
 
   try {
-    const { data } = await axios.post('/api/ai', {
+    const { data } = await axios.post('/ai', {
       confirm: true,
       message: message.value.trim(),
       project_id: currentProjectId.value ?? undefined,
