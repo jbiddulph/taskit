@@ -16,6 +16,7 @@ class OperationalObject extends Model
 
     protected $fillable = [
         'company_id',
+        'workspace_id',
         'client_id',
         'parent_id',
         'type',
@@ -31,6 +32,7 @@ class OperationalObject extends Model
         'notes',
         'metadata',
         'is_active',
+        'status',
         'created_by_user_id',
     ];
 
@@ -44,6 +46,11 @@ class OperationalObject extends Model
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
     }
 
     public function client(): BelongsTo

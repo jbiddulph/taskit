@@ -48,6 +48,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/n8n/*',
             // Bearer-token clients (Chrome extension) — does not affect cookie/session SPA routes
             'api/extension/*',
+            // Platform API keys / Bearer clients
+            'api/v1/*',
         ]);
 
         // Register middleware aliases
@@ -57,6 +59,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.rate.limit' => \App\Http\Middleware\ApiRateLimit::class,
             'subdomain' => SubdomainMiddleware::class,
             'n8n.webhook' => \App\Http\Middleware\VerifyN8nWebhookSecret::class,
+            'platform.auth' => \App\Http\Middleware\AuthenticatePlatformApi::class,
         ]);
 
         $middleware->trustProxies(at: '*');

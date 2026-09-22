@@ -10,6 +10,9 @@ Schedule::command('taskit:send-due-notifications')->hourly();
 // Create compliance reminder tasks daily
 Schedule::command('compliance:generate-upcoming-tasks')->daily();
 
+// Platform date_reached automations (create reminder tasks)
+Schedule::command('platform:run-automations')->dailyAt('07:00');
+
 // Email and in-app expiry reminders for company users
 Schedule::command('compliance:send-expiry-reminders')->dailyAt('08:00');
 

@@ -39,15 +39,23 @@ class Todo extends Model
         'status',
         'order',
         'company_id',
+        'workspace_id',
         'operational_object_id',
         'compliance_requirement_id',
         'source',
+        'category',
+        'metadata',
+        'recurrence',
+        'completed_at',
         'inspection_id',
     ];
 
     protected $casts = [
         'tags' => 'array',
+        'metadata' => 'array',
+        'recurrence' => 'array',
         'due_date' => 'date',
+        'completed_at' => 'datetime',
         'latitude' => 'float',
         'longitude' => 'float',
         'checked_in_at' => 'datetime',
@@ -55,6 +63,19 @@ class Todo extends Model
         'checked_in_longitude' => 'float',
         'story_points' => 'integer',
     ];
+
+    /**
+     * Platform API alias: asset_id maps to operational_object_id.
+     */
+    public function getAssetIdAttribute(): ?int
+    {
+        return $this->operational_object_id;
+    }
+
+    public function setAssetIdAttribute(?int $value): void
+    {
+        $this->attributes['operational_object_id'] = $value;
+    }
 
     protected $dates = [
         'due_date',
@@ -88,9 +109,27 @@ class Todo extends Model
         return $this->hasMany(TodoAttachment::class)->orderBy('created_at', 'desc');
     }
 
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
+
     public function operationalObject(): BelongsTo
     {
         return $this->belongsTo(OperationalObject::class);
+    }
+
+    /**
+     * Platform alias for specialised apps — assets are operational objects.
+     */
+    public function asset(): BelongsTo
+    {
+        return $this->belongsTo(OperationalObject::class, 'operational_object_id');
+    }
+
+    public function checklistItems(): HasMany
+    {
+        return $this->hasMany(TodoChecklistItem::class)->orderBy('position');
     }
 
     public function complianceRequirement(): BelongsTo
