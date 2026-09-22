@@ -1,0 +1,15 @@
+{
+  "name": "property-ops-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Example specialised app that consumes the ZapTask platform engine",
+  "scripts": {
+    "start": "node src/index.js",
+    "sync-renewals": "node src/index.js --sync-renewals",
+    "ai-demo": "node src/index.js --ai-demo"
+  },
+  "dependencies": {
+    "@zaptask/sdk": "file:../../packages/zaptask-sdk"
+  }
+}

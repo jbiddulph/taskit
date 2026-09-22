@@ -11,7 +11,7 @@ import Icon from '@/components/Icon.vue';
 
 const props = defineProps<{
   company: { id: number; name: string };
-  stats: { api_keys: number; automations: number };
+  stats: { api_keys: number; automations: number; applications: number };
   apiBaseUrl: string;
 }>();
 
@@ -23,6 +23,13 @@ const page = usePage();
 const flashSuccess = computed(() => (page.props.flash as { success?: string } | undefined)?.success);
 
 const cards = computed(() => [
+  {
+    title: 'Apps on ZapTask',
+    description: 'Enable Property, Fleet, and other specialised apps that run on this engine.',
+    href: '/settings/platform-applications',
+    count: props.stats.applications,
+    icon: 'Blocks',
+  },
   {
     title: 'Platform API keys',
     description: 'Issue zt_live_ keys for specialised apps, n8n, and the TypeScript SDK.',
@@ -44,7 +51,7 @@ const cards = computed(() => [
   <AppLayout :breadcrumbs="breadcrumbItems">
     <SeoHead
       title="ZapTask Platform"
-      description="Manage API keys and automations for the ZapTask platform."
+      description="Apps, API keys, automations, and AI for builders on ZapTask."
       image="/zap_icon.png"
     />
 
@@ -52,7 +59,7 @@ const cards = computed(() => [
       <div class="space-y-8">
         <HeadingSmall
           title="ZapTask Platform"
-          description="API access and automations on top of Company → Clients → Compliance → Sites → Projects → Tasks."
+          description="The engine specialised apps build upon — Company → Clients → Compliance → Sites → Projects → Tasks."
         />
 
         <p v-if="flashSuccess" class="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-900 dark:bg-green-950/40 dark:text-green-200">
@@ -66,7 +73,9 @@ const cards = computed(() => [
             <code class="rounded bg-background px-1.5 py-0.5 text-xs">{{ apiBaseUrl }}</code>
           </p>
           <p class="mt-2 text-muted-foreground">
-            On the dashboard, use <strong>What needs doing?</strong> for AI task creation (preview → confirm).
+            Dashboard <strong>What needs doing?</strong> uses session AI. Apps call
+            <code class="rounded bg-background px-1.5 py-0.5 text-xs">POST /api/v1/ai</code>
+            with a platform key (preview → confirm).
           </p>
         </div>
 

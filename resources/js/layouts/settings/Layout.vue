@@ -43,6 +43,10 @@ const sidebarNavItems = computed(() => {
             href: '/settings/platform',
         },
         {
+            title: 'Apps on ZapTask',
+            href: '/settings/platform-applications',
+        },
+        {
             title: 'Platform API keys',
             href: '/settings/platform-api-keys',
         },

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\ApiKey;
 use App\Models\Automation;
+use App\Models\CompanyApplication;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -12,7 +13,7 @@ use Inertia\Response;
 class PlatformController extends Controller
 {
     /**
-     * Platform overview — API keys, automations, and AI entry points.
+     * Platform overview — apps, API keys, automations, and AI entry points.
      */
     public function index(Request $request): Response
     {
@@ -31,6 +32,10 @@ class PlatformController extends Controller
             'stats' => [
                 'api_keys' => ApiKey::query()->forCompany($company->id)->count(),
                 'automations' => Automation::query()->forCompany($company->id)->count(),
+                'applications' => CompanyApplication::query()
+                    ->where('company_id', $company->id)
+                    ->where('enabled', true)
+                    ->count(),
             ],
             'apiBaseUrl' => rtrim(config('app.url'), '/').'/api/v1',
         ]);

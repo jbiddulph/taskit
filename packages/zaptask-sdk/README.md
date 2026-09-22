@@ -55,7 +55,30 @@ await client.assets.create({
 Hierarchy reminder: **Company → Clients → Compliance → Sites → Projects → Tasks**.
 Sites/assets are the property layer specialised apps extend.
 
+## AI for apps
+
+```typescript
+const proposal = await client.ai.propose({
+  message: 'Remind Alex to renew gas safety two weeks before 14 March',
+  context: 'property_ops',
+})
+
+await client.ai.confirm({
+  confirm: true,
+  task: {
+    title: proposal.task!.title as string,
+    due_date: proposal.task!.due_date as string | undefined,
+    asset_id: proposal.task!.asset_id as number | undefined,
+    category: 'compliance',
+  },
+})
+```
+
+Requires API key permission `ai.write` (`POST /api/v1/ai`).
+
 ## Auth
 
-Pass a company API key (`zt_live_…`) created via `POST /api/v1/api-keys`.
+Pass a company API key (`zt_live_…`) created via `POST /api/v1/api-keys` or **Settings → Platform API keys**.
 Company scope is derived from the key — never send `company_id` from the client.
+
+See [`BUILDERS.md`](../../BUILDERS.md) for the apps-on-ZapTask product story.
