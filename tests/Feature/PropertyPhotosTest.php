@@ -103,14 +103,56 @@ class PropertyPhotosTest extends TestCase
             'photos' => [UploadedFile::fake()->image('listing.jpg')],
         ]);
 
+        $photo = $site->photos()->first();
+
         $this->actingAs($user)
             ->get("/sites/{$site->id}")
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Sites/Show')
                 ->has('site.photos', 1)
-                ->where('site.cover_photo_url', fn ($url) => is_string($url) && str_contains($url, '/photos/'))
+                ->where('site.cover_photo_url', "/sites/{$site->id}/photos/{$photo->id}")
+                ->where('site.photos.0.url', "/sites/{$site->id}/photos/{$photo->id}")
             );
+    }
+
+    public function test_can_view_edit_caption_and_delete_photo(): void
+    {
+        Storage::fake('private');
+        [$user, , $site] = $this->createSiteSetup();
+
+        $this->actingAs($user)->post("/sites/{$site->id}/photos", [
+            'photos' => [UploadedFile::fake()->image('room.jpg')],
+            'caption' => 'Living room',
+        ]);
+
+        $photo = $site->photos()->first();
+        $this->assertNotNull($photo);
+
+        $this->actingAs($user)
+            ->get("/sites/{$site->id}/photos/{$photo->id}")
+            ->assertOk()
+            ->assertHeader('Content-Type', $photo->mime_type ?: 'image/jpeg');
+
+        $disposition = $this->actingAs($user)
+            ->get("/sites/{$site->id}/photos/{$photo->id}")
+            ->headers->get('Content-Disposition');
+        $this->assertNotNull($disposition);
+        $this->assertStringContainsString('inline', strtolower($disposition));
+
+        $this->actingAs($user)
+            ->patch("/sites/{$site->id}/photos/{$photo->id}", [
+                'caption' => 'Updated living room',
+            ])
+            ->assertRedirect();
+
+        $this->assertSame('Updated living room', $photo->fresh()->caption);
+
+        $this->actingAs($user)
+            ->delete("/sites/{$site->id}/photos/{$photo->id}")
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('taskit_operational_object_photos', ['id' => $photo->id]);
     }
 
     public function test_platform_api_can_upload_and_list_asset_photos(): void

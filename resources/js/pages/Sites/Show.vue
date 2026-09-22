@@ -136,6 +136,9 @@ const photoFiles = ref<File[]>([]);
 const photoCaption = ref('');
 const photoError = ref<string | null>(null);
 const lightboxUrl = ref<string | null>(null);
+const lightboxCaption = ref('');
+const editingCaptionId = ref<number | null>(null);
+const editingCaptionValue = ref('');
 
 const acceptedPhotoMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const acceptedPhotoExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
@@ -206,9 +209,22 @@ function setCoverPhoto(photo: SitePhoto) {
   );
 }
 
+function savePhotoCaption(photo: SitePhoto, caption: string) {
+  router.patch(
+    `/sites/${props.site.id}/photos/${photo.id}`,
+    { caption },
+    { preserveScroll: true },
+  );
+}
+
 function deletePhoto(photo: SitePhoto) {
   if (!confirm('Remove this photo?')) return;
   router.delete(`/sites/${props.site.id}/photos/${photo.id}`, { preserveScroll: true });
+}
+
+function openLightbox(photo: SitePhoto) {
+  lightboxUrl.value = photo.url;
+  lightboxCaption.value = photo.caption || photo.original_filename;
 }
 
 function formatFileSize(bytes: number): string {
@@ -455,45 +471,104 @@ onUnmounted(() => {
             <section class="mb-8">
               <h2 :class="sectionTitle" class="mb-1">Property photos</h2>
               <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-xl">
-                Listing and viewing photos for estate agents — front elevation, rooms, and garden. First photo becomes the cover unless you set another.
+                Listing photos for this property — front elevation, rooms, and garden. The cover photo appears on the Sites list.
               </p>
 
               <div
                 v-if="site.photos?.length"
-                class="mb-4 grid grid-cols-2 sm:grid-cols-3 gap-3"
+                class="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4"
               >
-                <div
+                <figure
                   v-for="photo in site.photos"
                   :key="photo.id"
-                  class="group relative overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 aspect-[4/3]"
+                  class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
                 >
-                  <button type="button" class="absolute inset-0 z-0" @click="lightboxUrl = photo.url">
-                    <img :src="photo.url" :alt="photo.caption || photo.original_filename" class="h-full w-full object-cover" loading="lazy" />
-                  </button>
-                  <span
-                    v-if="photo.is_cover"
-                    class="absolute left-2 top-2 z-10 rounded bg-black/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white"
+                  <button
+                    type="button"
+                    class="relative block w-full aspect-[4/3] bg-gray-100 dark:bg-gray-950"
+                    @click="openLightbox(photo)"
                   >
-                    Cover
-                  </span>
-                  <div class="absolute inset-x-0 bottom-0 z-10 flex gap-1 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                    <button
-                      v-if="!photo.is_cover"
-                      type="button"
-                      class="rounded bg-white/90 px-2 py-1 text-[11px] font-medium text-gray-900"
-                      @click.stop="setCoverPhoto(photo)"
+                    <img
+                      :src="photo.url"
+                      :alt="photo.caption || photo.original_filename"
+                      class="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                    <span
+                      v-if="photo.is_cover"
+                      class="absolute left-2 top-2 rounded bg-black/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white"
                     >
-                      Set cover
-                    </button>
-                    <button
-                      type="button"
-                      class="rounded bg-red-600/90 px-2 py-1 text-[11px] font-medium text-white"
-                      @click.stop="deletePhoto(photo)"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
+                      Cover
+                    </span>
+                  </button>
+
+                  <figcaption class="space-y-2 border-t border-gray-200 dark:border-gray-700 p-3">
+                    <div v-if="editingCaptionId === photo.id" class="flex gap-2">
+                      <input
+                        v-model="editingCaptionValue"
+                        type="text"
+                        maxlength="255"
+                        :class="input"
+                        placeholder="Caption"
+                        @keyup.enter="savePhotoCaption(photo, editingCaptionValue); editingCaptionId = null"
+                      />
+                      <button
+                        type="button"
+                        :class="btnPrimary"
+                        class="!px-2 !py-1 text-xs shrink-0"
+                        @click="savePhotoCaption(photo, editingCaptionValue); editingCaptionId = null"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        :class="btnSecondary"
+                        class="!px-2 !py-1 text-xs shrink-0"
+                        @click="editingCaptionId = null"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    <p v-else class="text-sm text-gray-700 dark:text-gray-200 truncate">
+                      {{ photo.caption || photo.original_filename }}
+                    </p>
+
+                    <div class="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        :class="btnSecondary"
+                        class="!px-2 !py-1 text-xs"
+                        @click="openLightbox(photo)"
+                      >
+                        View
+                      </button>
+                      <button
+                        type="button"
+                        :class="btnSecondary"
+                        class="!px-2 !py-1 text-xs"
+                        @click="editingCaptionId = photo.id; editingCaptionValue = photo.caption || ''"
+                      >
+                        Edit caption
+                      </button>
+                      <button
+                        v-if="!photo.is_cover"
+                        type="button"
+                        :class="btnSecondary"
+                        class="!px-2 !py-1 text-xs"
+                        @click="setCoverPhoto(photo)"
+                      >
+                        Set cover
+                      </button>
+                      <button
+                        type="button"
+                        :class="btnDangerSm"
+                        @click="deletePhoto(photo)"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </figcaption>
+                </figure>
               </div>
 
               <div :class="card">
@@ -531,17 +606,18 @@ onUnmounted(() => {
 
             <div
               v-if="lightboxUrl"
-              class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+              class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/85 p-4"
               @click.self="lightboxUrl = null"
             >
               <button
                 type="button"
-                class="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1 text-sm font-medium text-gray-900"
+                class="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-sm font-medium text-gray-900"
                 @click="lightboxUrl = null"
               >
                 Close
               </button>
-              <img :src="lightboxUrl" alt="Property photo" class="max-h-[90vh] max-w-full rounded-lg object-contain" />
+              <img :src="lightboxUrl" :alt="lightboxCaption" class="max-h-[85vh] max-w-full rounded-lg object-contain" />
+              <p v-if="lightboxCaption" class="mt-3 max-w-xl text-center text-sm text-white/90">{{ lightboxCaption }}</p>
             </div>
 
             <section class="mb-8">
