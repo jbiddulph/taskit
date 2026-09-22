@@ -4,7 +4,7 @@ import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSep
 import { edit } from '@/routes/profile';
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
-import { LogOut, Settings, CreditCard, Layers } from 'lucide-vue-next';
+import { LogOut, Settings, CreditCard } from 'lucide-vue-next';
 
 interface Props {
     user: User;
@@ -31,12 +31,6 @@ defineProps<Props>();
             <Link class="block w-full" :href="edit()" prefetch as="button">
                 <Settings class="mr-2 h-4 w-4" />
                 Settings
-            </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem :as-child="true">
-            <Link class="block w-full" href="/settings/workspaces" prefetch as="button">
-                <Layers class="mr-2 h-4 w-4" />
-                Workspaces
             </Link>
         </DropdownMenuItem>
         <DropdownMenuItem :as-child="true">

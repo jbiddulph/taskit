@@ -6,7 +6,6 @@ use App\Models\ApiKey;
 use App\Models\Automation;
 use App\Models\Company;
 use App\Models\User;
-use App\Models\Workspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -32,7 +31,7 @@ class PlatformSettingsUiTest extends TestCase
         return [$user, $company];
     }
 
-    public function test_platform_overview_requires_company_and_ensures_default_workspace(): void
+    public function test_platform_overview_requires_company(): void
     {
         [$user, $company] = $this->createCompanyUser();
 
@@ -43,32 +42,17 @@ class PlatformSettingsUiTest extends TestCase
                 ->component('settings/Platform')
                 ->has('stats')
                 ->where('company.id', $company->id)
+                ->missing('stats.workspaces')
             );
-
-        $this->assertDatabaseHas('taskit_workspaces', [
-            'company_id' => $company->id,
-            'name' => 'General',
-            'is_default' => true,
-        ]);
     }
 
-    public function test_user_can_create_workspace(): void
+    public function test_workspaces_settings_route_is_removed(): void
     {
-        [$user, $company] = $this->createCompanyUser();
+        [$user] = $this->createCompanyUser();
 
         $this->actingAs($user)
-            ->post('/settings/workspaces', [
-                'name' => 'Property Portfolio',
-                'type' => 'property',
-                'description' => 'UK rental stock',
-            ])
-            ->assertRedirect('/settings/workspaces');
-
-        $this->assertDatabaseHas('taskit_workspaces', [
-            'company_id' => $company->id,
-            'name' => 'Property Portfolio',
-            'type' => 'property',
-        ]);
+            ->get('/settings/workspaces')
+            ->assertNotFound();
     }
 
     public function test_user_can_create_platform_api_key(): void
@@ -109,51 +93,5 @@ class PlatformSettingsUiTest extends TestCase
             'name' => 'Insurance reminder',
             'enabled' => true,
         ]);
-    }
-
-    public function test_cannot_delete_default_workspace(): void
-    {
-        [$user, $company] = $this->createCompanyUser();
-        $workspace = Workspace::ensureDefaultForCompany($company);
-
-        $this->actingAs($user)
-            ->from('/settings/workspaces')
-            ->delete('/settings/workspaces/'.$workspace->id)
-            ->assertRedirect('/settings/workspaces')
-            ->assertSessionHasErrors('workspace');
-
-        $this->assertDatabaseHas('taskit_workspaces', ['id' => $workspace->id]);
-    }
-
-    public function test_dashboard_shares_workspaces_and_switch_updates_session(): void
-    {
-        [$user, $company] = $this->createCompanyUser();
-        $default = Workspace::ensureDefaultForCompany($company);
-        $property = Workspace::create([
-            'company_id' => $company->id,
-            'name' => 'Property',
-            'type' => 'property',
-            'is_default' => false,
-        ]);
-
-        $this->actingAs($user)
-            ->get('/dashboard')
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page
-                ->has('platform.workspaces', 2)
-                ->where('platform.currentWorkspaceId', $default->id)
-            );
-
-        $this->actingAs($user)
-            ->from('/dashboard')
-            ->post('/settings/workspaces/switch', ['workspace_id' => $property->id])
-            ->assertRedirect('/dashboard');
-
-        $this->actingAs($user)
-            ->get('/dashboard')
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page
-                ->where('platform.currentWorkspaceId', $property->id)
-            );
     }
 }

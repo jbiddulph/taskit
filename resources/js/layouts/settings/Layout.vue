@@ -43,10 +43,6 @@ const sidebarNavItems = computed(() => {
             href: '/settings/platform',
         },
         {
-            title: 'Workspaces',
-            href: '/settings/workspaces',
-        },
-        {
             title: 'Platform API keys',
             href: '/settings/platform-api-keys',
         },

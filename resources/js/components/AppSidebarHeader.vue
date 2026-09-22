@@ -174,13 +174,13 @@ const mobileNavClass = (active: boolean) =>
                 </Link>
 
                 <Link
-                    href="/settings/workspaces"
+                    href="/settings/platform"
                     :class="desktopNavClass(isPlatformActive)"
                     :aria-current="isPlatformActive ? 'page' : undefined"
-                    title="Workspaces — Platform Phase 2"
+                    title="Platform — API keys and automations"
                 >
                     <Layers class="w-4 h-4" />
-                    <span class="hidden sm:inline">Workspaces</span>
+                    <span class="hidden sm:inline">Platform</span>
                 </Link>
                 
                 <CompanyUsersDropdown :is-active="isTeamActive" />
@@ -299,13 +299,13 @@ const mobileNavClass = (active: boolean) =>
                             </Link>
 
                             <Link
-                                href="/settings/workspaces"
+                                href="/settings/platform"
                                 @click="closeMobileMenu"
                                 :class="mobileNavClass(isPlatformActive)"
                                 :aria-current="isPlatformActive ? 'page' : undefined"
                             >
                                 <Layers class="w-5 h-5 flex-shrink-0" />
-                                <span class="font-medium">Workspaces</span>
+                                <span class="font-medium">Platform</span>
                             </Link>
                             
                             <!-- Team Dropdown -->

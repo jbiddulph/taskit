@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Support\CurrentWorkspace;
 use App\Support\Industries;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
@@ -59,7 +58,6 @@ class HandleInertiaRequests extends Middleware
         }
         $company = $user?->company;
         $companyIndustry = $company?->industry ?? Industries::default();
-        $currentWorkspace = $user && $company ? CurrentWorkspace::resolve($request) : null;
 
         return [
             ...parent::share($request),
@@ -75,10 +73,6 @@ class HandleInertiaRequests extends Middleware
             'industries' => Industries::choices(),
             'features' => [
                 'sites' => (bool) ($company?->canAccessSites()),
-            ],
-            'platform' => [
-                'workspaces' => $company ? CurrentWorkspace::listForShare($company) : [],
-                'currentWorkspaceId' => $currentWorkspace?->id,
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
