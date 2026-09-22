@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\Activity;
 use App\Models\ProjectGroup;
 use App\Services\TodoWebSocketService;
+use App\Support\CurrentWorkspace;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -24,15 +25,16 @@ class ProjectController extends Controller
     /**
      * Display a listing of projects for the authenticated user
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $user = Auth::user();
         
         if ($user->company_id) {
             // Show visible projects from the same company (respecting subscription limits)
-            $projects = Project::visibleForCompany($user->company_id)
-                ->withCount('todos')
-                ->get();
+            $query = Project::visibleForCompany($user->company_id)
+                ->withCount('todos');
+            $this->scopeToCurrentWorkspace($query, $request);
+            $projects = $query->get();
         } else {
             // Fallback to user's own projects if no company
             $projects = Project::forUser($user->id)
@@ -154,6 +156,7 @@ class ProjectController extends Controller
             'viewing_order' => Project::getNextViewingOrder($user->id),
             'client_id' => $request->client_id,
             'company_id' => $user->company_id,
+            'workspace_id' => CurrentWorkspace::resolve($request)?->id,
         ]);
 
         ProjectGroup::createDefaultForProject($project);
@@ -335,14 +338,16 @@ class ProjectController extends Controller
     /**
      * Get all projects with their statistics
      */
-    public function withStats(): JsonResponse
+    public function withStats(Request $request): JsonResponse
     {
         $user = Auth::user();
         
         if ($user->company_id) {
             // Show visible projects from the same company (respecting subscription limits)
-            $projects = Project::visibleForCompany($user->company_id)
-                ->with(['todos', 'client'])
+            $query = Project::visibleForCompany($user->company_id)
+                ->with(['todos', 'client']);
+            $this->scopeToCurrentWorkspace($query, $request);
+            $projects = $query
                 ->get()
                 ->map(function ($project) {
                     $stats = $project->getStats();
@@ -426,5 +431,28 @@ class ProjectController extends Controller
             'success' => true,
             'message' => 'Project order updated successfully'
         ]);
+    }
+
+    /**
+     * Limit project listings to the active workspace.
+     * Legacy rows with null workspace_id stay visible in the default workspace.
+     */
+    private function scopeToCurrentWorkspace($query, Request $request): void
+    {
+        $workspace = CurrentWorkspace::resolve($request);
+        if (! $workspace) {
+            return;
+        }
+
+        if ($workspace->is_default) {
+            $query->where(function ($q) use ($workspace) {
+                $q->where('workspace_id', $workspace->id)
+                    ->orWhereNull('workspace_id');
+            });
+
+            return;
+        }
+
+        $query->where('workspace_id', $workspace->id);
     }
 }

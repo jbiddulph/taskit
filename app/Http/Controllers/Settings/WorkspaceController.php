@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\Workspace;
+use App\Support\CurrentWorkspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -143,6 +144,32 @@ class WorkspaceController extends Controller
         $workspace->delete();
 
         return redirect()->route('workspaces.settings')->with('success', 'Workspace deleted.');
+    }
+
+    /**
+     * Switch the active workspace for the signed-in company user.
+     */
+    public function switch(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        $company = $user->company;
+
+        if (! $company) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'workspace_id' => [
+                'required',
+                'integer',
+                Rule::exists('taskit_workspaces', 'id')->where(fn ($q) => $q->where('company_id', $company->id)),
+            ],
+        ]);
+
+        $workspace = Workspace::query()->findOrFail($validated['workspace_id']);
+        CurrentWorkspace::switchTo($request, $workspace);
+
+        return back()->with('success', 'Switched to '.$workspace->name.'.');
     }
 
     private function authorizeWorkspace(Workspace $workspace, $user): void

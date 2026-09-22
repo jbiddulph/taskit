@@ -124,4 +124,36 @@ class PlatformSettingsUiTest extends TestCase
 
         $this->assertDatabaseHas('taskit_workspaces', ['id' => $workspace->id]);
     }
+
+    public function test_dashboard_shares_workspaces_and_switch_updates_session(): void
+    {
+        [$user, $company] = $this->createCompanyUser();
+        $default = Workspace::ensureDefaultForCompany($company);
+        $property = Workspace::create([
+            'company_id' => $company->id,
+            'name' => 'Property',
+            'type' => 'property',
+            'is_default' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('platform.workspaces', 2)
+                ->where('platform.currentWorkspaceId', $default->id)
+            );
+
+        $this->actingAs($user)
+            ->from('/dashboard')
+            ->post('/settings/workspaces/switch', ['workspace_id' => $property->id])
+            ->assertRedirect('/dashboard');
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('platform.currentWorkspaceId', $property->id)
+            );
+    }
 }

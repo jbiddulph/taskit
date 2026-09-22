@@ -42,6 +42,9 @@ Route::middleware(['auth', 'subscription.access'])->group(function () {
     Route::post('settings/workspaces', [WorkspaceController::class, 'store'])
         ->middleware('throttle:30,1')
         ->name('workspaces.store');
+    Route::post('settings/workspaces/switch', [WorkspaceController::class, 'switch'])
+        ->middleware('throttle:60,1')
+        ->name('workspaces.switch');
     Route::put('settings/workspaces/{workspace}', [WorkspaceController::class, 'update'])
         ->middleware('throttle:30,1')
         ->name('workspaces.update');
