@@ -93,6 +93,16 @@ class OperationalObject extends Model
         return $this->hasMany(OperationalDocument::class)->orderByDesc('created_at');
     }
 
+    public function photos(): HasMany
+    {
+        return $this->hasMany(OperationalObjectPhoto::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function coverPhoto(): ?OperationalObjectPhoto
+    {
+        return $this->photos->firstWhere('is_cover', true) ?? $this->photos->first();
+    }
+
     public function todos(): HasMany
     {
         return $this->hasMany(Todo::class);

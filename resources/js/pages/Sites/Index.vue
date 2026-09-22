@@ -29,6 +29,8 @@ interface Site {
   compliance_counts: ComplianceCounts;
   children_count?: number;
   linked_todo_count?: number;
+  photo_count?: number;
+  cover_photo_url?: string | null;
 }
 
 interface ClientOption {
@@ -193,8 +195,17 @@ function deleteSite(site: Site) {
               <div
                 v-for="site in sites"
                 :key="site.id"
-                class="rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+                class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
               >
+                <Link v-if="site.cover_photo_url" :href="`/sites/${site.id}`" class="block aspect-[16/10] bg-gray-100 dark:bg-gray-900">
+                  <img
+                    :src="site.cover_photo_url"
+                    :alt="site.name"
+                    class="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                </Link>
+                <div class="p-5">
                 <div class="flex items-start justify-between gap-3 mb-2">
                   <Link :href="`/sites/${site.id}`" class="block flex-1 min-w-0">
                     <div class="text-xs font-medium uppercase tracking-wide text-gray-500">{{ site.type_label }}</div>
@@ -215,6 +226,7 @@ function deleteSite(site: Site) {
                   <span v-if="site.property_type_label">{{ site.property_type_label }}</span>
                   <span v-if="site.bedrooms != null">{{ site.bedrooms }} bed</span>
                   <span v-if="site.occupancy_label">{{ site.occupancy_label }}</span>
+                  <span v-if="site.photo_count">{{ site.photo_count }} photo{{ site.photo_count === 1 ? '' : 's' }}</span>
                 </p>
                 <p v-if="site.client" class="text-xs text-gray-500 mb-2">
                   Client:
@@ -228,6 +240,7 @@ function deleteSite(site: Site) {
                     <span :class="statusColor('compliant')">{{ site.compliance_counts.compliant }} compliant</span>
                   </div>
                 </Link>
+                </div>
               </div>
             </div>
 

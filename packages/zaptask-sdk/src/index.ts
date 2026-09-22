@@ -65,6 +65,9 @@ export interface Asset {
     tenure?: string | null;
     occupancy_status?: string | null;
   };
+  photo_count?: number;
+  cover_photo_url?: string | null;
+  photos?: AssetPhoto[];
   metadata?: Record<string, unknown> | null;
   address?: {
     line_1?: string | null;
@@ -75,6 +78,19 @@ export interface Asset {
   };
   created_at?: string;
   updated_at?: string;
+}
+
+export interface AssetPhoto {
+  id: number;
+  asset_id?: number;
+  caption?: string | null;
+  is_cover: boolean;
+  sort_order: number;
+  original_filename: string;
+  mime_type: string;
+  file_size: number;
+  url: string;
+  created_at?: string;
 }
 
 export interface Workspace {
@@ -176,6 +192,21 @@ export class ZapTaskClient {
     update: (id: number, input: Partial<CreateAssetInput>) =>
       this.patch<Asset>(`/api/v1/assets/${id}`, input),
     delete: (id: number) => this.delete<null>(`/api/v1/assets/${id}`),
+    photos: {
+      list: (assetId: number) =>
+        this.get<{ photos: AssetPhoto[] }>(`/api/v1/assets/${assetId}/photos`),
+      upload: async (assetId: number, file: Blob, options?: { caption?: string; asCover?: boolean; filename?: string }) => {
+        const form = new FormData();
+        form.append('photo', file, options?.filename ?? 'photo.jpg');
+        if (options?.caption) form.append('caption', options.caption);
+        if (options?.asCover) form.append('as_cover', '1');
+        return this.requestForm<{ photos: AssetPhoto[] }>(`/api/v1/assets/${assetId}/photos`, form);
+      },
+      update: (assetId: number, photoId: number, input: { caption?: string; is_cover?: boolean }) =>
+        this.patch<AssetPhoto>(`/api/v1/assets/${assetId}/photos/${photoId}`, input),
+      delete: (assetId: number, photoId: number) =>
+        this.delete<null>(`/api/v1/assets/${assetId}/photos/${photoId}`),
+    },
   };
 
   readonly workspaces = {
@@ -280,6 +311,34 @@ export class ZapTaskClient {
 
   private delete<T>(path: string): Promise<T> {
     return this.request<T>(path, { method: 'DELETE' });
+  }
+
+  private async requestForm<T>(path: string, form: FormData): Promise<T> {
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+    };
+
+    if (this.apiKey) {
+      headers.Authorization = `Bearer ${this.apiKey}`;
+    }
+
+    const response = await this.fetchImpl(`${this.baseUrl}${path}`, {
+      method: 'POST',
+      headers,
+      body: form,
+    });
+
+    const json = (await response.json().catch(() => null)) as ApiResponse<T> | null;
+
+    if (!response.ok || json?.success === false) {
+      throw new ZapTaskApiError(
+        json?.message ?? `Request failed with status ${response.status}`,
+        response.status,
+        json,
+      );
+    }
+
+    return (json?.data ?? json) as T;
   }
 
   private async request<T>(path: string, init: RequestInit): Promise<T> {

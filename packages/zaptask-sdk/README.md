@@ -50,10 +50,17 @@ await client.assets.create({
   city: 'London',
   postal_code: 'E1 1AA',
 })
+
+// Multiple listing photos (estate agents)
+await client.assets.photos.upload(42, fileBlob, {
+  caption: 'Front elevation',
+  asCover: true,
+  filename: 'front.jpg',
+})
 ```
 
 Hierarchy reminder: **Company → Clients → Compliance → Sites → Projects → Tasks**.
-Sites/assets are the property layer specialised apps extend.
+Sites/assets are the property layer specialised apps extend — including multi-photo galleries for listings.
 
 ## AI for apps
 

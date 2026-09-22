@@ -118,6 +118,10 @@ Route::middleware(['auth', 'verified', 'subscription.access', 'sites.access'])->
     Route::post('sites/{site}/compliance/{requirement}/complete', [OperationalObjectController::class, 'completeComplianceRequirement'])->name('sites.compliance.complete');
     Route::delete('sites/{site}/documents/{document}', [OperationalObjectController::class, 'destroyDocument'])->name('sites.documents.destroy');
     Route::get('sites/{site}/documents/{document}/download', [OperationalObjectController::class, 'downloadDocument'])->name('sites.documents.download');
+    Route::post('sites/{site}/photos', [OperationalObjectController::class, 'storePhotos'])->name('sites.photos.store');
+    Route::get('sites/{site}/photos/{photo}', [OperationalObjectController::class, 'showPhoto'])->name('sites.photos.show');
+    Route::patch('sites/{site}/photos/{photo}', [OperationalObjectController::class, 'updatePhoto'])->name('sites.photos.update');
+    Route::delete('sites/{site}/photos/{photo}', [OperationalObjectController::class, 'destroyPhoto'])->name('sites.photos.destroy');
     Route::get('sites/{site}/inspections/create', [InspectionController::class, 'create'])->name('sites.inspections.create');
     Route::get('inspections/{inspection}', [InspectionController::class, 'show'])->name('inspections.show');
     Route::delete('inspections/{inspection}', [InspectionController::class, 'destroy'])->name('inspections.destroy');
