@@ -142,6 +142,10 @@ Route::prefix('v1')
         Route::post('ai', [V1AiController::class, 'handle'])
             ->middleware('platform.auth:ai.write');
 
+        // One-shot: copy a portal key onto this Heroku app. Removed after use.
+        Route::post('zapproperty/adopt-key', [V1ZapPropertyController::class, 'adoptKey'])
+            ->middleware('platform.auth:assets.read');
+
         // ZapProperty portal — one platform key (ZAPPROPERTY_API_KEY), every
         // listing published with "Show on ZapProperty", across all companies.
         Route::prefix('zapproperty')
