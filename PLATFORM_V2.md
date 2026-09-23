@@ -75,12 +75,14 @@ Extends **Sites** (not a fork) for specialised property / estate-agent work:
 - Nav order: Clients → Compliance → Sites
 - Platform API asset payloads include `property` + `client_id` + `photo_count` / `cover_photo_url`
 - Companies can enable the `property` platform application
+- **ZapProperty listings**: `show_on_zapproperty` + listing fields on sites; the portal reads them cross-company via `/api/v1/zapproperty/*` with the single `ZAPPROPERTY_API_KEY` (see BUILDERS.md)
 
 ## Auth rules
 
 - Company scope is derived from the authenticated session, Sanctum token, or API key.
 - Clients must never supply a trusted `company_id`.
 - Cross-company ID access returns 404.
+- The one exception is the ZapProperty portal key (`zp_live_`), which is read-only across companies for *published* listings and can only write tasks into the listing's own company.
 
 ## Settings surfaces
 

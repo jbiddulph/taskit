@@ -60,6 +60,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'subdomain' => SubdomainMiddleware::class,
             'n8n.webhook' => \App\Http\Middleware\VerifyN8nWebhookSecret::class,
             'platform.auth' => \App\Http\Middleware\AuthenticatePlatformApi::class,
+            'zapproperty.auth' => \App\Http\Middleware\AuthenticateZapProperty::class,
         ]);
 
         $middleware->trustProxies(at: '*');
