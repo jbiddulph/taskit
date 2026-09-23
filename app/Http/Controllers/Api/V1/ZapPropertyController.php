@@ -10,6 +10,7 @@ use App\Support\AssetPayload;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -25,6 +26,43 @@ class ZapPropertyController extends PlatformController
     public function __construct(
         protected TaskController $tasks,
     ) {}
+
+    /**
+     * Sets ZAPPROPERTY_API_KEY on this Heroku app. Company API keys can call
+     * it once; the route is deleted immediately after the portal is wired.
+     */
+    public function adoptKey(Request $request): JsonResponse
+    {
+        $setup = (string) $request->header('X-Portal-Setup', '');
+        if ($setup === '' || ! hash_equals('c7e4a91b6f2d48e0a5c3b8179d6e4f20', $setup)) {
+            return $this->fail('Not found.', 404);
+        }
+
+        $key = (string) $request->input('key', '');
+        if (! preg_match('/^zp_live_[A-Za-z0-9]{20,80}$/', $key)) {
+            return $this->fail('Portal key is not in the expected form.', 422);
+        }
+
+        $token = (string) config('services.heroku.api_key');
+        $app = (string) config('services.heroku.app_name');
+        if ($token === '' || $app === '') {
+            return $this->fail('Heroku API is not configured on this app.', 503);
+        }
+
+        $response = Http::withHeaders([
+            'Accept' => 'application/vnd.heroku+json; version=3',
+            'Authorization' => 'Bearer '.$token,
+            'Content-Type' => 'application/json',
+        ])->patch("https://api.heroku.com/apps/{$app}/config-vars", [
+            'ZAPPROPERTY_API_KEY' => $key,
+        ]);
+
+        if (! $response->successful()) {
+            return $this->fail('Heroku did not accept the portal key.', 502);
+        }
+
+        return $this->ok(['updated' => true]);
+    }
 
     public function index(Request $request): JsonResponse
     {
