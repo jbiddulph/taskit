@@ -7,7 +7,7 @@ import SeoHead from '@/components/SeoHead.vue';
 import { useFormFieldClasses } from '@/composables/useFormFieldClasses';
 import { operationalSiteApi } from '@/services/operationalSiteApi';
 import { linkedTodoWarning } from '@/utils/linkedTodoWarning';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 interface OpenTodo {
   id: number;
@@ -75,6 +75,23 @@ interface SiteInspection {
   linked_todo_count?: number;
 }
 
+interface SiteListing {
+  show_on_zapproperty: boolean;
+  listing_type_label?: string | null;
+  price_label?: string | null;
+  bathrooms?: number | null;
+  receptions?: number | null;
+  furnishing_label?: string | null;
+  deposit_label?: string | null;
+  available_from_label?: string | null;
+  council_tax_label?: string | null;
+  epc_label?: string | null;
+  broadband?: string | null;
+  key_features?: string[];
+  listing_description?: string | null;
+  listing_visibility?: Record<string, boolean>;
+}
+
 interface Site {
   id: number;
   type_label: string;
@@ -82,6 +99,7 @@ interface Site {
   bedrooms?: number | null;
   tenure_label?: string;
   occupancy_label?: string;
+  listing?: SiteListing;
   name: string;
   reference?: string;
   full_address: string;
@@ -388,6 +406,51 @@ function deleteInspection(insp: SiteInspection) {
   });
 }
 
+const listingFacts = computed(() => {
+  const listing = props.site.listing;
+  if (!listing) return [];
+
+  const visible = (key: string) => listing.listing_visibility?.[key] !== false;
+  const rows = [
+    { key: 'price', label: 'Price', value: listing.price_label },
+    { key: 'property_type', label: 'Property type', value: props.site.property_type_label && props.site.property_type_label !== '—' ? props.site.property_type_label : null },
+    { key: 'bedrooms', label: 'Bedrooms', value: props.site.bedrooms != null ? String(props.site.bedrooms) : null },
+    { key: 'bathrooms', label: 'Bathrooms', value: listing.bathrooms != null ? String(listing.bathrooms) : null },
+    { key: 'receptions', label: 'Reception rooms', value: listing.receptions != null ? String(listing.receptions) : null },
+    { key: 'tenure', label: 'Tenure', value: props.site.tenure_label && props.site.tenure_label !== '—' ? props.site.tenure_label : null },
+    { key: 'furnishing', label: 'Furnishing', value: listing.furnishing_label },
+    { key: 'deposit', label: 'Deposit', value: listing.deposit_label },
+    { key: 'available_from', label: 'Available', value: listing.available_from_label },
+    { key: 'council_tax', label: 'Council tax band', value: listing.council_tax_label },
+    { key: 'epc', label: 'EPC', value: listing.epc_label },
+    { key: 'broadband', label: 'Broadband', value: listing.broadband },
+  ];
+
+  return rows
+    .filter((row) => row.value)
+    .map((row) => ({ ...row, shown: visible(row.key) }));
+});
+
+const listingHasCopy = computed(() => {
+  const listing = props.site.listing;
+  if (!listing) return false;
+  return Boolean(listing.listing_description) || (listing.key_features?.length ?? 0) > 0 || listingHasFacts(listing);
+});
+
+function listingHasFacts(listing: SiteListing): boolean {
+  return Boolean(
+    listing.price_label
+    || listing.listing_type_label
+    || listing.bathrooms != null
+    || listing.deposit_label
+    || listing.available_from_label
+    || listing.council_tax_label
+    || listing.epc_label
+    || listing.broadband
+    || listing.furnishing_label,
+  );
+}
+
 const onExtractionReviewed = () => {
   router.reload({ only: ['site', 'pendingDocumentProposals'] });
 };
@@ -467,6 +530,47 @@ onUnmounted(() => {
             </div>
 
             <OperationsTips context="sites_show" class="mb-8" />
+
+            <section v-if="site.listing && (site.listing.show_on_zapproperty || listingHasCopy)" class="mb-8">
+              <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                <h2 :class="sectionTitle">ZapProperty listing</h2>
+                <span
+                  class="rounded-full px-2.5 py-1 text-xs font-medium"
+                  :class="site.listing.show_on_zapproperty
+                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
+                    : 'bg-gray-100 text-gray-600 dark:bg-gray-900 dark:text-gray-300'"
+                >
+                  {{ site.listing.show_on_zapproperty ? 'Displayed on ZapProperty' : 'Not displayed on ZapProperty' }}
+                </span>
+              </div>
+              <p v-if="site.listing.listing_type_label" class="text-sm text-gray-500 mb-3">{{ site.listing.listing_type_label }}</p>
+              <p v-if="site.listing.price_label" class="text-xl font-semibold mb-4">{{ site.listing.price_label }}</p>
+              <dl v-if="listingFacts.length" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 mb-4 text-sm">
+                <div v-for="fact in listingFacts" :key="fact.key" class="flex justify-between gap-3 border-b border-gray-100 dark:border-gray-800 py-1">
+                  <dt class="text-gray-500">{{ fact.label }}</dt>
+                  <dd class="text-right">
+                    {{ fact.value }}
+                    <span v-if="site.listing.show_on_zapproperty && !fact.shown" class="ml-2 text-xs text-gray-400">Hidden</span>
+                  </dd>
+                </div>
+              </dl>
+              <div v-if="site.listing.key_features?.length" class="mb-4">
+                <p class="text-xs font-medium uppercase tracking-wide text-gray-500 mb-2">
+                  Key features
+                  <span v-if="site.listing.show_on_zapproperty && site.listing.listing_visibility?.features === false" class="normal-case tracking-normal text-gray-400">· hidden on ZapProperty</span>
+                </p>
+                <ul class="list-disc pl-5 text-sm space-y-1">
+                  <li v-for="feature in site.listing.key_features" :key="feature">{{ feature }}</li>
+                </ul>
+              </div>
+              <div v-if="site.listing.listing_description">
+                <p class="text-xs font-medium uppercase tracking-wide text-gray-500 mb-2">
+                  Description
+                  <span v-if="site.listing.show_on_zapproperty && site.listing.listing_visibility?.description === false" class="normal-case tracking-normal text-gray-400">· hidden on ZapProperty</span>
+                </p>
+                <p class="text-sm whitespace-pre-line text-gray-700 dark:text-gray-300">{{ site.listing.listing_description }}</p>
+              </div>
+            </section>
 
             <section class="mb-8">
               <h2 :class="sectionTitle" class="mb-1">Property photos</h2>

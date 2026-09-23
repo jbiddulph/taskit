@@ -19,6 +19,7 @@ use App\Services\OperationalObjectPhotoService;
 use App\Support\ComplianceTemplates;
 use App\Support\InspectionTemplates;
 use App\Support\OperationalObjectTypes;
+use App\Support\PropertyListing;
 use App\Support\PropertyOccupancy;
 use App\Support\PropertyTenure;
 use App\Support\PropertyTypes;
@@ -76,6 +77,7 @@ class OperationalObjectController extends Controller
             'propertyTypeOptions' => PropertyTypes::choices(),
             'tenureOptions' => PropertyTenure::choices(),
             'occupancyOptions' => PropertyOccupancy::choices(),
+            'listingOptions' => PropertyListing::formOptions(),
             'parentOptions' => $this->parentOptions($user->company_id),
             'clients' => $this->clientOptions($user->company_id),
             'projects' => $this->projectOptions($user->company_id),
@@ -110,6 +112,7 @@ class OperationalObjectController extends Controller
             'occupancy_status' => 'nullable|'.PropertyOccupancy::validationRule(),
             'apply_compliance_template' => 'sometimes|boolean',
             'default_project_id' => 'nullable|exists:taskit_projects,id',
+            ...PropertyListing::validationRules(),
         ]);
 
         if (! empty($validated['parent_id'])) {
@@ -128,7 +131,12 @@ class OperationalObjectController extends Controller
         $validated['occupancy_status'] = $validated['occupancy_status'] ?? PropertyOccupancy::OCCUPIED;
 
         $object = OperationalObject::create([
-            ...collect($validated)->except(['apply_compliance_template', 'default_project_id'])->all(),
+            ...collect($validated)->except([
+                'apply_compliance_template',
+                'default_project_id',
+                ...PropertyListing::requestKeys(),
+            ])->all(),
+            ...PropertyListing::attributes($validated),
             'company_id' => $user->company_id,
             'created_by_user_id' => $user->id,
         ]);
@@ -195,6 +203,7 @@ class OperationalObjectController extends Controller
             'propertyTypeOptions' => PropertyTypes::choices(),
             'tenureOptions' => PropertyTenure::choices(),
             'occupancyOptions' => PropertyOccupancy::choices(),
+            'listingOptions' => PropertyListing::formOptions(),
             'parentOptions' => $this->parentOptions($user->company_id, $site->id),
             'clients' => $this->clientOptions($user->company_id),
             'company' => $this->companyPayload($user),
@@ -224,6 +233,7 @@ class OperationalObjectController extends Controller
             'bedrooms' => 'nullable|integer|min:0|max:50',
             'tenure' => PropertyTenure::validationRule(),
             'occupancy_status' => 'nullable|'.PropertyOccupancy::validationRule(),
+            ...PropertyListing::validationRules(),
         ]);
 
         if (! empty($validated['parent_id']) && (int) $validated['parent_id'] === $site->id) {
@@ -234,7 +244,10 @@ class OperationalObjectController extends Controller
 
         $validated = $this->ensureCoordinates($validated);
 
-        $site->update($validated);
+        $site->update([
+            ...collect($validated)->except(PropertyListing::requestKeys())->all(),
+            ...PropertyListing::attributes($validated),
+        ]);
         $site->syncLocationToTodos();
 
         return redirect()->route('sites.show', $site)->with('success', 'Site updated successfully!');
@@ -621,6 +634,9 @@ class OperationalObjectController extends Controller
             'tenure_label' => PropertyTenure::label($object->tenure),
             'occupancy_status' => $object->occupancy_status,
             'occupancy_label' => PropertyOccupancy::label($object->occupancy_status),
+            'show_on_zapproperty' => (bool) $object->show_on_zapproperty,
+            'listing_type_label' => PropertyListing::listingTypeLabel($object->listing_type),
+            'price_label' => PropertyListing::formatPrice($object->price_amount, $object->price_qualifier),
             'name' => $object->name,
             'reference' => $object->reference,
             'full_address' => $object->full_address,
@@ -641,6 +657,38 @@ class OperationalObjectController extends Controller
                 'compliant' => $trackedRequirements->where('status', ComplianceRequirement::STATUS_COMPLIANT)->count(),
                 'missing' => $trackedRequirements->where('status', ComplianceRequirement::STATUS_MISSING)->count(),
             ],
+        ];
+    }
+
+    protected function serializeListing(OperationalObject $object): array
+    {
+        $visibility = PropertyListing::normalizeVisibility($object->listing_visibility);
+        $available = $object->available_from;
+
+        return [
+            'show_on_zapproperty' => (bool) $object->show_on_zapproperty,
+            'listing_type' => $object->listing_type,
+            'listing_type_label' => PropertyListing::listingTypeLabel($object->listing_type),
+            'price_amount' => $object->price_amount,
+            'price_qualifier' => $object->price_qualifier,
+            'price_qualifier_label' => PropertyListing::priceQualifierLabel($object->price_qualifier),
+            'price_label' => PropertyListing::formatPrice($object->price_amount, $object->price_qualifier),
+            'bathrooms' => $object->bathrooms,
+            'receptions' => $object->receptions,
+            'furnishing' => $object->furnishing,
+            'furnishing_label' => PropertyListing::furnishingLabel($object->furnishing),
+            'deposit_amount' => $object->deposit_amount,
+            'deposit_label' => PropertyListing::formatMoney($object->deposit_amount),
+            'available_from' => $available?->format('Y-m-d'),
+            'available_from_label' => $available ? 'from '.$available->format('j F Y') : null,
+            'council_tax_band' => $object->council_tax_band,
+            'council_tax_label' => PropertyListing::councilTaxLabel($object->council_tax_band),
+            'epc_rating' => $object->epc_rating,
+            'epc_label' => $object->epc_rating ? 'EPC '.$object->epc_rating : null,
+            'broadband' => $object->broadband,
+            'key_features' => $object->key_features ?? [],
+            'listing_description' => $object->listing_description,
+            'listing_visibility' => $visibility,
         ];
     }
 
@@ -686,6 +734,7 @@ class OperationalObjectController extends Controller
             'tenure_label' => PropertyTenure::label($object->tenure),
             'occupancy_status' => $object->occupancy_status,
             'occupancy_label' => PropertyOccupancy::label($object->occupancy_status),
+            'listing' => $this->serializeListing($object),
             'name' => $object->name,
             'reference' => $object->reference,
             'address_line_1' => $object->address_line_1,
