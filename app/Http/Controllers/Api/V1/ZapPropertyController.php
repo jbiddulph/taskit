@@ -6,12 +6,12 @@ use App\Models\Company;
 use App\Models\OperationalObject;
 use App\Models\OperationalObjectPhoto;
 use App\Models\User;
+use App\Services\OperationalObjectPhotoService;
 use App\Support\AssetPayload;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * ZapProperty portal API — everything an agent has published with
@@ -25,6 +25,7 @@ class ZapPropertyController extends PlatformController
 {
     public function __construct(
         protected TaskController $tasks,
+        protected OperationalObjectPhotoService $photoService,
     ) {}
 
     /**
@@ -139,14 +140,19 @@ class ZapPropertyController extends PlatformController
         }
 
         $photo = $asset->photos()->where('id', $photoId)->first();
-        if (! $photo || ! Storage::disk('private')->exists($photo->file_path)) {
+        if (! $photo) {
             return $this->fail('Photo not found.', 404);
         }
 
-        return Storage::disk('private')->response($photo->file_path, $photo->original_filename, [
-            'Content-Type' => $photo->mime_type,
-            'Cache-Control' => 'private, max-age=3600',
-        ]);
+        try {
+            return $this->photoService->inlineResponse($photo);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            if ($e->getStatusCode() === 404) {
+                return $this->fail('Photo not found.', 404);
+            }
+
+            throw $e;
+        }
     }
 
     public function tasks(Request $request, int $id): JsonResponse

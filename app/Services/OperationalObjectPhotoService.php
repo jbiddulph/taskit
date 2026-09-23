@@ -7,8 +7,8 @@ use App\Models\OperationalObjectPhoto;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response;
 
 class OperationalObjectPhotoService
 {
@@ -17,6 +17,10 @@ class OperationalObjectPhotoService
     public const MAX_BYTES = 10 * 1024 * 1024;
 
     public const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+    public function __construct(
+        protected SupabaseObjectStore $objects,
+    ) {}
 
     public function add(
         OperationalObject $object,
@@ -31,9 +35,12 @@ class OperationalObjectPhotoService
 
         $extension = strtolower($file->getClientOriginalExtension() ?: 'jpg');
         $filename = Str::uuid().'.'.$extension;
-        $filePath = $file->storeAs('site-photos/'.$object->id, $filename, 'private');
+        // Supabase object key: {company id}/{site id}/{file}
+        $filePath = $object->company_id.'/'.$object->id.'/'.$filename;
+        $mime = $file->getMimeType() ?: 'image/jpeg';
+        $this->objects->put($filePath, $file->getContent(), $mime);
 
-        return DB::transaction(function () use ($object, $file, $uploader, $caption, $asCover, $filename, $filePath) {
+        return DB::transaction(function () use ($object, $file, $uploader, $caption, $asCover, $filename, $filePath, $mime) {
             $makeCover = $asCover || $object->photos()->count() === 0;
 
             if ($makeCover) {
@@ -45,7 +52,7 @@ class OperationalObjectPhotoService
                 'uploaded_by_user_id' => $uploader?->id,
                 'filename' => $filename,
                 'original_filename' => $file->getClientOriginalName(),
-                'mime_type' => $file->getMimeType() ?: 'image/jpeg',
+                'mime_type' => $mime,
                 'file_path' => $filePath,
                 'file_size' => $file->getSize(),
                 'caption' => $caption,
@@ -53,6 +60,24 @@ class OperationalObjectPhotoService
                 'is_cover' => $makeCover,
             ]);
         });
+    }
+
+    public function inlineResponse(OperationalObjectPhoto $photo): Response
+    {
+        $contents = $this->objects->get((string) $photo->file_path);
+        if ($contents === null || $contents === '') {
+            abort(404, 'Photo file missing.');
+        }
+
+        $mime = $photo->mime_type ?: 'image/jpeg';
+        $filename = str_replace(['"', "\r", "\n"], '', $photo->original_filename ?: 'photo.jpg');
+
+        return response($contents, 200, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, max-age=3600',
+        ]);
     }
 
     public function setCover(OperationalObject $object, OperationalObjectPhoto $photo): void
@@ -94,8 +119,8 @@ class OperationalObjectPhotoService
 
             $photo->delete();
 
-            if ($path && Storage::disk('private')->exists($path)) {
-                Storage::disk('private')->delete($path);
+            if ($path) {
+                $this->objects->delete($path);
             }
 
             if ($wasCover) {
@@ -116,8 +141,8 @@ class OperationalObjectPhotoService
         $object->loadMissing('photos');
 
         foreach ($object->photos as $photo) {
-            if ($photo->file_path && Storage::disk('private')->exists($photo->file_path)) {
-                Storage::disk('private')->delete($photo->file_path);
+            if ($photo->file_path) {
+                $this->objects->delete($photo->file_path);
             }
         }
 

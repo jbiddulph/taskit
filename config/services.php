@@ -71,6 +71,14 @@ return [
         'access_key' => env('UNSPLASH_ACCESS_KEY'),
     ],
 
+    // Property photos are stored in this bucket at {company_id}/{site_id}/{file}.
+    // The anon key is already used by the app; a service-role key is preferred when set.
+    'supabase_storage' => [
+        'url' => env('VITE_SUPABASE_URL'),
+        'key' => env('SUPABASE_SERVICE_ROLE_KEY', env('VITE_SUPABASE_ANON_KEY')),
+        'bucket' => env('SUPABASE_BUCKET', 'taskit'),
+    ],
+
     // Platform-level key for the ZapProperty portal (/api/v1/zapproperty/*).
     // Generate with `php artisan zapproperty:key`. Unset = portal disabled.
     'zapproperty' => [

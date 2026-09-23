@@ -431,20 +431,7 @@ class OperationalObjectController extends Controller
             abort(404);
         }
 
-        if (! Storage::disk('private')->exists($photo->file_path)) {
-            abort(404, 'Photo file missing.');
-        }
-
-        $mime = $photo->mime_type ?: 'image/jpeg';
-        $filename = str_replace(['"', "\r", "\n"], '', $photo->original_filename ?: 'photo.jpg');
-
-        // Stream inline so <img> / lightbox can display (not download).
-        return Storage::disk('private')->response($photo->file_path, $filename, [
-            'Content-Type' => $mime,
-            'Content-Disposition' => 'inline; filename="'.$filename.'"',
-            'X-Content-Type-Options' => 'nosniff',
-            'Cache-Control' => 'private, max-age=3600',
-        ]);
+        return $this->photoService->inlineResponse($photo);
     }
 
     public function updatePhoto(Request $request, OperationalObject $site, OperationalObjectPhoto $photo)

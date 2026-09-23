@@ -105,7 +105,7 @@ class ZapPropertyPortalApiTest extends TestCase
 
     public function test_portal_photo_urls_point_at_the_portal_and_stream(): void
     {
-        Storage::fake('private');
+        Storage::fake('supabase');
         [$agency, $user] = $this->createAgency('Worthing Lets');
         $site = $this->createSite($agency, $user, 'Belsize Road', true);
 

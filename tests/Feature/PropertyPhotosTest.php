@@ -51,7 +51,7 @@ class PropertyPhotosTest extends TestCase
 
     public function test_can_upload_multiple_property_photos_on_site(): void
     {
-        Storage::fake('private');
+        Storage::fake('supabase');
         [$user, $company, $site] = $this->createSiteSetup();
 
         $this->actingAs($user)
@@ -68,12 +68,13 @@ class PropertyPhotosTest extends TestCase
         $cover = $site->photos()->where('is_cover', true)->first();
         $this->assertNotNull($cover);
         $this->assertSame('Front elevation', $cover->caption);
-        Storage::disk('private')->assertExists($cover->file_path);
+        Storage::disk('supabase')->assertExists($cover->file_path);
+        $this->assertSame($company->id.'/'.$site->id.'/'.$cover->filename, $cover->file_path);
     }
 
     public function test_first_photo_is_cover_and_can_be_changed(): void
     {
-        Storage::fake('private');
+        Storage::fake('supabase');
         [$user, , $site] = $this->createSiteSetup();
 
         $this->actingAs($user)->post("/sites/{$site->id}/photos", [
@@ -96,7 +97,7 @@ class PropertyPhotosTest extends TestCase
 
     public function test_site_show_includes_photos_and_cover_url(): void
     {
-        Storage::fake('private');
+        Storage::fake('supabase');
         [$user, , $site] = $this->createSiteSetup();
 
         $this->actingAs($user)->post("/sites/{$site->id}/photos", [
@@ -118,7 +119,7 @@ class PropertyPhotosTest extends TestCase
 
     public function test_can_view_edit_caption_and_delete_photo(): void
     {
-        Storage::fake('private');
+        Storage::fake('supabase');
         [$user, , $site] = $this->createSiteSetup();
 
         $this->actingAs($user)->post("/sites/{$site->id}/photos", [
@@ -157,7 +158,7 @@ class PropertyPhotosTest extends TestCase
 
     public function test_platform_api_can_upload_and_list_asset_photos(): void
     {
-        Storage::fake('private');
+        Storage::fake('supabase');
         [$user, $company, $site] = $this->createSiteSetup();
         $key = ApiKey::generate($company, 'Estate app', $user)['plain_text_key'];
 
@@ -181,7 +182,7 @@ class PropertyPhotosTest extends TestCase
 
     public function test_deleting_cover_promotes_next_photo(): void
     {
-        Storage::fake('private');
+        Storage::fake('supabase');
         [$user, , $site] = $this->createSiteSetup();
 
         $this->actingAs($user)->post("/sites/{$site->id}/photos", [
