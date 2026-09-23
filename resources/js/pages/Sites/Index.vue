@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
+import { reactive } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
 import OperationsTips from '@/components/OperationsTips.vue';
@@ -58,6 +59,7 @@ interface Props {
 
 defineProps<Props>();
 const { btnSecondary, btnDangerSm } = useFormFieldClasses();
+const missingCovers = reactive<Record<number, boolean>>({});
 
 function filterByClient(event: Event) {
   const value = (event.target as HTMLSelectElement).value;
@@ -202,11 +204,16 @@ function deleteSite(site: Site) {
               >
                 <Link v-if="site.cover_photo_url" :href="`/sites/${site.id}`" class="block aspect-[16/10] bg-gray-100 dark:bg-gray-900">
                   <img
+                    v-if="!missingCovers[site.id]"
                     :src="site.cover_photo_url"
                     :alt="site.name"
                     class="h-full w-full object-cover"
                     loading="lazy"
+                    @error="missingCovers[site.id] = true"
                   />
+                  <span v-else class="flex h-full items-center justify-center px-4 text-center text-sm text-gray-500">
+                    Cover photo missing. Open the property and upload it again.
+                  </span>
                 </Link>
                 <div class="p-5">
                 <div class="flex items-start justify-between gap-3 mb-2">

@@ -7,7 +7,6 @@ use App\Models\OperationalObjectPhoto;
 use App\Services\OperationalObjectPhotoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class AssetPhotoController extends PlatformController
@@ -81,14 +80,19 @@ class AssetPhotoController extends PlatformController
         }
 
         $photo = $asset->photos()->where('id', $photoId)->first();
-        if (! $photo || ! Storage::disk('private')->exists($photo->file_path)) {
+        if (! $photo) {
             return $this->fail('Photo not found.', 404);
         }
 
-        return Storage::disk('private')->response($photo->file_path, $photo->original_filename, [
-            'Content-Type' => $photo->mime_type,
-            'Cache-Control' => 'private, max-age=3600',
-        ]);
+        try {
+            return $this->photoService->inlineResponse($photo);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            if ($e->getStatusCode() === 404) {
+                return $this->fail('Photo not found.', 404);
+            }
+
+            throw $e;
+        }
     }
 
     public function update(Request $request, int $assetId, int $photoId): JsonResponse

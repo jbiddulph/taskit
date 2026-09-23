@@ -31,8 +31,8 @@ class OperationalObjectDeletionService
         }
 
         foreach ($object->photos as $photo) {
-            if ($photo->file_path && Storage::disk('private')->exists($photo->file_path)) {
-                Storage::disk('private')->delete($photo->file_path);
+            if ($photo->file_path) {
+                app(SupabaseObjectStore::class)->delete($photo->file_path);
             }
         }
 

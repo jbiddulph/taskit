@@ -7,7 +7,7 @@ import SeoHead from '@/components/SeoHead.vue';
 import { useFormFieldClasses } from '@/composables/useFormFieldClasses';
 import { operationalSiteApi } from '@/services/operationalSiteApi';
 import { linkedTodoWarning } from '@/utils/linkedTodoWarning';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 interface OpenTodo {
   id: number;
@@ -157,6 +157,7 @@ const lightboxUrl = ref<string | null>(null);
 const lightboxCaption = ref('');
 const editingCaptionId = ref<number | null>(null);
 const editingCaptionValue = ref('');
+const missingPhotoIds = reactive<Record<number, boolean>>({});
 
 const acceptedPhotoMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const acceptedPhotoExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
@@ -593,11 +594,19 @@ onUnmounted(() => {
                     @click="openLightbox(photo)"
                   >
                     <img
+                      v-if="!missingPhotoIds[photo.id]"
                       :src="photo.url"
                       :alt="photo.caption || photo.original_filename"
                       class="h-full w-full object-cover"
                       loading="lazy"
+                      @error="missingPhotoIds[photo.id] = true"
                     />
+                    <span
+                      v-else
+                      class="flex h-full items-center justify-center px-4 text-center text-sm text-gray-500"
+                    >
+                      This photo file is missing. Remove it and upload the picture again.
+                    </span>
                     <span
                       v-if="photo.is_cover"
                       class="absolute left-2 top-2 rounded bg-black/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white"
