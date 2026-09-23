@@ -5,6 +5,8 @@ import Icon from '@/components/Icon.vue';
 import OperationsTips from '@/components/OperationsTips.vue';
 import SeoHead from '@/components/SeoHead.vue';
 import { useFormFieldClasses } from '@/composables/useFormFieldClasses';
+import PropertyListingFields from '@/components/PropertyListingFields.vue';
+import { emptyListingForm, listingPayload, type ListingOptions } from '@/utils/propertyListing';
 
 interface Option {
   value: string;
@@ -27,6 +29,7 @@ interface Props {
   propertyTypeOptions?: Option[];
   tenureOptions?: Option[];
   occupancyOptions?: Option[];
+  listingOptions: ListingOptions;
   parentOptions: ParentOption[];
   clients?: { id: number; name: string }[];
   projects: ProjectOption[];
@@ -62,22 +65,29 @@ const form = useForm({
   bedrooms: '' as string | number,
   tenure: '',
   occupancy_status: 'occupied',
+  ...emptyListingForm(props.listingOptions),
   apply_compliance_template: true,
   default_project_id: '' as string | number,
 });
 
 const submit = () => {
-  form.transform((data) => ({
-    ...data,
-    parent_id: data.parent_id || null,
-    client_id: data.client_id || null,
-    default_project_id: data.default_project_id || null,
-    property_type: data.property_type || null,
-    tenure: data.tenure || null,
-    bedrooms: data.bedrooms === '' ? null : Number(data.bedrooms),
-    latitude: data.latitude === '' ? null : Number(data.latitude),
-    longitude: data.longitude === '' ? null : Number(data.longitude),
-  })).post('/sites');
+  form.transform((data) => {
+    const { key_features_text, ...rest } = data;
+    void key_features_text;
+
+    return {
+      ...rest,
+      parent_id: data.parent_id || null,
+      client_id: data.client_id || null,
+      default_project_id: data.default_project_id || null,
+      property_type: data.property_type || null,
+      tenure: data.tenure || null,
+      bedrooms: data.bedrooms === '' ? null : Number(data.bedrooms),
+      ...listingPayload(data),
+      latitude: data.latitude === '' ? null : Number(data.latitude),
+      longitude: data.longitude === '' ? null : Number(data.longitude),
+    };
+  }).post('/sites');
 };
 </script>
 
@@ -162,6 +172,17 @@ const submit = () => {
                   </div>
                 </div>
               </div>
+
+              <PropertyListingFields
+                v-if="['property', 'building', 'unit', 'site'].includes(form.type)"
+                :form="form"
+                :listing-options="listingOptions"
+                :label="label"
+                :input="input"
+                :select="select"
+                :textarea="textarea"
+                :error="error"
+              />
 
               <div v-if="parentOptions.length">
                 <label :class="label">Parent site (optional)</label>

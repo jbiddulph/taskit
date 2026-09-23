@@ -4,6 +4,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Icon from '@/components/Icon.vue';
 import SeoHead from '@/components/SeoHead.vue';
 import { useFormFieldClasses } from '@/composables/useFormFieldClasses';
+import PropertyListingFields from '@/components/PropertyListingFields.vue';
+import { defaultListingVisibility, listingPayload, moneyInput, type ListingOptions } from '@/utils/propertyListing';
 import { linkedTodoWarning } from '@/utils/linkedTodoWarning';
 
 interface Option {
@@ -35,6 +37,21 @@ interface Site {
   bedrooms?: number | null;
   tenure?: string | null;
   occupancy_status?: string | null;
+  show_on_zapproperty?: boolean;
+  listing_type?: string | null;
+  price_amount?: string | number | null;
+  price_qualifier?: string | null;
+  bathrooms?: number | null;
+  receptions?: number | null;
+  furnishing?: string | null;
+  deposit_amount?: string | number | null;
+  available_from?: string | null;
+  council_tax_band?: string | null;
+  epc_rating?: string | null;
+  broadband?: string | null;
+  key_features?: string[] | null;
+  listing_description?: string | null;
+  listing_visibility?: Record<string, boolean> | null;
   children_count?: number;
   linked_todo_count?: number;
 }
@@ -45,6 +62,7 @@ interface Props {
   propertyTypeOptions?: Option[];
   tenureOptions?: Option[];
   occupancyOptions?: Option[];
+  listingOptions: ListingOptions;
   parentOptions: ParentOption[];
   clients?: { id: number; name: string }[];
   company?: {
@@ -56,7 +74,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const { label, input, select, textarea, btnPrimary, btnSecondary, btnDanger } = useFormFieldClasses();
+const { label, input, select, textarea, error, btnPrimary, btnSecondary, btnDanger } = useFormFieldClasses();
 
 const form = useForm({
   type: props.site.type,
@@ -76,19 +94,43 @@ const form = useForm({
   bedrooms: props.site.bedrooms ?? '',
   tenure: props.site.tenure ?? '',
   occupancy_status: props.site.occupancy_status ?? 'occupied',
+  show_on_zapproperty: props.site.show_on_zapproperty ?? false,
+  listing_type: props.site.listing_type ?? '',
+  price_amount: moneyInput(props.site.price_amount),
+  price_qualifier: props.site.price_qualifier ?? '',
+  bathrooms: props.site.bathrooms ?? '',
+  receptions: props.site.receptions ?? '',
+  furnishing: props.site.furnishing ?? '',
+  deposit_amount: moneyInput(props.site.deposit_amount),
+  available_from: (props.site.available_from ?? '').slice(0, 10),
+  council_tax_band: props.site.council_tax_band ?? '',
+  epc_rating: props.site.epc_rating ?? '',
+  broadband: props.site.broadband ?? '',
+  key_features_text: (props.site.key_features ?? []).join('\n'),
+  listing_description: props.site.listing_description ?? '',
+  listing_visibility: {
+    ...defaultListingVisibility(props.listingOptions?.visibility),
+    ...(props.site.listing_visibility ?? {}),
+  },
 });
 
 const submit = () => {
-  form.transform((data) => ({
-    ...data,
-    parent_id: data.parent_id || null,
-    client_id: data.client_id || null,
-    property_type: data.property_type || null,
-    tenure: data.tenure || null,
-    bedrooms: data.bedrooms === '' ? null : Number(data.bedrooms),
-    latitude: data.latitude === '' ? null : Number(data.latitude),
-    longitude: data.longitude === '' ? null : Number(data.longitude),
-  })).put(`/sites/${props.site.id}`);
+  form.transform((data) => {
+    const { key_features_text, ...rest } = data;
+    void key_features_text;
+
+    return {
+      ...rest,
+      parent_id: data.parent_id || null,
+      client_id: data.client_id || null,
+      property_type: data.property_type || null,
+      tenure: data.tenure || null,
+      bedrooms: data.bedrooms === '' ? null : Number(data.bedrooms),
+      ...listingPayload(data),
+      latitude: data.latitude === '' ? null : Number(data.latitude),
+      longitude: data.longitude === '' ? null : Number(data.longitude),
+    };
+  }).put(`/sites/${props.site.id}`);
 };
 
 const deleteSite = () => {
@@ -181,6 +223,17 @@ const deleteSite = () => {
                   </div>
                 </div>
               </div>
+
+              <PropertyListingFields
+                v-if="['property', 'building', 'unit', 'site'].includes(form.type)"
+                :form="form"
+                :listing-options="listingOptions"
+                :label="label"
+                :input="input"
+                :select="select"
+                :textarea="textarea"
+                :error="error"
+              />
 
               <div v-if="parentOptions.length">
                 <label :class="label">Parent site</label>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Models\OperationalObject;
 use App\Models\Workspace;
+use App\Support\PropertyListing;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -92,6 +93,7 @@ class AssetController extends PlatformController
             'tenure' => 'nullable|string|max:50',
             'occupancy_status' => 'nullable|string|max:50',
             'client_id' => 'nullable|integer|exists:taskit_clients,id',
+            ...PropertyListing::validationRules(),
         ]);
 
         if ($validator->fails()) {
@@ -130,6 +132,7 @@ class AssetController extends PlatformController
             'bedrooms' => $request->input('bedrooms'),
             'tenure' => $request->input('tenure'),
             'occupancy_status' => $request->input('occupancy_status', 'occupied'),
+            ...PropertyListing::partialAttributes($request->only(PropertyListing::requestKeys())),
             'is_active' => true,
             'created_by_user_id' => $user->id,
         ]);
@@ -165,6 +168,7 @@ class AssetController extends PlatformController
             'tenure' => 'nullable|string|max:50',
             'occupancy_status' => 'nullable|string|max:50',
             'client_id' => 'nullable|integer|exists:taskit_clients,id',
+            ...PropertyListing::validationRules(),
         ]);
 
         if ($validator->fails()) {
@@ -176,6 +180,11 @@ class AssetController extends PlatformController
             'address_line_1', 'address_line_2', 'city', 'postal_code', 'country', 'notes',
             'property_type', 'bedrooms', 'tenure', 'occupancy_status', 'client_id',
         ]);
+
+        $listingInput = $request->only(PropertyListing::requestKeys());
+        if ($listingInput !== []) {
+            $data = array_merge($data, PropertyListing::partialAttributes($listingInput));
+        }
 
         if ($request->has('workspace_id')) {
             if ($request->filled('workspace_id')) {
@@ -236,8 +245,26 @@ class AssetController extends PlatformController
             'property' => [
                 'property_type' => $asset->property_type,
                 'bedrooms' => $asset->bedrooms,
+                'bathrooms' => $asset->bathrooms,
+                'receptions' => $asset->receptions,
                 'tenure' => $asset->tenure,
                 'occupancy_status' => $asset->occupancy_status,
+                'furnishing' => $asset->furnishing,
+                'listing' => [
+                    'show_on_zapproperty' => (bool) $asset->show_on_zapproperty,
+                    'listing_type' => $asset->listing_type,
+                    'price_amount' => $asset->price_amount,
+                    'price_qualifier' => $asset->price_qualifier,
+                    'price_label' => PropertyListing::formatPrice($asset->price_amount, $asset->price_qualifier),
+                    'deposit_amount' => $asset->deposit_amount,
+                    'available_from' => $asset->available_from?->toDateString(),
+                    'council_tax_band' => $asset->council_tax_band,
+                    'epc_rating' => $asset->epc_rating,
+                    'broadband' => $asset->broadband,
+                    'key_features' => $asset->key_features ?? [],
+                    'description' => $asset->listing_description,
+                    'visibility' => PropertyListing::normalizeVisibility($asset->listing_visibility),
+                ],
             ],
             'photo_count' => $asset->relationLoaded('photos')
                 ? $asset->photos->count()

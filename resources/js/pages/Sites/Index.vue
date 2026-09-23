@@ -21,6 +21,9 @@ interface Site {
   property_type_label?: string;
   bedrooms?: number | null;
   occupancy_label?: string;
+  show_on_zapproperty?: boolean;
+  listing_type_label?: string | null;
+  price_label?: string | null;
   name: string;
   reference?: string;
   full_address: string;
@@ -220,12 +223,15 @@ function deleteSite(site: Site) {
                   <Link :href="`/sites/${site.id}`">{{ site.full_address }}</Link>
                 </p>
                 <p
-                  v-if="site.property_type_label || site.bedrooms != null || site.occupancy_label"
+                  v-if="site.property_type_label || site.bedrooms != null || site.occupancy_label || site.price_label || site.listing_type_label || site.show_on_zapproperty"
                   class="text-xs text-gray-500 mb-2 flex flex-wrap gap-x-3 gap-y-1"
                 >
+                  <span v-if="site.listing_type_label">{{ site.listing_type_label }}</span>
+                  <span v-if="site.price_label">{{ site.price_label }}</span>
                   <span v-if="site.property_type_label">{{ site.property_type_label }}</span>
                   <span v-if="site.bedrooms != null">{{ site.bedrooms }} bed</span>
                   <span v-if="site.occupancy_label">{{ site.occupancy_label }}</span>
+                  <span v-if="site.show_on_zapproperty">On ZapProperty</span>
                   <span v-if="site.photo_count">{{ site.photo_count }} photo{{ site.photo_count === 1 ? '' : 's' }}</span>
                 </p>
                 <p v-if="site.client" class="text-xs text-gray-500 mb-2">
