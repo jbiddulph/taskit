@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\V1\ProjectController as V1ProjectController;
 use App\Http\Controllers\Api\V1\TaskController as V1TaskController;
 use App\Http\Controllers\Api\V1\UserController as V1UserController;
 use App\Http\Controllers\Api\V1\WorkspaceController as V1WorkspaceController;
+use App\Http\Controllers\Api\V1\ZapPropertyController as V1ZapPropertyController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -140,6 +141,18 @@ Route::prefix('v1')
         // AI as a service for specialised apps (preview → confirm)
         Route::post('ai', [V1AiController::class, 'handle'])
             ->middleware('platform.auth:ai.write');
+
+        // ZapProperty portal — one platform key (ZAPPROPERTY_API_KEY), every
+        // listing published with "Show on ZapProperty", across all companies.
+        Route::prefix('zapproperty')
+            ->middleware('zapproperty.auth')
+            ->group(function () {
+                Route::get('listings', [V1ZapPropertyController::class, 'index']);
+                Route::get('listings/{id}', [V1ZapPropertyController::class, 'show']);
+                Route::get('listings/{id}/photos/{photoId}', [V1ZapPropertyController::class, 'photo']);
+                Route::get('listings/{id}/tasks', [V1ZapPropertyController::class, 'tasks']);
+                Route::post('listings/{id}/tasks', [V1ZapPropertyController::class, 'storeTask']);
+            });
     });
 
 /*

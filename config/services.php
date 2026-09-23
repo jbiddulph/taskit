@@ -71,4 +71,10 @@ return [
         'access_key' => env('UNSPLASH_ACCESS_KEY'),
     ],
 
+    // Platform-level key for the ZapProperty portal (/api/v1/zapproperty/*).
+    // Generate with `php artisan zapproperty:key`. Unset = portal disabled.
+    'zapproperty' => [
+        'api_key' => env('ZAPPROPERTY_API_KEY'),
+    ],
+
 ];

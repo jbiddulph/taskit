@@ -89,6 +89,21 @@ if (proposal.task) {
 
 Company scope is always derived from the API key. **Never** send a trusted `company_id` from the client.
 
+### Cross-company portals (ZapProperty)
+
+A consumer that aggregates *every* company — such as the ZapProperty listings portal — cannot use a `zt_live_` key, which only ever sees one company. It uses the platform-level portal key instead:
+
+| | |
+|---|---|
+| Key | `ZAPPROPERTY_API_KEY` on the ZapTask server (generate with `php artisan zapproperty:key`, prefix `zp_live_`). Unset = portal disabled (503). |
+| Auth | `Authorization: Bearer zp_live_…` — rejected on every company endpoint, and company keys are rejected here. |
+| `GET /api/v1/zapproperty/listings` | Every active site with **Show on ZapProperty** ticked, across all companies. Same asset payload as `/assets` plus `agent` (`id`, `name`, `logo_url`, `website`). Filters: `type`, `listing_type`, `company_id`, `updated_since`, `search`; `per_page` ≤ 100. `meta.unpublished_total` counts active sites that are not ticked. |
+| `GET /api/v1/zapproperty/listings/{id}` | Detail incl. `photos[]`; 404 unless published. |
+| `GET /api/v1/zapproperty/listings/{id}/photos/{photoId}` | Photo bytes. |
+| `GET/POST /api/v1/zapproperty/listings/{id}/tasks` | Tasks for a listing, created *inside the listing's company* (as the site's creator), `source` defaults to `zapproperty`. |
+
+Unticking the box on a site removes it from the portal immediately — the filter is applied server-side.
+
 ## Example specialised consumer
 
 See [`examples/property-ops-app`](examples/property-ops-app) — a small Node app that:
