@@ -95,14 +95,32 @@ Extends **Sites** (not a fork) for specialised property / estate-agent work:
 
 On `/compliance` (Property Compliance AI):
 
+- **Bulk inbox upload** — drop many PDFs without picking a site; AI extracts address and auto-matches properties (`POST /api/compliance/documents/inbox`)
 - Multi-file certificate upload + AI extraction → review → ZapTask reminder todos
 - Attention insights by certificate type (e.g. gas within 14 days)
-- **Ask about your portfolio** — `POST /api/ai` / `POST /api/v1/ai` with `context: portfolio` answers from private sites/certificates/documents
-- One-click **Create ZapTask** from attention rows or portfolio answers (`POST /api/compliance/requirements/{id}/create-task`)
+- **Ask about your portfolio** — `POST /api/ai` / `POST /api/v1/ai` with `context: portfolio`
+  - Expiry / missing / boiler questions
+  - Document RAG over `extracted_text` (“Show me everything relating to the roof”)
+- One-click **Create ZapTask** (`POST /api/compliance/requirements/{id}/create-task`)
+
+Document AI allowances (plan positioning): FREE 10 / MIDI 100 / MAXI 500 / BUSINESS 2000 reads per month via `Company::getDocumentAiAllowance()`.
+
+## Vertical template
+
+The same pattern powers future apps without rebuilding the core:
+
+| Vertical | Asset | Certificates / evidence | Ask box |
+|---|---|---|---|
+| Property | Sites | Gas, EICR, EPC, insurance, boiler | Portfolio Q&A + RAG |
+| Fleet | Vehicles | MOT, tax, insurance, service | Fleet compliance ask |
+| HR | People | RTW, DBS, training, licences | Expiry tracker ask |
+| H&S | Sites / assets | FRA, RAMS, training records | “What needs doing this week?” |
+
+Enable apps under **Settings → Apps on ZapTask**. ZapTask remains Company → Clients → Compliance → Sites → Projects → Tasks.
 
 ## Next milestones
 
-1. Auto-match bulk PDFs to properties by extracted address (no site picker)
-2. Full document RAG (“Show me everything relating to the roof”)
-3. Hosted specialised app shells beyond the Node example
-4. Webhook delivery for automation actions (`send_email`, external HTTP)
+1. Enforce document AI allowances in the extraction pipeline + billing UI (£29 / £79 / £199+)
+2. Hosted specialised app shells (Property / Fleet / HR) beyond the Node example
+3. Webhook delivery for automation actions (`send_email`, external HTTP)
+4. Vector embeddings for larger document corpora (current RAG is keyword + excerpt grounded)

@@ -61,7 +61,7 @@ class ComplianceController extends Controller
         $pendingProposals = DocumentExtractionProposal::query()
             ->where('company_id', $user->company_id)
             ->where('status', DocumentExtractionProposal::STATUS_PENDING)
-            ->with(['operationalObject.client', 'operationalDocument'])
+            ->with(['operationalObject.client', 'operationalDocument', 'suggestedOperationalObject'])
             ->orderByDesc('created_at')
             ->get();
 
@@ -132,9 +132,15 @@ class ComplianceController extends Controller
                 'summary' => $proposal->summary,
                 'extracted_data' => $proposal->extracted_data,
                 'document_title' => $proposal->operationalDocument?->title,
+                'match_status' => $proposal->metadata['match_status'] ?? $proposal->operationalDocument?->match_status,
+                'match_confidence' => $proposal->metadata['match_confidence'] ?? $proposal->operationalDocument?->match_confidence,
                 'site' => $proposal->operationalObject ? [
                     'id' => $proposal->operationalObject->id,
                     'name' => $proposal->operationalObject->name,
+                ] : null,
+                'suggested_site' => $proposal->suggestedOperationalObject ? [
+                    'id' => $proposal->suggestedOperationalObject->id,
+                    'name' => $proposal->suggestedOperationalObject->name,
                 ] : null,
                 'client' => $proposal->operationalObject?->client ? [
                     'id' => $proposal->operationalObject->client->id,

@@ -211,6 +211,29 @@ class Company extends Model
     }
 
     /**
+     * Monthly AI / document extraction allowance for Property Compliance (and future verticals).
+     * Maps roughly to Starter £29 / Growth £79 / Agency £199+ positioning.
+     */
+    public function getDocumentAiAllowance(): int
+    {
+        return match ($this->subscription_type) {
+            'FREE' => 10,
+            'MIDI', 'LTD_TEAM' => 100, // ~£29–79 starter/growth
+            'MAXI', 'LTD_AGENCY' => 500, // agency portfolios
+            'BUSINESS', 'LTD_BUSINESS' => 2000,
+            'LTD_SOLO' => 50,
+            default => 10,
+        };
+    }
+
+    public function getDocumentAiAllowanceLabel(): string
+    {
+        $limit = $this->getDocumentAiAllowance();
+
+        return $limit >= PHP_INT_MAX ? 'Unlimited AI document reads' : "{$limit} AI document reads / month";
+    }
+
+    /**
      * Get todo limit based on subscription type
      */
     public function getTodoLimit(): int

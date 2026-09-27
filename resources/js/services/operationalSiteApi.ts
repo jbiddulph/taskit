@@ -19,7 +19,11 @@ export interface DocumentExtractionProposal {
     extracted_data: Record<string, unknown>;
     summary?: string | null;
     project_id?: number | null;
-    site?: { id: number; name: string };
+    site?: { id: number; name: string } | null;
+    suggested_site?: { id: number; name: string } | null;
+    match_status?: string | null;
+    match_confidence?: number | null;
+    match_reason?: string | null;
     document?: { id: number; title: string; original_filename: string };
 }
 
@@ -46,6 +50,26 @@ class OperationalSiteApi {
         });
         return response.data;
     }
+
+    /**
+     * Bulk / inbox upload — site optional. AI matches property from extracted address.
+     */
+    async uploadInboxDocument(
+        file: File,
+        options: { title?: string; extract?: boolean; project_id?: number; site_id?: number } = {},
+    ) {
+        const formData = new FormData();
+        formData.append('file', file);
+        if (options.title) formData.append('title', options.title);
+        if (options.extract !== undefined) formData.append('extract', options.extract ? '1' : '0');
+        if (options.project_id) formData.append('project_id', String(options.project_id));
+        if (options.site_id) formData.append('site_id', String(options.site_id));
+
+        const response = await axios.post('/compliance/documents/inbox', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return response.data;
+    }
 }
 
 class DocumentExtractionApi {
@@ -54,9 +78,10 @@ class DocumentExtractionApi {
         return response.data.data ?? [];
     }
 
-    async approve(proposalId: number, projectId?: number) {
+    async approve(proposalId: number, options: { projectId?: number; siteId?: number } = {}) {
         const response = await axios.post(`/document-extraction/proposals/${proposalId}/approve`, {
-            project_id: projectId,
+            project_id: options.projectId,
+            site_id: options.siteId,
         });
         return response.data as {
             success: boolean;

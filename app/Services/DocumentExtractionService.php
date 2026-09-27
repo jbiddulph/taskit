@@ -11,11 +11,13 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class DocumentExtractionService
 {
     public function __construct(
         protected ComplianceNotificationService $notificationService,
+        protected PropertyAddressMatcher $addressMatcher,
     ) {}
 
     public function extractFromDocument(
@@ -24,6 +26,7 @@ class DocumentExtractionService
         ?int $projectId = null,
     ): ?DocumentExtractionProposal {
         $extracted = null;
+        $extractedText = '';
 
         if (config('services.openai.api_key') && ($document->is_image || $document->is_pdf || $document->is_word_document)) {
             $extracted = $this->extractWithOpenAi($document);
@@ -34,17 +37,28 @@ class DocumentExtractionService
             $extracted = $this->extractViaN8n($document, $user, $webhookUrl, $projectId);
         }
 
-        if (! $extracted && ($document->is_pdf || $document->is_word_document)) {
+        if ($document->is_pdf || $document->is_word_document) {
             $path = Storage::disk('private')->path($document->file_path);
-            $text = $document->is_pdf
+            $extractedText = $document->is_pdf
                 ? $this->extractPdfText($path)
                 : $this->extractWordText($path, $document);
-            if (trim($text) !== '') {
-                $extracted = CertificateFieldExtractor::fromText($text);
+
+            if (! $extracted && trim($extractedText) !== '') {
+                $extracted = CertificateFieldExtractor::fromText($extractedText);
             }
         }
 
+        if (trim($extractedText) !== '') {
+            $document->update([
+                'extracted_text' => Str::limit($extractedText, 50000, ''),
+            ]);
+        }
+
         if (! is_array($extracted) || ! CertificateFieldExtractor::hasUsefulFields($extracted)) {
+            if (! $document->operational_object_id && $user->company_id) {
+                $this->applyAddressMatch($document, null, $user, null);
+            }
+
             return null;
         }
 
@@ -85,9 +99,39 @@ class DocumentExtractionService
             ]),
         ]);
 
-        $this->notificationService->notifyCompanyOfExtraction($proposal);
+        $this->applyAddressMatch($document, $extractedData['address'] ?? null, $user, $proposal);
 
-        return $proposal;
+        $this->notificationService->notifyCompanyOfExtraction($proposal->fresh());
+
+        return $proposal->fresh();
+    }
+
+    /**
+     * Match extracted address (or filename) to a portfolio property and update document + proposal.
+     */
+    protected function applyAddressMatch(
+        OperationalDocument $document,
+        ?string $address,
+        User $user,
+        ?DocumentExtractionProposal $proposal,
+    ): void {
+        // Respect an explicitly chosen site on upload.
+        if ($document->match_status === PropertyAddressMatcher::STATUS_MANUAL && $document->operational_object_id) {
+            return;
+        }
+
+        $companyId = (int) ($user->company_id ?? $document->company_id);
+        if (! $companyId) {
+            return;
+        }
+
+        $match = $this->addressMatcher->match(
+            $companyId,
+            $address,
+            $document->original_filename,
+        );
+
+        app(OperationalDocumentService::class)->applyMatchToDocument($document, $match, $proposal);
     }
 
     public function createFromN8n(array $payload): DocumentExtractionProposal

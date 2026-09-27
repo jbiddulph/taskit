@@ -103,7 +103,9 @@ class CertificateFieldExtractor
             || filled($extracted['renewal_date'] ?? null)
             || filled($extracted['issue_date'] ?? null)
             || filled($extracted['certificate_number'] ?? null)
-            || filled($extracted['label'] ?? null);
+            || filled($extracted['label'] ?? null)
+            || filled($extracted['address'] ?? null)
+            || filled($extracted['findings'] ?? null);
     }
 
     public static function merge(?array $primary, array $fallback): array

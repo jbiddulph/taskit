@@ -32,6 +32,9 @@ class OperationalDocument extends Model
         'expires_at',
         'status',
         'extracted_data',
+        'extracted_text',
+        'match_status',
+        'match_confidence',
         'notes',
     ];
 
@@ -39,6 +42,7 @@ class OperationalDocument extends Model
         'expires_at' => 'date',
         'extracted_data' => 'array',
         'file_size' => 'integer',
+        'match_confidence' => 'integer',
     ];
 
     public function company(): BelongsTo

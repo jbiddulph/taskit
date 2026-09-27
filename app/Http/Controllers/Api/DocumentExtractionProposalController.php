@@ -27,7 +27,7 @@ class DocumentExtractionProposalController extends Controller
         $proposals = DocumentExtractionProposal::query()
             ->where('company_id', $user->company_id)
             ->where('status', DocumentExtractionProposal::STATUS_PENDING)
-            ->with(['operationalDocument', 'operationalObject'])
+            ->with(['operationalDocument', 'operationalObject', 'suggestedOperationalObject'])
             ->orderByDesc('created_at')
             ->get()
             ->map(fn ($proposal) => $this->serialize($proposal));
@@ -39,6 +39,7 @@ class DocumentExtractionProposalController extends Controller
     {
         $request->validate([
             'project_id' => 'nullable|integer|exists:taskit_projects,id',
+            'site_id' => 'nullable|integer|exists:taskit_operational_objects,id',
         ]);
 
         try {
@@ -46,6 +47,7 @@ class DocumentExtractionProposalController extends Controller
                 Auth::user(),
                 $proposal,
                 $request->input('project_id'),
+                $request->input('site_id') ? (int) $request->input('site_id') : null,
             );
 
             $message = count($result['tasks'] ?? []) > 0
@@ -72,6 +74,8 @@ class DocumentExtractionProposalController extends Controller
                     ])->values(),
                 ],
             ]);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], $e->getStatusCode());
         } catch (ValidationException $e) {
             return response()->json(['success' => false, 'errors' => $e->errors()], 422);
         }
@@ -98,6 +102,13 @@ class DocumentExtractionProposalController extends Controller
                 'id' => $proposal->operationalObject->id,
                 'name' => $proposal->operationalObject->name,
             ] : null,
+            'suggested_site' => $proposal->suggestedOperationalObject ? [
+                'id' => $proposal->suggestedOperationalObject->id,
+                'name' => $proposal->suggestedOperationalObject->name,
+            ] : null,
+            'match_status' => $proposal->metadata['match_status'] ?? $proposal->operationalDocument?->match_status,
+            'match_confidence' => $proposal->metadata['match_confidence'] ?? $proposal->operationalDocument?->match_confidence,
+            'match_reason' => $proposal->metadata['match_reason'] ?? null,
             'document' => $proposal->operationalDocument ? [
                 'id' => $proposal->operationalDocument->id,
                 'title' => $proposal->operationalDocument->title,
