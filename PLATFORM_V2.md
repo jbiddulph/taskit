@@ -105,14 +105,15 @@ On `/compliance` (Property Compliance AI):
 
 Document AI allowances (enforced monthly via `taskit_document_ai_usages`):
 
-| Plan | Reads / month | B2B price cue |
+| Plan | Reads / month | Price cue |
 |---|---|---|
 | FREE | 10 | £0 |
-| MIDI / LTD_SOLO | 100 | entry SaaS |
-| MAXI / BUSINESS | 500 | Starter £29 |
-| LTD_TEAM | 1000 | Growth ~£79 |
+| MIDI (Starter) | 500 | £29/mo |
+| MAXI (Growth) | 1000 | £79/mo |
+| LTD_TEAM | 1000 | Growth-aligned |
 | LTD_AGENCY | 1500 | — |
-| LTD_BUSINESS | 2000 | Agency £199+ |
+| BUSINESS / LTD_BUSINESS (Agency) | 2000 | £199+ |
+| LTD_SOLO | 100 | lifetime entry |
 
 `Company::getDocumentAiAllowance()` + `consumeDocumentAi()` gate certificate extraction and portfolio ask. Usage and tiers surface on `/subscription` and `/compliance`.
 

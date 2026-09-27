@@ -50,8 +50,8 @@ return [
         ],
         'MIDI' => [
             'name' => 'MIDI Plan',
-            'price' => 600, // £6.00 in pence
-            'price_yearly' => 6000, // £60.00 in pence (save £12)
+            'price' => 2900, // £29.00 Starter — Property Compliance AI
+            'price_yearly' => 29000, // £290.00 in pence (save £58)
             'currency' => 'gbp',
             'stripe_price_id' => env('STRIPE_MIDI_PRICE_ID'),
             'stripe_price_id_yearly' => env('STRIPE_MIDI_PRICE_ID_YEARLY'),
@@ -60,7 +60,8 @@ return [
                 'Up to 10 clients',
                 'Up to 20 projects per client',
                 'Unlimited todos',
-                '100 AI document reads / month',
+                '500 AI document reads / month',
+                'Property Compliance (Starter)',
                 // Core app features
                 'Bulk Add Tasks',
                 'Voice Add Tasks (10 second)',
@@ -79,14 +80,13 @@ return [
                 'Public Facing Dashboard',
                 'Import/Export data',
                 'Sites & Assets',
-                'Property Compliance',
                 'Document upload & AI scanning',
             ]
         ],
         'MAXI' => [
             'name' => 'MAXI Plan',
-            'price' => 1200, // £12.00 in pence
-            'price_yearly' => 12000, // £120.00 in pence (save £24)
+            'price' => 7900, // £79.00 Growth — Property Compliance AI
+            'price_yearly' => 79000, // £790.00 in pence (save £158)
             'currency' => 'gbp',
             'stripe_price_id' => env('STRIPE_MAXI_PRICE_ID'),
             'stripe_price_id_yearly' => env('STRIPE_MAXI_PRICE_ID_YEARLY'),
@@ -95,7 +95,8 @@ return [
                 'Up to 30 clients',
                 'Up to 40 projects per client',
                 'Unlimited todos',
-                '500 AI document reads / month',
+                '1000 AI document reads / month',
+                'Property Compliance (Growth)',
                 // Core app features
                 'Bulk Add Tasks',
                 'Voice Add Tasks (10 second)',
@@ -114,19 +115,19 @@ return [
                 'Public Facing Dashboard',
                 'Import/Export data',
                 'Sites & Assets',
-                'Property Compliance',
                 'Document upload & AI scanning',
             ]
         ],
         'BUSINESS' => [
             'name' => 'BUSINESS Plan',
-            'price' => 2900, // £29.00 in pence
+            'price' => 19900, // £199.00 Agency — Property Compliance AI
             'currency' => 'gbp',
             'stripe_price_id' => env('STRIPE_BUSINESS_PRICE_ID'),
             'features' => [
                 'Unlimited members',
                 'Unlimited projects',
-                '500 AI document reads / month',
+                '2000 AI document reads / month',
+                'Property Compliance (Agency)',
                 'Admin controls',
                 'SSO / audit logs',
                 'Support SLAs',
@@ -148,7 +149,6 @@ return [
                 'Public Facing Dashboard',
                 'Import/Export data',
                 'Sites & Assets',
-                'Property Compliance',
                 'Document upload & AI scanning',
             ]
         ],
@@ -295,17 +295,17 @@ return [
         ],
         [
             'key' => 'starter',
-            'label' => 'Starter',
+            'label' => 'MIDI · Starter',
             'price_label' => '£29/mo',
-            'plan' => 'BUSINESS',
+            'plan' => 'MIDI',
             'reads' => 500,
             'blurb' => 'Portfolio scanning for landlords and small agencies.',
         ],
         [
             'key' => 'growth',
-            'label' => 'Growth',
-            'price_label' => '£79',
-            'plan' => 'LTD_TEAM',
+            'label' => 'MAXI · Growth',
+            'price_label' => '£79/mo',
+            'plan' => 'MAXI',
             'reads' => 1000,
             'blurb' => 'Team workspaces with higher monthly AI reads.',
         ],
@@ -313,7 +313,7 @@ return [
             'key' => 'agency',
             'label' => 'Agency',
             'price_label' => '£199+',
-            'plan' => 'LTD_BUSINESS',
+            'plan' => 'BUSINESS',
             'reads' => 2000,
             'blurb' => 'Larger portfolios, priority support, full feature set.',
         ],

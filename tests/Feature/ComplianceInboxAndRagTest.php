@@ -244,11 +244,11 @@ class ComplianceInboxAndRagTest extends TestCase
             'industry' => 'property-management',
         ]);
 
-        $this->assertSame(100, $company->getDocumentAiAllowance());
+        $this->assertSame(500, $company->getDocumentAiAllowance());
         $company->subscription_type = 'MAXI';
-        $this->assertSame(500, $company->getDocumentAiAllowance());
+        $this->assertSame(1000, $company->getDocumentAiAllowance());
         $company->subscription_type = 'BUSINESS';
-        $this->assertSame(500, $company->getDocumentAiAllowance());
+        $this->assertSame(2000, $company->getDocumentAiAllowance());
         $company->subscription_type = 'LTD_TEAM';
         $this->assertSame(1000, $company->getDocumentAiAllowance());
         $company->subscription_type = 'LTD_BUSINESS';
@@ -261,10 +261,10 @@ class ComplianceInboxAndRagTest extends TestCase
 
         [$user, $company] = $this->createMaxiUser();
 
-        // Exhaust MAXI's 500 monthly reads without running extractions.
+        // Exhaust MAXI's 1000 monthly reads without running extractions.
         $rows = [];
         $now = now();
-        for ($i = 0; $i < 500; $i++) {
+        for ($i = 0; $i < 1000; $i++) {
             $rows[] = [
                 'company_id' => $company->id,
                 'user_id' => $user->id,

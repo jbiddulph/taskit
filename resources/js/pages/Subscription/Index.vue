@@ -501,7 +501,7 @@ const reactivateSubscription = async () => {
                     Property Compliance AI
                 </h2>
                 <p class="text-gray-600 dark:text-gray-400 mb-6">
-                    ZapTask stays the workflow engine. These tiers size document and portfolio AI for landlords and agencies (£29 / £79 / £199+).
+                    ZapTask stays the workflow engine. MIDI is Starter (£29 / 500 reads), MAXI is Growth (£79 / 1,000 reads); Agency is £199+ / 2,000 reads.
                 </p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <Card
