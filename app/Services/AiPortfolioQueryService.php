@@ -170,6 +170,9 @@ class AiPortfolioQueryService
                 'last_completed_hint' => data_get($doc->extracted_data, 'issue_date')
                     ?? data_get($doc->extracted_data, 'service_date')
                     ?? $doc->created_at?->toDateString(),
+                'findings' => data_get($doc->extracted_data, 'findings'),
+                'address' => data_get($doc->extracted_data, 'address'),
+                'text_excerpt' => Str::limit((string) ($doc->extracted_text ?? ''), 1200, ''),
             ])
             ->values()
             ->all();
@@ -270,12 +273,136 @@ class AiPortfolioQueryService
             return $this->answerSiteDocuments($snapshot, $siteHint);
         }
 
+        // Document RAG: “Show me everything relating to the roof”
+        if ($topic = $this->detectTopic($lower)) {
+            return $this->answerDocumentTopic($snapshot, $topic, $siteHint);
+        }
+
         // Portfolio overview
         if (preg_match('/\b(overview|summary|how many|attention|this week)\b/', $lower)) {
             return $this->answerOverview($snapshot);
         }
 
         return null;
+    }
+
+    private function detectTopic(string $lower): ?string
+    {
+        // Prefer explicit “relating to / about the X” before a broad “show me …” capture.
+        if (preg_match('/\b(?:relating to|related to|regarding|concerning|about(?:\s+the)?)\s+(?:the\s+)?([a-z][a-z0-9\-]{2,40})\b/i', $lower, $m)) {
+            return $this->cleanTopic($m[1]);
+        }
+
+        if (preg_match('/\b(?:everything|documents?|records?)\s+(?:on|about|for|relating to)\s+(?:the\s+)?([a-z][a-z0-9\-]{2,40})\b/i', $lower, $m)) {
+            return $this->cleanTopic($m[1]);
+        }
+
+        foreach (['roof', 'boiler', 'damp', 'mould', 'mold', 'asbestos', 'gutter', 'window', 'kitchen', 'bathroom', 'electrical', 'heating', 'plumbing', 'fire', 'alarm', 'tyre', 'mot'] as $word) {
+            if (str_contains($lower, $word) && (str_contains($lower, 'show') || str_contains($lower, 'find') || str_contains($lower, 'what') || str_contains($lower, 'any') || str_contains($lower, 'document') || str_contains($lower, 'relat'))) {
+                return $word;
+            }
+        }
+
+        return null;
+    }
+
+    private function cleanTopic(string $topic): ?string
+    {
+        $topic = trim(strtolower($topic), " \t.?!");
+        $topic = preg_replace('/\b(please|thanks|property|portfolio|documents?|everything|relating|related)\b/i', '', $topic) ?? $topic;
+        $topic = trim($topic);
+        if (strlen($topic) < 3) {
+            return null;
+        }
+
+        // Take first meaningful token if a phrase slipped through.
+        if (str_contains($topic, ' ')) {
+            $parts = preg_split('/\s+/', $topic) ?: [];
+            $topic = $parts[0] ?? $topic;
+        }
+
+        return strlen($topic) >= 3 ? $topic : null;
+    }
+
+    /**
+     * @param  array{sites: array, requirements: array, documents: array}  $snapshot
+     * @param  array<string, mixed>|null  $siteHint
+     * @return array<string, mixed>
+     */
+    private function answerDocumentTopic(array $snapshot, string $topic, ?array $siteHint): array
+    {
+        $needle = strtolower($topic);
+        $docs = collect($snapshot['documents'])
+            ->filter(function (array $doc) use ($needle, $siteHint) {
+                if ($siteHint && (int) ($doc['site_id'] ?? 0) !== (int) $siteHint['id']) {
+                    return false;
+                }
+                $hay = strtolower(implode(' ', array_filter([
+                    $doc['title'] ?? '',
+                    $doc['type_label'] ?? '',
+                    $doc['findings'] ?? '',
+                    $doc['address'] ?? '',
+                    $doc['text_excerpt'] ?? '',
+                    $doc['site_name'] ?? '',
+                ])));
+
+                return str_contains($hay, $needle);
+            })
+            ->values();
+
+        if ($docs->isEmpty()) {
+            $where = $siteHint ? " at {$siteHint['name']}" : '';
+
+            return $this->packAnswer(
+                "No documents found relating to “{$topic}”{$where}.",
+                [],
+                'medium',
+                ['documents', 'extracted_text'],
+            );
+        }
+
+        $lines = $docs->take(25)->map(function (array $doc) use ($needle) {
+            $site = $doc['site_name'] ?? 'Unmatched inbox';
+            $snippet = $this->topicSnippet((string) ($doc['text_excerpt'] ?: $doc['findings'] ?: $doc['title']), $needle);
+
+            return "• {$site}: {$doc['type_label']} — {$doc['title']}"
+                .($snippet ? "\n  “{$snippet}”" : '');
+        })->implode("\n");
+
+        $scope = $siteHint ? " at {$siteHint['name']}" : '';
+
+        return $this->packAnswer(
+            "{$docs->count()} document".($docs->count() === 1 ? '' : 's')." relating to “{$topic}”{$scope}:\n{$lines}",
+            $docs->map(fn (array $doc) => [
+                'id' => null,
+                'site_id' => $doc['site_id'],
+                'site_name' => $doc['site_name'] ?? 'Inbox',
+                'requirement_type' => $doc['document_type'],
+                'type_label' => $doc['type_label'],
+                'status' => 'document',
+                'next_due_date' => $doc['expires_at'],
+                'label' => $doc['title'],
+                'has_document' => true,
+                'has_open_task' => false,
+            ])->all(),
+            'high',
+            ['documents', 'extracted_text'],
+        );
+    }
+
+    private function topicSnippet(string $text, string $needle): ?string
+    {
+        $text = trim(preg_replace('/\s+/', ' ', $text) ?? $text);
+        if ($text === '') {
+            return null;
+        }
+        $pos = stripos($text, $needle);
+        if ($pos === false) {
+            return Str::limit($text, 140, '…');
+        }
+        $start = max(0, $pos - 40);
+
+        return Str::limit(substr($text, $start), 160, '…');
     }
 
     /**

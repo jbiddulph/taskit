@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { documentExtractionApi, type DocumentExtractionProposal } from '@/services/operationalSiteApi';
+import { documentExtractionApi, operationalSiteApi, type DocumentExtractionProposal, type OperationalSite } from '@/services/operationalSiteApi';
 import { todoApi, type Project } from '@/services/todoApi';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
@@ -10,7 +10,9 @@ const loading = ref(false);
 const submitting = ref(false);
 const proposal = ref<DocumentExtractionProposal | null>(null);
 const projects = ref<Project[]>([]);
+const sites = ref<OperationalSite[]>([]);
 const selectedProjectId = ref<number | null>(null);
+const selectedSiteId = ref<number | null>(null);
 
 const notify = (type: 'success' | 'error', title: string, message: string) => {
     if ((window as any).$notify) {
@@ -94,6 +96,9 @@ const openProposal = async (proposalId: number) => {
             projects.value = await todoApi.getProjects();
             selectedProjectId.value = projects.value[0]?.id ?? null;
         }
+        if (sites.value.length === 0) {
+            sites.value = await operationalSiteApi.list();
+        }
 
         const pending = await documentExtractionApi.getPending();
         proposal.value = pending.find((p) => p.id === proposalId) ?? null;
@@ -105,6 +110,10 @@ const openProposal = async (proposalId: number) => {
         if (proposal.value.project_id) {
             selectedProjectId.value = proposal.value.project_id;
         }
+        selectedSiteId.value = proposal.value.site?.id
+            ?? proposal.value.suggested_site?.id
+            ?? sites.value[0]?.id
+            ?? null;
     } catch (error: any) {
         notify('error', 'Load failed', error.message || 'Could not load extraction proposal.');
         isOpen.value = false;
@@ -116,13 +125,20 @@ const openProposal = async (proposalId: number) => {
 
 const approve = async () => {
     if (!proposal.value) return;
+    if (!selectedSiteId.value) {
+        notify('warning', 'Property required', 'Select which property this certificate belongs to.');
+        return;
+    }
     if (!selectedProjectId.value) {
         notify('warning', 'Project required', 'Select a board for reminder tasks.');
         return;
     }
     submitting.value = true;
     try {
-        const result = await documentExtractionApi.approve(proposal.value.id, selectedProjectId.value);
+        const result = await documentExtractionApi.approve(proposal.value.id, {
+            projectId: selectedProjectId.value,
+            siteId: selectedSiteId.value,
+        });
         notify('success', 'Applied', result.message || 'Certificate details saved and tasks created.');
         isOpen.value = false;
         proposal.value = null;
@@ -178,13 +194,19 @@ onUnmounted(() => {
                 <div v-if="loading" class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">Loading…</div>
 
                 <div v-else-if="proposal" class="space-y-4">
-                    <p v-if="proposal.site?.name" class="text-xs tracking-wide text-gray-500 uppercase dark:text-gray-400">
-                        {{ proposal.site.name }}
-                    </p>
                     <p v-if="categoryLabel" class="text-xs font-medium tracking-wide text-blue-700 uppercase dark:text-blue-300">
                         {{ categoryLabel }}
                     </p>
                     <p v-if="proposal.summary" class="text-sm text-gray-600 dark:text-gray-400">{{ proposal.summary }}</p>
+                    <p
+                        v-if="proposal.match_status && proposal.match_status !== 'manual'"
+                        class="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300"
+                    >
+                        Address match:
+                        <span class="font-medium">{{ proposal.match_status }}</span>
+                        <span v-if="proposal.match_confidence"> · {{ proposal.match_confidence }}%</span>
+                        <span v-if="proposal.match_reason"> · {{ proposal.match_reason }}</span>
+                    </p>
 
                     <dl class="grid grid-cols-1 gap-2 text-sm">
                         <div
@@ -205,6 +227,19 @@ onUnmounted(() => {
                                 <span v-if="(task as any).due_date"> — {{ (task as any).due_date }}</span>
                             </li>
                         </ul>
+                    </div>
+
+                    <div v-if="sites.length">
+                        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Property *</label>
+                        <select
+                            v-model="selectedSiteId"
+                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            required
+                        >
+                            <option v-for="site in sites" :key="site.id" :value="site.id">
+                              {{ site.name }}<template v-if="site.full_address"> — {{ site.full_address }}</template>
+                            </option>
+                        </select>
                     </div>
 
                     <div v-if="projects.length">

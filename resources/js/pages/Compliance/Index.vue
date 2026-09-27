@@ -46,7 +46,10 @@ interface PendingProposal {
   summary?: string;
   extracted_data: Record<string, unknown>;
   document_title?: string;
+  match_status?: string | null;
+  match_confidence?: number | null;
   site?: SiteRef | null;
+  suggested_site?: SiteRef | null;
   client?: SiteRef | null;
 }
 
@@ -106,7 +109,7 @@ interface Props {
 const props = defineProps<Props>();
 const { btnPrimary, btnSecondary, label, select } = useFormFieldClasses();
 
-const uploadSiteId = ref<number | ''>(props.sites[0]?.id ?? '');
+const uploadSiteId = ref<number | ''>('');
 const uploadProjectId = ref<number | ''>(props.projects[0]?.id ?? '');
 const uploadFiles = ref<File[]>([]);
 const extractWithAi = ref(true);
@@ -252,10 +255,13 @@ function clearUploadFiles() {
 }
 
 async function uploadDocument() {
-  if (!uploadFiles.value.length || !uploadSiteId.value) {
-    uploadError.value = props.sites.length
-      ? 'Choose a site and one or more certificate files to upload.'
-      : 'Add a site first, then upload certificates here.';
+  if (!uploadFiles.value.length) {
+    uploadError.value = 'Add one or more certificate files to upload.';
+    return;
+  }
+
+  if (!props.sites.length) {
+    uploadError.value = 'Add at least one property so matched certificates have somewhere to land.';
     return;
   }
 
@@ -264,19 +270,30 @@ async function uploadDocument() {
   uploadMessage.value = null;
 
   let uploaded = 0;
+  let matched = 0;
+  let suggested = 0;
+  let unmatched = 0;
   let firstProposalId: number | null = null;
   const failures: string[] = [];
 
   try {
     for (const file of uploadFiles.value) {
       try {
-        const result = await operationalSiteApi.uploadDocument(Number(uploadSiteId.value), file, {
+        const result = await operationalSiteApi.uploadInboxDocument(file, {
           extract: extractWithAi.value,
           project_id: uploadProjectId.value ? Number(uploadProjectId.value) : undefined,
+          site_id: uploadSiteId.value ? Number(uploadSiteId.value) : undefined,
         });
         uploaded += 1;
-        if (!firstProposalId && result.data?.proposal_id) {
-          firstProposalId = result.data.proposal_id;
+        const status = result.data?.results?.[0]?.match?.status
+          ?? result.data?.results?.[0]?.document?.match_status;
+        if (status === 'matched') matched += 1;
+        else if (status === 'suggested') suggested += 1;
+        else if (status === 'unmatched') unmatched += 1;
+
+        const proposalId = result.data?.results?.[0]?.proposal_id ?? result.data?.proposal_id;
+        if (!firstProposalId && proposalId) {
+          firstProposalId = proposalId;
         }
       } catch {
         failures.push(file.name);
@@ -286,9 +303,15 @@ async function uploadDocument() {
     clearUploadFiles();
 
     if (uploaded > 0) {
-      uploadMessage.value = extractWithAi.value
-        ? `Uploaded ${uploaded} file${uploaded === 1 ? '' : 's'}. Review AI extractions to confirm dates and create reminder todos.`
-        : `Uploaded ${uploaded} file${uploaded === 1 ? '' : 's'}.`;
+      if (uploadSiteId.value) {
+        uploadMessage.value = `Uploaded ${uploaded} file${uploaded === 1 ? '' : 's'} to the selected property.`;
+      } else {
+        uploadMessage.value = `Uploaded ${uploaded} file${uploaded === 1 ? '' : 's'}`
+          + (matched || suggested || unmatched
+            ? ` — ${matched} matched, ${suggested} suggested, ${unmatched} need a property.`
+            : '.')
+          + (extractWithAi.value ? ' Review extractions to confirm.' : '');
+      }
     }
     if (failures.length) {
       uploadError.value = `Failed: ${failures.slice(0, 3).join(', ')}${failures.length > 3 ? '…' : ''}`;
@@ -429,9 +452,9 @@ onUnmounted(() => {
             <section class="mb-8">
               <div class="flex flex-wrap items-end justify-between gap-3 mb-3">
                 <div>
-                  <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Upload for any site</h2>
+                  <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Drop certificates (any properties)</h2>
                   <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Same upload as on a site page — pick the site here, then AI extracts details and creates renewal todos.
+                    Leave property blank to auto-match from the address on each PDF — or pin files to one site.
                   </p>
                 </div>
                 <ol class="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
@@ -471,13 +494,15 @@ onUnmounted(() => {
                 <div v-else class="space-y-5">
                   <div class="grid gap-4 md:grid-cols-2">
                     <div>
-                      <label :class="label" for="compliance-upload-site">Site</label>
+                      <label :class="label" for="compliance-upload-site">Property (optional)</label>
                       <select id="compliance-upload-site" v-model="uploadSiteId" :class="select">
+                        <option value="">Auto-match from address on document</option>
                         <option v-for="site in sites" :key="site.id" :value="site.id">
                           {{ site.name }}<template v-if="site.client_name"> — {{ site.client_name }}</template>
                         </option>
                       </select>
                       <p v-if="selectedSite?.address" class="mt-1 text-xs text-gray-500 truncate">{{ selectedSite.address }}</p>
+                      <p v-else class="mt-1 text-xs text-gray-500">Drop dozens of PDFs — AI reads the address and attaches each file to the right property.</p>
                     </div>
                     <div v-if="projects.length">
                       <label :class="label" for="compliance-upload-project">Project for reminder todos</label>
@@ -580,7 +605,7 @@ onUnmounted(() => {
                     <button
                       type="button"
                       class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium border transition-colors bg-black text-white hover:bg-gray-900 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-white dark:text-black dark:hover:bg-gray-100"
-                      :disabled="!uploadFiles.length || uploading || !uploadSiteId"
+                      :disabled="!uploadFiles.length || uploading"
                       @click="uploadDocument"
                     >
                       <Icon :name="uploading ? 'Loader2' : 'Sparkles'" class="w-4 h-4" :class="{ 'animate-spin': uploading }" />
@@ -612,7 +637,12 @@ onUnmounted(() => {
                   <div>
                     <div class="font-medium text-sm">{{ proposal.document_title || 'Uploaded document' }}</div>
                     <div class="text-xs text-gray-600 dark:text-gray-400">
-                      {{ proposal.site?.name }}
+                      <template v-if="proposal.site">{{ proposal.site.name }}</template>
+                      <template v-else-if="proposal.suggested_site">
+                        Suggested: {{ proposal.suggested_site.name }}
+                        <span v-if="proposal.match_confidence"> ({{ proposal.match_confidence }}%)</span>
+                      </template>
+                      <template v-else>Unmatched — choose a property when reviewing</template>
                       <span v-if="expiryValue(proposal.extracted_data) !== '—'"> · Expiry {{ expiryValue(proposal.extracted_data) }}</span>
                     </div>
                     <p v-if="proposal.summary" class="text-sm mt-1">{{ proposal.summary }}</p>

@@ -29,6 +29,7 @@ const examples = [
   'Which properties have gas certificates expiring in the next 60 days?',
   'Show me properties with no EICR.',
   'When was the boiler at 22 Richmond Road last serviced?',
+  'Show me everything relating to the roof.',
   'What needs attention this week?',
 ];
 

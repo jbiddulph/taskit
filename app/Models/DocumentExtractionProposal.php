@@ -20,6 +20,7 @@ class DocumentExtractionProposal extends Model
         'company_id',
         'operational_document_id',
         'operational_object_id',
+        'suggested_operational_object_id',
         'status',
         'extracted_data',
         'summary',
@@ -46,6 +47,11 @@ class DocumentExtractionProposal extends Model
     public function operationalObject(): BelongsTo
     {
         return $this->belongsTo(OperationalObject::class);
+    }
+
+    public function suggestedOperationalObject(): BelongsTo
+    {
+        return $this->belongsTo(OperationalObject::class, 'suggested_operational_object_id');
     }
 
     public function isPending(): bool

@@ -22,7 +22,7 @@ class DocumentExtractionProposalService
         protected TodoWebSocketService $webSocketService,
     ) {}
 
-    public function approve(User $user, DocumentExtractionProposal $proposal, ?int $projectId = null): array
+    public function approve(User $user, DocumentExtractionProposal $proposal, ?int $projectId = null, ?int $siteId = null): array
     {
         $this->assertCompanyAccess($user, $proposal);
 
@@ -31,8 +31,36 @@ class DocumentExtractionProposalService
         }
 
         $document = $proposal->operationalDocument;
-        $object = $proposal->operationalObject;
         $data = $proposal->extracted_data ?? [];
+
+        $object = null;
+        if ($siteId) {
+            $object = OperationalObject::forCompany((int) $user->company_id)->where('id', $siteId)->first();
+            if (! $object) {
+                abort(422, 'Choose a valid property for this document.');
+            }
+            $document->update([
+                'operational_object_id' => $object->id,
+                'match_status' => PropertyAddressMatcher::STATUS_MANUAL,
+                'match_confidence' => 100,
+            ]);
+            $proposal->update(['operational_object_id' => $object->id]);
+        } else {
+            $object = $proposal->operationalObject
+                ?? ($proposal->suggested_operational_object_id
+                    ? OperationalObject::find($proposal->suggested_operational_object_id)
+                    : null)
+                ?? $document->operationalObject;
+        }
+
+        if (! $object) {
+            abort(422, 'Choose a property before approving — this document is still unmatched.');
+        }
+
+        if (! $document->operational_object_id) {
+            $document->update(['operational_object_id' => $object->id]);
+            $proposal->update(['operational_object_id' => $object->id]);
+        }
 
         $projectId = $projectId
             ?? $proposal->metadata['project_id'] ?? null;
