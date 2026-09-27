@@ -36,9 +36,16 @@ export function isRealtimeAvailable(): boolean {
   return true;
 }
 
-export const supabase = createClient(supabaseUrl ?? '', supabaseAnonKey ?? '');
+// Avoid crashing the SPA when Supabase is not configured (local / no photos).
+export const supabase = isSupabaseConfigured()
+    ? createClient(supabaseUrl!, supabaseAnonKey!)
+    : (null as unknown as ReturnType<typeof createClient>);
 
 export async function uploadImageToTaskitBucket(file: File): Promise<string> {
+  if (!isSupabaseConfigured() || !supabase) {
+    throw new Error('Supabase is not configured.');
+  }
+
   const fileExt = file.name.split('.').pop();
   const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
   const filePath = `todos/${fileName}`;

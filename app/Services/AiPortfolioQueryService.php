@@ -260,7 +260,7 @@ class AiPortfolioQueryService
         }
 
         // Expiring / due within N days
-        if (preg_match('/\b(expir|due|renew|attention|need)\b/', $lower)) {
+        if (preg_match('/\b(expir(?:y|ies|ing|e[ds]?)?|due|renew(?:al|ing)?|attention|needs?)\b/', $lower)) {
             return $this->answerExpiring($snapshot, $type, $days);
         }
 
