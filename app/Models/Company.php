@@ -219,9 +219,10 @@ class Company extends Model
         return match ($this->subscription_type) {
             'FREE' => 10,
             'MIDI', 'LTD_SOLO' => 100,
-            'MAXI', 'LTD_TEAM' => 500, // Growth ~£79
-            'LTD_AGENCY' => 1000,
-            'BUSINESS', 'LTD_BUSINESS' => 2000, // Starter £29 / Agency £199+
+            'MAXI', 'BUSINESS' => 500, // SaaS mid / Starter £29
+            'LTD_TEAM' => 1000, // Growth ~£79
+            'LTD_AGENCY' => 1500,
+            'LTD_BUSINESS' => 2000, // Agency £199+
             default => 10,
         };
     }

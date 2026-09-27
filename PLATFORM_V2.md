@@ -109,9 +109,10 @@ Document AI allowances (enforced monthly via `taskit_document_ai_usages`):
 |---|---|---|
 | FREE | 10 | £0 |
 | MIDI / LTD_SOLO | 100 | entry SaaS |
-| MAXI / LTD_TEAM | 500 | Growth ~£79 |
-| LTD_AGENCY | 1000 | — |
-| BUSINESS / LTD_BUSINESS | 2000 | Starter £29 / Agency £199+ |
+| MAXI / BUSINESS | 500 | Starter £29 |
+| LTD_TEAM | 1000 | Growth ~£79 |
+| LTD_AGENCY | 1500 | — |
+| LTD_BUSINESS | 2000 | Agency £199+ |
 
 `Company::getDocumentAiAllowance()` + `consumeDocumentAi()` gate certificate extraction and portfolio ask. Usage and tiers surface on `/subscription` and `/compliance`.
 

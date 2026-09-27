@@ -126,7 +126,7 @@ return [
             'features' => [
                 'Unlimited members',
                 'Unlimited projects',
-                '2000 AI document reads / month',
+                '500 AI document reads / month',
                 'Admin controls',
                 'SSO / audit logs',
                 'Support SLAs',
@@ -188,7 +188,7 @@ return [
                 'Up to 10 clients',
                 'Up to 20 projects per client',
                 'Unlimited todos',
-                '500 AI document reads / month',
+                '1000 AI document reads / month',
                 'All MIDI-level features',
                 // Core app features
                 'Bulk Add Tasks',
@@ -220,7 +220,7 @@ return [
                 'Up to 30 clients',
                 'Up to 40 projects per client',
                 'Unlimited todos',
-                '1000 AI document reads / month',
+                '1500 AI document reads / month',
                 'Most features (except enterprise-level)',
                 // Core app features
                 'Bulk Add Tasks',
@@ -298,7 +298,7 @@ return [
             'label' => 'Starter',
             'price_label' => '£29/mo',
             'plan' => 'BUSINESS',
-            'reads' => 2000,
+            'reads' => 500,
             'blurb' => 'Portfolio scanning for landlords and small agencies.',
         ],
         [
@@ -306,7 +306,7 @@ return [
             'label' => 'Growth',
             'price_label' => '£79',
             'plan' => 'LTD_TEAM',
-            'reads' => 500,
+            'reads' => 1000,
             'blurb' => 'Team workspaces with higher monthly AI reads.',
         ],
         [

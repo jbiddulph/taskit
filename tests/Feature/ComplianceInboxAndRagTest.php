@@ -248,7 +248,9 @@ class ComplianceInboxAndRagTest extends TestCase
         $company->subscription_type = 'MAXI';
         $this->assertSame(500, $company->getDocumentAiAllowance());
         $company->subscription_type = 'BUSINESS';
-        $this->assertSame(2000, $company->getDocumentAiAllowance());
+        $this->assertSame(500, $company->getDocumentAiAllowance());
+        $company->subscription_type = 'LTD_TEAM';
+        $this->assertSame(1000, $company->getDocumentAiAllowance());
         $company->subscription_type = 'LTD_BUSINESS';
         $this->assertSame(2000, $company->getDocumentAiAllowance());
     }
