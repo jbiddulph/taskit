@@ -7,6 +7,7 @@ use App\Models\Activity;
 use App\Models\Project;
 use App\Models\ProjectGroup;
 use App\Models\Todo;
+use App\Services\AiPortfolioQueryService;
 use App\Services\AiTaskCreationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,11 +18,13 @@ class AiController extends Controller
 {
     public function __construct(
         protected AiTaskCreationService $aiTaskCreationService,
+        protected AiPortfolioQueryService $aiPortfolioQueryService,
     ) {}
 
     /**
      * POST /api/ai — structured AI gateway.
      * Returns proposals only; does not mutate data unless confirm=true with a validated payload.
+     * Use context=portfolio for Property Compliance “Ask about your portfolio”.
      */
     public function handle(Request $request): JsonResponse
     {
@@ -48,15 +51,25 @@ class AiController extends Controller
         }
 
         $user = Auth::user();
+        $context = (string) $request->input('context', 'task_creation');
 
         if ($request->boolean('confirm')) {
             return $this->confirmCreate($request, $user);
         }
 
+        if (in_array($context, ['portfolio', 'property_compliance', 'compliance'], true)) {
+            $answer = $this->aiPortfolioQueryService->ask($user, (string) $request->input('message'));
+
+            return response()->json([
+                'success' => true,
+                ...$answer,
+            ]);
+        }
+
         $proposal = $this->aiTaskCreationService->propose(
             $user,
             (string) $request->input('message'),
-            (string) $request->input('context', 'task_creation'),
+            $context,
         );
 
         return response()->json([

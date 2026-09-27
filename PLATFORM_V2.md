@@ -91,8 +91,18 @@ Extends **Sites** (not a fork) for specialised property / estate-agent work:
 - **Platform API keys** — `zt_live_` keys
 - **Automations** — when/then rules shared by all apps
 
+## Property Compliance AI
+
+On `/compliance` (Property Compliance AI):
+
+- Multi-file certificate upload + AI extraction → review → ZapTask reminder todos
+- Attention insights by certificate type (e.g. gas within 14 days)
+- **Ask about your portfolio** — `POST /api/ai` / `POST /api/v1/ai` with `context: portfolio` answers from private sites/certificates/documents
+- One-click **Create ZapTask** from attention rows or portfolio answers (`POST /api/compliance/requirements/{id}/create-task`)
+
 ## Next milestones
 
-1. Deeper Property workflows (tenancy dates, richer compliance-type UI)
-2. Hosted specialised app shells beyond the Node example
-3. Webhook delivery for automation actions (`send_email`, external HTTP)
+1. Auto-match bulk PDFs to properties by extracted address (no site picker)
+2. Full document RAG (“Show me everything relating to the roof”)
+3. Hosted specialised app shells beyond the Node example
+4. Webhook delivery for automation actions (`send_email`, external HTTP)

@@ -270,6 +270,10 @@ export class ZapTaskClient {
    * Platform AI for specialised apps — always preview first, then confirm to write.
    */
   readonly ai = {
+    /**
+     * Propose a task (default) or ask about a property compliance portfolio
+     * (`context: 'portfolio'`). Portfolio answers never write until you create tasks.
+     */
     propose: (input: {
       message: string;
       context?: string;
@@ -279,8 +283,12 @@ export class ZapTaskClient {
         intent: string;
         task?: Record<string, unknown> | null;
         preview?: Record<string, unknown>;
+        answer?: string;
+        matches?: Array<Record<string, unknown>>;
+        suggested_tasks?: Array<Record<string, unknown>>;
         confidence?: string;
         requires_confirmation?: boolean;
+        sources?: string[];
       }>('/api/v1/ai', input),
     confirm: (input: {
       confirm: true;

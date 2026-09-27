@@ -230,6 +230,7 @@ Route::middleware(['web', 'auth', 'subscription.access', 'api.rate.limit:api,60,
     Route::middleware('sites.access')->group(function () {
         Route::get('sites', [App\Http\Controllers\Api\OperationalObjectController::class, 'index']);
         Route::get('compliance/summary', [App\Http\Controllers\Api\OperationalObjectController::class, 'complianceSummary']);
+        Route::post('compliance/requirements/{requirement}/create-task', [App\Http\Controllers\Api\ComplianceTaskController::class, 'store']);
         Route::post('sites/{site}/documents', [App\Http\Controllers\Api\OperationalDocumentController::class, 'store']);
         Route::get('sites/{site}/documents/{document}/download', [App\Http\Controllers\Api\OperationalDocumentController::class, 'download']);
         Route::get('document-extraction/proposals/pending', [DocumentExtractionProposalController::class, 'pending']);

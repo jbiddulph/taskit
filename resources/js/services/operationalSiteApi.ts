@@ -74,5 +74,25 @@ class DocumentExtractionApi {
     }
 }
 
+class ComplianceTaskApi {
+    async createForRequirement(requirementId: number) {
+        const response = await axios.post(`/compliance/requirements/${requirementId}/create-task`);
+        return response.data as {
+            success: boolean;
+            message: string;
+            task?: {
+                id: number;
+                title: string;
+                due_date?: string;
+                status: string;
+                project_id: number;
+                asset_id?: number;
+                requirement_id: number;
+            };
+        };
+    }
+}
+
 export const operationalSiteApi = new OperationalSiteApi();
 export const documentExtractionApi = new DocumentExtractionApi();
+export const complianceTaskApi = new ComplianceTaskApi();

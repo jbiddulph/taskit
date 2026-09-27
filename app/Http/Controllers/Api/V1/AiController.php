@@ -6,6 +6,7 @@ use App\Models\Activity;
 use App\Models\Project;
 use App\Models\ProjectGroup;
 use App\Models\Todo;
+use App\Services\AiPortfolioQueryService;
 use App\Services\AiTaskCreationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,11 +15,13 @@ use Illuminate\Support\Facades\Validator;
 /**
  * Platform AI gateway for specialised apps (API key / Sanctum / session).
  * Preview → confirm; never writes unless confirm=true.
+ * context=portfolio answers Property Compliance questions from company data.
  */
 class AiController extends PlatformController
 {
     public function __construct(
         protected AiTaskCreationService $aiTaskCreationService,
+        protected AiPortfolioQueryService $aiPortfolioQueryService,
     ) {}
 
     public function handle(Request $request): JsonResponse
@@ -45,15 +48,20 @@ class AiController extends PlatformController
 
         $user = $this->platformUser($request);
         $companyId = $this->companyId($request);
+        $context = (string) $request->input('context', 'app_task_creation');
 
         if ($request->boolean('confirm')) {
             return $this->confirmCreate($request, $user, $companyId);
         }
 
+        if (in_array($context, ['portfolio', 'property_compliance', 'compliance'], true)) {
+            return $this->ok($this->aiPortfolioQueryService->ask($user, (string) $request->input('message')));
+        }
+
         $proposal = $this->aiTaskCreationService->propose(
             $user,
             (string) $request->input('message'),
-            (string) $request->input('context', 'app_task_creation'),
+            $context,
         );
 
         return $this->ok($proposal);

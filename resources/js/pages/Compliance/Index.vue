@@ -2,10 +2,11 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import AiPortfolioBox from '@/components/AiPortfolioBox.vue';
 import Icon from '@/components/Icon.vue';
 import SeoHead from '@/components/SeoHead.vue';
 import { useFormFieldClasses } from '@/composables/useFormFieldClasses';
-import { operationalSiteApi } from '@/services/operationalSiteApi';
+import { complianceTaskApi, operationalSiteApi } from '@/services/operationalSiteApi';
 
 interface SiteRef {
   id: number;
@@ -68,6 +69,15 @@ interface CertificateType {
   short: string;
 }
 
+interface AttentionInsight {
+  severity: string;
+  count: number;
+  label: string;
+  type?: string | null;
+  days?: number | null;
+  status?: string | null;
+}
+
 interface Props {
   summary: {
     overdue: number;
@@ -84,6 +94,7 @@ interface Props {
   sites: SiteOption[];
   projects: ProjectOption[];
   certificateTypes: CertificateType[];
+  attentionInsights?: AttentionInsight[];
   company?: {
     id: number;
     name: string;
@@ -97,12 +108,14 @@ const { btnPrimary, btnSecondary, label, select } = useFormFieldClasses();
 
 const uploadSiteId = ref<number | ''>(props.sites[0]?.id ?? '');
 const uploadProjectId = ref<number | ''>(props.projects[0]?.id ?? '');
-const uploadFile = ref<File | null>(null);
+const uploadFiles = ref<File[]>([]);
 const extractWithAi = ref(true);
 const uploading = ref(false);
 const uploadMessage = ref<string | null>(null);
 const uploadError = ref<string | null>(null);
 const isDraggingFile = ref(false);
+const creatingTaskId = ref<number | null>(null);
+const createdTaskIds = ref<Set<number>>(new Set());
 
 const acceptedExtensions = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.webp'];
 const acceptedMimeTypes = [
@@ -176,58 +189,72 @@ function isAcceptedFile(file: File): boolean {
   return hasExtension && hasMime;
 }
 
-function assignUploadFile(file: File | null) {
+function assignUploadFiles(fileList: FileList | File[] | null) {
   uploadMessage.value = null;
   uploadError.value = null;
 
-  if (!file) {
-    uploadFile.value = null;
+  if (!fileList || (fileList as FileList).length === 0) {
     return;
   }
 
-  if (!isAcceptedFile(file)) {
-    uploadFile.value = null;
-    uploadError.value = `That file type is not supported. Use ${fileAcceptLabel}.`;
-    return;
+  const incoming = Array.from(fileList as FileList);
+  const accepted: File[] = [];
+  const rejected: string[] = [];
+
+  for (const file of incoming) {
+    if (!isAcceptedFile(file)) {
+      rejected.push(`${file.name} (unsupported type)`);
+      continue;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      rejected.push(`${file.name} (over 20MB)`);
+      continue;
+    }
+    accepted.push(file);
   }
 
-  if (file.size > 20 * 1024 * 1024) {
-    uploadFile.value = null;
-    uploadError.value = 'File is too large. Maximum size is 20MB.';
-    return;
+  if (accepted.length) {
+    const existingKeys = new Set(uploadFiles.value.map((f) => `${f.name}:${f.size}`));
+    for (const file of accepted) {
+      const key = `${file.name}:${file.size}`;
+      if (!existingKeys.has(key)) {
+        uploadFiles.value.push(file);
+        existingKeys.add(key);
+      }
+    }
   }
 
-  uploadFile.value = file;
+  if (rejected.length) {
+    uploadError.value = `Skipped: ${rejected.slice(0, 3).join(', ')}${rejected.length > 3 ? '…' : ''}. Use ${fileAcceptLabel}.`;
+  }
 }
 
 function onFileChange(event: Event) {
   const inputEl = event.target as HTMLInputElement;
-  assignUploadFile(inputEl.files?.[0] ?? null);
+  assignUploadFiles(inputEl.files);
+  if (inputEl) inputEl.value = '';
 }
 
 function onDrop(event: DragEvent) {
   event.preventDefault();
   isDraggingFile.value = false;
-  const file = event.dataTransfer?.files?.[0] ?? null;
-  assignUploadFile(file);
-
-  const fileInput = document.getElementById('compliance-upload-file') as HTMLInputElement | null;
-  if (fileInput && file) {
-    // Keep the native input in sync when possible (browsers limit programmatic FileList writes).
-    fileInput.value = '';
-  }
+  assignUploadFiles(event.dataTransfer?.files ?? null);
 }
 
-function clearUploadFile() {
-  uploadFile.value = null;
+function removeUploadFile(index: number) {
+  uploadFiles.value.splice(index, 1);
+}
+
+function clearUploadFiles() {
+  uploadFiles.value = [];
   const fileInput = document.getElementById('compliance-upload-file') as HTMLInputElement | null;
   if (fileInput) fileInput.value = '';
 }
 
 async function uploadDocument() {
-  if (!uploadFile.value || !uploadSiteId.value) {
+  if (!uploadFiles.value.length || !uploadSiteId.value) {
     uploadError.value = props.sites.length
-      ? 'Choose a site and a certificate file to upload.'
+      ? 'Choose a site and one or more certificate files to upload.'
       : 'Add a site first, then upload certificates here.';
     return;
   }
@@ -236,28 +263,67 @@ async function uploadDocument() {
   uploadError.value = null;
   uploadMessage.value = null;
 
+  let uploaded = 0;
+  let firstProposalId: number | null = null;
+  const failures: string[] = [];
+
   try {
-    const result = await operationalSiteApi.uploadDocument(Number(uploadSiteId.value), uploadFile.value, {
-      extract: extractWithAi.value,
-      project_id: uploadProjectId.value ? Number(uploadProjectId.value) : undefined,
-    });
-
-    clearUploadFile();
-
-    uploadMessage.value = result.message
-      || (result.data?.proposal_id
-        ? 'Uploaded. Review the AI extraction to confirm dates and create reminder todos.'
-        : 'Document uploaded.');
-
-    if (result.data?.proposal_id) {
-      openProposalReview(result.data.proposal_id);
+    for (const file of uploadFiles.value) {
+      try {
+        const result = await operationalSiteApi.uploadDocument(Number(uploadSiteId.value), file, {
+          extract: extractWithAi.value,
+          project_id: uploadProjectId.value ? Number(uploadProjectId.value) : undefined,
+        });
+        uploaded += 1;
+        if (!firstProposalId && result.data?.proposal_id) {
+          firstProposalId = result.data.proposal_id;
+        }
+      } catch {
+        failures.push(file.name);
+      }
     }
 
-    router.reload({ only: ['summary', 'requirements', 'documents', 'pendingProposals'] });
-  } catch {
-    uploadError.value = `Could not upload that document. Try ${fileAcceptLabel}.`;
+    clearUploadFiles();
+
+    if (uploaded > 0) {
+      uploadMessage.value = extractWithAi.value
+        ? `Uploaded ${uploaded} file${uploaded === 1 ? '' : 's'}. Review AI extractions to confirm dates and create reminder todos.`
+        : `Uploaded ${uploaded} file${uploaded === 1 ? '' : 's'}.`;
+    }
+    if (failures.length) {
+      uploadError.value = `Failed: ${failures.slice(0, 3).join(', ')}${failures.length > 3 ? '…' : ''}`;
+    }
+
+    if (firstProposalId) {
+      openProposalReview(firstProposalId);
+    }
+
+    router.reload({ only: ['summary', 'requirements', 'documents', 'pendingProposals', 'attentionInsights'] });
   } finally {
     uploading.value = false;
+  }
+}
+
+function insightTone(severity: string): string {
+  if (severity === 'critical') {
+    return 'border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-200';
+  }
+  if (severity === 'high') {
+    return 'border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200';
+  }
+  return 'border-yellow-200 dark:border-yellow-900 bg-yellow-50 dark:bg-yellow-950/20 text-yellow-900 dark:text-yellow-200';
+}
+
+async function createTaskForRequirement(requirementId: number) {
+  creatingTaskId.value = requirementId;
+  try {
+    await complianceTaskApi.createForRequirement(requirementId);
+    createdTaskIds.value = new Set([...createdTaskIds.value, requirementId]);
+    router.reload({ only: ['requirements', 'summary', 'attentionInsights'] });
+  } catch {
+    uploadError.value = 'Could not create a ZapTask job for that certificate.';
+  } finally {
+    creatingTaskId.value = null;
   }
 }
 
@@ -276,8 +342,8 @@ onUnmounted(() => {
 
 <template>
   <SeoHead
-    title="Compliance"
-    description="Company-wide compliance overview across all sites. Upload certificates and track renewals."
+    title="Property Compliance AI"
+    description="Upload gas, EICR, EPC and insurance documents. AI extracts dates, surfaces what needs attention, and creates ZapTask jobs."
     image="/zap_icon.png"
   />
 
@@ -294,36 +360,22 @@ onUnmounted(() => {
                     <span class="text-sm font-medium">Dashboard</span>
                   </Link>
                 </div>
-                <h1 class="text-2xl font-semibold">Compliance</h1>
+                <h1 class="text-2xl font-semibold">Property Compliance AI</h1>
                 <p class="text-gray-600 dark:text-gray-400 mt-1 max-w-2xl">
-                  Company-wide overview across all sites — what's overdue, upload certificates for any site, and track renewals in one place.
+                  For landlords and estate agents: upload certificates, let AI extract dates, see what needs attention across the portfolio, then create ZapTask jobs in one click.
                 </p>
               </div>
               <div class="flex flex-wrap gap-2">
                 <Link href="/clients" :class="btnSecondary">Clients</Link>
-                <Link href="/sites" :class="btnSecondary">All sites</Link>
+                <Link href="/sites" :class="btnSecondary">Properties</Link>
                 <Link
                   href="/sites/create"
                   class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border transition-colors bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
                 >
                   <Icon name="Plus" class="w-4 h-4" />
-                  Add Site
+                  Add property
                 </Link>
               </div>
-            </div>
-
-            <div class="mb-6 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20 p-4">
-              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">How this relates to Sites</p>
-              <ul class="text-sm text-gray-700 dark:text-gray-300 space-y-1.5 list-disc pl-5">
-                <li>
-                  <span class="font-medium">This page</span> — portfolio view: status tiles, upload for any site, and every dated certificate in one list.
-                </li>
-                <li>
-                  <span class="font-medium">A site page</span>
-                  (e.g. <Link href="/sites" class="underline hover:no-underline">Sites → open a property</Link>)
-                  — day-to-day work for one location: its documents, inspections, and checklist.
-                </li>
-              </ul>
             </div>
 
             <div class="flex flex-wrap gap-2 mb-6">
@@ -339,7 +391,7 @@ onUnmounted(() => {
               </span>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
               <div class="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30 p-4">
                 <div class="text-xs uppercase tracking-wide text-red-700 dark:text-red-300">Overdue</div>
                 <div class="text-2xl font-semibold text-red-700 dark:text-red-300">{{ summary.overdue }}</div>
@@ -356,6 +408,22 @@ onUnmounted(() => {
                 <div class="text-xs uppercase tracking-wide text-gray-600 dark:text-gray-400">Documents</div>
                 <div class="text-2xl font-semibold text-gray-700 dark:text-gray-300">{{ summary.documents }}</div>
               </div>
+            </div>
+
+            <div v-if="attentionInsights?.length" class="mb-8 flex flex-wrap gap-2">
+              <div
+                v-for="(insight, idx) in attentionInsights"
+                :key="`${insight.label}-${idx}`"
+                class="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                :class="insightTone(insight.severity)"
+              >
+                <span class="font-semibold">{{ insight.count }}</span>
+                <span>{{ insight.label }}</span>
+              </div>
+            </div>
+
+            <div class="mb-8">
+              <AiPortfolioBox />
             </div>
 
             <section class="mb-8">
@@ -423,7 +491,7 @@ onUnmounted(() => {
                   </div>
 
                   <div>
-                    <label :class="label" for="compliance-upload-file">Certificate file</label>
+                    <label :class="label" for="compliance-upload-file">Certificate files</label>
                     <label
                       for="compliance-upload-file"
                       class="mt-1 flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors"
@@ -438,6 +506,7 @@ onUnmounted(() => {
                       <input
                         id="compliance-upload-file"
                         type="file"
+                        multiple
                         accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*"
                         class="sr-only"
                         @change="onFileChange"
@@ -447,9 +516,9 @@ onUnmounted(() => {
                       </div>
                       <div>
                         <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          Drag & drop a certificate here, or click to browse
+                          Drag & drop certificates here, or click to browse
                         </p>
-                        <p class="mt-1 text-xs text-gray-500">{{ fileAcceptLabel }}</p>
+                        <p class="mt-1 text-xs text-gray-500">Multiple PDFs/photos at once · {{ fileAcceptLabel }}</p>
                       </div>
                       <div class="flex flex-wrap justify-center gap-1.5">
                         <span
@@ -462,23 +531,34 @@ onUnmounted(() => {
                       </div>
                     </label>
 
-                    <div
-                      v-if="uploadFile"
-                      class="mt-3 flex items-center justify-between gap-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2"
-                    >
-                      <div class="min-w-0 flex items-center gap-2">
-                        <Icon name="FileText" class="w-4 h-4 shrink-0 text-gray-500" />
-                        <div class="min-w-0">
-                          <p class="truncate text-sm font-medium">{{ uploadFile.name }}</p>
-                          <p class="text-xs text-gray-500">{{ formatFileSize(uploadFile.size) }}</p>
+                    <div v-if="uploadFiles.length" class="mt-3 space-y-2">
+                      <div
+                        v-for="(file, index) in uploadFiles"
+                        :key="`${file.name}-${file.size}-${index}`"
+                        class="flex items-center justify-between gap-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2"
+                      >
+                        <div class="min-w-0 flex items-center gap-2">
+                          <Icon name="FileText" class="w-4 h-4 shrink-0 text-gray-500" />
+                          <div class="min-w-0">
+                            <p class="truncate text-sm font-medium">{{ file.name }}</p>
+                            <p class="text-xs text-gray-500">{{ formatFileSize(file.size) }}</p>
+                          </div>
                         </div>
+                        <button
+                          type="button"
+                          class="text-xs font-medium text-gray-500 hover:text-red-600"
+                          @click="removeUploadFile(index)"
+                        >
+                          Remove
+                        </button>
                       </div>
                       <button
+                        v-if="uploadFiles.length > 1"
                         type="button"
-                        class="text-xs font-medium text-gray-500 hover:text-red-600"
-                        @click="clearUploadFile"
+                        class="text-xs text-gray-500 hover:text-red-600"
+                        @click="clearUploadFiles"
                       >
-                        Remove
+                        Clear all {{ uploadFiles.length }} files
                       </button>
                     </div>
                   </div>
@@ -500,11 +580,15 @@ onUnmounted(() => {
                     <button
                       type="button"
                       class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium border transition-colors bg-black text-white hover:bg-gray-900 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-white dark:text-black dark:hover:bg-gray-100"
-                      :disabled="!uploadFile || uploading || !uploadSiteId"
+                      :disabled="!uploadFiles.length || uploading || !uploadSiteId"
                       @click="uploadDocument"
                     >
                       <Icon :name="uploading ? 'Loader2' : 'Sparkles'" class="w-4 h-4" :class="{ 'animate-spin': uploading }" />
-                      {{ uploading ? 'Uploading & extracting…' : (extractWithAi ? 'Upload & extract' : 'Upload document') }}
+                      {{ uploading
+                        ? 'Uploading & extracting…'
+                        : (extractWithAi
+                          ? `Upload & extract${uploadFiles.length > 1 ? ` (${uploadFiles.length})` : ''}`
+                          : `Upload ${uploadFiles.length || ''} document${uploadFiles.length === 1 ? '' : 's'}`.trim()) }}
                     </button>
                   </div>
                 </div>
@@ -539,7 +623,10 @@ onUnmounted(() => {
             </section>
 
             <section v-if="actionNeeded.length" class="mb-8">
-              <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">Needs attention</h2>
+              <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
+                Needs attention
+                <span class="normal-case font-normal text-gray-400">({{ actionNeeded.length }})</span>
+              </h2>
               <div class="space-y-2">
                 <div
                   v-for="item in actionNeeded"
@@ -553,9 +640,26 @@ onUnmounted(() => {
                       <span v-if="item.next_due_display"> · Due {{ item.next_due_display }}</span>
                     </div>
                   </div>
-                  <span class="rounded-full px-2.5 py-1 text-xs font-medium" :class="statusBadge(item.status)">
-                    {{ statusLabel(item.status) }}
-                  </span>
+                  <div class="flex items-center gap-2">
+                    <span class="rounded-full px-2.5 py-1 text-xs font-medium" :class="statusBadge(item.status)">
+                      {{ statusLabel(item.status) }}
+                    </span>
+                    <button
+                      v-if="!item.has_linked_task && !createdTaskIds.has(item.id)"
+                      type="button"
+                      class="text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 px-2.5 py-1 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      :disabled="creatingTaskId === item.id"
+                      @click="createTaskForRequirement(item.id)"
+                    >
+                      {{ creatingTaskId === item.id ? 'Creating…' : 'Create ZapTask' }}
+                    </button>
+                    <span
+                      v-else
+                      class="text-xs text-green-700 dark:text-green-300"
+                    >
+                      On board
+                    </span>
+                  </div>
                 </div>
               </div>
             </section>
