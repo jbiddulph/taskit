@@ -212,17 +212,17 @@ class Company extends Model
 
     /**
      * Monthly AI / document extraction allowance for Property Compliance (and future verticals).
-     * B2B positioning: Starter £29 / Growth £79 / Agency £199+ (BUSINESS / LTD_TEAM / LTD_BUSINESS).
+     * Public SaaS: FREE / MIDI (Starter £29) / MAXI (Growth £79). Agency £199+ = BUSINESS / LTD_BUSINESS.
      */
     public function getDocumentAiAllowance(): int
     {
         return match ($this->subscription_type) {
             'FREE' => 10,
-            'MIDI', 'LTD_SOLO' => 100,
-            'MAXI', 'BUSINESS' => 500, // SaaS mid / Starter £29
-            'LTD_TEAM' => 1000, // Growth ~£79
+            'LTD_SOLO' => 100,
+            'MIDI' => 500, // Starter £29
+            'MAXI', 'LTD_TEAM' => 1000, // Growth £79
             'LTD_AGENCY' => 1500,
-            'LTD_BUSINESS' => 2000, // Agency £199+
+            'BUSINESS', 'LTD_BUSINESS' => 2000, // Agency £199+
             default => 10,
         };
     }
