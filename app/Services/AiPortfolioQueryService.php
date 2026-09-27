@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ComplianceRequirement;
+use App\Models\DocumentAiUsage;
 use App\Models\OperationalDocument;
 use App\Models\OperationalObject;
 use App\Models\User;
@@ -44,6 +45,16 @@ class AiPortfolioQueryService
                 'requires_confirmation' => false,
                 'sources' => [],
             ];
+        }
+
+        $company = $user->company;
+        if ($company) {
+            $company->consumeDocumentAi(
+                DocumentAiUsage::KIND_PORTFOLIO_ASK,
+                $user->id,
+                null,
+                ['message_preview' => Str::limit($message, 120)],
+            );
         }
 
         $snapshot = $this->buildSnapshot((int) $user->company_id);

@@ -247,6 +247,65 @@ class ComplianceInboxAndRagTest extends TestCase
         $this->assertSame(100, $company->getDocumentAiAllowance());
         $company->subscription_type = 'MAXI';
         $this->assertSame(500, $company->getDocumentAiAllowance());
+        $company->subscription_type = 'BUSINESS';
+        $this->assertSame(500, $company->getDocumentAiAllowance());
+        $company->subscription_type = 'LTD_TEAM';
+        $this->assertSame(1000, $company->getDocumentAiAllowance());
+        $company->subscription_type = 'LTD_BUSINESS';
+        $this->assertSame(2000, $company->getDocumentAiAllowance());
+    }
+
+    public function test_document_ai_allowance_blocks_extraction_when_exhausted(): void
+    {
+        Storage::fake('private');
+
+        [$user, $company] = $this->createMaxiUser();
+
+        // Exhaust MAXI's 500 monthly reads without running extractions.
+        $rows = [];
+        $now = now();
+        for ($i = 0; $i < 500; $i++) {
+            $rows[] = [
+                'company_id' => $company->id,
+                'user_id' => $user->id,
+                'kind' => \App\Models\DocumentAiUsage::KIND_EXTRACTION,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+        \App\Models\DocumentAiUsage::insert($rows);
+
+        $this->assertFalse($company->fresh()->canConsumeDocumentAi());
+
+        $file = UploadedFile::fake()->create('gas.pdf', 100, 'application/pdf');
+
+        $this->actingAs($user)
+            ->postJson('/api/compliance/documents/inbox', [
+                'file' => $file,
+                'extract' => true,
+            ])
+            ->assertStatus(429)
+            ->assertJsonPath('error', 'document_ai_allowance_exceeded')
+            ->assertJsonPath('document_ai.exceeded', true);
+
+        $this->assertDatabaseCount('taskit_operational_documents', 1);
+    }
+
+    public function test_portfolio_ask_consumes_document_ai_allowance(): void
+    {
+        [$user, $company] = $this->createMaxiUser();
+
+        $before = $company->getDocumentAiUsageThisMonth();
+
+        $this->actingAs($user)
+            ->postJson('/api/ai', [
+                'message' => 'What needs attention this week?',
+                'context' => 'portfolio',
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertSame($before + 1, $company->fresh()->getDocumentAiUsageThisMonth());
     }
 
     /**

@@ -212,16 +212,17 @@ class Company extends Model
 
     /**
      * Monthly AI / document extraction allowance for Property Compliance (and future verticals).
-     * Maps roughly to Starter £29 / Growth £79 / Agency £199+ positioning.
+     * B2B positioning: Starter £29 / Growth £79 / Agency £199+ (BUSINESS / LTD_TEAM / LTD_BUSINESS).
      */
     public function getDocumentAiAllowance(): int
     {
         return match ($this->subscription_type) {
             'FREE' => 10,
-            'MIDI', 'LTD_TEAM' => 100, // ~£29–79 starter/growth
-            'MAXI', 'LTD_AGENCY' => 500, // agency portfolios
-            'BUSINESS', 'LTD_BUSINESS' => 2000,
-            'LTD_SOLO' => 50,
+            'MIDI', 'LTD_SOLO' => 100,
+            'MAXI', 'BUSINESS' => 500, // SaaS mid / Starter £29
+            'LTD_TEAM' => 1000, // Growth ~£79
+            'LTD_AGENCY' => 1500,
+            'LTD_BUSINESS' => 2000, // Agency £199+
             default => 10,
         };
     }
@@ -231,6 +232,97 @@ class Company extends Model
         $limit = $this->getDocumentAiAllowance();
 
         return $limit >= PHP_INT_MAX ? 'Unlimited AI document reads' : "{$limit} AI document reads / month";
+    }
+
+    public function getDocumentAiUsageThisMonth(): int
+    {
+        return DocumentAiUsage::query()
+            ->where('company_id', $this->id)
+            ->where('created_at', '>=', now()->startOfMonth())
+            ->count();
+    }
+
+    public function getDocumentAiRemainingThisMonth(): int
+    {
+        $limit = $this->getDocumentAiAllowance();
+        if ($limit >= PHP_INT_MAX) {
+            return PHP_INT_MAX;
+        }
+
+        return max(0, $limit - $this->getDocumentAiUsageThisMonth());
+    }
+
+    public function canConsumeDocumentAi(int $count = 1): bool
+    {
+        if ($count < 1) {
+            return true;
+        }
+
+        $limit = $this->getDocumentAiAllowance();
+        if ($limit >= PHP_INT_MAX) {
+            return true;
+        }
+
+        return ($this->getDocumentAiUsageThisMonth() + $count) <= $limit;
+    }
+
+    /**
+     * @return array{
+     *   used: int,
+     *   limit: int,
+     *   remaining: int,
+     *   label: string,
+     *   percent_used: int,
+     *   resets_at: string,
+     *   exceeded: bool,
+     *   plan: string
+     * }
+     */
+    public function getDocumentAiUsageSummary(): array
+    {
+        $limit = $this->getDocumentAiAllowance();
+        $used = $this->getDocumentAiUsageThisMonth();
+        $remaining = $limit >= PHP_INT_MAX ? PHP_INT_MAX : max(0, $limit - $used);
+        $percent = $limit >= PHP_INT_MAX || $limit === 0
+            ? 0
+            : (int) min(100, round(($used / $limit) * 100));
+
+        return [
+            'used' => $used,
+            'limit' => $limit,
+            'remaining' => $remaining === PHP_INT_MAX ? -1 : $remaining,
+            'label' => $this->getDocumentAiAllowanceLabel(),
+            'percent_used' => $percent,
+            'resets_at' => now()->startOfMonth()->addMonth()->toDateString(),
+            'exceeded' => $limit < PHP_INT_MAX && $used >= $limit,
+            'plan' => $this->subscription_type,
+        ];
+    }
+
+    /**
+     * @throws \App\Exceptions\DocumentAiAllowanceExceededException
+     */
+    public function consumeDocumentAi(
+        string $kind,
+        ?int $userId = null,
+        ?Model $reference = null,
+        array $metadata = [],
+    ): DocumentAiUsage {
+        if (! $this->canConsumeDocumentAi()) {
+            throw new \App\Exceptions\DocumentAiAllowanceExceededException(
+                $this,
+                $this->getDocumentAiUsageSummary(),
+            );
+        }
+
+        return DocumentAiUsage::create([
+            'company_id' => $this->id,
+            'user_id' => $userId,
+            'kind' => $kind,
+            'reference_type' => $reference ? $reference->getMorphClass() : null,
+            'reference_id' => $reference?->getKey(),
+            'metadata' => $metadata ?: null,
+        ]);
     }
 
     /**

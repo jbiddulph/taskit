@@ -53,11 +53,25 @@ class OperationalDocumentController extends Controller
             $request->boolean('extract', true),
         );
 
+        if (! empty($result['allowance_exceeded']) && $request->boolean('extract', true) && ! $result['proposal']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Document uploaded, but AI extraction was blocked — monthly document AI allowance reached. Upgrade your plan for more reads.',
+                'error' => 'document_ai_allowance_exceeded',
+                'document_ai' => $result['document_ai'] ?? $user->company?->getDocumentAiUsageSummary(),
+                'data' => [
+                    'document' => $this->serializeDocument($result['document']),
+                    'proposal_id' => null,
+                ],
+            ], 429);
+        }
+
         return response()->json([
             'success' => true,
             'message' => $result['proposal']
                 ? 'Document uploaded. Review the AI extraction to create reminder todos.'
                 : 'Document uploaded.',
+            'document_ai' => $user->company?->fresh()?->getDocumentAiUsageSummary(),
             'data' => [
                 'document' => $this->serializeDocument($result['document']),
                 'proposal_id' => $result['proposal']?->id,

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\DocumentAiAllowanceExceededException;
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\Project;
@@ -58,10 +59,15 @@ class AiController extends Controller
         }
 
         if (in_array($context, ['portfolio', 'property_compliance', 'compliance'], true)) {
-            $answer = $this->aiPortfolioQueryService->ask($user, (string) $request->input('message'));
+            try {
+                $answer = $this->aiPortfolioQueryService->ask($user, (string) $request->input('message'));
+            } catch (DocumentAiAllowanceExceededException $e) {
+                return $e->render();
+            }
 
             return response()->json([
                 'success' => true,
+                'document_ai' => $user->company?->fresh()?->getDocumentAiUsageSummary(),
                 ...$answer,
             ]);
         }

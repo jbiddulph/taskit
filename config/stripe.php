@@ -32,6 +32,7 @@ return [
                 '1 user',
                 '3 projects',
                 '200 todos',
+                '10 AI document reads / month',
                 'Basic features',
                 // Core FREE features
                 'Bulk Add Tasks',
@@ -59,6 +60,7 @@ return [
                 'Up to 10 clients',
                 'Up to 20 projects per client',
                 'Unlimited todos',
+                '100 AI document reads / month',
                 // Core app features
                 'Bulk Add Tasks',
                 'Voice Add Tasks (10 second)',
@@ -93,6 +95,7 @@ return [
                 'Up to 30 clients',
                 'Up to 40 projects per client',
                 'Unlimited todos',
+                '500 AI document reads / month',
                 // Core app features
                 'Bulk Add Tasks',
                 'Voice Add Tasks (10 second)',
@@ -123,6 +126,7 @@ return [
             'features' => [
                 'Unlimited members',
                 'Unlimited projects',
+                '500 AI document reads / month',
                 'Admin controls',
                 'SSO / audit logs',
                 'Support SLAs',
@@ -143,6 +147,9 @@ return [
                 'Company Sub Domain',
                 'Public Facing Dashboard',
                 'Import/Export data',
+                'Sites & Assets',
+                'Property Compliance',
+                'Document upload & AI scanning',
             ]
         ],
         'LTD_SOLO' => [
@@ -156,6 +163,7 @@ return [
                 '10 projects',
                 '0 clients (solo workspace only)',
                 'Unlimited todos',
+                '100 AI document reads / month',
                 'No team features',
                 // Core solo features (workspace-level)
                 'Bulk Add Tasks',
@@ -180,6 +188,7 @@ return [
                 'Up to 10 clients',
                 'Up to 20 projects per client',
                 'Unlimited todos',
+                '1000 AI document reads / month',
                 'All MIDI-level features',
                 // Core app features
                 'Bulk Add Tasks',
@@ -211,6 +220,7 @@ return [
                 'Up to 30 clients',
                 'Up to 40 projects per client',
                 'Unlimited todos',
+                '1500 AI document reads / month',
                 'Most features (except enterprise-level)',
                 // Core app features
                 'Bulk Add Tasks',
@@ -241,6 +251,7 @@ return [
                 'Up to 50 members',
                 'Up to 50 clients',
                 'Up to 100 projects per client',
+                '2000 AI document reads / month',
                 'All current features',
                 'Priority support',
                 // Core app features
@@ -262,5 +273,49 @@ return [
                 'Import/Export data',
             ]
         ]
-    ]
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Property Compliance AI — B2B document/AI allowance tiers
+    |--------------------------------------------------------------------------
+    |
+    | Positioning for specialised front ends (Property / Fleet / HR). ZapTask
+    | remains the workflow engine; these tiers describe document AI capacity.
+    |
+    */
+    'document_ai_tiers' => [
+        [
+            'key' => 'free',
+            'label' => 'Free',
+            'price_label' => '£0',
+            'plan' => 'FREE',
+            'reads' => 10,
+            'blurb' => 'Try portfolio ask and a handful of certificate scans.',
+        ],
+        [
+            'key' => 'starter',
+            'label' => 'Starter',
+            'price_label' => '£29/mo',
+            'plan' => 'BUSINESS',
+            'reads' => 500,
+            'blurb' => 'Portfolio scanning for landlords and small agencies.',
+        ],
+        [
+            'key' => 'growth',
+            'label' => 'Growth',
+            'price_label' => '£79',
+            'plan' => 'LTD_TEAM',
+            'reads' => 1000,
+            'blurb' => 'Team workspaces with higher monthly AI reads.',
+        ],
+        [
+            'key' => 'agency',
+            'label' => 'Agency',
+            'price_label' => '£199+',
+            'plan' => 'LTD_BUSINESS',
+            'reads' => 2000,
+            'blurb' => 'Larger portfolios, priority support, full feature set.',
+        ],
+    ],
 ];
