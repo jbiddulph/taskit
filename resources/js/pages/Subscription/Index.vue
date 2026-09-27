@@ -56,6 +56,28 @@ interface Props {
     company: Company;
     plans: Plans;
     stripePublicKey: string;
+    documentAi?: DocumentAiUsage | null;
+    documentAiTiers?: DocumentAiTier[];
+}
+
+interface DocumentAiUsage {
+    used: number;
+    limit: number;
+    remaining: number;
+    label: string;
+    percent_used: number;
+    resets_at: string;
+    exceeded: boolean;
+    plan: string;
+}
+
+interface DocumentAiTier {
+    key: string;
+    label: string;
+    price_label: string;
+    plan: string;
+    reads: number;
+    blurb: string;
 }
 
 const props = defineProps<Props>();
@@ -66,6 +88,8 @@ const currentPlan = computed(() => props.company?.effective_subscription_type ||
 const isActive = computed(() => props.company?.subscription_status === 'active');
 const hasPendingChange = computed(() => !!props.company?.pending_change);
 const billingInterval = ref<'month' | 'year'>('month');
+const documentAi = computed(() => props.documentAi ?? null);
+const documentAiTiers = computed(() => props.documentAiTiers ?? []);
 
 // Company creation modal state
 const showCompanyModal = ref(false);
@@ -436,6 +460,70 @@ const reactivateSubscription = async () => {
                     </div>
                 </CardContent>
             </Card>
+
+            <!-- Document AI usage -->
+            <Card v-if="documentAi" class="mb-8">
+                <CardHeader>
+                    <CardTitle>Document AI allowance</CardTitle>
+                    <CardDescription>
+                        Certificate extraction and portfolio Q&amp;A share this monthly pool. Resets {{ new Date(documentAi.resets_at).toLocaleDateString() }}.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div class="flex flex-wrap items-end justify-between gap-4 mb-3">
+                        <div>
+                            <p class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                                {{ documentAi.used }}
+                                <span class="text-base font-normal text-gray-500">/ {{ documentAi.limit }} reads</span>
+                            </p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ documentAi.label }}</p>
+                        </div>
+                        <p
+                            class="text-sm font-medium"
+                            :class="documentAi.exceeded ? 'text-red-600 dark:text-red-400' : 'text-gray-500'"
+                        >
+                            {{ documentAi.exceeded ? 'Allowance reached' : `${documentAi.remaining} remaining` }}
+                        </p>
+                    </div>
+                    <div class="h-2 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                        <div
+                            class="h-full transition-all"
+                            :class="documentAi.exceeded ? 'bg-red-500' : documentAi.percent_used >= 80 ? 'bg-amber-500' : 'bg-blue-600'"
+                            :style="{ width: `${Math.min(100, documentAi.percent_used)}%` }"
+                        />
+                    </div>
+                </CardContent>
+            </Card>
+
+            <!-- Property Compliance AI B2B tiers -->
+            <div v-if="documentAiTiers.length" class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                    Property Compliance AI
+                </h2>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">
+                    ZapTask stays the workflow engine. These tiers size document and portfolio AI for landlords and agencies (£29 / £79 / £199+).
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card
+                        v-for="tier in documentAiTiers"
+                        :key="tier.key"
+                        :class="tier.plan === currentPlan ? 'border-2 border-blue-500' : ''"
+                    >
+                        <CardHeader class="pb-2">
+                            <CardTitle class="text-lg">{{ tier.label }}</CardTitle>
+                            <CardDescription>
+                                <span class="text-xl font-semibold text-gray-900 dark:text-gray-100">{{ tier.price_label }}</span>
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+                                {{ tier.reads.toLocaleString() }} AI reads / month
+                            </p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">{{ tier.blurb }}</p>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
 
             <!-- Pending Subscription Change -->
             <Card v-if="hasPendingChange" class="mb-8 border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20">

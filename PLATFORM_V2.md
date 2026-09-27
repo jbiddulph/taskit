@@ -103,7 +103,17 @@ On `/compliance` (Property Compliance AI):
   - Document RAG over `extracted_text` (“Show me everything relating to the roof”)
 - One-click **Create ZapTask** (`POST /api/compliance/requirements/{id}/create-task`)
 
-Document AI allowances (plan positioning): FREE 10 / MIDI 100 / MAXI 500 / BUSINESS 2000 reads per month via `Company::getDocumentAiAllowance()`.
+Document AI allowances (enforced monthly via `taskit_document_ai_usages`):
+
+| Plan | Reads / month | B2B price cue |
+|---|---|---|
+| FREE | 10 | £0 |
+| MIDI / LTD_SOLO | 100 | entry SaaS |
+| MAXI / LTD_TEAM | 500 | Growth ~£79 |
+| LTD_AGENCY | 1000 | — |
+| BUSINESS / LTD_BUSINESS | 2000 | Starter £29 / Agency £199+ |
+
+`Company::getDocumentAiAllowance()` + `consumeDocumentAi()` gate certificate extraction and portfolio ask. Usage and tiers surface on `/subscription` and `/compliance`.
 
 ## Vertical template
 
@@ -120,7 +130,6 @@ Enable apps under **Settings → Apps on ZapTask**. ZapTask remains Company → 
 
 ## Next milestones
 
-1. Enforce document AI allowances in the extraction pipeline + billing UI (£29 / £79 / £199+)
-2. Hosted specialised app shells (Property / Fleet / HR) beyond the Node example
-3. Webhook delivery for automation actions (`send_email`, external HTTP)
-4. Vector embeddings for larger document corpora (current RAG is keyword + excerpt grounded)
+1. Hosted specialised app shells (Property / Fleet / HR) beyond the Node example
+2. Webhook delivery for automation actions (`send_email`, external HTTP)
+3. Vector embeddings for larger document corpora (current RAG is keyword + excerpt grounded)

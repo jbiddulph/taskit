@@ -104,11 +104,22 @@ interface Props {
     code: string;
     subscription_type: string;
   } | null;
+  documentAi?: {
+    used: number;
+    limit: number;
+    remaining: number;
+    label: string;
+    percent_used: number;
+    resets_at: string;
+    exceeded: boolean;
+    plan: string;
+  } | null;
 }
 
 const props = defineProps<Props>();
 const { btnPrimary, btnSecondary, label, select } = useFormFieldClasses();
 
+const documentAi = computed(() => props.documentAi ?? null);
 const uploadSiteId = ref<number | ''>('');
 const uploadProjectId = ref<number | ''>(props.projects[0]?.id ?? '');
 const uploadFiles = ref<File[]>([]);
@@ -295,8 +306,17 @@ async function uploadDocument() {
         if (!firstProposalId && proposalId) {
           firstProposalId = proposalId;
         }
-      } catch {
-        failures.push(file.name);
+      } catch (error: unknown) {
+        const axiosError = error as {
+          response?: { status?: number; data?: { message?: string; document_ai?: typeof props.documentAi } };
+        };
+        if (axiosError.response?.status === 429) {
+          failures.push(`${file.name} (AI allowance reached)`);
+          uploadError.value = axiosError.response.data?.message
+            ?? 'Document AI allowance reached for this month. Upgrade your plan for more reads.';
+        } else {
+          failures.push(file.name);
+        }
       }
     }
 
@@ -321,7 +341,7 @@ async function uploadDocument() {
       openProposalReview(firstProposalId);
     }
 
-    router.reload({ only: ['summary', 'requirements', 'documents', 'pendingProposals', 'attentionInsights'] });
+    router.reload({ only: ['summary', 'requirements', 'documents', 'pendingProposals', 'attentionInsights', 'documentAi'] });
   } finally {
     uploading.value = false;
   }
@@ -386,6 +406,17 @@ onUnmounted(() => {
                 <h1 class="text-2xl font-semibold">Property Compliance AI</h1>
                 <p class="text-gray-600 dark:text-gray-400 mt-1 max-w-2xl">
                   For landlords and estate agents: upload certificates, let AI extract dates, see what needs attention across the portfolio, then create ZapTask jobs in one click.
+                </p>
+                <p
+                  v-if="documentAi"
+                  class="mt-3 text-sm"
+                  :class="documentAi.exceeded ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'"
+                >
+                  AI allowance: {{ documentAi.used }}/{{ documentAi.limit }} reads this month
+                  <template v-if="!documentAi.exceeded"> · {{ documentAi.remaining }} left</template>
+                  <template v-else> · upgrade for more</template>
+                  ·
+                  <Link href="/subscription" class="underline hover:no-underline">Manage plan</Link>
                 </p>
               </div>
               <div class="flex flex-wrap gap-2">

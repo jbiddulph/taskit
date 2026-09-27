@@ -65,7 +65,21 @@ class ComplianceDocumentInboxController extends Controller
         }
 
         $results = [];
+        $allowanceExceeded = false;
+        $extractedCount = 0;
+        $company = $user->company;
+        $documentAi = $company?->getDocumentAiUsageSummary();
+        $wantExtract = $request->boolean('extract', true);
+
         foreach ($files as $file) {
+            $runExtraction = $wantExtract && ! $allowanceExceeded;
+
+            if ($runExtraction && $company && ! $company->canConsumeDocumentAi()) {
+                $allowanceExceeded = true;
+                $runExtraction = false;
+                $documentAi = $company->getDocumentAiUsageSummary();
+            }
+
             $stored = $this->documentService->storeForCompany(
                 (int) $user->company_id,
                 $user,
@@ -75,12 +89,21 @@ class ComplianceDocumentInboxController extends Controller
                     'project_id' => $request->input('project_id'),
                     'site_id' => $request->input('site_id'),
                 ],
-                $request->boolean('extract', true),
+                $runExtraction,
             );
+
+            if (! empty($stored['allowance_exceeded'])) {
+                $allowanceExceeded = true;
+                $documentAi = $stored['document_ai'] ?? $documentAi;
+            }
 
             $document = $stored['document'];
             $proposal = $stored['proposal'];
             $match = $stored['match'] ?? null;
+
+            if ($proposal) {
+                $extractedCount++;
+            }
 
             $results[] = [
                 'document' => [
@@ -92,6 +115,7 @@ class ComplianceDocumentInboxController extends Controller
                     'site_id' => $document->operational_object_id,
                 ],
                 'proposal_id' => $proposal?->id,
+                'extraction_skipped' => $wantExtract && (! $runExtraction || ! empty($stored['allowance_exceeded'])),
                 'match' => $match ? [
                     'status' => $match['status'],
                     'confidence' => $match['confidence'],
@@ -107,18 +131,31 @@ class ComplianceDocumentInboxController extends Controller
         $matched = collect($results)->filter(fn ($r) => ($r['match']['status'] ?? null) === 'matched')->count();
         $suggested = collect($results)->filter(fn ($r) => ($r['match']['status'] ?? null) === 'suggested')->count();
         $unmatched = count($results) - $matched - $suggested;
+        $documentAi = $company?->fresh()?->getDocumentAiUsageSummary() ?? $documentAi;
+
+        $message = count($results) === 1
+            ? $this->singleMessage($results[0])
+            : sprintf(
+                'Uploaded %d files — %d matched, %d suggested, %d need a property.',
+                count($results),
+                $matched,
+                $suggested,
+                $unmatched,
+            );
+
+        if ($allowanceExceeded) {
+            $message .= $extractedCount > 0
+                ? ' Some files were stored without AI extraction because your monthly allowance was reached.'
+                : ' Document AI allowance reached — files were stored without AI extraction. Upgrade for more reads.';
+        }
+
+        $status = ($allowanceExceeded && $extractedCount === 0 && $wantExtract) ? 429 : 200;
 
         return response()->json([
-            'success' => true,
-            'message' => count($results) === 1
-                ? $this->singleMessage($results[0])
-                : sprintf(
-                    'Uploaded %d files — %d matched, %d suggested, %d need a property.',
-                    count($results),
-                    $matched,
-                    $suggested,
-                    $unmatched,
-                ),
+            'success' => $status === 200,
+            'message' => $message,
+            'error' => $status === 429 ? 'document_ai_allowance_exceeded' : null,
+            'document_ai' => $documentAi,
             'data' => [
                 'results' => $results,
                 'summary' => [
@@ -126,9 +163,11 @@ class ComplianceDocumentInboxController extends Controller
                     'matched' => $matched,
                     'suggested' => $suggested,
                     'unmatched' => $unmatched,
+                    'extracted' => $extractedCount,
+                    'allowance_exceeded' => $allowanceExceeded,
                 ],
             ],
-        ]);
+        ], $status);
     }
 
     /**

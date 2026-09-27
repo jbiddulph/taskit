@@ -168,6 +168,7 @@ class ComplianceController extends Controller
                 'code' => $company->code,
                 'subscription_type' => $company->subscription_type,
             ] : null,
+            'documentAi' => $company?->getDocumentAiUsageSummary(),
         ]);
     }
 }

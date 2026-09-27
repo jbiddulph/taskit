@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\DocumentAiAllowanceExceededException;
 use App\Models\OperationalDocument;
 use App\Models\OperationalObject;
 use App\Models\User;
@@ -36,24 +37,37 @@ class OperationalDocumentService
         ]);
 
         $proposal = null;
-        $match = null;
+        $match = [
+            'status' => PropertyAddressMatcher::STATUS_MANUAL,
+            'confidence' => 100,
+            'site' => $object,
+            'reason' => 'Selected on upload',
+            'score' => 1.0,
+        ];
+        $allowanceExceeded = false;
+        $documentAi = null;
+
         if ($runExtraction) {
-            $proposal = $this->extractionService->extractFromDocument(
-                $document,
-                $user,
-                isset($attributes['project_id']) ? (int) $attributes['project_id'] : null,
-            );
-            $document->refresh();
-            $match = [
-                'status' => PropertyAddressMatcher::STATUS_MANUAL,
-                'confidence' => 100,
-                'site' => $object,
-                'reason' => 'Selected on upload',
-                'score' => 1.0,
-            ];
+            try {
+                $proposal = $this->extractionService->extractFromDocument(
+                    $document,
+                    $user,
+                    isset($attributes['project_id']) ? (int) $attributes['project_id'] : null,
+                );
+                $document->refresh();
+            } catch (DocumentAiAllowanceExceededException $e) {
+                $allowanceExceeded = true;
+                $documentAi = $e->usageSummary;
+            }
         }
 
-        return ['document' => $document, 'proposal' => $proposal, 'match' => $match];
+        return [
+            'document' => $document->fresh(),
+            'proposal' => $proposal?->fresh() ?? $proposal,
+            'match' => $match,
+            'allowance_exceeded' => $allowanceExceeded,
+            'document_ai' => $documentAi,
+        ];
     }
 
     /**
@@ -91,39 +105,74 @@ class OperationalDocumentService
 
         $proposal = null;
         $match = null;
-        if ($runExtraction) {
-            $proposal = $this->extractionService->extractFromDocument(
-                $document,
-                $user,
-                isset($attributes['project_id']) ? (int) $attributes['project_id'] : null,
-            );
-            $document->refresh();
+        $allowanceExceeded = false;
+        $documentAi = null;
 
-            if ($document->operational_object_id) {
-                $site = OperationalObject::find($document->operational_object_id);
-                $match = [
-                    'status' => $document->match_status ?? PropertyAddressMatcher::STATUS_MATCHED,
-                    'confidence' => $document->match_confidence ?? 0,
-                    'site' => $site,
-                    'reason' => $proposal?->metadata['match_reason'] ?? null,
-                    'score' => ($document->match_confidence ?? 0) / 100,
-                ];
-            } else {
-                $match = $this->addressMatcher->match(
-                    $companyId,
-                    null,
-                    $file->getClientOriginalName(),
+        if ($runExtraction) {
+            try {
+                $proposal = $this->extractionService->extractFromDocument(
+                    $document,
+                    $user,
+                    isset($attributes['project_id']) ? (int) $attributes['project_id'] : null,
                 );
-                $this->applyMatchToDocument($document, $match, $proposal);
                 $document->refresh();
+
+                if ($document->operational_object_id) {
+                    $site = OperationalObject::find($document->operational_object_id);
+                    $match = [
+                        'status' => $document->match_status ?? PropertyAddressMatcher::STATUS_MATCHED,
+                        'confidence' => $document->match_confidence ?? 0,
+                        'site' => $site,
+                        'reason' => $proposal?->metadata['match_reason'] ?? null,
+                        'score' => ($document->match_confidence ?? 0) / 100,
+                    ];
+                } else {
+                    $match = $this->addressMatcher->match(
+                        $companyId,
+                        null,
+                        $file->getClientOriginalName(),
+                    );
+                    $this->applyMatchToDocument($document, $match, $proposal);
+                    $document->refresh();
+                }
+            } catch (DocumentAiAllowanceExceededException $e) {
+                $allowanceExceeded = true;
+                $documentAi = $e->usageSummary;
+                if (! $siteId) {
+                    $match = $this->addressMatcher->match($companyId, null, $file->getClientOriginalName());
+                    $this->applyMatchToDocument($document, $match, null);
+                    $document->refresh();
+                } elseif ($siteId) {
+                    $match = [
+                        'status' => PropertyAddressMatcher::STATUS_MANUAL,
+                        'confidence' => 100,
+                        'site' => OperationalObject::find($siteId),
+                        'reason' => 'Selected on upload',
+                        'score' => 1.0,
+                    ];
+                }
             }
         } elseif (! $siteId) {
             $match = $this->addressMatcher->match($companyId, null, $file->getClientOriginalName());
             $this->applyMatchToDocument($document, $match, null);
             $document->refresh();
+        } elseif ($siteId) {
+            $match = [
+                'status' => PropertyAddressMatcher::STATUS_MANUAL,
+                'confidence' => 100,
+                'site' => OperationalObject::find($siteId),
+                'reason' => 'Selected on upload',
+                'score' => 1.0,
+            ];
         }
 
-        return ['document' => $document->fresh(), 'proposal' => $proposal?->fresh(), 'match' => $match];
+        return [
+            'document' => $document->fresh(),
+            'proposal' => $proposal?->fresh() ?? $proposal,
+            'match' => $match,
+            'allowance_exceeded' => $allowanceExceeded,
+            'document_ai' => $documentAi,
+        ];
     }
 
     /**

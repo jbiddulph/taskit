@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\DocumentAiUsage;
 use App\Models\DocumentExtractionProposal;
+use App\Models\Company;
 use App\Models\OperationalDocument;
 use App\Models\User;
 use App\Support\CertificateFieldExtractor;
@@ -25,6 +27,18 @@ class DocumentExtractionService
         User $user,
         ?int $projectId = null,
     ): ?DocumentExtractionProposal {
+        $company = $user->company_id
+            ? Company::find($user->company_id)
+            : ($document->company_id ? Company::find($document->company_id) : null);
+
+        if ($company) {
+            $company->consumeDocumentAi(
+                DocumentAiUsage::KIND_EXTRACTION,
+                $user->id,
+                $document,
+            );
+        }
+
         $extracted = null;
         $extractedText = '';
 

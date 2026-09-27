@@ -37,6 +37,8 @@ class SubscriptionController extends Controller
             'user' => $user,
             'company' => $companyData,
             'plans' => config('stripe.plans'),
+            'documentAiTiers' => config('stripe.document_ai_tiers', []),
+            'documentAi' => $company?->getDocumentAiUsageSummary(),
             'stripePublicKey' => config('stripe.public_key'),
         ]);
     }
