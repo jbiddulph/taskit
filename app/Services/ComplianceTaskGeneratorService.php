@@ -58,19 +58,32 @@ class ComplianceTaskGeneratorService
 
     public function createTaskForRequirement(ComplianceRequirement $requirement): bool
     {
+        return $this->createOrReturnTaskForRequirement($requirement) !== null;
+    }
+
+    /**
+     * Create a ZapTask todo for a compliance requirement, or return the open one.
+     */
+    public function createOrReturnTaskForRequirement(ComplianceRequirement $requirement): ?Todo
+    {
         $object = $requirement->operationalObject;
         if (! $object) {
-            return false;
+            return null;
+        }
+
+        $existing = $requirement->latestOpenTodo();
+        if ($existing) {
+            return $existing;
         }
 
         $project = $this->resolveProject($requirement);
         if (! $project) {
-            return false;
+            return null;
         }
 
         $owner = $this->resolveTaskOwner($requirement, $project);
         if (! $owner) {
-            return false;
+            return null;
         }
 
         $industry = $requirement->company?->industry;
@@ -109,7 +122,7 @@ class ComplianceTaskGeneratorService
         CacheService::invalidateUserCaches($owner->id, $requirement->company_id);
         CacheService::invalidateProjectCaches($project->id, $requirement->company_id);
 
-        return (bool) $todo->id;
+        return $todo;
     }
 
     protected function resolveProject(ComplianceRequirement $requirement): ?Project

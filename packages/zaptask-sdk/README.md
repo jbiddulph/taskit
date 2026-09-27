@@ -81,6 +81,16 @@ await client.ai.confirm({
 })
 ```
 
+Portfolio Q&A (Property Compliance AI):
+
+```typescript
+const portfolio = await client.ai.propose({
+  message: 'Which properties have gas certificates expiring in the next 60 days?',
+  context: 'portfolio',
+})
+// portfolio.answer, portfolio.matches, portfolio.suggested_tasks
+```
+
 Requires API key permission `ai.write` (`POST /api/v1/ai`).
 
 ## Auth

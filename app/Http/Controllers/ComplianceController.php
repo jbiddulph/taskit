@@ -7,6 +7,7 @@ use App\Models\DocumentExtractionProposal;
 use App\Models\OperationalDocument;
 use App\Models\OperationalObject;
 use App\Models\Project;
+use App\Services\AiPortfolioQueryService;
 use App\Support\CertificateTypes;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -14,6 +15,10 @@ use Inertia\Response;
 
 class ComplianceController extends Controller
 {
+    public function __construct(
+        protected AiPortfolioQueryService $aiPortfolioQueryService,
+    ) {}
+
     public function index(): Response
     {
         $user = Auth::user();
@@ -150,6 +155,7 @@ class ComplianceController extends Controller
                 'key' => $project->key,
             ]),
             'certificateTypes' => CertificateTypes::propertyManagerTypes(),
+            'attentionInsights' => $this->aiPortfolioQueryService->attentionInsights((int) $user->company_id),
             'company' => $company ? [
                 'id' => $company->id,
                 'name' => $company->name,
