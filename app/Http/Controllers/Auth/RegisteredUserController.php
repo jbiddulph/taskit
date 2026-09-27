@@ -46,6 +46,7 @@ class RegisteredUserController extends Controller
             'billingInterval' => $billingInterval,
             'industries' => Industries::choices(),
             'selectedIndustry' => $industry !== Industries::default() ? $industry : null,
+            'plans' => $this->registrationPlans(),
         ]);
     }
 
@@ -93,11 +94,11 @@ class RegisteredUserController extends Controller
                 
                 if ($company->subscription_type === 'FREE') {
                     return back()->withErrors([
-                        'company_code' => "This company has reached its member limit ({$limit} members). A registered member needs to upgrade to MIDI (£6/month) or MAXI (£12/month) to add more members."
+                        'company_code' => "This company has reached its member limit ({$limit} members). A registered member needs to upgrade to MIDI ({$this->monthlyPriceLabel('MIDI')}) or MAXI ({$this->monthlyPriceLabel('MAXI')}) to add more members."
                     ]);
                 } elseif ($company->subscription_type === 'MIDI') {
                     return back()->withErrors([
-                        'company_code' => "This company has reached its member limit ({$limit} members). A registered member needs to upgrade to MAXI (£12/month) to add more members."
+                        'company_code' => "This company has reached its member limit ({$limit} members). A registered member needs to upgrade to MAXI ({$this->monthlyPriceLabel('MAXI')}) to add more members."
                     ]);
                 }
             }
@@ -176,5 +177,37 @@ class RegisteredUserController extends Controller
         }
 
         return to_route('dashboard');
+    }
+
+    /**
+     * Public prices for the plans offered at signup.
+     * Kept in config/stripe.php so the register page matches checkout.
+     *
+     * @return array<string, array{price: int, price_yearly: int|null}>
+     */
+    private function registrationPlans(): array
+    {
+        $plans = [];
+
+        foreach (['FREE', 'MIDI', 'MAXI'] as $key) {
+            $plan = config("stripe.plans.{$key}", []);
+            $plans[$key] = [
+                'price' => (int) ($plan['price'] ?? 0),
+                'price_yearly' => isset($plan['price_yearly']) ? (int) $plan['price_yearly'] : null,
+            ];
+        }
+
+        return $plans;
+    }
+
+    private function monthlyPriceLabel(string $plan): string
+    {
+        $pence = (int) config("stripe.plans.{$plan}.price", 0);
+        $pounds = $pence / 100;
+        $amount = fmod($pounds, 1.0) === 0.0
+            ? (string) (int) $pounds
+            : number_format($pounds, 2, '.', '');
+
+        return "£{$amount}/month";
     }
 }
