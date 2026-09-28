@@ -82,9 +82,7 @@ class Company extends Model
      */
     public function projects()
     {
-        return Project::whereHas('owner', function ($query) {
-            $query->where('company_id', $this->id);
-        })->where('is_active', true);
+        return Project::query()->forCompany($this->id);
     }
 
     /**
@@ -162,14 +160,26 @@ class Company extends Model
      */
     public function userCanAccess(User $user): bool
     {
-        if ($user->company_id !== $this->id) {
+        if ((int) $user->company_id !== (int) $this->id) {
             return false;
         }
-        
-        // Get the user IDs of accessible users (first N registered)
-        $accessibleUserIds = $this->accessibleUsers()->pluck('id')->toArray();
-        
-        return in_array($user->id, $accessibleUserIds);
+
+        $accessibleUserIds = $this->accessibleUsers()
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        return in_array((int) $user->id, $accessibleUserIds, true);
+    }
+
+    /**
+     * Plan code stored on subscription_type.
+     * A manual database update is honoured as written. Scheduled downgrades are ignored
+     * until they are copied onto subscription_type, so a MAXI value is not hidden by an old FREE schedule.
+     */
+    private function planKey(): string
+    {
+        return strtoupper(trim((string) $this->subscription_type));
     }
 
     /**
@@ -177,7 +187,7 @@ class Company extends Model
      */
     public function getMemberLimit(): int
     {
-        return match($this->subscription_type) {
+        return match($this->planKey()) {
             'FREE' => 1,
             'MIDI' => 5,
             'MAXI' => 20,
@@ -195,7 +205,7 @@ class Company extends Model
      */
     public function getProjectLimit(): int
     {
-        return match($this->subscription_type) {
+        return match($this->planKey()) {
             'FREE' => 3,
             'MIDI' => 20,
             'MAXI' => 100,
@@ -216,7 +226,7 @@ class Company extends Model
      */
     public function getDocumentAiAllowance(): int
     {
-        return match ($this->subscription_type) {
+        return match ($this->planKey()) {
             'FREE' => 10,
             'LTD_SOLO' => 100,
             'MIDI' => 500, // Starter £29
@@ -330,7 +340,7 @@ class Company extends Model
      */
     public function getTodoLimit(): int
     {
-        return match($this->subscription_type) {
+        return match($this->planKey()) {
             'FREE' => 200,
             'MIDI',
             'MAXI',
@@ -348,7 +358,7 @@ class Company extends Model
      */
     public function getClientLimit(): int
     {
-        return match($this->subscription_type) {
+        return match($this->planKey()) {
             'LTD_SOLO',
             'FREE'               => 0,   // FREE plan has no clients
             'MIDI',
@@ -366,7 +376,7 @@ class Company extends Model
      */
     public function getProjectLimitPerClient(): int
     {
-        return match($this->subscription_type) {
+        return match($this->planKey()) {
             'MIDI',
             'LTD_TEAM'     => 20,   // Up to 20 projects for each client
             'MAXI',
@@ -451,7 +461,7 @@ class Company extends Model
 
     public function canAccessSites(): bool
     {
-        return in_array($this->subscription_type, self::sitesAccessPlans(), true);
+        return in_array($this->planKey(), self::sitesAccessPlans(), true);
     }
 
     public function hasPlatformApplication(string $slug): bool
