@@ -2792,6 +2792,9 @@ const loadProjects = async () => {
 
 
 
+const findLoadedProject = (projectId: number) =>
+  projectsState.value.find((project) => Number(project.id) === projectId);
+
 // Handle project selection change (keeping for backward compatibility)
 const onProjectChange = async (projectIdOrEvent?: Event | string) => {
   
@@ -2833,9 +2836,14 @@ const onProjectChange = async (projectIdOrEvent?: Event | string) => {
       }
     }
 
-    // Prefer the already-loaded project list — avoids a round-trip on every switch.
-    const project = projectsState.value.find(p => p.id === projectId)
-      ?? await todoApi.getProject(projectId);
+    // Only open a project that is already in this account's list.
+    // A stored id from another login is not fetched — that request is the 403.
+    const project = findLoadedProject(projectId);
+    if (!project) {
+      localStorage.removeItem('currentProjectId');
+      isLoadingTodos.value = false;
+      return;
+    }
 
     // Instant feedback: clear the previous board and show the spinner right away.
     todosState.value = [];
@@ -3240,20 +3248,16 @@ const loadCurrentProject = async () => {
 
     if (projectId) {
       const parsedId = parseInt(projectId, 10);
-      const cachedProject = projectsState.value.find(p => p.id === parsedId);
+      const cachedProject = Number.isFinite(parsedId) ? findLoadedProject(parsedId) : undefined;
 
       if (cachedProject) {
         currentProject.value = cachedProject;
-        selectedProjectId.value = projectId;
+        selectedProjectId.value = String(cachedProject.id);
         await loadProjectGroups(cachedProject.id);
         return;
       }
 
-      const project = await todoApi.getProject(parsedId);
-      currentProject.value = project;
-      selectedProjectId.value = projectId;
-      await loadProjectGroups(project.id);
-      return;
+      localStorage.removeItem('currentProjectId');
     }
 
     if (projectsState.value.length > 0) {
@@ -3451,9 +3455,16 @@ const ensureCurrentProjectForTodos = async (projectId: number) => {
   currentGroup.value = null;
   projectGroups.value = [];
 
+  let project = findLoadedProject(projectId);
+  if (!project) {
+    await loadProjects();
+    project = findLoadedProject(projectId);
+  }
+  if (!project) {
+    return;
+  }
+
   selectedProjectId.value = projectId.toString();
-  const project = projectsState.value.find(p => p.id === projectId)
-    ?? await todoApi.getProject(projectId);
 
   currentProject.value = project;
   localStorage.setItem('currentProjectId', projectId.toString());
@@ -3599,7 +3610,7 @@ onMounted(async () => {
 
   if (typeof window !== 'undefined') {
     const projectFromQuery = Number(new URLSearchParams(window.location.search).get('project'));
-    if (projectFromQuery) {
+    if (projectFromQuery && findLoadedProject(projectFromQuery)) {
       localStorage.setItem('currentProjectId', projectFromQuery.toString());
     }
   }

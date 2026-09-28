@@ -11,6 +11,7 @@ interface Props {
 }
 
 const handleLogout = () => {
+    localStorage.removeItem('currentProjectId');
     router.post('/logout', {
         onSuccess: () => router.visit('/'),
     });

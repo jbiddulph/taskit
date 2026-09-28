@@ -7,6 +7,7 @@ const page = usePage();
 const user = computed(() => (page.props.auth as any)?.user);
 
 const logout = () => {
+  localStorage.removeItem('currentProjectId');
   router.post('/logout', {
     onSuccess: () => router.visit('/'),
   });

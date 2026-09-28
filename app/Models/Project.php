@@ -81,13 +81,17 @@ class Project extends Model
     }
 
     /**
-     * Get active projects for a company
+     * Get active projects for a company.
+     * A project belongs to the company when its company_id matches, or when its owner is still a member.
      */
     public function scopeForCompany($query, int $companyId)
     {
-        return $query->whereHas('owner', function ($q) use ($companyId) {
-            $q->where('company_id', $companyId);
-        })->where('is_active', true);
+        return $query->where('is_active', true)->where(function ($inner) use ($companyId) {
+            $inner->where('company_id', $companyId)
+                ->orWhereHas('owner', function ($owner) use ($companyId) {
+                    $owner->where('company_id', $companyId);
+                });
+        });
     }
 
     /**
@@ -97,14 +101,13 @@ class Project extends Model
     {
         $company = Company::find($companyId);
         if (!$company) {
-            return $query->whereRaw('1 = 0'); // Return empty result
+            return $query->whereRaw('1 = 0');
         }
 
-        $baseQuery = $query->whereHas('owner', function ($q) use ($companyId) {
-            $q->where('company_id', $companyId);
-        })->where('is_active', true)->orderBy('viewing_order');
+        $baseQuery = $query->forCompany($companyId)
+            ->orderBy('viewing_order')
+            ->orderBy('id');
 
-        // Apply subscription-based limits
         $limit = $company->getProjectLimit();
         if ($limit !== PHP_INT_MAX) {
             $baseQuery->limit($limit);
@@ -170,20 +173,34 @@ class Project extends Model
     public function canAccess(int $userId): bool
     {
         $user = User::find($userId);
-        if (!$user || !$user->company_id) {
-            return $this->owner_id === $userId;
-        }
-        
-        // Basic access check: User can access if they own it OR if they're in the same company as the owner
-        $hasBasicAccess = $this->owner_id === $userId || $this->owner->company_id === $user->company_id;
-        
-        if (!$hasBasicAccess) {
+        if (! $user) {
             return false;
         }
-        
-        // Additional check: Project must be within subscription limits (visible)
-        $visibleProjectIds = static::visibleForCompany($user->company_id)->pluck('id')->toArray();
-        return in_array($this->id, $visibleProjectIds);
+
+        $ownsProject = (int) $this->owner_id === (int) $userId;
+
+        if (! $user->company_id) {
+            return $ownsProject && $this->is_active;
+        }
+
+        $companyId = (int) $user->company_id;
+        $projectCompanyMatches = (int) $this->company_id === $companyId;
+        $ownerCompanyMatches = (int) ($this->owner?->company_id) === $companyId;
+
+        if (! $ownsProject && ! $projectCompanyMatches && ! $ownerCompanyMatches) {
+            return false;
+        }
+
+        if (! $this->is_active) {
+            return false;
+        }
+
+        $visibleIds = static::visibleForCompany($companyId)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        return in_array((int) $this->id, $visibleIds, true);
     }
 
     /**
