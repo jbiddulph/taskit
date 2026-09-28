@@ -17,6 +17,21 @@ class RegistrationTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_registration_screen_shows_billed_plan_prices(): void
+    {
+        $response = $this->get(route('register'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('auth/Register')
+            ->where('plans.FREE.price', 0)
+            ->where('plans.MIDI.price', 2900)
+            ->where('plans.MIDI.price_yearly', 29000)
+            ->where('plans.MAXI.price', 7900)
+            ->where('plans.MAXI.price_yearly', 79000)
+        );
+    }
+
     public function test_new_users_can_register_with_company_and_industry(): void
     {
         $response = $this->post(route('register.store'), [

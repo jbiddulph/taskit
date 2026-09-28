@@ -12,11 +12,21 @@ import { LoaderCircle } from 'lucide-vue-next';
 import { ref, computed, watch } from 'vue';
 import SeoHead from '@/components/SeoHead.vue';
 
+interface RegistrationPlan {
+    price: number;
+    price_yearly: number | null;
+}
+
 interface Props {
     subscriptionType?: string;
     billingInterval?: 'month' | 'year';
     industries?: Array<{ value: string; label: string }>;
     selectedIndustry?: string | null;
+    plans?: {
+        FREE: RegistrationPlan;
+        MIDI: RegistrationPlan;
+        MAXI: RegistrationPlan;
+    };
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -24,7 +34,22 @@ const props = withDefaults(defineProps<Props>(), {
     billingInterval: 'month',
     industries: () => [],
     selectedIndustry: null,
+    plans: () => ({
+        FREE: { price: 0, price_yearly: null },
+        MIDI: { price: 2900, price_yearly: 29000 },
+        MAXI: { price: 7900, price_yearly: 79000 },
+    }),
 });
+
+const formatGbp = (pence: number): string => {
+    const pounds = pence / 100;
+    const amount = Number.isInteger(pounds) ? String(pounds) : pounds.toFixed(2);
+
+    return `£${amount}`;
+};
+
+const monthlyLabel = (pence: number): string => `${formatGbp(pence)}/month`;
+const yearlyLabel = (pence: number): string => `${formatGbp(pence)}/year`;
 
 const companyType = ref('');
 const selectedIndustry = ref(props.selectedIndustry ?? '');
@@ -127,23 +152,23 @@ const showIndividualOption = computed(() => subscriptionType.value === 'FREE');
                     >
                         <!-- FREE (no yearly variant) -->
                         <option value="FREE:month">
-                            ⭐ FREE - £0/month (1 user, 3 projects, 200 todos)
+                            ⭐ FREE - {{ monthlyLabel(plans.FREE.price) }} (1 user, 3 projects, 200 todos)
                         </option>
                         <!-- MIDI monthly -->
                         <option value="MIDI:month">
-                            ⭐ MIDI - £6/month (Up to 5 members, 10 clients, 20 projects per client, unlimited todos)
+                            ⭐ MIDI - {{ monthlyLabel(plans.MIDI.price) }} (Up to 5 members, 10 clients, 20 projects per client, unlimited todos)
                         </option>
                         <!-- MIDI yearly -->
-                        <option value="MIDI:year">
-                            ⭐ MIDI - £60/year (Up to 5 members, 10 clients, 20 projects per client, unlimited todos)
+                        <option v-if="plans.MIDI.price_yearly" value="MIDI:year">
+                            ⭐ MIDI - {{ yearlyLabel(plans.MIDI.price_yearly) }} (Up to 5 members, 10 clients, 20 projects per client, unlimited todos)
                         </option>
                         <!-- MAXI monthly -->
                         <option value="MAXI:month">
-                            ⭐ MAXI - £12/month (Up to 20 members, 30 clients, 40 projects per client, unlimited todos)
+                            ⭐ MAXI - {{ monthlyLabel(plans.MAXI.price) }} (Up to 20 members, 30 clients, 40 projects per client, unlimited todos)
                         </option>
                         <!-- MAXI yearly -->
-                        <option value="MAXI:year">
-                            ⭐ MAXI - £120/year (Up to 20 members, 30 clients, 40 projects per client, unlimited todos)
+                        <option v-if="plans.MAXI.price_yearly" value="MAXI:year">
+                            ⭐ MAXI - {{ yearlyLabel(plans.MAXI.price_yearly) }} (Up to 20 members, 30 clients, 40 projects per client, unlimited todos)
                         </option>
                     </select>
                     <p class="text-xs text-muted-foreground mt-1">
