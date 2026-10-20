@@ -34,8 +34,9 @@ const page = usePage();
 const currentUser = (page.props.auth as any)?.user;
 
 onMounted(() => {
-  if (currentUser?.id && props.company?.id) {
-    realtimeService.init(currentUser.id, props.company.id);
+  const companyId = props.company?.id ?? currentUser?.company_id ?? currentUser?.company?.id;
+  if (currentUser?.id && companyId) {
+    realtimeService.init(currentUser.id, companyId);
     
     // Add test functions to window for debugging
     (window as any).testRealtime = () => {

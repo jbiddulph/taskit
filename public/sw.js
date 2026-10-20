@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'zaptask-v2';
+const CACHE_VERSION = 'zaptask-v3';
 const STATIC_CACHE = `zaptask-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `zaptask-dynamic-${CACHE_VERSION}`;
 

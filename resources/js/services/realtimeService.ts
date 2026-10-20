@@ -36,9 +36,7 @@ class RealtimeService {
     this.subscribeToCompanyMessages();
     this.subscribeToNotifications();
     this.subscribeToProjects();
-    // Todo board reads from the Laravel API (fresh=1). Supabase taskit_todos
-    // events can reference rows that are not in the Heroku database.
-    // this.subscribeToTodos();
+    this.subscribeToTodos();
     this.subscribeToActivities();
   }
   
@@ -334,10 +332,68 @@ class RealtimeService {
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
         } else if (status === 'CHANNEL_ERROR') {
+          this.setupFallbackTodoSubscription();
         }
       });
 
     this.channels.set(channelName, channel);
+    this.setupFallbackTodoSubscription();
+  }
+
+  /**
+   * Catch todo writes that have a null company_id so iPhone and website stay in sync.
+   */
+  private setupFallbackTodoSubscription() {
+    if (!this.currentCompanyId) {
+      return;
+    }
+
+    const fallbackChannelName = `company_todos_fallback_${this.currentCompanyId}`;
+    if (this.channels.has(fallbackChannelName)) {
+      return;
+    }
+
+    const fallbackChannel = supabase
+      .channel(fallbackChannelName)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'taskit_todos',
+        },
+        (payload) => {
+          const row = (payload.new ?? payload.old) as any;
+          if (!this.todoBelongsToCurrentCompany(row)) {
+            return;
+          }
+
+          if (payload.eventType === 'INSERT') {
+            this.handleNewTodo(payload.new as any);
+          } else if (payload.eventType === 'DELETE') {
+            this.handleTodoDelete((payload.old ?? payload.new) as any);
+          } else {
+            this.handleTodoUpdate((payload.new ?? payload.old) as any);
+          }
+        }
+      )
+      .subscribe();
+
+    this.channels.set(fallbackChannelName, fallbackChannel);
+  }
+
+  private todoBelongsToCurrentCompany(todo: any): boolean {
+    if (!todo) {
+      return false;
+    }
+
+    const companyId = parseInt(String(todo.company_id ?? ''), 10);
+    if (companyId && this.currentCompanyId) {
+      return companyId === this.currentCompanyId;
+    }
+
+    // Older rows were saved without company_id. Let the board ignore foreign ids.
+    return todo.company_id == null || todo.company_id === '';
   }
 
   /**
@@ -764,12 +820,6 @@ class RealtimeService {
       channel.unsubscribe();
     });
     this.channels.clear();
-    this.messageCallbacks.clear();
-    this.unreadCountCallbacks.clear();
-    this.notificationCallbacks.clear();
-    this.projectCallbacks.clear();
-    this.todoCallbacks.clear();
-    this.activityCallbacks.clear();
     this.currentUserId = null;
     this.currentCompanyId = null;
   }

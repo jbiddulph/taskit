@@ -3399,8 +3399,32 @@ async function onSubmitBulkTodos() {
   }
 }
 
+const asNumericId = (value: unknown): number | null => {
+  const id = Number(value);
+  return Number.isFinite(id) && id > 0 ? id : null;
+};
+
+const mergeRealtimeTodo = (raw: any, existing?: Todo): Todo => {
+  const id = asNumericId(raw?.id) ?? existing?.id;
+  const projectId = asNumericId(raw?.project_id) ?? existing?.project_id;
+
+  return {
+    ...(existing ?? {}),
+    ...raw,
+    id,
+    project_id: projectId,
+    parent_task_id: raw?.parent_task_id != null ? asNumericId(raw.parent_task_id) : existing?.parent_task_id,
+    project_group_id: raw?.project_group_id != null ? asNumericId(raw.project_group_id) : existing?.project_group_id,
+    type: raw?.type ?? existing?.type ?? null,
+    project: existing?.project || currentProject.value,
+    subtasks: existing?.subtasks || raw?.subtasks || [],
+    comments: existing?.comments ?? raw?.comments,
+    attachments: existing?.attachments ?? raw?.attachments,
+  } as Todo;
+};
+
 const ingestCreatedTodo = (newTodo: Todo): boolean => {
-  if (!currentProject.value || newTodo.project_id !== currentProject.value.id) {
+  if (!currentProject.value || asNumericId(newTodo.project_id) !== asNumericId(currentProject.value.id)) {
     return false;
   }
 
@@ -3637,23 +3661,26 @@ onMounted(async () => {
     
     switch (event.type) {
       case 'todo_created': {
-        const newTodo = event.data;
+        const newTodo = mergeRealtimeTodo(event.data);
 
-        if (currentProject.value && newTodo.project_id === currentProject.value.id) {
+        if (currentProject.value && asNumericId(newTodo.project_id) === asNumericId(currentProject.value.id)) {
           ingestCreatedTodo(newTodo);
+          window.dispatchEvent(new CustomEvent('todoChanged'));
         }
         break;
       }
         
       case 'todo_updated':
         // Update existing todo in the list
-        const updatedTodo = event.data;
+        const incoming = event.data;
+        const existingForMerge = todosState.value.find(t => asNumericId(t.id) === asNumericId(incoming?.id));
+        const updatedTodo = mergeRealtimeTodo(incoming, existingForMerge);
 
         // Moved to another project (possibly by another session): drop it from this board.
         if (
           currentProject.value &&
           updatedTodo.project_id &&
-          updatedTodo.project_id !== currentProject.value.id
+          asNumericId(updatedTodo.project_id) !== asNumericId(currentProject.value.id)
         ) {
           removeTodoFromState(updatedTodo.id);
           break;
@@ -3662,54 +3689,33 @@ onMounted(async () => {
         // Check if this is a subtask
         if (updatedTodo.parent_task_id) {
           // Find the parent todo and update the subtask in its subtasks array
-          const parentIndex = todosState.value.findIndex(t => t.id === updatedTodo.parent_task_id);
+          const parentIndex = todosState.value.findIndex(t => asNumericId(t.id) === asNumericId(updatedTodo.parent_task_id));
           if (parentIndex !== -1) {
             const parentTodo = todosState.value[parentIndex];
             if (parentTodo.subtasks) {
-              const subtaskIndex = parentTodo.subtasks.findIndex((st: any) => st.id === updatedTodo.id);
+              const subtaskIndex = parentTodo.subtasks.findIndex((st: any) => asNumericId(st.id) === asNumericId(updatedTodo.id));
               if (subtaskIndex !== -1) {
-                // Preserve the project relationship
-                const existingSubtask = parentTodo.subtasks[subtaskIndex];
-                const subtaskWithProject = {
-                  ...updatedTodo,
-                  project: existingSubtask.project || currentProject.value
-                };
-                parentTodo.subtasks[subtaskIndex] = subtaskWithProject;
-                // Force reactivity update
+                parentTodo.subtasks[subtaskIndex] = mergeRealtimeTodo(incoming, parentTodo.subtasks[subtaskIndex]);
                 todosState.value = [...todosState.value];
-              } else {
               }
             }
           } else {
-            // Try to update in main list if parent not found
-            const updateIndex = todosState.value.findIndex(t => t.id === updatedTodo.id);
+            const updateIndex = todosState.value.findIndex(t => asNumericId(t.id) === asNumericId(updatedTodo.id));
             if (updateIndex !== -1) {
-              const existingTodo = todosState.value[updateIndex];
-              const todoWithProject = {
-                ...updatedTodo,
-                project: existingTodo.project || currentProject.value
-              };
-              todosState.value[updateIndex] = todoWithProject;
+              todosState.value[updateIndex] = mergeRealtimeTodo(incoming, todosState.value[updateIndex]);
+              todosState.value = [...todosState.value];
             }
           }
         } else {
-          // Regular todo (not a subtask)
-          const updateIndex = todosState.value.findIndex(t => t.id === updatedTodo.id);
+          const updateIndex = todosState.value.findIndex(t => asNumericId(t.id) === asNumericId(updatedTodo.id));
           if (updateIndex !== -1) {
-            // Preserve the project relationship from the existing todo
-            const existingTodo = todosState.value[updateIndex];
-            const todoWithProject = {
-              ...updatedTodo,
-              type: updatedTodo.type ?? existingTodo.type ?? null,
-              project: existingTodo.project || currentProject.value,
-              subtasks: existingTodo.subtasks || [] // Preserve subtasks
-            };
-            todosState.value[updateIndex] = todoWithProject;
+            todosState.value[updateIndex] = mergeRealtimeTodo(incoming, todosState.value[updateIndex]);
+            todosState.value = [...todosState.value];
           } else {
-            // Not on this board yet: it may have just been moved into this project.
             ingestCreatedTodo(updatedTodo);
           }
         }
+        window.dispatchEvent(new CustomEvent('todoChanged'));
         break;
         
       case 'todo_deleted':

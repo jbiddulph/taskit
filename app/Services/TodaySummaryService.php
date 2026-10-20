@@ -98,6 +98,8 @@ class TodaySummaryService
             'checked_in_at' => $todo->checked_in_at?->toIso8601String(),
             'project_id' => $todo->project_id,
             'project_name' => $todo->project?->name,
+            'project_color' => $todo->project?->color,
+            'outline_color' => $todo->outline_color,
             'reference_id' => $this->referenceIdForTodo($todo),
         ])->all();
     }
