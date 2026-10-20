@@ -55,15 +55,22 @@ class CheckSubscriptionAccess
         $canAccess = $company->userCanAccess($user);
         
         if (!$canAccess) {
+            $message = 'Access denied. Your company has exceeded the user limit for the current subscription plan. Please upgrade your plan to regain access.';
+
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 403);
+            }
+
             Auth::logout();
-            
-            // Clear session
+
             $request->session()->invalidate();
             $request->session()->regenerateToken();
-            
-            // Redirect to subscription page with error message (force HTTPS)
+
             return redirect()->route('subscription.index', [], true)->withErrors([
-                'subscription' => 'Access denied. Your company has exceeded the user limit for the current subscription plan. Please upgrade your plan to regain access.'
+                'subscription' => $message,
             ]);
         }
         

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\ExtensionController;
+use App\Http\Controllers\Api\MobileAuthController;
 use App\Http\Controllers\Api\MapboxController;
 use App\Http\Controllers\Api\MeetingNoteProposalController;
 use App\Http\Controllers\Api\MeetingNotesController;
@@ -171,6 +172,57 @@ Route::middleware(['auth:sanctum', 'subscription.access', 'api.rate.limit:api,60
         Route::get('projects', [ProjectController::class, 'index']);
         Route::post('todos', [TodoController::class, 'store']);
     });
+
+/*
+|--------------------------------------------------------------------------
+| iOS / mobile clients (Bearer token)
+|--------------------------------------------------------------------------
+|
+| Additive only — existing cookie/session SPA routes and /api/v1 remain unchanged.
+| CSRF is skipped for api/mobile/* (see bootstrap/app.php).
+|
+*/
+Route::prefix('mobile')->group(function () {
+    Route::post('login', [MobileAuthController::class, 'login'])
+        ->middleware('api.rate.limit:api,10,1');
+
+    Route::middleware(['auth:sanctum', 'subscription.access', 'api.rate.limit:api,60,1'])->group(function () {
+        Route::get('me', [MobileAuthController::class, 'me']);
+        Route::post('logout', [MobileAuthController::class, 'logout']);
+
+        Route::get('today/summary', [TodayController::class, 'summary']);
+
+        Route::get('projects', [ProjectController::class, 'index']);
+        Route::get('projects/{project}', [ProjectController::class, 'show']);
+
+        Route::get('todos', [TodoController::class, 'index']);
+        Route::post('todos', [TodoController::class, 'store']);
+        Route::get('todos/{todo}', [TodoController::class, 'show']);
+        Route::patch('todos/{todo}', [TodoController::class, 'update']);
+        Route::delete('todos/{todo}', [TodoController::class, 'destroy']);
+        Route::patch('todos/{todo}/status', [TodoController::class, 'updateStatus']);
+        Route::post('todos/{todo}/check-in', [TodoController::class, 'checkIn']);
+        Route::get('todos/{todo}/comments', [TodoCommentController::class, 'index']);
+        Route::post('todos/{todo}/comments', [TodoCommentController::class, 'store']);
+
+        Route::get('notifications', [NotificationController::class, 'index']);
+        Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+        Route::patch('notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
+        Route::patch('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+
+        Route::get('activities', [ActivityController::class, 'index']);
+        Route::get('activities/recent', [ActivityController::class, 'recent']);
+
+        Route::get('company-users', [App\Http\Controllers\Api\CompanyUsersController::class, 'index']);
+        Route::get('company-users/{user}/messages', [App\Http\Controllers\Api\CompanyUsersController::class, 'getMessages']);
+        Route::post('company-messages', [App\Http\Controllers\Api\CompanyUsersController::class, 'sendMessage']);
+
+        Route::middleware('sites.access')->group(function () {
+            Route::get('sites', [App\Http\Controllers\Api\OperationalObjectController::class, 'index']);
+            Route::get('compliance/summary', [App\Http\Controllers\Api\OperationalObjectController::class, 'complianceSummary']);
+        });
+    });
+});
 
 Route::middleware(['n8n.webhook', 'api.rate.limit:api,120,1'])->group(function () {
     Route::post('n8n/meeting-notes/proposals', [N8nMeetingNotesController::class, 'store']);
