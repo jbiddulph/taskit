@@ -152,6 +152,23 @@ class Todo extends Model
         return $this->belongsTo(Inspection::class);
     }
 
+    protected static function booted(): void
+    {
+        static::saving(function (Todo $todo): void {
+            if ($todo->company_id) {
+                return;
+            }
+
+            if ($todo->project_id) {
+                $todo->company_id = Project::query()->whereKey($todo->project_id)->value('company_id');
+            }
+
+            if (! $todo->company_id && $todo->user_id) {
+                $todo->company_id = User::query()->whereKey($todo->user_id)->value('company_id');
+            }
+        });
+    }
+
     // Parent-child relationships for subtasks
     public function parentTask(): BelongsTo
     {
