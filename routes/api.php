@@ -198,12 +198,20 @@ Route::prefix('mobile')->group(function () {
         Route::get('todos', [TodoController::class, 'index']);
         Route::post('todos', [TodoController::class, 'store']);
         Route::get('todos/{todo}', [TodoController::class, 'show']);
-        Route::patch('todos/{todo}', [TodoController::class, 'update']);
+        // Accept PUT and PATCH — iOS URLSession / Alamofire often use PUT for updates.
+        Route::match(['put', 'patch'], 'todos/{todo}', [TodoController::class, 'update']);
         Route::delete('todos/{todo}', [TodoController::class, 'destroy']);
-        Route::patch('todos/{todo}/status', [TodoController::class, 'updateStatus']);
+        Route::match(['put', 'patch'], 'todos/{todo}/status', [TodoController::class, 'updateStatus']);
         Route::post('todos/{todo}/check-in', [TodoController::class, 'checkIn']);
         Route::get('todos/{todo}/comments', [TodoCommentController::class, 'index']);
         Route::post('todos/{todo}/comments', [TodoCommentController::class, 'store']);
+
+        // Create/edit parity with the website form: voice commands + map geocoding.
+        Route::post('voice-commands/process', [VoiceCommandController::class, 'process']);
+        Route::get('mapbox/status', [MapboxController::class, 'status']);
+        Route::get('mapbox/geocode', [MapboxController::class, 'geocode']);
+        Route::get('mapbox/reverse-geocode', [MapboxController::class, 'reverseGeocode']);
+        Route::post('mapbox/directions', [MapboxController::class, 'directions']);
 
         Route::get('notifications', [NotificationController::class, 'index']);
         Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
@@ -219,6 +227,7 @@ Route::prefix('mobile')->group(function () {
 
         Route::middleware('sites.access')->group(function () {
             Route::get('sites', [App\Http\Controllers\Api\OperationalObjectController::class, 'index']);
+            Route::get('sites/{site}', [App\Http\Controllers\Api\OperationalObjectController::class, 'show']);
             Route::get('compliance/summary', [App\Http\Controllers\Api\OperationalObjectController::class, 'complianceSummary']);
         });
     });

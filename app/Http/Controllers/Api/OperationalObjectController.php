@@ -39,6 +39,36 @@ class OperationalObjectController extends Controller
         return response()->json(['success' => true, 'data' => $objects]);
     }
 
+    public function show(OperationalObject $site): JsonResponse
+    {
+        $user = Auth::user();
+
+        if (! $user->company_id || (int) $site->company_id !== (int) $user->company_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized',
+            ], 403);
+        }
+
+        $site->load('client');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $site->id,
+                'name' => $site->name,
+                'type' => $site->type,
+                'type_label' => OperationalObjectTypes::label($site->type),
+                'full_address' => $site->full_address,
+                'parent_id' => $site->parent_id,
+                'client_id' => $site->client_id,
+                'client_name' => $site->client?->name,
+                'latitude' => $site->latitude,
+                'longitude' => $site->longitude,
+            ],
+        ]);
+    }
+
     public function complianceSummary(): JsonResponse
     {
         $user = Auth::user();
