@@ -36,9 +36,7 @@ class RealtimeService {
     this.subscribeToCompanyMessages();
     this.subscribeToNotifications();
     this.subscribeToProjects();
-    // Todo board reads from the Laravel API (fresh=1). Supabase taskit_todos
-    // events can reference rows that are not in the Heroku database.
-    // this.subscribeToTodos();
+    this.subscribeToTodos();
     this.subscribeToActivities();
   }
   
