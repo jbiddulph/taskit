@@ -147,4 +147,77 @@ class MobileApiTest extends TestCase
             'name' => 'iPhone',
         ]);
     }
+
+    public function test_mobile_can_create_and_update_todo_with_put_and_tags(): void
+    {
+        $user = User::factory()->create();
+        $project = Project::create([
+            'name' => 'Viewings',
+            'key' => 'VIEW',
+            'color' => '#3B82F6',
+            'owner_id' => $user->id,
+        ]);
+        ProjectGroup::createDefaultForProject($project);
+
+        $plainTextToken = $user->createToken('iPhone', ['mobile'])->plainTextToken;
+
+        $create = $this->withToken($plainTextToken)
+            ->postJson('/api/mobile/todos', [
+                'project_id' => $project->id,
+                'title' => 'Inspect flat',
+                'tags' => 'urgent, viewing',
+                'location_name' => '12 High Street',
+                'latitude' => 50.8225,
+                'longitude' => -0.1372,
+            ]);
+
+        $create
+            ->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.title', 'Inspect flat')
+            ->assertJsonPath('data.priority', 'Medium')
+            ->assertJsonPath('data.status', 'todo')
+            ->assertJsonPath('data.tags.0', 'urgent')
+            ->assertJsonPath('data.tags.1', 'viewing')
+            ->assertJsonPath('data.location_name', '12 High Street');
+
+        $todoId = $create->json('data.id');
+
+        $this->withToken($plainTextToken)
+            ->putJson("/api/mobile/todos/{$todoId}", [
+                'title' => 'Inspect flat — updated',
+                'description' => 'Bring keys',
+                'tags' => ['keys', 'urgent'],
+                'priority' => 'High',
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.title', 'Inspect flat — updated')
+            ->assertJsonPath('data.description', 'Bring keys')
+            ->assertJsonPath('data.priority', 'High')
+            ->assertJsonPath('data.tags.0', 'keys');
+
+        $this->withToken($plainTextToken)
+            ->patchJson("/api/mobile/todos/{$todoId}/status", [
+                'status' => 'in-progress',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'in-progress');
+    }
+
+    public function test_mobile_exposes_voice_and_mapbox_routes(): void
+    {
+        $user = User::factory()->create();
+        $plainTextToken = $user->createToken('iPhone', ['mobile'])->plainTextToken;
+
+        $this->withToken($plainTextToken)
+            ->getJson('/api/mobile/mapbox/status')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure(['data' => ['configured']]);
+
+        $this->withToken($plainTextToken)
+            ->postJson('/api/mobile/voice-commands/process', [])
+            ->assertStatus(422);
+    }
 }
