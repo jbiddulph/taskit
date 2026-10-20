@@ -48,6 +48,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/n8n/*',
             // Bearer-token clients (Chrome extension) — does not affect cookie/session SPA routes
             'api/extension/*',
+            // iOS / mobile Bearer clients
+            'api/mobile/*',
             // Platform API keys / Bearer clients
             'api/v1/*',
         ]);
