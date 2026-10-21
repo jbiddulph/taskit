@@ -186,7 +186,7 @@ Route::prefix('mobile')->group(function () {
     Route::post('login', [MobileAuthController::class, 'login'])
         ->middleware('api.rate.limit:api,10,1');
 
-    Route::middleware(['auth:sanctum', 'subscription.access', 'api.rate.limit:api,60,1'])->group(function () {
+    Route::middleware(['auth:sanctum', 'subscription.access', 'api.rate.limit:mobile,240,1'])->group(function () {
         Route::get('me', [MobileAuthController::class, 'me']);
         Route::post('logout', [MobileAuthController::class, 'logout']);
 

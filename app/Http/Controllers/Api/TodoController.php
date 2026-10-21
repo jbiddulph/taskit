@@ -835,7 +835,7 @@ class TodoController extends Controller
             'card_icon' => 'nullable|string|max:50|regex:/^[A-Za-z0-9]+$/',
             'outline_color' => ['nullable', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
             'assignee' => 'nullable|string|max:255',
-            'due_date' => 'nullable|date|after:today',
+            'due_date' => 'nullable|date|after_or_equal:today',
             'story_points' => 'nullable|integer|min:1|max:21',
         ]);
 
