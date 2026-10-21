@@ -188,6 +188,8 @@ Route::prefix('mobile')->group(function () {
 
     Route::middleware(['auth:sanctum', 'subscription.access', 'api.rate.limit:mobile,240,1'])->group(function () {
         Route::get('me', [MobileAuthController::class, 'me']);
+        Route::patch('me', [MobileAuthController::class, 'updateProfile']);
+        Route::patch('me/password', [MobileAuthController::class, 'updatePassword']);
         Route::post('logout', [MobileAuthController::class, 'logout']);
 
         Route::get('today/summary', [TodayController::class, 'summary']);

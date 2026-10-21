@@ -101,7 +101,17 @@ class TodaySummaryService
             'project_color' => $todo->project?->color,
             'outline_color' => $todo->outline_color,
             'reference_id' => $this->referenceIdForTodo($todo),
+            'image_url' => $this->firstImageUrl($todo->description),
         ])->all();
+    }
+
+    private function firstImageUrl(?string $html): ?string
+    {
+        if (! $html || ! preg_match('/<img[^>]*src=["\']([^"\']+)["\']/i', $html, $matches)) {
+            return null;
+        }
+
+        return $matches[1];
     }
 
     private function referenceIdForTodo(Todo $todo): string

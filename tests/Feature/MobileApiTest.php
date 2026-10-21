@@ -7,6 +7,7 @@ use App\Models\ProjectGroup;
 use App\Models\Todo;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -130,6 +131,44 @@ class MobileApiTest extends TestCase
             ->getJson('/api/mobile/projects')
             ->assertOk()
             ->assertJsonFragment(['name' => 'Viewings']);
+    }
+
+    public function test_mobile_can_update_profile_with_token(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Field Agent',
+            'email' => 'field@zaptask.co.uk',
+        ]);
+
+        Sanctum::actingAs($user, ['mobile']);
+
+        $this->patchJson('/api/mobile/me', [
+            'name' => 'John Field',
+            'email' => 'john.field@zaptask.co.uk',
+        ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.user.name', 'John Field')
+            ->assertJsonPath('data.user.email', 'john.field@zaptask.co.uk');
+    }
+
+    public function test_mobile_can_update_password_with_token(): void
+    {
+        $user = User::factory()->create([
+            'password' => 'password',
+        ]);
+
+        Sanctum::actingAs($user, ['mobile']);
+
+        $this->patchJson('/api/mobile/me/password', [
+            'current_password' => 'password',
+            'password' => 'new-secret-pass',
+            'password_confirmation' => 'new-secret-pass',
+        ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertTrue(Hash::check('new-secret-pass', $user->fresh()->password));
     }
 
     public function test_mobile_logout_revokes_current_token(): void
