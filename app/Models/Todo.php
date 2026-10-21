@@ -419,11 +419,24 @@ class Todo extends Model
      */
     public function canAccess(User $user): bool
     {
-        if (! $user->company_id) {
-            return $this->user_id === $user->id;
+        if ((int) $this->user_id === (int) $user->id) {
+            return true;
         }
 
-        // User can access if they created it OR if they're in the same company as the creator
-        return $this->user_id === $user->id || $this->user->company_id === $user->company_id;
+        if (! $user->company_id) {
+            return false;
+        }
+
+        // Same company via todo.company_id (preferred) or the creator's company.
+        if ($this->company_id && (int) $this->company_id === (int) $user->company_id) {
+            return true;
+        }
+
+        $creatorCompanyId = $this->relationLoaded('user')
+            ? $this->user?->company_id
+            : $this->user()->value('company_id');
+
+        return $creatorCompanyId !== null
+            && (int) $creatorCompanyId === (int) $user->company_id;
     }
 }

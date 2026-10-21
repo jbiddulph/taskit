@@ -259,27 +259,30 @@ class TodoController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $this->normalizeTodoRequestPayload($request);
+
         $validator = Validator::make($request->all(), [
             'project_id' => 'required|exists:taskit_projects,id',
             'project_group_id' => 'nullable|exists:taskit_project_groups,id',
             'parent_task_id' => 'nullable|exists:taskit_todos,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'priority' => 'required|in:Low,Medium,High,Critical',
+            // Mobile clients often omit these — match website TodoForm defaults.
+            'priority' => 'sometimes|required|in:Low,Medium,High,Critical',
             'type' => TodoTypes::validationRule(),
             'card_icon' => 'nullable|string|max:50|regex:/^[A-Za-z0-9]+$/',
             'outline_color' => ['nullable', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:50',
             'assignee' => 'nullable|string|max:255',
-            'due_date' => 'nullable|date|after_or_equal:today',
+            'due_date' => 'nullable|date',
             'location_name' => 'nullable|string|max:255',
             'location_address' => 'nullable|string|max:500',
             'latitude' => 'nullable|numeric|between:-90,90|required_with:longitude',
             'longitude' => 'nullable|numeric|between:-180,180|required_with:latitude',
             'operational_object_id' => 'nullable|exists:taskit_operational_objects,id',
             'story_points' => 'nullable|integer|min:1|max:21',
-            'status' => 'required|in:todo,in-progress,qa-testing,done',
+            'status' => 'sometimes|required|in:todo,in-progress,qa-testing,done',
             'email_assignee' => 'sometimes|boolean',
             'assignee_email' => 'nullable|email',
         ]);
@@ -331,7 +334,7 @@ class TodoController extends Controller
             'parent_task_id' => $request->parent_task_id,
             'title' => $request->title,
             'description' => $request->description,
-            'priority' => $request->priority,
+            'priority' => $request->input('priority', 'Medium'),
             'type' => $request->type,
             'card_icon' => $request->card_icon,
             'outline_color' => $request->outline_color,
@@ -345,7 +348,7 @@ class TodoController extends Controller
             'operational_object_id' => $request->operational_object_id,
             'company_id' => $user->company_id,
             'story_points' => $request->story_points,
-            'status' => $request->status,
+            'status' => $request->input('status', 'todo'),
         ]);
 
         $payload = [
@@ -426,6 +429,8 @@ class TodoController extends Controller
                 'message' => 'Unauthorized'
             ], 403);
         }
+
+        $this->normalizeTodoRequestPayload($request);
 
         $validator = Validator::make($request->all(), [
             'title' => 'sometimes|required|string|max:255',
@@ -1523,5 +1528,33 @@ class TodoController extends Controller
                 ]);
             }
         });
+    }
+
+    /**
+     * Normalize mobile / form payloads before validation.
+     * iOS often sends tags as a comma string and empty strings for optional fields.
+     */
+    private function normalizeTodoRequestPayload(Request $request): void
+    {
+        if ($request->exists('tags') && is_string($request->input('tags'))) {
+            $tags = collect(explode(',', $request->input('tags')))
+                ->map(fn ($tag) => trim($tag))
+                ->filter()
+                ->values()
+                ->all();
+            $request->merge(['tags' => $tags]);
+        }
+
+        foreach (['type', 'description', 'assignee', 'due_date', 'location_name', 'location_address', 'card_icon', 'outline_color'] as $field) {
+            if ($request->exists($field) && $request->input($field) === '') {
+                $request->merge([$field => null]);
+            }
+        }
+
+        foreach (['latitude', 'longitude', 'operational_object_id', 'story_points', 'project_group_id', 'parent_task_id'] as $field) {
+            if ($request->exists($field) && $request->input($field) === '') {
+                $request->merge([$field => null]);
+            }
+        }
     }
 }
