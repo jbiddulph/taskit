@@ -195,6 +195,7 @@ Route::prefix('mobile')->group(function () {
         Route::get('today/summary', [TodayController::class, 'summary']);
 
         Route::get('projects', [ProjectController::class, 'index']);
+        Route::post('projects', [ProjectController::class, 'store']);
         Route::get('projects/{project}', [ProjectController::class, 'show']);
 
         Route::get('todos', [TodoController::class, 'index']);

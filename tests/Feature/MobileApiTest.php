@@ -244,6 +244,50 @@ class MobileApiTest extends TestCase
             ->assertJsonPath('data.status', 'in-progress');
     }
 
+    public function test_mobile_can_create_a_project(): void
+    {
+        $user = User::factory()->create();
+        $plainTextToken = $user->createToken('iPhone', ['mobile'])->plainTextToken;
+
+        $create = $this->withToken($plainTextToken)
+            ->postJson('/api/mobile/projects', [
+                'name' => 'Seafront lettings',
+                'description' => 'Viewings and inspections',
+                'key' => 'SEA',
+                'color' => '#10B981',
+            ]);
+
+        $create
+            ->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.name', 'Seafront lettings')
+            ->assertJsonPath('data.key', 'SEA')
+            ->assertJsonPath('data.color', '#10B981')
+            ->assertJsonPath('data.owner_id', $user->id);
+
+        $this->assertDatabaseHas('taskit_projects', [
+            'name' => 'Seafront lettings',
+            'key' => 'SEA',
+            'owner_id' => $user->id,
+        ]);
+        $this->assertDatabaseHas('taskit_project_groups', [
+            'project_id' => $create->json('data.id'),
+        ]);
+    }
+
+    public function test_mobile_create_project_requires_a_name(): void
+    {
+        $user = User::factory()->create();
+        $plainTextToken = $user->createToken('iPhone', ['mobile'])->plainTextToken;
+
+        $this->withToken($plainTextToken)
+            ->postJson('/api/mobile/projects', [
+                'color' => '#3B82F6',
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['name']);
+    }
+
     public function test_mobile_exposes_voice_and_mapbox_routes(): void
     {
         $user = User::factory()->create();
