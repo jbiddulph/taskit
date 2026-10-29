@@ -24,7 +24,10 @@ Route::get('/demo', function () {
     return Inertia::render('Demo');
 })->name('demo');
 
-Route::get('/property-compliance', function () {
+// Google Ads display path limit is 15 characters; keep a redirect for the old slug.
+Route::redirect('/property-compliance', '/prop-compliance', 301);
+
+Route::get('/prop-compliance', function () {
     return Inertia::render('PropertyCompliance');
 })->name('property-compliance');
 
