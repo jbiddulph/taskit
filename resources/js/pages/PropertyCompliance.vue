@@ -106,7 +106,7 @@ const audiences = [
             </div>
         </header>
 
-        <main class="pt-24">
+        <main class="pt-18">
             <!-- Hero: one composition — brand, headline, support, CTA, dominant visual -->
             <section class="relative overflow-hidden border-b border-slate-200 dark:border-gray-800">
                 <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(14,116,144,0.14),_transparent_55%),linear-gradient(180deg,#f8fafc_0%,#eef6f8_55%,#f8fafc_100%)] dark:bg-[radial-gradient(ellipse_at_top_right,_rgba(34,211,238,0.12),_transparent_50%),linear-gradient(180deg,#030712_0%,#0f172a_100%)]" />
