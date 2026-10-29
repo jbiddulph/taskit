@@ -7,8 +7,8 @@ import {
     SEO_PROPERTY_COMPLIANCE_TITLE,
 } from '@/constants/seo';
 
-const canonical = 'https://www.zaptask.co.uk/property-compliance';
-const registerUrl = '/register?source=property-compliance&plan=MIDI';
+const canonical = 'https://www.zaptask.co.uk/prop-compliance';
+const registerUrl = '/register?source=prop-compliance&plan=MIDI';
 
 const jsonLd = {
     '@context': 'https://schema.org',

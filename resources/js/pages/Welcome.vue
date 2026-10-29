@@ -89,7 +89,7 @@ onMounted(() => {
                         <button @click="scrollToSection('pricing')" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer">
                             Pricing
                         </button>
-                        <a href="/property-compliance" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                        <a href="/prop-compliance" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                             Property Compliance
                         </a>
                         <a href="/industries" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
@@ -164,7 +164,7 @@ onMounted(() => {
                             Pricing
                         </button>
                         <a
-                            href="/property-compliance"
+                            href="/prop-compliance"
                             class="px-2 py-1 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                             @click="mobileMenuOpen = false"
                         >
@@ -290,7 +290,7 @@ onMounted(() => {
                         </li>
                         <li>
                             <a
-                                href="/property-compliance"
+                                href="/prop-compliance"
                                 class="inline-flex items-center gap-1 text-sm font-medium text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                             >
                                 Property compliance
@@ -463,7 +463,7 @@ onMounted(() => {
                 </ol>
                 <div class="mt-8 text-center">
                     <a
-                        href="/property-compliance"
+                        href="/prop-compliance"
                         class="inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                     >
                         Explore property compliance for landlords &amp; managers
@@ -936,7 +936,7 @@ onMounted(() => {
                                 </a>
                             </li>
                             <li>
-                                <a href="/property-compliance" class="text-gray-300 hover:text-white transition-colors">
+                                <a href="/prop-compliance" class="text-gray-300 hover:text-white transition-colors">
                                     Property Compliance
                                 </a>
                             </li>
