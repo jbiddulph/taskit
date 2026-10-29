@@ -22,7 +22,7 @@ const homeJsonLd = {
     },
     audience: {
         '@type': 'Audience',
-        audienceType: 'Estate agents, trades, field teams, and small businesses',
+        audienceType: 'Small businesses, landlords, property managers, and letting agents',
     },
 };
 
@@ -62,7 +62,7 @@ onMounted(() => {
     <SeoHead
         :title="SEO_HOME_TITLE"
         :description="SEO_HOME_DESCRIPTION"
-        keywords="task management for estate agents, AI task management, location based tasks, small business task app, property viewing planner, field team management, Kanban for small teams UK"
+        keywords="property compliance management software, gas safety certificate reminder software, landlord certificate tracking software, AI document management, document expiry reminder software, task management for property managers UK"
         :json-ld="homeJsonLd"
         image="/images/activity-feed.png"
     />
@@ -89,6 +89,9 @@ onMounted(() => {
                         <button @click="scrollToSection('pricing')" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer">
                             Pricing
                         </button>
+                        <a href="/property-compliance" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                            Property Compliance
+                        </a>
                         <a href="/industries" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                             Industries
                         </a>
@@ -161,6 +164,13 @@ onMounted(() => {
                             Pricing
                         </button>
                         <a
+                            href="/property-compliance"
+                            class="px-2 py-1 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                            @click="mobileMenuOpen = false"
+                        >
+                            Property Compliance
+                        </a>
+                        <a
                             href="/industries"
                             class="px-2 py-1 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                             @click="mobileMenuOpen = false"
@@ -214,9 +224,9 @@ onMounted(() => {
                 <div
                     class="flex-1 rounded-br-lg rounded-bl-lg bg-white p-4 pb-8 text-[15px] leading-[22px] shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] lg:rounded-tl-lg lg:rounded-br-none lg:p-12 dark:bg-[#161615] dark:text-[#EDEDEC] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]"
                 >
-                    <h1 class="mb-2 text-lg font-medium">Task management for teams on the move</h1>
+                    <h1 class="mb-2 text-lg font-medium">Stop Chasing Paperwork. Let AI Handle Your Deadlines.</h1>
                     <p class="mb-4 text-[15px] text-[#706f6c] dark:text-[#A1A09A]">
-                        ZapTask helps estate agents, trades, and small businesses plan property visits, site jobs, and everyday work—with AI built into the dashboard controls so you can create multiple tasks in seconds, plus location-based tasks on a map.
+                        AI-powered document, compliance and task management for small businesses, landlords and property managers. Upload certificates, invoices and business documents — ZapTask extracts important dates, creates tasks and sends reminders before action is needed.
                     </p>
                     
                     <!-- Features Section -->
@@ -228,8 +238,8 @@ onMounted(() => {
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="font-medium text-base text-[#1b1b18] dark:text-[#EDEDEC]">Location tasks & map routes</h3>
-                                <p class="text-[14px] text-[#706f6c] dark:text-[#A1A09A]">Pin tasks to addresses, plan viewing or site-visit routes, check in on arrival, and navigate with Apple or Google Maps.</p>
+                                <h3 class="font-medium text-base text-[#1b1b18] dark:text-[#EDEDEC]">Upload. Extract. Track. Relax.</h3>
+                                <p class="text-[14px] text-[#706f6c] dark:text-[#A1A09A]">AI reads gas safety certificates, EICRs, insurance docs and invoices — then creates tasks with reminders before deadlines.</p>
                             </div>
                         </div>
                         
@@ -240,8 +250,8 @@ onMounted(() => {
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="font-medium text-base text-[#1b1b18] dark:text-[#EDEDEC]">Simple Kanban boards</h3>
-                                <p class="text-[14px] text-[#706f6c] dark:text-[#A1A09A]">Organise work with drag-and-drop columns everyone understands—no agile jargon required.</p>
+                                <h3 class="font-medium text-base text-[#1b1b18] dark:text-[#EDEDEC]">Property-linked compliance</h3>
+                                <p class="text-[14px] text-[#706f6c] dark:text-[#A1A09A]">Attach certificates to each address so landlords and managers see what’s due across the whole portfolio.</p>
                             </div>
                         </div>
                         
@@ -252,41 +262,39 @@ onMounted(() => {
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="font-medium text-base text-[#1b1b18] dark:text-[#EDEDEC]">Real-time Collaboration</h3>
-                                <p class="text-[14px] text-[#706f6c] dark:text-[#A1A09A]">Work together seamlessly with live updates, comments, and notifications.</p>
+                                <h3 class="font-medium text-base text-[#1b1b18] dark:text-[#EDEDEC]">Tasks, maps & collaboration</h3>
+                                <p class="text-[14px] text-[#706f6c] dark:text-[#A1A09A]">Turn extracted deadlines into trackable jobs, plan site visits on a map, and keep your team aligned on simple boards.</p>
                             </div>
                         </div>
                         
                         <div class="flex items-start gap-2">
-                            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900 flex-shrink-0">
-                                <svg class="h-4 w-4 text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-teal-100 dark:bg-teal-900 flex-shrink-0">
+                                <svg class="h-4 w-4 text-teal-600 dark:text-teal-400" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                 </svg>
                             </div>
                             <div>
                                 <h3 class="font-medium text-base text-[#1b1b18] dark:text-[#EDEDEC]">AI dashboard controls</h3>
-                                <p class="text-[14px] text-[#706f6c] dark:text-[#A1A09A]">Tap the AI button on your dashboard—speak to create multiple tasks at once, update or delete by task ID or title, or record a meeting and let AI extract action items with priorities, due dates, and locations.</p>
+                                <p class="text-[14px] text-[#706f6c] dark:text-[#A1A09A]">Speak to create multiple tasks, update work by voice, or record a meeting and let AI extract action items with due dates.</p>
                             </div>
                         </div>
                     </div>
                     <ul class="flex flex-wrap gap-3 text-sm leading-normal items-center">
                         <li>
                             <a
-                                href="/dashboard"
+                                href="/register"
                                 class="inline-block rounded-sm border border-black bg-[#1b1b18] px-5 py-1.5 text-sm leading-normal text-white hover:border-black hover:bg-black dark:border-[#eeeeec] dark:bg-[#eeeeec] dark:text-[#1C1C1A] dark:hover:border-white dark:hover:bg-white"
                             >
-                                Get Started
+                                Start free
                             </a>
                         </li>
                         <li>
                             <a
-                                href="https://youtu.be/2wUYdllCOaQ"
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                href="/property-compliance"
                                 class="inline-flex items-center gap-1 text-sm font-medium text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                             >
-                                Watch ZapTask Demo
-                                <span aria-hidden="true">↗</span>
+                                Property compliance
+                                <span aria-hidden="true">→</span>
                             </a>
                         </li>
                     </ul>
@@ -319,10 +327,10 @@ onMounted(() => {
                                 ZapTask
                             </h2>
                             <p class="text-lg text-gray-600 dark:text-gray-300 font-medium">
-                                For estate agents & small teams
+                                For businesses &amp; property managers
                             </p>
                             <p class="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
-                                AI-powered dashboard, location tasks, and Kanban boards your whole team can use on the move.
+                                AI document, compliance and task management — upload PDFs, extract deadlines, stay on top of obligations.
                             </p>
                             
                         </div>
@@ -420,15 +428,60 @@ onMounted(() => {
             </div>
         </section>
         
+        <!-- How ZapTask Works -->
+        <section id="how-it-works" class="w-full py-12 mt-4">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">
+                        How ZapTask Works
+                    </h2>
+                    <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] max-w-3xl mx-auto">
+                        Spend less time managing paperwork and more time running your business.
+                    </p>
+                </div>
+                <ol class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <li class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-[#161615]">
+                        <div class="mb-3 text-sm font-semibold text-blue-700 dark:text-blue-400">1. Upload</div>
+                        <h3 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Add your documents</h3>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Gas safety certificates, electrical reports, invoices, insurance documents and more.</p>
+                    </li>
+                    <li class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-[#161615]">
+                        <div class="mb-3 text-sm font-semibold text-blue-700 dark:text-blue-400">2. Extract</div>
+                        <h3 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">AI finds the details</h3>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">ZapTask identifies important dates, property information and actions required.</p>
+                    </li>
+                    <li class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-[#161615]">
+                        <div class="mb-3 text-sm font-semibold text-blue-700 dark:text-blue-400">3. Create tasks</div>
+                        <h3 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Turn dates into work</h3>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Extracted information becomes trackable tasks with assigned responsibilities.</p>
+                    </li>
+                    <li class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-[#161615]">
+                        <div class="mb-3 text-sm font-semibold text-blue-700 dark:text-blue-400">4. Reminders</div>
+                        <h3 class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC] mb-2">Act before it’s due</h3>
+                        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Get notified before certificates, services or payments need attention.</p>
+                    </li>
+                </ol>
+                <div class="mt-8 text-center">
+                    <a
+                        href="/property-compliance"
+                        class="inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                    >
+                        Explore property compliance for landlords &amp; managers
+                        <span aria-hidden="true">→</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
         <!-- Who ZapTask is for -->
         <section id="industries" class="w-full py-12 mt-4">
             <div class="max-w-6xl mx-auto px-6">
                 <div class="text-center mb-10">
                     <h2 class="text-3xl font-bold text-[#1b1b18] dark:text-[#EDEDEC] mb-3">
-                        Built for small teams—not just software projects
+                        Built for Businesses That Manage Important Documents
                     </h2>
                     <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] max-w-3xl mx-auto">
-                        If your work happens at addresses, on the road, or across clients, ZapTask keeps everyone aligned without enterprise complexity.
+                        Landlords, property managers, letting agents, tradespeople and small businesses use ZapTask to stay organised and on top of their obligations.
                     </p>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -509,7 +562,7 @@ onMounted(() => {
                         Choose Your Plan
                     </h2>
                     <p class="text-xl text-[#4a4a45] dark:text-gray-300 max-w-3xl mx-auto leading-relaxed mb-6">
-                        Start free as a solo agent or tradesperson. Upgrade when your branch or team needs more members, clients, and projects.
+                        Start free. Upgrade to MIDI or MAXI for property compliance, document upload and AI scanning across your portfolio.
                     </p>
 
                     <!-- Billing interval toggle -->
@@ -859,7 +912,7 @@ onMounted(() => {
                             <span class="text-xl font-bold text-white">ZapTask</span>
                         </div>
                         <p class="text-gray-300 text-sm mb-4 max-w-md">
-                            AI-powered task management for estate agents, trades, and small teams across the UK. Create tasks from the dashboard by voice, plan location-based visits on a map, and keep work visible on simple boards.
+                            AI-powered document, compliance and task management for small businesses, landlords and property managers. Upload PDFs, extract deadlines, create tasks and never miss a renewal.
                         </p>
                     </div>
                     
@@ -880,6 +933,11 @@ onMounted(() => {
                             <li>
                                 <a href="#pricing" class="text-gray-300 hover:text-white transition-colors">
                                     Pricing
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/property-compliance" class="text-gray-300 hover:text-white transition-colors">
+                                    Property Compliance
                                 </a>
                             </li>
                             <li>
@@ -937,7 +995,7 @@ onMounted(() => {
                 <div class="border-t border-gray-700 mt-8 pt-8">
                     <div class="flex flex-col md:flex-row justify-between items-center">
                         <div class="text-gray-400 text-sm mb-4 md:mb-0">
-                            Made for estate agents, field teams, and small businesses across the UK
+                            Made for landlords, property managers, and small businesses across the UK
                         </div>
                         <div class="text-gray-400 text-sm">
                             ZapTask &copy; 2025 ZapTask.co.uk. All rights reserved.

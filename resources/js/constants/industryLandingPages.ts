@@ -134,14 +134,14 @@ export const INDUSTRY_LANDING_PAGES: IndustryLandingPage[] = [
         slug: 'property-management',
         label: 'Property management',
         audienceLabel: 'Built for property managers',
-        headline: 'Coordinate maintenance, inspections, and tenant requests across your portfolio',
+        headline: 'Track certificates, maintenance and compliance across every property',
         subheadline:
-            'Pin every job to the right property, assign contractors, and see what your team is doing today on a map. ZapTask helps property managers stay on top of repairs, compliance checks, and void works without drowning in email threads.',
+            'Upload gas safety, EICR and insurance documents, link them to each address, and let AI create reminders before renewals. ZapTask also keeps repairs, inspections and contractor jobs organised on maps and boards.',
         keywords:
-            'property management software UK, landlord maintenance tracker, block management tasks, tenant request management, property portfolio task app',
-        seoTitle: 'Task Management for Property Management Companies | ZapTask',
+            'property compliance management software, landlord certificate tracking software, gas safety certificate reminder software, property management software UK, landlord maintenance tracker',
+        seoTitle: 'Property Compliance & Task Management for Property Managers | ZapTask',
         seoDescription:
-            'Track maintenance, inspections, and tenant requests across your property portfolio with location tasks, maps, and simple Kanban boards.',
+            'Upload certificates, extract due dates with AI, and track compliance across every property. Plus maps, maintenance tasks and contractor coordination.',
         screenshots: shots(
             {
                 alt: 'Property management jobs on a map',

@@ -27,6 +27,11 @@ class SitemapController extends Controller
                 'priority' => '0.8',
             ],
             [
+                'loc' => route('property-compliance'),
+                'changefreq' => 'weekly',
+                'priority' => '0.95',
+            ],
+            [
                 'loc' => route('competitors'),
                 'changefreq' => 'monthly',
                 'priority' => '0.7',
