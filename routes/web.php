@@ -24,6 +24,10 @@ Route::get('/demo', function () {
     return Inertia::render('Demo');
 })->name('demo');
 
+Route::get('/property-compliance', function () {
+    return Inertia::render('PropertyCompliance');
+})->name('property-compliance');
+
 Route::get('/privacy', function () {
     return Inertia::render('Privacy');
 })->name('privacy');

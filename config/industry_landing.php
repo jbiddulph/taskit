@@ -40,9 +40,9 @@ return [
             'keywords' => 'estate agent task management, property viewing planner, estate agency software UK, viewing route planner, property task app, Kanban for estate agents',
         ],
         'property-management' => [
-            'title' => 'Task Management for Property Management Companies | ZapTask',
-            'description' => 'Track maintenance, inspections, and tenant requests across your property portfolio with location tasks, maps, and simple Kanban boards.',
-            'keywords' => 'property management software UK, landlord maintenance tracker, block management tasks, tenant request management, property portfolio task app',
+            'title' => 'Property Compliance & Task Management for Property Managers | ZapTask',
+            'description' => 'Upload certificates, extract due dates with AI, and track compliance across every property. Plus maps, maintenance tasks and contractor coordination.',
+            'keywords' => 'property compliance management software, landlord certificate tracking software, gas safety certificate reminder software, property management software UK',
         ],
         'construction' => [
             'title' => 'Task Management for Construction Companies | ZapTask',
