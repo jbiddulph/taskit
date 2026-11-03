@@ -54,45 +54,23 @@
                 </p>
             </section>
 
-            <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <!-- Trello -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">ZapTask vs Trello</h2>
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                <Link
+                    v-for="comparison in comparisons"
+                    :key="comparison.slug"
+                    :href="`/vs/${comparison.slug}`"
+                    class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
+                >
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                        ZapTask vs {{ comparison.name }}
+                    </h2>
                     <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                        Trello is great for simple boards, but it can get messy as teams and projects grow.
+                        {{ comparison.summary }}
                     </p>
-                    <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                        <li>✅ ZapTask has opinionated workflows (Todo → In Progress → Q&A → Done)</li>
-                        <li>✅ Built-in project limits and guardrails to keep boards focused</li>
-                        <li>✅ Real-time collaboration and activity feed out of the box</li>
-                    </ul>
-                </div>
-
-                <!-- Asana -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">ZapTask vs Asana</h2>
-                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                        Asana is powerful but can feel heavy for teams that just need a clear board.
-                    </p>
-                    <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                        <li>✅ ZapTask keeps the interface lean and focused on tasks</li>
-                        <li>✅ Less configuration, more doing – get started in minutes</li>
-                        <li>✅ Transparent pricing with simple tiers</li>
-                    </ul>
-                </div>
-
-                <!-- Jira -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">ZapTask vs Jira</h2>
-                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                        Jira is powerful for big enterprises, but often overkill for product teams and agencies.
-                    </p>
-                    <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                        <li>✅ ZapTask is easier to onboard clients and non-technical stakeholders</li>
-                        <li>✅ No complex workflows or admin overhead</li>
-                        <li>✅ Fast, clean UI tuned for everyday execution</li>
-                    </ul>
-                </div>
+                    <span class="text-sm font-medium text-blue-600 dark:text-blue-400">
+                        Read the full comparison →
+                    </span>
+                </Link>
             </section>
 
             <section class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-6">
@@ -126,6 +104,29 @@
 import { Link } from '@inertiajs/vue3';
 import PublicNavigation from '@/components/PublicNavigation.vue';
 import SeoHead from '@/components/SeoHead.vue';
+
+const comparisons = [
+    {
+        slug: 'trello',
+        name: 'Trello',
+        summary: 'Trello is great for simple boards, but it can get messy as teams and projects grow.',
+    },
+    {
+        slug: 'asana',
+        name: 'Asana',
+        summary: 'Asana is powerful but can feel heavy for teams that just need a clear board.',
+    },
+    {
+        slug: 'monday',
+        name: 'Monday.com',
+        summary: 'Monday.com can feel like a full work OS when you mainly need jobs, maps, and reminders.',
+    },
+    {
+        slug: 'jira',
+        name: 'Jira',
+        summary: 'Jira is powerful for big enterprises, but often overkill for product teams and agencies.',
+    },
+];
 
 // Navigate to homepage section function
 const scrollToSection = (sectionId: string) => {

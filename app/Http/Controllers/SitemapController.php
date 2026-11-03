@@ -96,6 +96,22 @@ class SitemapController extends Controller
             ]);
         }
 
+        foreach (config('competitor_landing.comparisons', []) as $slug) {
+            $urls->push([
+                'loc' => route("competitors.{$slug}"),
+                'changefreq' => 'monthly',
+                'priority' => '0.75',
+            ]);
+        }
+
+        foreach (config('competitor_landing.alternatives', []) as $slug) {
+            $urls->push([
+                'loc' => route("alternative-to.{$slug}"),
+                'changefreq' => 'monthly',
+                'priority' => '0.75',
+            ]);
+        }
+
         $urls = $urls->map(function (array $entry) use ($now) {
             return $entry + ['lastmod' => $now];
         });
