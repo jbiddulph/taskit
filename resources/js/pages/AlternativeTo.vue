@@ -54,43 +54,23 @@
                 </p>
             </section>
 
-            <section class="space-y-8 mb-12">
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Alternative to Trello</h2>
+            <section class="space-y-6 mb-12">
+                <Link
+                    v-for="alternative in alternatives"
+                    :key="alternative.slug"
+                    :href="`/alternative-to/${alternative.slug}`"
+                    class="block bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
+                >
+                    <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+                        Alternative to {{ alternative.name }}
+                    </h2>
                     <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                        Trello is simple, but boards can quickly turn into a wall of cards with no structure.
+                        {{ alternative.summary }}
                     </p>
-                    <ul class="list-disc list-inside text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                        <li>ZapTask has a clear, opinionated workflow with built-in columns.</li>
-                        <li>Powerful filtering, bulk editing, and activity feed for growing teams.</li>
-                        <li>Simple pricing: start free, then upgrade when your team needs more.</li>
-                    </ul>
-                </div>
-
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Alternative to Asana</h2>
-                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                        Asana offers many views and workflows, which can be overwhelming for smaller teams.
-                    </p>
-                    <ul class="list-disc list-inside text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                        <li>ZapTask keeps everyone on one board with just enough structure.</li>
-                        <li>Fast to onboard negotiators, contractors, and non-technical staff.</li>
-                        <li>Location tasks, routes, and on-site check-in—not just dev sprints.</li>
-                        <li>Designed for estate agents, agencies, trades, and founders.</li>
-                    </ul>
-                </div>
-
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Alternative to Jira</h2>
-                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                        Jira is built for large enterprises and can feel like too much for everyday product work.
-                    </p>
-                    <ul class="list-disc list-inside text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                        <li>ZapTask removes admin overhead and complex workflows.</li>
-                        <li>Lightweight enough for fast-moving teams, but powerful where it matters.</li>
-                        <li>Great for agencies that need a clean client-facing board.</li>
-                    </ul>
-                </div>
+                    <span class="text-sm font-medium text-indigo-600 dark:text-indigo-400">
+                        See why teams switch →
+                    </span>
+                </Link>
             </section>
 
             <section class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-6">
@@ -124,6 +104,34 @@
 import { Link } from '@inertiajs/vue3';
 import PublicNavigation from '@/components/PublicNavigation.vue';
 import SeoHead from '@/components/SeoHead.vue';
+
+const alternatives = [
+    {
+        slug: 'trello',
+        name: 'Trello',
+        summary: 'Trello is simple, but boards can quickly turn into a wall of cards with no structure.',
+    },
+    {
+        slug: 'asana',
+        name: 'Asana',
+        summary: 'Asana offers many views and workflows, which can be overwhelming for smaller teams.',
+    },
+    {
+        slug: 'monday',
+        name: 'Monday.com',
+        summary: 'Monday.com packs a lot of surface area when you mainly need jobs, maps, and reminders.',
+    },
+    {
+        slug: 'jira',
+        name: 'Jira',
+        summary: 'Jira is built for large enterprises and can feel like too much for everyday product work.',
+    },
+    {
+        slug: 'spreadsheets',
+        name: 'spreadsheets',
+        summary: 'Spreadsheets hide overdue certificates and site visits until someone remembers to check a tab.',
+    },
+];
 
 // Navigate to homepage section function
 const scrollToSection = (sectionId: string) => {
