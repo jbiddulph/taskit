@@ -27,6 +27,11 @@ class SitemapController extends Controller
                 'priority' => '0.8',
             ],
             [
+                'loc' => route('property-compliance'),
+                'changefreq' => 'weekly',
+                'priority' => '0.95',
+            ],
+            [
                 'loc' => route('competitors'),
                 'changefreq' => 'monthly',
                 'priority' => '0.7',
@@ -88,6 +93,22 @@ class SitemapController extends Controller
                 'loc' => route("industry.{$slug}"),
                 'changefreq' => 'monthly',
                 'priority' => '0.85',
+            ]);
+        }
+
+        foreach (config('competitor_landing.comparisons', []) as $slug) {
+            $urls->push([
+                'loc' => route("competitors.{$slug}"),
+                'changefreq' => 'monthly',
+                'priority' => '0.75',
+            ]);
+        }
+
+        foreach (config('competitor_landing.alternatives', []) as $slug) {
+            $urls->push([
+                'loc' => route("alternative-to.{$slug}"),
+                'changefreq' => 'monthly',
+                'priority' => '0.75',
             ]);
         }
 

@@ -94,7 +94,7 @@ const showIndividualOption = computed(() => subscriptionType.value === 'FREE');
     <AuthBase title="Create an account" description="Enter your details below to create your account">
         <SeoHead
             title="Sign up free"
-            description="Create a free ZapTask account for your estate agency or small business. Location tasks, map routes, Kanban boards, and meeting notes—ready in minutes."
+            description="Create a free ZapTask account for document, compliance and task management. Upload certificates, extract deadlines with AI, and stay organised — ready in minutes."
             image="/zap_icon.png"
         />
 

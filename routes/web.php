@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CompetitorLandingController;
 use App\Http\Controllers\ComplianceController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ClientController;
@@ -24,6 +25,13 @@ Route::get('/demo', function () {
     return Inertia::render('Demo');
 })->name('demo');
 
+// Google Ads display path limit is 15 characters; keep a redirect for the old slug.
+Route::redirect('/property-compliance', '/prop-compliance', 301);
+
+Route::get('/prop-compliance', function () {
+    return Inertia::render('PropertyCompliance');
+})->name('property-compliance');
+
 Route::get('/privacy', function () {
     return Inertia::render('Privacy');
 })->name('privacy');
@@ -44,6 +52,16 @@ Route::get('/competitors', function () {
 Route::get('/alternative-to', function () {
     return Inertia::render('AlternativeTo');
 })->name('alternative-to');
+
+foreach (config('competitor_landing.comparisons', []) as $competitorSlug) {
+    Route::get("/vs/{$competitorSlug}", [CompetitorLandingController::class, 'comparison'])
+        ->name("competitors.{$competitorSlug}");
+}
+
+foreach (config('competitor_landing.alternatives', []) as $alternativeSlug) {
+    Route::get("/alternative-to/{$alternativeSlug}", [CompetitorLandingController::class, 'alternative'])
+        ->name("alternative-to.{$alternativeSlug}");
+}
 
 Route::get('/for-estate-agents', function () {
     return redirect('/estate-agents', 301);
